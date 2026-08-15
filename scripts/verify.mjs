@@ -1,4 +1,5 @@
 import { access, readFile } from 'node:fs/promises'
+import z from '@deepseek-ai/schemastery'
 
 let failures = 0
 
@@ -39,6 +40,12 @@ check('根许可证为 Apache License 2.0 正文', license.startsWith('Apache Li
 
 const plugin = await import(new URL('../lib/index.js', import.meta.url).href)
 check('编译入口导出 DSH 插件约定', ['name', 'Config', 'apply'].every((key) => key in plugin))
+
+const defaultConfig = z.resolve({}, plugin.Config)[0]
+const bundledExperts = await plugin.loadCatalog(plugin.resolveCatalogRoot(''), defaultConfig.divisions)
+check('内置智能体总数为 271', bundledExperts.size === 271, `实际为 ${bundledExperts.size}`)
+const bundledDivisions = new Set([...bundledExperts.values()].map((expert) => expert.division))
+check('17 个标准分区均包含内置智能体', defaultConfig.divisions.every((division) => bundledDivisions.has(division)))
 
 if (failures > 0) {
   console.error(`\n${failures} 项验证失败`)

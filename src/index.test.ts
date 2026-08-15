@@ -123,13 +123,23 @@ describe('loadCatalog', () => {
 })
 
 describe('resolveExpert', () => {
-  it('精确名称对应多个智能体时抛出歧义并列出 slug', () => {
-    const experts = [
-      { slug: 'engineering-backend-architect', name: 'Backend Architect' },
-      { slug: 'backend-architect-with-memory', name: 'Backend Architect' },
-    ]
+  const experts = [
+    { slug: 'engineering-backend-architect', name: 'Backend Architect' },
+    { slug: 'backend-architect-with-memory', name: 'Backend Architect' },
+    { slug: 'Unity-Architect', name: 'Unity Architect' },
+  ]
 
+  it('精确名称对应多个智能体时抛出歧义并列出 slug', () => {
     expect(() => resolveExpert(experts, 'Backend Architect')).toThrow(/engineering-backend-architect, backend-architect-with-memory/)
+  })
+
+  it('按 slug 不区分大小写匹配外部目录中的文件名', () => {
+    expect(resolveExpert(experts, 'unity-architect').name).toBe('Unity Architect')
+  })
+
+  it('唯一部分匹配时返回智能体，无匹配时给出可操作错误', () => {
+    expect(resolveExpert(experts, 'unity').slug).toBe('Unity-Architect')
+    expect(() => resolveExpert(experts, 'missing')).toThrow('Call list_experts')
   })
 })
 
@@ -167,5 +177,105 @@ describe('summon_expert', () => {
     }
 
     await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow('dispose failed')
+  })
+
+  it('空 maxDepth 不透传给 provider，且子代理不能浏览或递归召唤花名册', async () => {
+    const tools: unknown[] = []
+    let startOptions: Record<string, unknown> | undefined
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        start: async (_provider: string, options: Record<string, unknown>) => {
+          startOptions = options
+          return {
+            result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
+            dispose: async () => undefined,
+          }
+        },
+      },
+      systemPrompt: { section: () => undefined },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: null as unknown as number })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
+      execute: (args: unknown, exec: unknown) => Promise<unknown>
+    }
+
+    await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).resolves.toEqual({ expert: 'reviewer', answer: 'done' })
+    expect(startOptions).toMatchObject({ toolFilter: { deny: ['summon_expert', 'list_experts'] } })
+    expect(startOptions).not.toHaveProperty('maxDepth')
+  })
+
+  it('在注册阶段拒绝零 maxDepth，避免第一次委派才失败', () => {
+    const ctx = {
+      tools: { register: () => undefined },
+      subagents: { getProvider: () => undefined },
+      systemPrompt: { section: () => undefined },
+    } as unknown as Context
+
+    expect(() => apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: 0 })).toThrow('positive safe integer')
+  })
+
+  it('分区筛选会去除空白并要求精确 division', async () => {
+    const tools: unknown[] = []
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: { getProvider: () => undefined },
+      systemPrompt: { section: () => undefined },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const list = tools.find((tool) => (tool as { name?: string }).name === 'list_experts') as {
+      execute: (args: unknown) => Promise<{ divisions: Array<{ division: string }>; total: number }>
+    }
+
+    await expect(list.execute({ division: ' engineering ' })).resolves.toMatchObject({ divisions: [{ division: 'engineering' }], total: 1 })
+    await expect(list.execute({ division: 'en' })).resolves.toEqual({ divisions: [], total: 0 })
+  })
+
+  it.each([
+    ['expert personas', { persona: false, toolFilter: true, depthLimit: true }, undefined, 'does not support expert personas'],
+    ['toolFilter', { persona: true, toolFilter: false, depthLimit: true }, undefined, 'cannot prevent recursive expert delegation'],
+    ['maxDepth', { persona: true, toolFilter: true, depthLimit: false }, 1, 'does not support maxDepth'],
+  ])('provider 缺少 %s 能力时给出明确错误', async (_capability, capabilities, maxDepth, message) => {
+    const tools: unknown[] = []
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities }),
+        start: async () => { throw new Error('must not start') },
+      },
+      systemPrompt: { section: () => undefined },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], ...(maxDepth === undefined ? {} : { maxDepth }) })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
+      execute: (args: unknown, exec: unknown) => Promise<unknown>
+    }
+
+    await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow(message)
+  })
+
+  it('非 completed 的专家运行会返回部分输出以便排障', async () => {
+    const tools: unknown[] = []
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        start: async () => ({
+          result: Promise.resolve({ output: [{ type: 'text', text: 'partial result' }], stopReason: 'cancelled' }),
+          dispose: async () => undefined,
+        }),
+      },
+      systemPrompt: { section: () => undefined },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
+      execute: (args: unknown, exec: unknown) => Promise<unknown>
+    }
+
+    await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow('Partial output:\npartial result')
   })
 })

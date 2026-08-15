@@ -99,6 +99,15 @@ export function resolveCatalogRoot(root: string): string {
   return root.trim() === '' ? BUNDLED_ROOT : root
 }
 
+/** 规范化可选深度上限：配置表单的空值等同于未设置，其他值必须允许至少一层子代理。 */
+function normalizeMaxDepth(value: unknown): number | undefined {
+  if (value === undefined || value === null) return undefined
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) {
+    throw new Error('agency-agents config maxDepth must be a positive safe integer')
+  }
+  return value
+}
+
 interface Frontmatter {
   name?: string
   description?: string
@@ -225,13 +234,13 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
 export function resolveExpert<T extends { readonly slug: string; readonly name: string }>(experts: readonly T[], query: unknown): T {
   const q = String(query).trim().toLowerCase()
   if (q.length === 0) throw new Error('expert is required')
-  const bySlug = experts.find((expert) => expert.slug === q)
+  const bySlug = experts.find((expert) => expert.slug.toLowerCase() === q)
   if (bySlug !== undefined) return bySlug
   const exactNames = experts.filter((expert) => expert.name.toLowerCase() === q)
   if (exactNames.length === 1) return exactNames[0]
   const matches = exactNames.length > 1
     ? exactNames
-    : experts.filter((expert) => expert.slug.includes(q) || expert.name.toLowerCase().includes(q))
+    : experts.filter((expert) => expert.slug.toLowerCase().includes(q) || expert.name.toLowerCase().includes(q))
   if (matches.length === 1) return matches[0]
   if (matches.length > 1) {
     const preview = matches.slice(0, 12).map((expert) => expert.slug).join(', ')
@@ -241,6 +250,7 @@ export function resolveExpert<T extends { readonly slug: string; readonly name: 
 }
 
 export function apply(ctx: Context, config: Config): void {
+  const maxDepth = normalizeMaxDepth(config.maxDepth)
   let experts = new Map<string, Expert>()
   let loadError: string | null = null
   const ready = loadCatalog(resolveCatalogRoot(config.root), config.divisions)
@@ -281,9 +291,12 @@ export function apply(ctx: Context, config: Config): void {
     },
     output: {
       schema: { type: 'object', additionalProperties: false, properties: { divisions: { type: 'array', required: true, items: { type: 'json' } }, total: { type: 'number', required: true } } },
-      render: (_args, value) => {
+      render: (args, value) => {
         const divisions = value.divisions as Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; emoji: string; description: string }> }>
-        if (divisions.length === 0) return [{ type: 'text', text: 'No experts available.' }]
+        if (divisions.length === 0) {
+          const division = args.division === undefined ? '' : String(args.division).trim()
+          return [{ type: 'text', text: division === '' ? 'No experts available.' : `No experts matched division "${division}".` }]
+        }
         const lines: string[] = []
         for (const group of divisions) {
           lines.push(`## ${group.division} (${group.count})`)
@@ -297,13 +310,13 @@ export function apply(ctx: Context, config: Config): void {
     },
     async execute(args) {
       await ensureReady()
-      const hasFilter = args.division !== undefined && String(args.division).trim() !== ''
+      const query = args.division === undefined ? '' : String(args.division).trim().toLowerCase()
+      const hasFilter = query !== ''
       const groups = groupByDivision(hasFilter)
       if (hasFilter) {
-        const q = String(args.division).toLowerCase()
         const filtered = groups.filter((g) => {
           const division = g.division.toLowerCase()
-          return division === q || division.includes(q)
+          return division === query
         })
         return { divisions: filtered, total: filtered.reduce((n, g) => n + g.count, 0) }
       }
@@ -335,7 +348,7 @@ export function apply(ctx: Context, config: Config): void {
       if (!provider.capabilities.toolFilter) {
         throw new Error(`subagent provider "${config.provider}" cannot prevent recursive expert delegation`)
       }
-      if (config.maxDepth !== undefined && !provider.capabilities.depthLimit) {
+      if (maxDepth !== undefined && !provider.capabilities.depthLimit) {
         throw new Error(`subagent provider "${config.provider}" does not support maxDepth`)
       }
       const expert = resolveExpert([...experts.values()], args.expert)
@@ -344,8 +357,8 @@ export function apply(ctx: Context, config: Config): void {
         prompt: [{ type: 'text', text: String(args.task) }],
         parent: exec.agent,
         persona: expert.persona,
-        toolFilter: { deny: ['summon_expert'] },
-        ...config.maxDepth === undefined ? {} : { maxDepth: config.maxDepth },
+        toolFilter: { deny: ['summon_expert', 'list_experts'] },
+        ...(maxDepth === undefined ? {} : { maxDepth }),
         signal: exec.signal,
       })
       try {
@@ -365,6 +378,6 @@ export function apply(ctx: Context, config: Config): void {
   ctx.systemPrompt.section({
     name: 'agency:experts',
     order: 117,
-    text: '## Agency expert mode\nYou have a roster of domain experts from The Agency (specialists across 17 divisions). Summon one to delegate a whole task by calling `summon_expert(expert, task)` — the expert runs as a specialist subagent with its own persona and returns the result. Call `list_experts()` to see division names and counts, then call `list_experts(division)` to browse experts and find an exact slug. Prefer summoning an expert when a task clearly belongs to a specialist domain. A summoned expert cannot summon another Agency expert, so keep each delegation self-contained.',
+    text: '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 17 divisions). In the parent session, call `list_experts()` to see division names and counts, then call `list_experts(division)` to browse experts and find an exact slug before using `summon_expert(expert, task)`. A delegated expert receives its complete task directly; roster tools are unavailable to it, so it must complete that task without browsing or delegating the roster.',
   })
 }
