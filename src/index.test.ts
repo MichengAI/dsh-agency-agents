@@ -191,6 +191,9 @@ describe('summon_expert', () => {
         }),
       },
       systemPrompt: { section: () => undefined },
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
@@ -217,6 +220,9 @@ describe('summon_expert', () => {
         },
       },
       systemPrompt: { section: () => undefined },
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: null as unknown as number })
@@ -225,7 +231,7 @@ describe('summon_expert', () => {
     }
 
     await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).resolves.toEqual({ expert: 'reviewer', answer: 'done' })
-    expect(startOptions).toMatchObject({ toolFilter: { deny: ['summon_expert', 'list_experts'] } })
+    expect(startOptions).toMatchObject({ toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts'] } })
     expect(startOptions).not.toHaveProperty('maxDepth')
   })
 
@@ -236,6 +242,9 @@ describe('summon_expert', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: (section: { name: string; text: string | ((context: unknown) => string) }) => sections.push(section) },
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
@@ -252,6 +261,9 @@ describe('summon_expert', () => {
       tools: { register: () => undefined },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: () => undefined },
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
     } as unknown as Context
 
     expect(() => apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: 0 })).toThrow('positive safe integer')
@@ -263,6 +275,9 @@ describe('summon_expert', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: () => undefined },
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
@@ -287,6 +302,9 @@ describe('summon_expert', () => {
         start: async () => { throw new Error('must not start') },
       },
       systemPrompt: { section: () => undefined },
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], ...(maxDepth === undefined ? {} : { maxDepth }) })
@@ -309,6 +327,9 @@ describe('summon_expert', () => {
         }),
       },
       systemPrompt: { section: () => undefined },
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })

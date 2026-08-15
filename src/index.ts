@@ -24,11 +24,14 @@
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
+import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
+import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { SubagentRun } from '@deepseek-ai/dsh-subagent'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { ZH_DIVISION, ZH_NAME } from './names.js'
 
 export const name = 'agency-agents'
 export const inject = ['tools', 'subagents', 'systemPrompt']
@@ -65,9 +68,11 @@ const DESCRIPTION_LIMIT = 120
 interface Expert {
   readonly slug: string
   readonly name: string
+  readonly nameEn: string
   readonly description: string
   readonly emoji: string
   readonly division: string
+  readonly divisionZh: string
   readonly persona: string
 }
 
@@ -218,10 +223,12 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
       }
       map.set(slug, {
         slug,
-        name: parsed.name,
+        name: ZH_NAME[slug] ?? parsed.name,
+        nameEn: parsed.name,
         description: parsed.description,
         emoji: parsed.emoji ?? '',
         division: source.division,
+        divisionZh: ZH_DIVISION[source.division] ?? source.division,
         persona: sanitize(parsed.body),
       })
     })
@@ -233,16 +240,16 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
 }
 
 /** 根据 slug 或名称解析智能体；任意多命中都必须要求调用者提供更精确的 slug。 */
-export function resolveExpert<T extends { readonly slug: string; readonly name: string }>(experts: readonly T[], query: unknown): T {
+export function resolveExpert<T extends { readonly slug: string; readonly name: string; readonly nameEn?: string }>(experts: readonly T[], query: unknown): T {
   const q = String(query).trim().toLowerCase()
   if (q.length === 0) throw new Error('expert is required')
   const bySlug = experts.find((expert) => expert.slug.toLowerCase() === q)
   if (bySlug !== undefined) return bySlug
-  const exactNames = experts.filter((expert) => expert.name.toLowerCase() === q)
+  const exactNames = experts.filter((expert) => expert.name.toLowerCase() === q || expert.nameEn?.toLowerCase() === q)
   if (exactNames.length === 1) return exactNames[0]
   const matches = exactNames.length > 1
     ? exactNames
-    : experts.filter((expert) => expert.slug.toLowerCase().includes(q) || expert.name.toLowerCase().includes(q))
+    : experts.filter((expert) => expert.slug.toLowerCase().includes(q) || expert.name.toLowerCase().includes(q) || expert.nameEn?.toLowerCase().includes(q))
   if (matches.length === 1) return matches[0]
   if (matches.length > 1) {
     const preview = matches.slice(0, 12).map((expert) => expert.slug).join(', ')
@@ -253,6 +260,12 @@ export function resolveExpert<T extends { readonly slug: string; readonly name: 
 
 export function apply(ctx: Context, config: Config): void {
   const maxDepth = normalizeMaxDepth(config.maxDepth)
+  let enabledSource: () => readonly string[] = () => []
+  installSettingsSection(ctx, settingsNamespace('agency-agents'), z.object({ enabled: z.array(z.string()) }), { enabled: [] }, {
+    setSource: (current) => { enabledSource = () => current().enabled },
+    onChange: () => {},
+  })
+  const enabledSet = (): ReadonlySet<string> => new Set(enabledSource())
   let experts = new Map<string, Expert>()
   let loadError: string | null = null
   const ready = loadCatalog(resolveCatalogRoot(config.root), config.divisions)
@@ -266,7 +279,9 @@ export function apply(ctx: Context, config: Config): void {
 
   function groupByDivision(withExperts: boolean): Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; emoji: string; description: string }> }> {
     const groups = new Map<string, Expert[]>()
+    const enabled = enabledSet()
     for (const expert of experts.values()) {
+      if (!enabled.has(expert.slug)) continue
       const list = groups.get(expert.division) ?? []
       list.push(expert)
       groups.set(expert.division, list)
@@ -326,6 +341,37 @@ export function apply(ctx: Context, config: Config): void {
     },
   }))
 
+  async function runExpert(query: unknown, task: unknown, exec: ToolRunContext): Promise<{ expert: string; answer: string }> {
+    if (exec.agent === undefined) throw new Error('summon_expert requires a calling agent')
+    const provider = ctx.subagents.getProvider(config.provider)
+    if (provider === undefined) throw new Error(`subagent provider "${config.provider}" is not registered`)
+    if (!provider.capabilities.persona) throw new Error(`subagent provider "${config.provider}" does not support expert personas`)
+    if (!provider.capabilities.toolFilter) throw new Error(`subagent provider "${config.provider}" cannot prevent recursive expert delegation`)
+    if (maxDepth !== undefined && !provider.capabilities.depthLimit) throw new Error(`subagent provider "${config.provider}" does not support maxDepth`)
+    const expert = resolveExpert([...experts.values()], query)
+    if (!enabledSet().has(expert.slug)) throw new Error(`expert "${expert.name}" is disabled`)
+    const run: SubagentRun = await ctx.subagents.start(config.provider, {
+      label: `expert:${expert.slug}`,
+      prompt: [{ type: 'text', text: String(task) }],
+      parent: exec.agent,
+      persona: expert.persona,
+      toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts'] },
+      ...(maxDepth === undefined ? {} : { maxDepth }),
+      signal: exec.signal,
+    })
+    try {
+      const result = await run.result
+      const text = textBlocks(result.output)
+      if (result.stopReason !== 'completed') {
+        const detail = text.length > 0 ? `\nPartial output:\n${text}` : ''
+        throw new Error(`expert run ended with "${result.stopReason}"${detail}`)
+      }
+      return { expert: expert.slug, answer: text }
+    } finally {
+      await run.dispose()
+    }
+  }
+
   ctx.tools.register(defineTool({
     name: 'summon_expert',
     description: "Summon a domain expert from The Agency roster to complete a task: a specialist subagent runs with that expert's full persona and returns its result. Use for tasks that clearly belong to a specialist domain (frontend work, security review, marketing copy, etc.). This call waits for the expert's result. Call list_experts first if you do not know the exact expert slug.",
@@ -339,41 +385,42 @@ export function apply(ctx: Context, config: Config): void {
     },
     async execute(args, exec) {
       await ensureReady()
-      if (exec.agent === undefined) throw new Error('summon_expert requires a calling agent')
-      const provider = ctx.subagents.getProvider(config.provider)
-      if (provider === undefined) {
-        throw new Error(`subagent provider "${config.provider}" is not registered`)
-      }
-      if (!provider.capabilities.persona) {
-        throw new Error(`subagent provider "${config.provider}" does not support expert personas`)
-      }
-      if (!provider.capabilities.toolFilter) {
-        throw new Error(`subagent provider "${config.provider}" cannot prevent recursive expert delegation`)
-      }
-      if (maxDepth !== undefined && !provider.capabilities.depthLimit) {
-        throw new Error(`subagent provider "${config.provider}" does not support maxDepth`)
-      }
-      const expert = resolveExpert([...experts.values()], args.expert)
-      const run: SubagentRun = await ctx.subagents.start(config.provider, {
-        label: `expert:${expert.slug}`,
-        prompt: [{ type: 'text', text: String(args.task) }],
-        parent: exec.agent,
-        persona: expert.persona,
-        toolFilter: { deny: ['summon_expert', 'list_experts'] },
-        ...(maxDepth === undefined ? {} : { maxDepth }),
-        signal: exec.signal,
-      })
-      try {
-        const result = await run.result
-        const text = textBlocks(result.output)
-        if (result.stopReason !== 'completed') {
-          const detail = text.length > 0 ? `\nPartial output:\n${text}` : ''
-          throw new Error(`expert run ended with "${result.stopReason}"${detail}`)
-        }
-        return { expert: expert.slug, answer: text }
-      } finally {
-        await run.dispose()
-      }
+      return runExpert(args.expert, args.task, exec)
+    },
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'summon_experts',
+    description: 'Summon multiple domain experts in parallel to work on one mission. Each expert gets its own task/role and runs as a specialist subagent with its own persona; results are returned per expert. Use this to assemble a specialist team. This call waits for all experts.',
+    parameters: {
+      experts: {
+        type: 'array',
+        required: true,
+        description: 'The experts to summon, each with an expert slug/name and its own task.',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            expert: { type: 'string', required: true, description: 'Expert slug or name (e.g. engineering-frontend-developer, or "Frontend Developer").' },
+            task: { type: 'string', required: true, description: 'The complete, self-contained task/role for this expert.' },
+          },
+        },
+      },
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: false, properties: { results: { type: 'array', required: true, items: { type: 'json' } } } },
+      render: (_args, value) => {
+        const parts = (value.results as Array<{ expert: string; answer: string }>).map((r) => `## ${r.expert}\n${r.answer}`)
+        return [{ type: 'text', text: parts.join('\n\n') }]
+      },
+    },
+    async execute(args, exec) {
+      await ensureReady()
+      if (exec.agent === undefined) throw new Error('summon_experts requires a calling agent')
+      const specs = args.experts
+      if (!Array.isArray(specs) || specs.length === 0) throw new Error('experts must be a non-empty array')
+      const results = await Promise.all(specs.map((spec) => runExpert(spec.expert, spec.task, exec)))
+      return { results }
     },
   }))
 
@@ -383,7 +430,7 @@ export function apply(ctx: Context, config: Config): void {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 17 divisions). In the parent session, call `list_experts()` to see division names and counts, then call `list_experts(division)` to browse experts and find an exact slug before using `summon_expert(expert, task)`.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 17 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). In the parent session, call `list_experts()` to see enabled division names and counts, then call `list_experts(division)` to browse enabled experts and find an exact slug before using `summon_expert(expert, task)`. A disabled expert cannot be summoned.'
     },
   })
 }

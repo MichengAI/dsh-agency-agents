@@ -7,9 +7,11 @@ declare const inject: string[];
 interface Expert {
   readonly slug: string;
   readonly name: string;
+  readonly nameEn: string;
   readonly description: string;
   readonly emoji: string;
   readonly division: string;
+  readonly divisionZh: string;
   readonly persona: string;
 }
 /** Plugin config: the persona root, the subagent provider, and the divisions to scan. */
@@ -48,6 +50,7 @@ declare function loadCatalog(root: string, divisions: readonly string[]): Promis
 declare function resolveExpert<T extends {
   readonly slug: string;
   readonly name: string;
+  readonly nameEn?: string;
 }>(experts: readonly T[], query: unknown): T;
 declare function apply(ctx: Context, config: Config): void;
 //#endregion
