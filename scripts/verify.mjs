@@ -17,12 +17,12 @@ const packageJson = JSON.parse(await readFile(packageUrl, 'utf8'))
 check('DSH bundle 指向 Cordis patch', packageJson.dsh?.bundle?.patch === './cordis.patch.yml')
 check(
   '发布文件包含运行代码、智能体资产、patch、双语说明和授权文件',
-  ['lib', 'assets/agency-agents', 'cordis.patch.yml', 'README.md', 'README_EN.md', 'LICENSE', 'NOTICE', 'docs']
+  ['lib', 'assets/agency-agents', 'cordis.patch.yml', 'README.md', 'README.zh-CN.md', 'LICENSE', 'NOTICE', 'docs']
     .every((entry) => packageJson.files?.includes(entry)),
 )
 check('包许可证为 Apache-2.0', packageJson.license === 'Apache-2.0')
 
-for (const file of ['../lib/index.js', '../cordis.patch.yml', '../LICENSE', '../NOTICE', '../README_EN.md', '../assets/agency-agents/LICENSE', '../docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md']) {
+for (const file of ['../lib/index.js', '../cordis.patch.yml', '../LICENSE', '../NOTICE', '../README.zh-CN.md', '../assets/agency-agents/LICENSE', '../docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md']) {
   try {
     await access(new URL(file, import.meta.url))
     check(`发布文件存在：${file.slice(3)}`, true)
