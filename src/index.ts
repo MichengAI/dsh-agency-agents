@@ -79,7 +79,7 @@ export interface Config {
   provider: string
   /** Division directory names to scan under `root`. */
   divisions: string[]
-  /** 可选的绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
+  /** 可选的正整数绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
   maxDepth?: number
 }
 
@@ -88,15 +88,17 @@ const ROOT_ENV = 'AGENCY_AGENTS_ROOT'
 const BUNDLED_ROOT = fileURLToPath(new URL('../assets/agency-agents/', import.meta.url))
 
 export const Config: z<Config> = z.object({
-  root: z.string().default(process.env[ROOT_ENV] ?? ''),
+  root: z.string().default(''),
   provider: z.string().default('spawn'),
   divisions: z.array(z.string()).default(DEFAULT_DIVISIONS),
   maxDepth: z.natural().min(1),
 })
 
-/** 解析智能体根目录：显式配置优先，其次使用包内资产。 */
+/** 解析智能体根目录：显式配置优先，其次读取环境变量，最后使用包内资产。 */
 export function resolveCatalogRoot(root: string): string {
-  return root.trim() === '' ? BUNDLED_ROOT : root
+  if (root.trim() !== '') return root
+  const environmentRoot = process.env[ROOT_ENV]?.trim()
+  return environmentRoot === undefined || environmentRoot === '' ? BUNDLED_ROOT : environmentRoot
 }
 
 /** 规范化可选深度上限：配置表单的空值等同于未设置，其他值必须允许至少一层子代理。 */
@@ -112,7 +114,6 @@ interface Frontmatter {
   name?: string
   description?: string
   emoji?: string
-  vibe?: string
   body: string
 }
 
@@ -138,7 +139,8 @@ export function unquote(value: string): string {
 
 /** 将超长文本截断到指定长度并追加省略号。 */
 export function truncate(text: string, limit: number): string {
-  return text.length <= limit ? text : `${text.slice(0, limit)}…`
+  const codePoints = Array.from(text)
+  return codePoints.length <= limit ? text : `${codePoints.slice(0, limit).join('')}…`
 }
 
 /** Parse the `key: value` frontmatter block of one agency agent file. */
@@ -151,7 +153,7 @@ export function parseFrontmatter(raw: string): Frontmatter | undefined {
     const m = fm.match(new RegExp(`^${key}\\s*:\\s*(.*)$`, 'm'))
     return m === null ? undefined : unquote(m[1].trim())
   }
-  return { name: get('name'), description: get('description'), emoji: get('emoji'), vibe: get('vibe'), body }
+  return { name: get('name'), description: get('description'), emoji: get('emoji'), body }
 }
 
 /** Concatenate the text blocks of a subagent output. */
@@ -378,6 +380,10 @@ export function apply(ctx: Context, config: Config): void {
   ctx.systemPrompt.section({
     name: 'agency:experts',
     order: 117,
-    text: '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 17 divisions). In the parent session, call `list_experts()` to see division names and counts, then call `list_experts(division)` to browse experts and find an exact slug before using `summon_expert(expert, task)`. A delegated expert receives its complete task directly; roster tools are unavailable to it, so it must complete that task without browsing or delegating the roster.',
+    text: (context) => {
+      const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
+      if (agent?.session?.header?.parentSession !== undefined) return ''
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 17 divisions). In the parent session, call `list_experts()` to see division names and counts, then call `list_experts(division)` to browse experts and find an exact slug before using `summon_expert(expert, task)`.'
+    },
   })
 }

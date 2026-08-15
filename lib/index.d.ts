@@ -20,17 +20,16 @@ interface Config {
   provider: string;
   /** Division directory names to scan under `root`. */
   divisions: string[];
-  /** 可选的绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
+  /** 可选的正整数绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
   maxDepth?: number;
 }
 declare const Config: z<Config>;
-/** 解析智能体根目录：显式配置优先，其次使用包内资产。 */
+/** 解析智能体根目录：显式配置优先，其次读取环境变量，最后使用包内资产。 */
 declare function resolveCatalogRoot(root: string): string;
 interface Frontmatter {
   name?: string;
   description?: string;
   emoji?: string;
-  vibe?: string;
   body: string;
 }
 /** Neutralize strict `{{...}}` template interpolation inside expert prose. */

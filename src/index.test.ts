@@ -58,6 +58,10 @@ describe('truncate', () => {
   it('不超长原样返回', () => {
     expect(truncate('abc', 3)).toBe('abc')
   })
+
+  it('按码点截断，不拆开 emoji 代理对', () => {
+    expect(truncate('😀abc', 1)).toBe('😀…')
+  })
 })
 
 describe('parseFrontmatter', () => {
@@ -126,6 +130,17 @@ describe('loadCatalog', () => {
   it('未配置 root 时加载随包发布的智能体目录', async () => {
     const map = await loadCatalog(resolveCatalogRoot(''), ['academic'])
     expect(map.size).toBeGreaterThan(0)
+  })
+
+  it('在解析 root 时读取之后设置的环境变量', () => {
+    const original = process.env.AGENCY_AGENTS_ROOT
+    process.env.AGENCY_AGENTS_ROOT = dir
+    try {
+      expect(resolveCatalogRoot('')).toBe(dir)
+    } finally {
+      if (original === undefined) delete process.env.AGENCY_AGENTS_ROOT
+      else process.env.AGENCY_AGENTS_ROOT = original
+    }
   })
 })
 
@@ -212,6 +227,24 @@ describe('summon_expert', () => {
     await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).resolves.toEqual({ expert: 'reviewer', answer: 'done' })
     expect(startOptions).toMatchObject({ toolFilter: { deny: ['summon_expert', 'list_experts'] } })
     expect(startOptions).not.toHaveProperty('maxDepth')
+  })
+
+  it('只向父会话注入花名册协议', () => {
+    const tools: unknown[] = []
+    const sections: Array<{ name: string; text: string | ((context: unknown) => string) }> = []
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: { getProvider: () => undefined },
+      systemPrompt: { section: (section: { name: string; text: string | ((context: unknown) => string) }) => sections.push(section) },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const text = sections.find((section) => section.name === 'agency:experts')?.text
+    expect(typeof text).toBe('function')
+    if (typeof text !== 'function') throw new Error('agency:experts must be dynamic')
+
+    expect(text({ agent: { session: { header: {} } } })).toContain('parent session')
+    expect(text({ agent: { session: { header: { parentSession: 'parent' } } } })).toBe('')
   })
 
   it('在注册阶段拒绝零 maxDepth，避免第一次委派才失败', () => {
