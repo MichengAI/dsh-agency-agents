@@ -41,6 +41,7 @@ try {
   check('npm 受信发布使用官方发布命令', workflow.includes('npm publish'))
   check('npm 受信发布不注入令牌式 registry 配置', !workflow.includes('registry-url'))
   check('npm 受信发布不缓存依赖', !workflow.includes('cache:'))
+  check('npm 受信发布隔离 Node 校验脚本避免 shell 插值', workflow.includes("<<'NODE'"))
 } catch {
   check('npm 受信发布工作流存在', false)
 }

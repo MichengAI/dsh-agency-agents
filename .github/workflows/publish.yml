@@ -32,7 +32,14 @@ jobs:
         run: pnpm prepublishOnly
 
       - name: 校验版本标签
-        run: node -e "const version = require('./package.json').version; if (process.env.GITHUB_REF_NAME !== `v${version}`) { throw new Error(`版本标签 ${process.env.GITHUB_REF_NAME} 必须与 package.json 的 v${version} 一致`) }"
+        run: |
+          node <<'NODE'
+          const version = require('./package.json').version
+          const expected = `v${version}`
+          if (process.env.GITHUB_REF_NAME !== expected) {
+            throw new Error(`版本标签 ${process.env.GITHUB_REF_NAME} 必须与 package.json 的 ${expected} 一致`)
+          }
+          NODE
 
       - name: 发布到 npm
         run: npm publish
