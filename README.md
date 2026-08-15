@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/branding/dsh-logo.png" width="88" alt="DeepSeek Harness logo">
+  <img src="https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/branding/dsh-logo.png" width="88" alt="DeepSeek Harness logo">
 
   # DSH Agency Agents
 
@@ -17,7 +17,7 @@
 
 Browse and enable agents in the **Agents** settings panel. The plugin exposes the bundled agents by division, alongside their names, descriptions, and enabled state.
 
-![DSH Agents panel](assets/screenshots/agent-roster.png)
+![DSH Agents panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
 
 Choose **Agent** mode in the chat composer, then identify the agent by name and slug. For example:
 
@@ -26,7 +26,7 @@ Summon the "Code Review Engineer" agent (engineering-code-reviewer) for this tas
 Review the changes in the current workspace and list reproducible issues by severity.
 ```
 
-![Summoning an agent from the composer](assets/screenshots/summon-prompt.png)
+![Summoning an agent from the composer](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
 
 ## How it works
 

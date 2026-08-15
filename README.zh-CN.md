@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/branding/dsh-logo.png" width="88" alt="DeepSeek Harness 标识">
+  <img src="https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/branding/dsh-logo.png" width="88" alt="DeepSeek Harness 标识">
 
   # DSH Agency Agents
 
@@ -17,7 +17,7 @@
 
 在设置的「智能体」面板中浏览并启用所需的智能体。插件按分区提供内置智能体，并在面板中保留名称、简介与启用状态。
 
-![DSH 智能体面板](assets/screenshots/agent-roster.png)
+![DSH 智能体面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
 
 在对话输入框选择「智能体」模式，然后用名称和 slug 明确指定要召唤的智能体。例如：
 
@@ -26,7 +26,7 @@
 审查当前工作区的改动，按严重程度列出可复现的问题。
 ```
 
-![召唤智能体的输入方式](assets/screenshots/summon-prompt.png)
+![召唤智能体的输入方式](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
 
 ## 工作方式
 
