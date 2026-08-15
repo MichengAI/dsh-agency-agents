@@ -26,6 +26,7 @@ import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
+import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { SubagentRun } from '@deepseek-ai/dsh-subagent'
 import { readdir, readFile, stat } from 'node:fs/promises'
@@ -258,8 +259,38 @@ export function resolveExpert<T extends { readonly slug: string; readonly name: 
   throw new Error(`No expert matched "${String(query)}". Call list_experts to see the roster.`)
 }
 
+/**
+ * 插件自有的 Host↔Client 类型化远程通道（Typert Remote）。
+ * 启用状态仍由 installSettingsSection 持久化（settings 服务），客户端不再
+ * 走 api.settings（那是 Host 自有配置面、白名单对第三方硬编码封死），而是
+ * 通过 `ctx.remote.agencyAgents` 读写 —— 第三方安装无需修改或重编 DSH。
+ */
+export class AgencyAgentsRemote extends TypertRemoteService {
+  static inject = ['settings']
+
+  constructor(ctx: Context) {
+    super(ctx, 'agencyAgents')
+  }
+
+  /** 读取当前启用的专家 slug 列表。 */
+  @Remote('getEnabled')
+  getEnabled(): string[] {
+    const value = this.ctx.settings.get(settingsNamespace('agency-agents')) as { enabled?: unknown } | undefined
+    const enabled = value?.enabled
+    return Array.isArray(enabled) ? enabled.filter((s): s is string => typeof s === 'string') : []
+  }
+
+  /** 整体替换启用的专家 slug 列表。 */
+  @Remote('setEnabled')
+  async setEnabled(enabled: string[]): Promise<void> {
+    await this.ctx.settings.mutate(settingsNamespace('agency-agents'), [{ op: 'set', path: ['enabled'], value: enabled }])
+  }
+}
+
 export function apply(ctx: Context, config: Config): void {
   const maxDepth = normalizeMaxDepth(config.maxDepth)
+  // 提供插件自有的 Remote 服务：gateway 通过 typertRemote 绑定自动发现并路由。
+  void new AgencyAgentsRemote(ctx)
   let enabledSource: () => readonly string[] = () => []
   installSettingsSection(ctx, settingsNamespace('agency-agents'), z.object({ enabled: z.array(z.string()) }), { enabled: [] }, {
     setSource: (current) => { enabledSource = () => current().enabled },

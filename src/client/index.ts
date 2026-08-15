@@ -1,8 +1,10 @@
 import React from 'react'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { InputTriggerSource } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
+// Type-only: 拉入 api-remotes 的 ctx.remote 合并（client 侧 TypertClientRemote）。
+import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type { PropsLocale, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
+import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 // Type-only: 拉入 ctx.locale 的 Context merge（跨插件协作只走服务，不做值导入）。
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
@@ -10,6 +12,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { ZH_NAME, ZH_DIVISION } from '../names.js'
 import { ROSTER } from './roster.js'
 import { zh, en, type AgencyKey } from './locales.js'
+import { TYPERT_REMOTE } from './remote.js'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -19,7 +22,6 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 }
 
 const PLUGIN_ID = '@michengai/dsh-agency-agents'
-const SETTINGS_NS = 'agency-agents'
 /** 本插件客户端词条字典命名空间。 */
 const NS = 'agency'
 
@@ -93,31 +95,21 @@ const MENU_NAME_OVERRIDE = DIVISION_ORDER
   .join(',')
 const CSS = '.aag-btn-wrap{position:relative;order:1;margin-right:-8px}.aag-btn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 4px 0 8px;border:none;border-radius:24px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100vh - 24px);overflow-y:auto;border:1px solid var(--dsw-alias-border-inverted);border-radius:12px;background:var(--dsw-specific-menu);box-shadow:var(--dsw-shadow-lv3);z-index:10000}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:10px;background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-emoji{flex:0 0 auto;font-size:16px}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}.aag-settings{padding:4px 0}.aag-group{margin-bottom:18px}.aag-group-title{font-size:12px;font-weight:600;color:var(--dsw-alias-label-secondary);margin:0 0 8px 2px}.aag-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);margin-bottom:6px}.aag-row:hover{background:var(--dsw-alias-bg-layer-1)}.aag-info{flex:1 1 auto;min-width:0}.aag-name{font-size:13px;font-weight:500;color:var(--dsw-alias-label-primary)}.aag-desc{font-size:12px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.aag-toggle{flex:0 0 auto;border:1px solid var(--dsw-alias-border-l1);background:transparent;border-radius:999px;padding:3px 12px;font-size:12px;cursor:pointer;color:var(--dsw-alias-label-primary)}.aag-toggle.aag-on{border-color:var(--dsw-alias-state-success-primary);color:var(--dsw-alias-state-success-primary)}.aag-toggle.aag-off{color:var(--dsw-alias-label-secondary)}.aag-loading,.aag-empty,.aag-error{padding:20px;color:var(--dsw-alias-label-secondary);font-size:13px}[data-composer-card] :has(> button[aria-haspopup="listbox"]) > :nth-child(2){order:2}' + MENU_NAME_OVERRIDE + '{flex:1 1 auto;max-width:none;min-width:0}'
 
-type Api = ConnectionHandle['api']
-
-interface EnabledState {
-  readonly enabled: ReadonlySet<string>
-  readonly revision: number
-  readonly writable: boolean
+/** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
+interface AgencyAgentsRemoteApi {
+  getEnabled(): Promise<RemoteResult<string[]>>
+  setEnabled(enabled: string[]): Promise<RemoteResult<undefined>>
 }
 
-function extractEnabled(view: { value: unknown }): Set<string> {
-  const raw = (view.value as { enabled?: unknown } | null)?.enabled
-  return new Set(Array.isArray(raw) ? raw.filter((s): s is string => typeof s === 'string') : [])
+async function readEnabled(remote: AgencyAgentsRemoteApi): Promise<ReadonlySet<string>> {
+  const result = await remote.getEnabled()
+  if (!result.ok) throw new Error(result.error.message)
+  return new Set(result.value)
 }
 
-async function readEnabled(api: Api): Promise<EnabledState | null> {
-  const response = await api.settings.describe({})
-  if (!response.result.ok) throw new Error(response.result.error.message)
-  const view = response.result.value.namespaces.find((e) => e.ns === SETTINGS_NS)
-  if (view === undefined) return null
-  return { enabled: extractEnabled(view), revision: view.revision, writable: response.result.value.writable }
-}
-
-async function writeEnabled(api: Api, enabled: ReadonlySet<string>, revision: number): Promise<EnabledState> {
-  const response = await api.settings.mutate({ ns: SETTINGS_NS, ops: [{ op: 'set', path: ['enabled'], value: [...enabled] }], expectedRevision: revision })
-  if (!response.result.ok) throw new Error(response.result.error.message)
-  return { enabled: extractEnabled(response.result.value), revision: response.result.value.revision, writable: true }
+async function writeEnabled(remote: AgencyAgentsRemoteApi, enabled: ReadonlySet<string>): Promise<void> {
+  const result = await remote.setEnabled([...enabled])
+  if (!result.ok) throw new Error(result.error.message)
 }
 
 function expertIcon(): React.ReactElement {
@@ -159,7 +151,7 @@ interface InputActions { setDraft(draft: string): void; submit(): void }
 type ButtonProps = PropsLocale<'agency'> & {
   readonly input?: InputDraft
   readonly inputActions?: InputActions
-  readonly api: Api
+  readonly remote: AgencyAgentsRemoteApi
   /** 当前 locale 读取器（locale 切换后框架以新 t 重渲染，名称随之刷新）。 */
   readonly getActive: () => 'zh' | 'en'
 }
@@ -179,8 +171,7 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
   }, [open])
 
   const onClick = (): void => {
-    void readEnabled(props.api).then((state) => {
-      const current = state?.enabled ?? new Set<string>()
+    void readEnabled(props.remote).then((current) => {
       setEnabled(current)
       if (current.size === 0) { openAgentSettings(props.t); return }
       setOpen((prev) => !prev)
@@ -215,20 +206,18 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
     menu)
 }
 
-function AgentsSettings(props: PropsLocale<'agency'> & { api: Api; getActive: () => 'zh' | 'en' }): React.ReactElement {
+function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRemoteApi; getActive: () => 'zh' | 'en' }): React.ReactElement {
   const [enabled, setEnabled] = React.useState<ReadonlySet<string> | null>(null)
-  const [revision, setRevision] = React.useState(0)
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     let alive = true
-    void readEnabled(props.api).then((state) => {
+    void readEnabled(props.remote).then((current) => {
       if (!alive) return
-      setEnabled(state?.enabled ?? new Set<string>())
-      setRevision(state?.revision ?? 0)
+      setEnabled(current)
     }).catch((err: unknown) => { if (alive) setError(err instanceof Error ? err.message : String(err)) })
     return () => { alive = false }
-  }, [props.api])
+  }, [props.remote])
 
   const toggle = (slug: string): void => {
     if (enabled === null) return
@@ -236,9 +225,7 @@ function AgentsSettings(props: PropsLocale<'agency'> & { api: Api; getActive: ()
     if (next.has(slug)) next.delete(slug)
     else next.add(slug)
     setEnabled(next)
-    void writeEnabled(props.api, next, revision).then((state) => {
-      setRevision(state.revision)
-    }).catch((err: unknown) => {
+    void writeEnabled(props.remote, next).catch((err: unknown) => {
       setEnabled(enabled)
       setError(err instanceof Error ? err.message : String(err))
     })
@@ -259,9 +246,9 @@ function AgentsSettings(props: PropsLocale<'agency'> & { api: Api; getActive: ()
         React.createElement('button', { type: 'button', className: `aag-toggle ${enabled.has(e.slug) ? 'aag-on' : 'aag-off'}`, onClick: () => toggle(e.slug) }, props.t(enabled.has(e.slug) ? 'settings.enabled' : 'settings.disabled')))))))
 }
 
-export const inject = ['slots', 'inputTriggers', 'connection', 'locale']
+export const inject = ['slots', 'inputTriggers', 'locale', 'remote']
 
-export function apply(ctx: ClientContext): void {
+export async function apply(ctx: ClientContext): Promise<() => void> {
   ctx.effect(() => {
     const tag = document.createElement('style')
     tag.dataset.plugin = PLUGIN_ID
@@ -270,24 +257,27 @@ export function apply(ctx: ClientContext): void {
     return () => { tag.remove() }
   }, 'agency-agents: style')
 
-  const connection = ctx.get('connection') as ConnectionHandle
-  const api = connection.api
-
   // 注册双语词条；t 为稳定引用（调用时读取当前 locale），locale 切换由
   // framework 以 (namespace, revision) 重新派生注入的 t 并触发重渲染。
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'agency-agents: dictionaries')
   const t = ctx.locale.bind(NS)
   const getActive = (): 'zh' | 'en' => ctx.locale.getSnapshot().active
 
+  // 挂载本插件的 Typert Remote：host 端由 gateway 的 SRC 自动发现（@Remote
+  // markers），这里 $mount 后 ctx.remote.agencyAgents 即就绪；await 保证下方
+  // slot/source 注册时 face 已可用（不依赖 api.settings 白名单）。
+  const disposeRemote = await ctx.remote.$mount(TYPERT_REMOTE)
+  const remote = ctx.remote.agencyAgents
+
   ctx.slots.inject('settings.section', () => ctx.slots.register(
     // label 是 thunk：nav 行每渲染读一次，locale 切换后自动跟随。
     { name: 'settings.section', id: 'agency-agents', order: 16, label: () => t('settings.nav'), locale: NS },
-    (props) => React.createElement(AgentsSettings, { ...props, api, getActive }),
+    (props) => React.createElement(AgentsSettings, { ...props, remote, getActive }),
   ))
 
   ctx.slots.inject('conversation.input.left', () => ctx.slots.register(
     { name: 'conversation.input.left', id: 'agency-agents', order: 0, locale: NS },
-    (props) => React.createElement(AgentsButton, { ...props, api, getActive }),
+    (props) => React.createElement(AgentsButton, { ...props, remote, getActive }),
   ))
 
   for (const [i, div] of DIVISION_ORDER.entries()) {
@@ -298,8 +288,7 @@ export function apply(ctx: ClientContext): void {
       name: `division.${div}`,
       order: 100 + i,
       candidates: async (_session, req) => {
-        const state = await readEnabled(api).catch(() => null)
-        const enabled = state?.enabled ?? new Set<string>()
+        const enabled = await readEnabled(remote).catch(() => new Set<string>())
         const q = String(req.query ?? '').toLowerCase()
         return EXPERTS
           .filter((e) => e.division === div && enabled.has(e.slug) && (q === '' || e.name.toLowerCase().includes(q) || e.nameEn.toLowerCase().includes(q) || e.slug.includes(q)))
@@ -309,4 +298,6 @@ export function apply(ctx: ClientContext): void {
     }
     ctx.effect(() => ctx.inputTriggers.registerSource(source), `agency-agents: @${div}`)
   }
+
+  return () => { void disposeRemote() }
 }

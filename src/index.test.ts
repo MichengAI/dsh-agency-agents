@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
+import { AgencyAgentsRemote, Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
+import { TYPERT_REMOTE } from './client/remote.js'
 
 describe('Config', () => {
   it('配置 schema 拒绝零 maxDepth，避免设置界面展示为合法值', () => {
@@ -194,6 +195,7 @@ describe('summon_expert', () => {
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
+      reflect: { provide: () => undefined },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
@@ -223,6 +225,7 @@ describe('summon_expert', () => {
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
+      reflect: { provide: () => undefined },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: null as unknown as number })
@@ -245,6 +248,7 @@ describe('summon_expert', () => {
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
+      reflect: { provide: () => undefined },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
@@ -264,6 +268,7 @@ describe('summon_expert', () => {
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
+      reflect: { provide: () => undefined },
     } as unknown as Context
 
     expect(() => apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: 0 })).toThrow('positive safe integer')
@@ -278,6 +283,7 @@ describe('summon_expert', () => {
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
+      reflect: { provide: () => undefined },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
@@ -305,6 +311,7 @@ describe('summon_expert', () => {
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
+      reflect: { provide: () => undefined },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], ...(maxDepth === undefined ? {} : { maxDepth }) })
@@ -330,6 +337,7 @@ describe('summon_expert', () => {
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
+      reflect: { provide: () => undefined },
     } as unknown as Context
 
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
@@ -338,5 +346,41 @@ describe('summon_expert', () => {
     }
 
     await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow('Partial output:\npartial result')
+  })
+})
+
+describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
+  it('getEnabled/setEnabled 通过 settings 服务读写启用列表', async () => {
+    let stored: { enabled: string[] } = { enabled: [] }
+    const ctx = {
+      reflect: { provide: () => undefined },
+      settings: {
+        get: () => stored,
+        mutate: async (_ns: unknown, ops: Array<{ op: string; path: readonly string[]; value: unknown }>) => {
+          const op = ops[0]
+          if (op !== undefined && op.op === 'set' && op.path[0] === 'enabled') {
+            stored = { enabled: op.value as string[] }
+          }
+        },
+      },
+    } as unknown as Context
+
+    const remote = new AgencyAgentsRemote(ctx)
+    expect(remote.getEnabled()).toEqual([])
+
+    await remote.setEnabled(['reviewer', 'coder'])
+    expect(remote.getEnabled()).toEqual(['reviewer', 'coder'])
+  })
+
+  it('TYPERT_REMOTE 贡献描述符与 host 方法对齐（client $mount 契约）', () => {
+    const endpoints = TYPERT_REMOTE.descriptors.map((d) => `${d.namespace}/${d.method}`)
+    expect(endpoints).toContain('agencyAgents/getEnabled')
+    expect(endpoints).toContain('agencyAgents/setEnabled')
+    for (const d of TYPERT_REMOTE.descriptors) {
+      expect(d.service).toBe('agencyAgents')
+      expect(d.result.mode).toBe('strict')
+    }
+    const setEnabled = TYPERT_REMOTE.descriptors.find((d) => d.method === 'setEnabled')
+    expect(setEnabled?.parameters.map((p) => p.wire)).toEqual(['enabled'])
   })
 })
