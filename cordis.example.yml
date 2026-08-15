@@ -1,0 +1,24 @@
+# 外部专家目录覆盖示例。常规安装无需此配置，默认使用包内资产。
+#
+# The subagent registry + its spawn/fork backends are HOST-side and shared; this
+# plugin only consumes them (`inject: ['subagents', ...]`) and contributes the
+# `list_experts` / `summon_expert` delegation tools plus the `agency:experts`
+# prompt section.
+#
+# Where a row belongs:
+#   - Host composition (e.g. ~/.dsh/profiles/<profile>/cordis.patch.yml) when the
+#     expert mode should be available to every session.
+#   - An agent preset's `agent.cordis.yml` when only that preset should expose it.
+#
+# The `spawn` provider gives the expert a fresh context (it never sees the parent
+# conversation); `fork` seeds it with the conversation's completed turns. Both
+# in-process providers support the `persona` capability this plugin relies on.
+
+# 宿主组合形式（对所有会话生效）：
+- id: agency-experts
+  name: '@deepseek-ai/dsh-agency-agents'
+  config:
+    root: 'D:\Repository\agency-agents'
+    provider: spawn
+
+# Or, inside an agent preset, the same row contributes the tools for that session.

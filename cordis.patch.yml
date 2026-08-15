@@ -1,0 +1,5 @@
+# 由 `dsh plugin add` 读取并合并到目标 profile。
+# 专家资料随包发布；仅在需要使用外部检出目录时才在 profile 中覆盖 config.root。
+- insert:
+    - id: agency-agents
+      name: '@deepseek-ai/dsh-agency-agents'
