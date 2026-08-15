@@ -22,6 +22,10 @@ check(
     .every((entry) => packageJson.files?.includes(entry)),
 )
 check('包许可证为 Apache-2.0', packageJson.license === 'Apache-2.0')
+check(
+  '包仓库元数据与发布溯源仓库一致',
+  packageJson.repository?.type === 'git' && packageJson.repository?.url === 'https://github.com/MichengAI/dsh-agency-agents.git',
+)
 
 for (const file of ['../lib/index.js', '../cordis.patch.yml', '../LICENSE', '../NOTICE', '../README.zh-CN.md', '../assets/agency-agents/LICENSE', '../docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md']) {
   try {
