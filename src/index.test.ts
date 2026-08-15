@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { loadCatalog, parseFrontmatter, resolveCatalogRoot, sanitize, stripBom, truncate, unquote } from './index.js'
+import { loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
 
 describe('sanitize', () => {
   it('转义双花括号，避免模板插值', () => {
@@ -94,6 +94,18 @@ describe('loadCatalog', () => {
     expect(map.get('backend-architect-with-memory')?.division).toBe('engineering')
   })
 
+  it('未选择 engineering 时不加载 mcp-memory 额外源', async () => {
+    await mkdir(join(dir, 'marketing'), { recursive: true })
+    await mkdir(join(dir, 'integrations', 'mcp-memory'), { recursive: true })
+    await writeFile(join(dir, 'marketing', 'marketing-specialist.md'), '---\nname: Marketing Specialist\ndescription: d\n---\nbody', 'utf8')
+    await writeFile(join(dir, 'integrations', 'mcp-memory', 'backend-architect-with-memory.md'), '---\nname: Backend Architect\ndescription: d\n---\nbody', 'utf8')
+
+    const map = await loadCatalog(dir, ['marketing'])
+
+    expect(map.has('marketing-specialist')).toBe(true)
+    expect(map.has('backend-architect-with-memory')).toBe(false)
+  })
+
   it('root 不存在时抛出', async () => {
     await expect(loadCatalog(join(dir, 'nope'), ['engineering'])).rejects.toThrow()
   })
@@ -106,5 +118,16 @@ describe('loadCatalog', () => {
   it('未配置 root 时加载随包发布的专家目录', async () => {
     const map = await loadCatalog(resolveCatalogRoot(''), ['academic'])
     expect(map.size).toBeGreaterThan(0)
+  })
+})
+
+describe('resolveExpert', () => {
+  it('精确名称对应多个专家时抛出歧义并列出 slug', () => {
+    const experts = [
+      { slug: 'engineering-backend-architect', name: 'Backend Architect' },
+      { slug: 'backend-architect-with-memory', name: 'Backend Architect' },
+    ]
+
+    expect(() => resolveExpert(experts, 'Backend Architect')).toThrow(/engineering-backend-architect, backend-architect-with-memory/)
   })
 })

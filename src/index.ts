@@ -79,6 +79,8 @@ export interface Config {
   provider: string
   /** Division directory names to scan under `root`. */
   divisions: string[]
+  /** 可选的绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
+  maxDepth?: number
 }
 
 /** 未在配置中显式提供 `root` 时，先读取该环境变量，再使用随包发布的专家目录。 */
@@ -89,6 +91,7 @@ export const Config: z<Config> = z.object({
   root: z.string().default(process.env[ROOT_ENV] ?? ''),
   provider: z.string().default('spawn'),
   divisions: z.array(z.string()).default(DEFAULT_DIVISIONS),
+  maxDepth: z.natural(),
 })
 
 /** 解析专家根目录：显式配置优先，其次使用包内资产。 */
@@ -184,7 +187,7 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
 
   const sources: Array<{ dir: string; division: string }> = [
     ...divisions.map((division) => ({ dir: division, division })),
-    ...EXTRA_SOURCES,
+    ...EXTRA_SOURCES.filter((source) => divisions.includes(source.division)),
   ]
   const map = new Map<string, Expert>()
   for (const source of sources) {
@@ -218,6 +221,25 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
   return map
 }
 
+/** 根据 slug 或名称解析专家；任意多命中都必须要求调用者提供更精确的 slug。 */
+export function resolveExpert<T extends { readonly slug: string; readonly name: string }>(experts: readonly T[], query: unknown): T {
+  const q = String(query).trim().toLowerCase()
+  if (q.length === 0) throw new Error('expert is required')
+  const bySlug = experts.find((expert) => expert.slug === q)
+  if (bySlug !== undefined) return bySlug
+  const exactNames = experts.filter((expert) => expert.name.toLowerCase() === q)
+  if (exactNames.length === 1) return exactNames[0]
+  const matches = exactNames.length > 1
+    ? exactNames
+    : experts.filter((expert) => expert.slug.includes(q) || expert.name.toLowerCase().includes(q))
+  if (matches.length === 1) return matches[0]
+  if (matches.length > 1) {
+    const preview = matches.slice(0, 12).map((expert) => expert.slug).join(', ')
+    throw new Error(`Ambiguous expert "${String(query)}"; candidates: ${preview}. Use list_experts to pick an exact slug.`)
+  }
+  throw new Error(`No expert matched "${String(query)}". Call list_experts to see the roster.`)
+}
+
 export function apply(ctx: Context, config: Config): void {
   let experts = new Map<string, Expert>()
   let loadError: string | null = null
@@ -228,23 +250,6 @@ export function apply(ctx: Context, config: Config): void {
   async function ensureReady(): Promise<void> {
     await ready
     if (loadError !== null) throw new Error(`agency-agents catalog failed to load: ${loadError}`)
-  }
-
-  function resolveExpert(query: unknown): Expert {
-    const q = String(query).trim().toLowerCase()
-    if (q.length === 0) throw new Error('expert is required')
-    const values = [...experts.values()]
-    const bySlug = values.find((e) => e.slug === q)
-    if (bySlug !== undefined) return bySlug
-    const byName = values.find((e) => e.name.toLowerCase() === q)
-    if (byName !== undefined) return byName
-    const matches = values.filter((e) => e.slug.includes(q) || e.name.toLowerCase().includes(q))
-    if (matches.length === 1) return matches[0]
-    if (matches.length > 1) {
-      const preview = matches.slice(0, 12).map((e) => e.slug).join(', ')
-      throw new Error(`Ambiguous expert "${String(query)}"; candidates: ${preview}. Use list_experts to pick an exact slug.`)
-    }
-    throw new Error(`No expert matched "${String(query)}". Call list_experts to see the roster.`)
   }
 
   function groupByDivision(withExperts: boolean): Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; emoji: string; description: string }> }> {
@@ -311,7 +316,7 @@ export function apply(ctx: Context, config: Config): void {
     description: "Summon a domain expert from The Agency roster to complete a task: a specialist subagent runs with that expert's full persona and returns its result. Use for tasks that clearly belong to a specialist domain (frontend work, security review, marketing copy, etc.). This call waits for the expert's result. Call list_experts first if you do not know the exact expert slug.",
     parameters: {
       expert: { type: 'string', required: true, description: 'Expert slug or name to summon (e.g. engineering-frontend-developer, or "Frontend Developer").' },
-      task: { type: 'string', required: true, description: 'The complete, self-contained task to give the expert. The expert does not see this conversation, so include all necessary context.' },
+      task: { type: 'string', required: true, description: 'The complete, self-contained task to give the expert. Include all necessary context; fork providers may additionally inherit completed conversation turns.' },
     },
     output: {
       schema: { type: 'object', additionalProperties: false, properties: { expert: { type: 'string', required: true }, answer: { type: 'string', required: true } } },
@@ -330,13 +335,17 @@ export function apply(ctx: Context, config: Config): void {
       if (!provider.capabilities.toolFilter) {
         throw new Error(`subagent provider "${config.provider}" cannot prevent recursive expert delegation`)
       }
-      const expert = resolveExpert(args.expert)
+      if (config.maxDepth !== undefined && !provider.capabilities.depthLimit) {
+        throw new Error(`subagent provider "${config.provider}" does not support maxDepth`)
+      }
+      const expert = resolveExpert([...experts.values()], args.expert)
       const run: SubagentRun = await ctx.subagents.start(config.provider, {
         label: `expert:${expert.slug}`,
         prompt: [{ type: 'text', text: String(args.task) }],
         parent: exec.agent,
         persona: expert.persona,
         toolFilter: { deny: ['summon_expert'] },
+        ...config.maxDepth === undefined ? {} : { maxDepth: config.maxDepth },
         signal: exec.signal,
       })
       try {
@@ -348,7 +357,7 @@ export function apply(ctx: Context, config: Config): void {
         }
         return { expert: expert.slug, answer: text }
       } finally {
-        try { await run.dispose() } catch { /* disposal is best-effort */ }
+        await run.dispose()
       }
     },
   }))
@@ -356,6 +365,6 @@ export function apply(ctx: Context, config: Config): void {
   ctx.systemPrompt.section({
     name: 'agency:experts',
     order: 117,
-    text: '## Agency expert mode\nYou have a roster of domain experts from The Agency (specialists across 17 divisions). Summon one to delegate a whole task by calling `summon_expert(expert, task)` — the expert runs as a specialist subagent with its own persona and returns the result. Call `list_experts(division?)` first to browse experts or find an exact slug. Prefer summoning an expert when a task clearly belongs to a specialist domain. A summoned expert cannot summon another Agency expert, so keep each delegation self-contained.',
+    text: '## Agency expert mode\nYou have a roster of domain experts from The Agency (specialists across 17 divisions). Summon one to delegate a whole task by calling `summon_expert(expert, task)` — the expert runs as a specialist subagent with its own persona and returns the result. Call `list_experts()` to see division names and counts, then call `list_experts(division)` to browse experts and find an exact slug. Prefer summoning an expert when a task clearly belongs to a specialist domain. A summoned expert cannot summon another Agency expert, so keep each delegation self-contained.',
   })
 }

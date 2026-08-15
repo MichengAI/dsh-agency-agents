@@ -34,6 +34,7 @@ dsh --profile default --dump-config
 | `root` | 包内专家资产 | 外部专家根目录；显式配置优先于包内资产。 |
 | `provider` | `spawn` | DSH 子代理 provider。 |
 | `divisions` | 全部 17 个标准分区 | 需要扫描的顶层分区。 |
+| `maxDepth` | 不设置 | 可选的绝对子代理深度上限；provider 必须支持深度限制。 |
 
 ## 内置专家来源与授权
 

@@ -34,6 +34,7 @@ Replace `default` with the target profile. The second command should show the `a
 | `root` | Bundled expert assets | External expert root; an explicit value overrides bundled assets. |
 | `provider` | `spawn` | DSH subagent provider. |
 | `divisions` | All 17 standard divisions | Top-level divisions to scan. |
+| `maxDepth` | Unset | Optional absolute child-depth cap; the provider must support depth limiting. |
 
 ## Bundled source and licensing
 

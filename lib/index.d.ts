@@ -20,6 +20,8 @@ interface Config {
   provider: string;
   /** Division directory names to scan under `root`. */
   divisions: string[];
+  /** 可选的绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
+  maxDepth?: number;
 }
 declare const Config: z<Config>;
 /** 解析专家根目录：显式配置优先，其次使用包内资产。 */
@@ -43,6 +45,11 @@ declare function truncate(text: string, limit: number): string;
 declare function parseFrontmatter(raw: string): Frontmatter | undefined;
 /** Load every `<division>/**\/*.md` persona file (plus extra sources) into a slug-keyed map. Throws when root is invalid or empty. */
 declare function loadCatalog(root: string, divisions: readonly string[]): Promise<Map<string, Expert>>;
+/** 根据 slug 或名称解析专家；任意多命中都必须要求调用者提供更精确的 slug。 */
+declare function resolveExpert<T extends {
+  readonly slug: string;
+  readonly name: string;
+}>(experts: readonly T[], query: unknown): T;
 declare function apply(ctx: Context, config: Config): void;
 //#endregion
-export { Config, apply, inject, loadCatalog, name, parseFrontmatter, resolveCatalogRoot, sanitize, stripBom, truncate, unquote };
+export { Config, apply, inject, loadCatalog, name, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote };

@@ -20,5 +20,6 @@
   config:
     root: 'D:\Repository\agency-agents'
     provider: spawn
+    # maxDepth: 1
 
 # Or, inside an agent preset, the same row contributes the tools for that session.
