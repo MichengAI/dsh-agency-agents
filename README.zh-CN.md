@@ -50,7 +50,7 @@ dsh plugin --profile default add @michengai/dsh-agency-agents
 dsh --profile default --dump-config
 ```
 
-将 `default` 替换为目标 profile。第二条命令应显示 `agency-agents` 组合项；本地开发时可将包名替换为 `.`。
+将 `default` 替换为目标 profile。第二条命令应显示 `agency-agents` 与 `agency-agents-remote` 两个组合项；后者是设置页读写启用状态所需的 Host Remote 服务。请通过 `dsh plugin` 安装，手工复制客户端文件而未应用 `cordis.patch.yml` 会使设置页显示 Remote 不可用。本地开发时可将包名替换为 `.`。
 
 ## 配置
 

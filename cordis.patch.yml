@@ -1,5 +1,8 @@
 # 由 `dsh plugin add` 读取并合并到目标 profile。
 # 智能体资料随包发布；仅在需要使用外部检出目录时才在 profile 中覆盖 config.root。
 - insert:
+    # 独立顶层行，供 api-gateway 从根服务表发现 agencyAgents Remote 路由。
+    - id: agency-agents-remote
+      name: '@michengai/dsh-agency-agents/remote'
     - id: agency-agents
       name: '@michengai/dsh-agency-agents'

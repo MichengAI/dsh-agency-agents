@@ -50,7 +50,7 @@ dsh plugin --profile default add @michengai/dsh-agency-agents
 dsh --profile default --dump-config
 ```
 
-Replace `default` with the target profile. The second command should show the `agency-agents` composition entry. For local development, replace the package name with `.`.
+Replace `default` with the target profile. The second command should show both `agency-agents` and `agency-agents-remote`; the latter is the Host Remote service used by the settings page. Install through `dsh plugin`: copying only client files without applying `cordis.patch.yml` leaves that Remote unavailable. For local development, replace the package name with `.`.
 
 ## Configuration
 

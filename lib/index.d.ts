@@ -1,5 +1,4 @@
 import z from "@deepseek-ai/schemastery";
-import { TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
 import { Context } from "@deepseek-ai/cordis";
 //#region src/index.d.ts
 declare const name = "agency-agents";
@@ -53,20 +52,6 @@ declare function resolveExpert<T extends {
   readonly name: string;
   readonly nameEn?: string;
 }>(experts: readonly T[], query: unknown): T;
-/**
- * 插件自有的 Host↔Client 类型化远程通道（Typert Remote）。
- * 启用状态仍由 installSettingsSection 持久化（settings 服务），客户端不再
- * 走 api.settings（那是 Host 自有配置面、白名单对第三方硬编码封死），而是
- * 通过 `ctx.remote.agencyAgents` 读写 —— 第三方安装无需修改或重编 DSH。
- */
-declare class AgencyAgentsRemote extends TypertRemoteService {
-  static inject: string[];
-  constructor(ctx: Context);
-  /** 读取当前启用的专家 slug 列表。 */
-  getEnabled(): string[];
-  /** 整体替换启用的专家 slug 列表。 */
-  setEnabled(enabled: string[]): Promise<void>;
-}
 declare function apply(ctx: Context, config: Config): void;
 //#endregion
-export { AgencyAgentsRemote, Config, apply, inject, loadCatalog, name, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote };
+export { Config, apply, inject, loadCatalog, name, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote };

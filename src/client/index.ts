@@ -12,7 +12,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { ZH_NAME, ZH_DIVISION } from '../names.js'
 import { ROSTER } from './roster.js'
 import { zh, en, type AgencyKey } from './locales.js'
-import { TYPERT_REMOTE } from './remote.js'
+import { TYPERT_REMOTE, type AgencyAgentsEnabledState } from './remote.js'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -97,19 +97,32 @@ const CSS = '.aag-btn-wrap{position:relative;order:1;margin-right:-8px}.aag-btn{
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
 interface AgencyAgentsRemoteApi {
-  getEnabled(): Promise<RemoteResult<string[]>>
-  setEnabled(enabled: string[]): Promise<RemoteResult<undefined>>
+  getEnabled(): Promise<RemoteResult<AgencyAgentsEnabledState>>
+  setEnabled(enabled: string[], expectedRevision: number): Promise<RemoteResult<AgencyAgentsEnabledState>>
 }
 
-async function readEnabled(remote: AgencyAgentsRemoteApi): Promise<ReadonlySet<string>> {
+interface EnabledState {
+  readonly enabled: ReadonlySet<string>
+  readonly revision: number
+}
+
+const SETTINGS_CONFLICT_MESSAGE = '配置已被其他窗口修改，已为您刷新。'
+
+export function writeErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.includes('changed since it was read')) return SETTINGS_CONFLICT_MESSAGE
+  return error instanceof Error ? error.message : String(error)
+}
+
+async function readEnabled(remote: AgencyAgentsRemoteApi): Promise<EnabledState> {
   const result = await remote.getEnabled()
   if (!result.ok) throw new Error(result.error.message)
-  return new Set(result.value)
+  return { enabled: new Set(result.value.enabled), revision: result.value.revision }
 }
 
-async function writeEnabled(remote: AgencyAgentsRemoteApi, enabled: ReadonlySet<string>): Promise<void> {
-  const result = await remote.setEnabled([...enabled])
+async function writeEnabled(remote: AgencyAgentsRemoteApi, enabled: ReadonlySet<string>, expectedRevision: number): Promise<EnabledState> {
+  const result = await remote.setEnabled([...enabled], expectedRevision)
   if (!result.ok) throw new Error(result.error.message)
+  return { enabled: new Set(result.value.enabled), revision: result.value.revision }
 }
 
 function expertIcon(): React.ReactElement {
@@ -172,8 +185,8 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
 
   const onClick = (): void => {
     void readEnabled(props.remote).then((current) => {
-      setEnabled(current)
-      if (current.size === 0) { openAgentSettings(props.t); return }
+      setEnabled(current.enabled)
+      if (current.enabled.size === 0) { openAgentSettings(props.t); return }
       setOpen((prev) => !prev)
     }).catch(() => { setOpen((prev) => !prev) })
   }
@@ -207,32 +220,46 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
 }
 
 function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRemoteApi; getActive: () => 'zh' | 'en' }): React.ReactElement {
-  const [enabled, setEnabled] = React.useState<ReadonlySet<string> | null>(null)
+  const [state, setState] = React.useState<EnabledState | null>(null)
   const [error, setError] = React.useState<string | null>(null)
+  const saving = React.useRef(false)
+  const [isSaving, setIsSaving] = React.useState(false)
 
   React.useEffect(() => {
     let alive = true
     void readEnabled(props.remote).then((current) => {
       if (!alive) return
-      setEnabled(current)
+      setState(current)
     }).catch((err: unknown) => { if (alive) setError(err instanceof Error ? err.message : String(err)) })
     return () => { alive = false }
   }, [props.remote])
 
   const toggle = (slug: string): void => {
-    if (enabled === null) return
-    const next = new Set(enabled)
+    if (state === null || saving.current) return
+    const next = new Set(state.enabled)
     if (next.has(slug)) next.delete(slug)
     else next.add(slug)
-    setEnabled(next)
-    void writeEnabled(props.remote, next).catch((err: unknown) => {
-      setEnabled(enabled)
-      setError(err instanceof Error ? err.message : String(err))
-    })
+    saving.current = true
+    setIsSaving(true)
+    setState({ enabled: next, revision: state.revision })
+    void writeEnabled(props.remote, next, state.revision)
+      .then(setState)
+      .catch(async (err: unknown) => {
+        try {
+          setState(await readEnabled(props.remote))
+        } catch {
+          // 保留当前乐观状态；原始错误仍会显示给用户。
+        }
+        setError(writeErrorMessage(err))
+      })
+      .finally(() => {
+        saving.current = false
+        setIsSaving(false)
+      })
   }
 
   if (error !== null) return React.createElement('div', { className: 'aag-error' }, error)
-  if (enabled === null) return React.createElement('div', { className: 'aag-loading' }, props.t('settings.loading'))
+  if (state === null) return React.createElement('div', { className: 'aag-loading' }, props.t('settings.loading'))
   const groups = groupByDivision(EXPERTS)
   return React.createElement('div', { className: 'aag-settings' },
     groups.map((g) => React.createElement('div', { key: g.division, className: 'aag-group' },
@@ -243,7 +270,7 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
         React.createElement('div', { className: 'aag-info' },
           React.createElement('div', { className: 'aag-name' }, displayName(e, props.getActive())),
           React.createElement('div', { className: 'aag-desc' }, displayDescription(e, props.getActive()))),
-        React.createElement('button', { type: 'button', className: `aag-toggle ${enabled.has(e.slug) ? 'aag-on' : 'aag-off'}`, onClick: () => toggle(e.slug) }, props.t(enabled.has(e.slug) ? 'settings.enabled' : 'settings.disabled')))))))
+        React.createElement('button', { type: 'button', disabled: isSaving, className: `aag-toggle ${state.enabled.has(e.slug) ? 'aag-on' : 'aag-off'}`, onClick: () => toggle(e.slug) }, props.t(state.enabled.has(e.slug) ? 'settings.enabled' : 'settings.disabled')))))))
 }
 
 export const inject = ['slots', 'inputTriggers', 'locale', 'remote']
@@ -264,10 +291,11 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   const getActive = (): 'zh' | 'en' => ctx.locale.getSnapshot().active
 
   // 挂载本插件的 Typert Remote：host 端由 gateway 的 SRC 自动发现（@Remote
-  // markers），这里 $mount 后 ctx.remote.agencyAgents 即就绪；await 保证下方
-  // slot/source 注册时 face 已可用（不依赖 api.settings 白名单）。
+  // markers）。namespace 是独立的 Cordis 服务，必须在挂载后通过 ctx.get()
+  // 获取；直接读取 ctx.remote.agencyAgents 会要求预先注入该服务并导致死锁。
   const disposeRemote = await ctx.remote.$mount(TYPERT_REMOTE)
-  const remote = ctx.remote.agencyAgents
+  const remote = ctx.get('remote.agencyAgents') as AgencyAgentsRemoteApi | undefined
+  if (remote === undefined) throw new Error('agency-agents Remote 挂载后不可用')
 
   ctx.slots.inject('settings.section', () => ctx.slots.register(
     // label 是 thunk：nav 行每渲染读一次，locale 切换后自动跟随。
@@ -288,7 +316,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       name: `division.${div}`,
       order: 100 + i,
       candidates: async (_session, req) => {
-        const enabled = await readEnabled(remote).catch(() => new Set<string>())
+        const enabled = await readEnabled(remote).then((state) => state.enabled).catch(() => new Set<string>())
         const q = String(req.query ?? '').toLowerCase()
         return EXPERTS
           .filter((e) => e.division === div && enabled.has(e.slug) && (q === '' || e.name.toLowerCase().includes(q) || e.nameEn.toLowerCase().includes(q) || e.slug.includes(q)))

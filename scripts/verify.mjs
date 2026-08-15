@@ -27,7 +27,7 @@ check(
   packageJson.repository?.type === 'git' && packageJson.repository?.url === 'https://github.com/MichengAI/dsh-agency-agents.git',
 )
 
-for (const file of ['../lib/index.js', '../cordis.patch.yml', '../LICENSE', '../NOTICE', '../README.zh-CN.md', '../assets/agency-agents/LICENSE', '../docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md']) {
+for (const file of ['../lib/index.js', '../lib/remote.js', '../cordis.patch.yml', '../LICENSE', '../NOTICE', '../README.zh-CN.md', '../assets/agency-agents/LICENSE', '../docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md']) {
   try {
     await access(new URL(file, import.meta.url))
     check(`发布文件存在：${file.slice(3)}`, true)
@@ -52,6 +52,7 @@ try {
 
 const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
 check('Cordis patch 挂载当前包名', patch.includes(`name: '${packageJson.name}'`))
+check('Cordis patch 挂载顶层 Remote 服务', patch.includes(`name: '${packageJson.name}/remote'`))
 
 const license = await readFile(new URL('../LICENSE', import.meta.url), 'utf8')
 check('根许可证为 Apache License 2.0 正文', license.startsWith('Apache License\n                           Version 2.0'))

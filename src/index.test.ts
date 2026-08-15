@@ -4,7 +4,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { AgencyAgentsRemote, Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
+import { Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
+import AgencyAgentsRemote from './remote.js'
+import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
+import { writeErrorMessage } from './client/index.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 
 describe('Config', () => {
@@ -350,26 +353,38 @@ describe('summon_expert', () => {
 })
 
 describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
+  it('将 Settings revision 冲突映射为用户可理解的提示', () => {
+    expect(writeErrorMessage(new Error('settings namespace "agency-agents" changed since it was read (expected revision 0, now 1)')))
+      .toBe('配置已被其他窗口修改，已为您刷新。')
+  })
+
   it('getEnabled/setEnabled 通过 settings 服务读写启用列表', async () => {
     let stored: { enabled: string[] } = { enabled: [] }
+    let revision = 0
+    const registered: unknown[] = []
     const ctx = {
       reflect: { provide: () => undefined },
+      typert: { register: (contribution: unknown) => { registered.push(contribution) } },
       settings: {
         get: () => stored,
-        mutate: async (_ns: unknown, ops: Array<{ op: string; path: readonly string[]; value: unknown }>) => {
+        describe: () => [{ ns: 'agency-agents', revision }],
+        mutate: async (_ns: unknown, ops: Array<{ op: string; path: readonly string[]; value: unknown }>, expectedRevision?: number) => {
+          if (expectedRevision !== revision) throw new Error('stale revision')
           const op = ops[0]
           if (op !== undefined && op.op === 'set' && op.path[0] === 'enabled') {
             stored = { enabled: op.value as string[] }
+            revision += 1
           }
         },
       },
     } as unknown as Context
 
     const remote = new AgencyAgentsRemote(ctx)
-    expect(remote.getEnabled()).toEqual([])
+    expect(registered).toHaveLength(1)
+    expect(remote.getEnabled()).toEqual({ enabled: [], revision: 0 })
 
-    await remote.setEnabled(['reviewer', 'coder'])
-    expect(remote.getEnabled()).toEqual(['reviewer', 'coder'])
+    await expect(remote.setEnabled(['reviewer', 'coder'], 0)).resolves.toEqual({ enabled: ['reviewer', 'coder'], revision: 1 })
+    await expect(remote.setEnabled(['writer'], 0)).rejects.toThrow('stale revision')
   })
 
   it('TYPERT_REMOTE 贡献描述符与 host 方法对齐（client $mount 契约）', () => {
@@ -381,6 +396,7 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
       expect(d.result.mode).toBe('strict')
     }
     const setEnabled = TYPERT_REMOTE.descriptors.find((d) => d.method === 'setEnabled')
-    expect(setEnabled?.parameters.map((p) => p.wire)).toEqual(['enabled'])
+    expect(TYPERT_REMOTE.descriptors).toBe(AGENCY_AGENTS_DESCRIPTORS)
+    expect(setEnabled?.parameters.map((p) => p.wire)).toEqual(['enabled', 'expectedRevision'])
   })
 })
