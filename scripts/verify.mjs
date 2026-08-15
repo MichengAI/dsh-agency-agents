@@ -32,6 +32,19 @@ for (const file of ['../lib/index.js', '../cordis.patch.yml', '../LICENSE', '../
   }
 }
 
+try {
+  const workflow = await readFile(new URL('../.github/workflows/publish.yml', import.meta.url), 'utf8')
+  check('npm 受信发布工作流存在', true)
+  check('npm 受信发布仅由 v 标签触发', workflow.includes("tags:\n      - 'v*'"))
+  check('npm 受信发布申请 OIDC 权限', workflow.includes('id-token: write'))
+  check('npm 受信发布先执行发布门禁', workflow.includes('pnpm prepublishOnly'))
+  check('npm 受信发布使用官方发布命令', workflow.includes('npm publish'))
+  check('npm 受信发布不注入令牌式 registry 配置', !workflow.includes('registry-url'))
+  check('npm 受信发布不缓存依赖', !workflow.includes('cache:'))
+} catch {
+  check('npm 受信发布工作流存在', false)
+}
+
 const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
 check('Cordis patch 挂载当前包名', patch.includes(`name: '${packageJson.name}'`))
 
