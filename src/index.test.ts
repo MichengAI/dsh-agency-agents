@@ -3,7 +3,14 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import { apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
+import z from '@deepseek-ai/schemastery'
+import { Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
+
+describe('Config', () => {
+  it('配置 schema 拒绝零 maxDepth，避免设置界面展示为合法值', () => {
+    expect(() => z.resolve({ maxDepth: 0 }, Config, {})).toThrow()
+  })
+})
 
 describe('sanitize', () => {
   it('转义双花括号，避免模板插值', () => {

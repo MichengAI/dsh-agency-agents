@@ -38,7 +38,7 @@
 
 - 默认内置 271 名智能体，安装后无需依赖外部目录。
 - 可通过 `root` 配置或 `AGENCY_AGENTS_ROOT` 环境变量覆盖为自行同步的智能体目录。
-- 子代理无法再次调用 `summon_expert`，避免递归委派和不可控消耗。
+- 子代理无法调用 `summon_expert` 或 `list_experts`，避免递归委派、无效花名册浏览和不可控消耗。
 - 支持 `spawn` 或 `fork` provider；provider 必须支持 persona 和工具过滤能力。
 
 ## 安装
@@ -59,7 +59,7 @@ dsh --profile default --dump-config
 | `root` | 包内智能体资产 | 外部智能体根目录；显式配置优先于包内资产。 |
 | `provider` | `spawn` | DSH 子代理 provider。 |
 | `divisions` | 全部 17 个标准分区 | 需要扫描的顶层分区。 |
-| `maxDepth` | 不设置 | 可选的绝对子代理深度上限；provider 必须支持深度限制。 |
+| `maxDepth` | 不设置 | 可选的正整数绝对子代理深度上限；provider 必须支持深度限制。 |
 
 ## 内置智能体来源与授权
 

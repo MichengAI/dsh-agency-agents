@@ -38,7 +38,7 @@ Review the changes in the current workspace and list reproducible issues by seve
 
 - 271 agent personas are bundled; no external directory is required after installation.
 - Configure `root`, or set `AGENCY_AGENTS_ROOT`, to use a separately synchronized agent directory.
-- Agent children cannot call `summon_expert`, preventing recursive delegation.
+- Agent children cannot call `summon_expert` or `list_experts`, preventing recursive delegation and unnecessary roster browsing.
 - `spawn` and `fork` are supported when the provider supports persona and tool filtering.
 
 ## Install
@@ -59,7 +59,7 @@ Replace `default` with the target profile. The second command should show the `a
 | `root` | Bundled agent assets | External agent root; an explicit value overrides bundled assets. |
 | `provider` | `spawn` | DSH subagent provider. |
 | `divisions` | All 17 standard divisions | Top-level divisions to scan. |
-| `maxDepth` | Unset | Optional absolute child-depth cap; the provider must support depth limiting. |
+| `maxDepth` | Unset | Optional positive absolute child-depth cap; the provider must support depth limiting. |
 
 ## Bundled source and licensing
 
