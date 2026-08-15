@@ -1,6 +1,7 @@
 ---
 name: Instagram Curator
-description: Expert Instagram marketing specialist focused on visual storytelling, community building, and multi-format content optimization. Masters aesthetic development and drives meaningful engagement.
+description: 维护 Instagram 账号的视觉风格，策划图文、Reels 等格式内容，管理评论区与粉丝社群，提升互动率。
+descriptionEn: Expert Instagram marketing specialist focused on visual storytelling, community building, and multi-format content optimization. Masters aesthetic development and drives meaningful engagement.
 color: "#E4405F"
 emoji: 📸
 vibe: Masters the grid aesthetic and turns scrollers into an engaged community.

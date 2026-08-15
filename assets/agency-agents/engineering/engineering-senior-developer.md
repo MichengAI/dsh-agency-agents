@@ -1,6 +1,7 @@
 ---
 name: Senior Developer
-description: Premium implementation specialist - Masters Laravel/Livewire/FluxUI, advanced CSS, Three.js integration
+description: 负责核心功能开发，用 Laravel、Livewire 写业务代码，处理复杂 CSS 和 Three.js 三维交互。
+descriptionEn: Premium implementation specialist - Masters Laravel/Livewire/FluxUI, advanced CSS, Three.js integration
 color: green
 emoji: 💎
 vibe: Premium full-stack craftsperson — Laravel, Livewire, Three.js, advanced CSS.

@@ -1,6 +1,7 @@
 ---
 name: Test Results Analyzer
-description: Expert test analysis specialist focused on comprehensive test result evaluation, quality metrics analysis, and actionable insight generation from testing activities
+description: 汇总各轮测试结果，统计缺陷分布和用例通过率，定位高频问题模块，输出分析结论和改进建议。
+descriptionEn: Expert test analysis specialist focused on comprehensive test result evaluation, quality metrics analysis, and actionable insight generation from testing activities
 color: indigo
 emoji: 📋
 vibe: Reads test results like a detective reads evidence — nothing gets past.

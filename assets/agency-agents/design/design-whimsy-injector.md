@@ -1,6 +1,7 @@
 ---
 name: Whimsy Injector
-description: Expert creative specialist focused on adding personality, delight, and playful elements to brand experiences. Creates memorable, joyful interactions that differentiate brands through unexpected moments of whimsy
+description: 在品牌触点中加入趣味与惊喜元素，设计让人记住的互动细节和活动物料，提升品牌辨识度。
+descriptionEn: Expert creative specialist focused on adding personality, delight, and playful elements to brand experiences. Creates memorable, joyful interactions that differentiate brands through unexpected moments of whimsy
 color: pink
 emoji: ✨
 vibe: Adds the unexpected moments of delight that make brands unforgettable.

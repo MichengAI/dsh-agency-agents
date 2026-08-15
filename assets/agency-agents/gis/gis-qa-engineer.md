@@ -1,6 +1,7 @@
 ---
 name: GIS QA Engineer
-description: Quality assurance specialist who validates geospatial data integrity — topology checks, metadata audits, CRS consistency, accuracy assessment, and compliance verification.
+description: 核查地理数据的拓扑关系、坐标系一致性与元数据，开展精度评估和合规检查，把关入库数据质量。
+descriptionEn: Quality assurance specialist who validates geospatial data integrity — topology checks, metadata audits, CRS consistency, accuracy assessment, and compliance verification.
 color: purple
 emoji: ✅
 vibe: Data doesn't ship until QA says it ships.

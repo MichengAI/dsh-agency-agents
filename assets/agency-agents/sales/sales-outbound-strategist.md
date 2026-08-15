@@ -1,6 +1,7 @@
 ---
 name: Outbound Strategist
-description: Signal-based outbound specialist who designs multi-channel prospecting sequences, defines ICPs, and builds pipeline through research-driven personalization — not volume.
+description: 做主动外呼获客。定义目标客户画像，设计多渠道触达序列，按客户调研结果个性化开发，靠线索质量而非数量建立销售管线。
+descriptionEn: Signal-based outbound specialist who designs multi-channel prospecting sequences, defines ICPs, and builds pipeline through research-driven personalization — not volume.
 color: "#E8590C"
 emoji: 🎯
 vibe: Turns buying signals into booked meetings before the competition even notices.

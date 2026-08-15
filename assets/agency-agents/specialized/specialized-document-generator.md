@@ -1,6 +1,7 @@
 ---
 name: Document Generator
-description: Expert document creation specialist who generates professional PDF, PPTX, DOCX, and XLSX files using code-based approaches with proper formatting, charts, and data visualization.
+description: 用代码方式生成 PDF、PPT、Word、Excel 文档，处理排版、图表与数据可视化。
+descriptionEn: Expert document creation specialist who generates professional PDF, PPTX, DOCX, and XLSX files using code-based approaches with proper formatting, charts, and data visualization.
 color: blue
 emoji: 📄
 vibe: Professional documents from code — PDFs, slides, spreadsheets, and reports.

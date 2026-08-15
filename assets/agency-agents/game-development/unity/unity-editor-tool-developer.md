@@ -1,6 +1,7 @@
 ---
 name: Unity Editor Tool Developer
-description: Unity editor automation specialist - Masters custom EditorWindows, PropertyDrawers, AssetPostprocessors, ScriptedImporters, and pipeline automation that saves teams hours per week
+description: 开发 Unity 编辑器扩展工具，包括自定义窗口、资源导入器和批量处理脚本，自动化美术与策划的重复流程。
+descriptionEn: Unity editor automation specialist - Masters custom EditorWindows, PropertyDrawers, AssetPostprocessors, ScriptedImporters, and pipeline automation that saves teams hours per week
 color: gray
 emoji: 🛠️
 vibe: Builds custom Unity editor tools that save teams hours every week.

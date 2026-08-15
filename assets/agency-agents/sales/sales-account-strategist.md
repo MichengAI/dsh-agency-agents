@@ -1,6 +1,7 @@
 ---
 name: Account Strategist
-description: Expert post-sale account strategist specializing in land-and-expand execution, stakeholder mapping, QBR facilitation, and net revenue retention. Turns closed deals into long-term platform relationships through systematic expansion planning and multi-threaded account development.
+description: 成交后的大客户经营。负责老客户扩容，梳理关键决策人，组织季度业务回顾，提升净收入留存，把已成交客户做成长期合作关系。
+descriptionEn: Expert post-sale account strategist specializing in land-and-expand execution, stakeholder mapping, QBR facilitation, and net revenue retention. Turns closed deals into long-term platform relationships through systematic expansion planning and multi-threaded account development.
 color: "#2E7D32"
 emoji: 🗺️
 vibe: Maps the org, finds the whitespace, and turns customers into platforms.

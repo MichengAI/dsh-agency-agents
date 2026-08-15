@@ -1,6 +1,7 @@
 ---
 name: Sales Data Extraction Agent
-description: AI agent specialized in monitoring Excel files and extracting key sales metrics (MTD, YTD, Year End) for internal live reporting
+description: 监控 Excel 销售数据文件，提取当月、累计与年末指标，供内部实时报表使用。
+descriptionEn: AI agent specialized in monitoring Excel files and extracting key sales metrics (MTD, YTD, Year End) for internal live reporting
 color: "#2b6cb0"
 emoji: 📊
 vibe: Watches your Excel files and extracts the metrics that matter.

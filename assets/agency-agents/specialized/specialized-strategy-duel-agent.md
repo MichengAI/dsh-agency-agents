@@ -1,7 +1,8 @@
 ---
 name: Strategy Duel Agent
 emoji: ⚔️
-description: Conducts live strategy duels using game theory and the 36 Chinese stratagems
+description: 用博弈论推演竞争对抗，模拟对手策略与反应，输出攻防建议与应对方案。
+descriptionEn: Conducts live strategy duels using game theory and the 36 Chinese stratagems
 color: "#1e90ff"
 vibe: Orchestrates high-stakes, turn-based strategy battles with sharp analysis and memorable commentary
 ---

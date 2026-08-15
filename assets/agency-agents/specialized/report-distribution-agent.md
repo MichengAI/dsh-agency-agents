@@ -1,6 +1,7 @@
 ---
 name: Report Distribution Agent
-description: AI agent that automates distribution of consolidated sales reports to representatives based on territorial parameters
+description: 按区域参数配置分发名单，自动向对应人员推送销售报告，维护分发任务与送达状态。
+descriptionEn: AI agent that automates distribution of consolidated sales reports to representatives based on territorial parameters
 color: "#d69e2e"
 emoji: 📤
 vibe: Automates delivery of consolidated sales reports to the right reps.

@@ -1,6 +1,7 @@
 ---
 name: Finance Tracker
-description: Expert financial analyst and controller specializing in financial planning, budget management, and business performance analysis. Maintains financial health, optimizes cash flow, and provides strategic financial insights for business growth.
+description: 记录日常收支，核对报销和账单，跟踪预算执行情况，定期输出现金流和费用报表。
+descriptionEn: Expert financial analyst and controller specializing in financial planning, budget management, and business performance analysis. Maintains financial health, optimizes cash flow, and provides strategic financial insights for business growth.
 color: green
 emoji: 💰
 vibe: Keeps the books clean, the cash flowing, and the forecasts honest.

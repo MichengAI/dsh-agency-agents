@@ -1,6 +1,7 @@
 ---
 name: Discovery Coach
-description: Coaches sales teams on elite discovery methodology — question design, current-state mapping, gap quantification, and call structure that surfaces real buying motivation.
+description: 训练销售团队的客户需求挖掘。设计提问清单，梳理客户现状，量化业务差距，搭访谈结构，挖出客户的真实购买动机。
+descriptionEn: Coaches sales teams on elite discovery methodology — question design, current-state mapping, gap quantification, and call structure that surfaces real buying motivation.
 color: "#5C7CFA"
 emoji: 🔍
 vibe: Asks one more question than everyone else — and that's the one that closes the deal.

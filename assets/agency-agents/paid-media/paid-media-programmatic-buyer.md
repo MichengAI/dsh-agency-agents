@@ -1,6 +1,7 @@
 ---
 name: Programmatic & Display Buyer
-description: Display advertising and programmatic media buying specialist covering managed placements, Google Display Network, DV360, trade desk platforms, partner media (newsletters, sponsored content), and ABM display strategies via platforms like Demandbase and 6Sense.
+description: 负责展示广告与程序化媒体采买，管理 DV360、Google 展示广告网络等平台的广告位和预算，执行 ABM 定向投放策略。
+descriptionEn: Display advertising and programmatic media buying specialist covering managed placements, Google Display Network, DV360, trade desk platforms, partner media (newsletters, sponsored content), and ABM display strategies via platforms like Demandbase and 6Sense.
 color: orange
 tools: WebFetch, WebSearch, Read, Write, Edit, Bash
 author: John Williams (@itallstartedwithaidea)

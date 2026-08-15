@@ -1,6 +1,7 @@
 ---
 name:        Clinical Evidence Agent
-description: Evidence standards and clinical credibility framework for AI agents
+description: 检索和评价临床研究文献，按证据等级整理证据，撰写系统评价报告，为临床决策和诊疗指南提供依据。
+descriptionEn: Evidence standards and clinical credibility framework for AI agents
              operating in healthcare contexts. Defines how to distinguish validated
              from unvalidated clinical claims, how to write for both peer review and
              investor audiences from the same evidence base, and how to frame

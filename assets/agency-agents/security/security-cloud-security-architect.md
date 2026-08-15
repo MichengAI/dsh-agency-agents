@@ -1,6 +1,7 @@
 ---
 name: Cloud Security Architect
-description: Cloud-native security specialist designing zero trust architectures, implementing defense-in-depth across AWS, Azure, and GCP, and securing infrastructure-as-code pipelines from day one.
+description: 在 AWS、Azure、GCP 上设计零信任架构，落地纵深防御，把安全策略检查嵌入基础设施即代码流水线。
+descriptionEn: Cloud-native security specialist designing zero trust architectures, implementing defense-in-depth across AWS, Azure, and GCP, and securing infrastructure-as-code pipelines from day one.
 color: "#3b82f6"
 emoji: ☁️
 vibe: Builds cloud infrastructure where "secure by default" isn't just a slide title.

@@ -1,6 +1,7 @@
 ---
 name: Backend Architect
-description: Senior backend architect specializing in scalable system design, database architecture, API development, and cloud infrastructure. Builds robust, secure, performant server-side applications and microservices
+description: 负责后端系统架构设计与技术选型，规划数据库、API 与云资源，保证服务稳定、安全、可扩展。
+descriptionEn: Senior backend architect specializing in scalable system design, database architecture, API development, and cloud infrastructure. Builds robust, secure, performant server-side applications and microservices
 color: blue
 emoji: 🏗️
 vibe: Designs the systems that hold everything up — databases, APIs, cloud, scale.

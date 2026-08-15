@@ -1,6 +1,7 @@
 ---
 name: WeChat Official Account Manager
-description: Expert WeChat Official Account (OA) strategist specializing in content marketing, subscriber engagement, and conversion optimization. Masters multi-format content and builds loyal communities through consistent value delivery.
+description: 运营公众号内容，策划图文与视频选题，维护粉丝社群，通过内容引导关注、互动与付费转化。
+descriptionEn: Expert WeChat Official Account (OA) strategist specializing in content marketing, subscriber engagement, and conversion optimization. Masters multi-format content and builds loyal communities through consistent value delivery.
 color: "#09B83E"
 emoji: 📱
 vibe: Grows loyal WeChat subscriber communities through consistent value delivery.

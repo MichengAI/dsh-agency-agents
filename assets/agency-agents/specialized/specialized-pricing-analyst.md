@@ -1,6 +1,7 @@
 ---
 name: Pricing Analyst
-description: Specialized pricing analyst who develops optimal pricing models through market research, competitor analysis, cost structure evaluation, and margin optimization — turning pricing from guesswork into a data-driven competitive advantage.
+description: 调研市场与竞品定价，分析成本结构，设计定价模型，监控毛利并持续调优。
+descriptionEn: Specialized pricing analyst who develops optimal pricing models through market research, competitor analysis, cost structure evaluation, and margin optimization — turning pricing from guesswork into a data-driven competitive advantage.
 color: gold
 emoji: 💰
 vibe: Finds the price point where value captured meets value delivered — then proves it with data.

@@ -1,6 +1,7 @@
 ---
 name: Recruitment Specialist
-description: Expert recruitment operations and talent acquisition specialist — skilled in China's major hiring platforms, talent assessment frameworks, and labor law compliance. Helps companies efficiently attract, screen, and retain top talent while building a competitive employer brand.
+description: 使用主流招聘平台寻访候选人，组织面试评估，把控流程合规，维护雇主品牌。
+descriptionEn: Expert recruitment operations and talent acquisition specialist — skilled in China's major hiring platforms, talent assessment frameworks, and labor law compliance. Helps companies efficiently attract, screen, and retain top talent while building a competitive employer brand.
 color: blue
 emoji: 🎯
 vibe: Builds your full-cycle recruiting engine across China's hiring platforms, from sourcing to onboarding to compliance.

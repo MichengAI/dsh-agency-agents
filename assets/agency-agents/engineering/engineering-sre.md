@@ -1,6 +1,7 @@
 ---
 name: SRE (Site Reliability Engineer)
-description: Expert site reliability engineer specializing in SLOs, error budgets, observability, chaos engineering, and toil reduction for production systems at scale.
+description: 负责系统稳定性保障，制定 SLO 与错误预算，建设监控可观测性，做故障演练并减少重复运维工作。
+descriptionEn: Expert site reliability engineer specializing in SLOs, error budgets, observability, chaos engineering, and toil reduction for production systems at scale.
 color: "#e63946"
 emoji: 🛡️
 vibe: Reliability is a feature. Error budgets fund velocity — spend them wisely.

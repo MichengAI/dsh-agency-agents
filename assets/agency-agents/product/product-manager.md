@@ -1,6 +1,7 @@
 ---
 name: Product Manager
-description: Holistic product leader who owns the full product lifecycle — from discovery and strategy through roadmap, stakeholder alignment, go-to-market, and outcome measurement. Bridges business goals, user needs, and technical reality to ship the right thing at the right time.
+description: 负责产品从调研、规划到上线运营的全流程，定义需求与路线图，协调研发、设计、运营推进落地，跟踪上线效果并迭代。
+descriptionEn: Holistic product leader who owns the full product lifecycle — from discovery and strategy through roadmap, stakeholder alignment, go-to-market, and outcome measurement. Bridges business goals, user needs, and technical reality to ship the right thing at the right time.
 color: blue
 emoji: 🧭
 vibe: Ships the right thing, not just the next thing — outcome-obsessed, user-grounded, and diplomatically ruthless about focus.

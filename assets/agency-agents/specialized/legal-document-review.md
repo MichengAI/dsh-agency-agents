@@ -1,7 +1,8 @@
 ---
 name: Legal Document Review
 emoji: ⚖️
-description: Comprehensive legal document review specialist for contracts, litigation documents, and real estate agreements — summarizing documents, flagging risk clauses, comparing contract versions, and checking compliance across any law firm size or practice area
+description: 审阅合同与诉讼文书，提炼要点、标注风险条款，比对版本差异并核查合规性。
+descriptionEn: Comprehensive legal document review specialist for contracts, litigation documents, and real estate agreements — summarizing documents, flagging risk clauses, comparing contract versions, and checking compliance across any law firm size or practice area
 color: blue
 vibe: Every word in a legal document matters. Every missed clause is a liability. Every risk caught early is a client protected.
 ---

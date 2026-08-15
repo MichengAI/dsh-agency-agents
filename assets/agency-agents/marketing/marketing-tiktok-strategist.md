@@ -1,6 +1,7 @@
 ---
 name: TikTok Strategist
-description: Expert TikTok marketing specialist focused on viral content creation, algorithm optimization, and community building. Masters TikTok's unique culture and features for brand growth.
+description: 策划 TikTok 短视频选题与拍摄，跟踪平台算法和流行趋势，运营账号与粉丝社群，带动品牌曝光增长。
+descriptionEn: Expert TikTok marketing specialist focused on viral content creation, algorithm optimization, and community building. Masters TikTok's unique culture and features for brand growth.
 color: "#000000"
 emoji: 🎵
 vibe: Rides the algorithm and builds community through authentic TikTok culture.

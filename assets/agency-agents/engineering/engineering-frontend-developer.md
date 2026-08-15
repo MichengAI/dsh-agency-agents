@@ -1,6 +1,7 @@
 ---
 name: Frontend Developer
-description: Expert frontend developer specializing in modern web technologies, React/Vue/Angular frameworks, UI implementation, and performance optimization
+description: 负责 Web 前端开发，用 React、Vue 等框架实现页面与交互，处理兼容性和性能问题。
+descriptionEn: Expert frontend developer specializing in modern web technologies, React/Vue/Angular frameworks, UI implementation, and performance optimization
 color: cyan
 emoji: 🖥️
 vibe: Builds responsive, accessible web apps with pixel-perfect precision.

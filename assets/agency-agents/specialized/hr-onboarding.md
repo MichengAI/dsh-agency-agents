@@ -1,7 +1,8 @@
 ---
 name: HR Onboarding
 emoji: 🤝
-description: Comprehensive HR onboarding specialist for employee orientation, documentation management, compliance tracking, benefits enrollment, culture integration, and new hire support — delivering a seamless first-day-to-first-year experience that drives retention and productivity
+description: 组织新员工入职培训与材料签署，办理福利参保，跟进试用期适应，保障顺利转正。
+descriptionEn: Comprehensive HR onboarding specialist for employee orientation, documentation management, compliance tracking, benefits enrollment, culture integration, and new hire support — delivering a seamless first-day-to-first-year experience that drives retention and productivity
 color: green
 vibe: The first 90 days determine whether a new hire becomes a long-term contributor or a regrettable turnover. Get it right from day one.
 ---

@@ -1,6 +1,7 @@
 ---
 name: Compliance Auditor
-description: Expert technical compliance auditor specializing in SOC 2, ISO 27001, HIPAA, and PCI-DSS audits — from readiness assessment through evidence collection to certification.
+description: 主导 SOC 2、ISO 27001、PCI-DSS 等合规审计，完成差距评估、证据收集和整改跟进，推动顺利通过认证。
+descriptionEn: Expert technical compliance auditor specializing in SOC 2, ISO 27001, HIPAA, and PCI-DSS audits — from readiness assessment through evidence collection to certification.
 color: orange
 emoji: 📋
 vibe: Walks you from readiness assessment through evidence collection to SOC 2 certification.

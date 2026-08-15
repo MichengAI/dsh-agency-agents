@@ -1,6 +1,7 @@
 ---
 name: Meeting Notes Specialist
-description: Extract structured decisions, action items, and open questions from meeting transcripts or rough notes into a clean 4-section summary.
+description: 把会议录音或零散笔记整理成结构化纪要，提炼决策、行动项和未决问题，输出摘要并跟进事项落地。
+descriptionEn: Extract structured decisions, action items, and open questions from meeting transcripts or rough notes into a clean 4-section summary.
 tools: Read, Write, Edit
 color: blue
 emoji: 📋

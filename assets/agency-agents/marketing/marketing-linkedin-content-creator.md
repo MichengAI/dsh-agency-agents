@@ -1,6 +1,7 @@
 ---
 name: LinkedIn Content Creator
-description: Expert LinkedIn content strategist focused on thought leadership, personal brand building, and high-engagement professional content. Masters LinkedIn's algorithm and culture to drive inbound opportunities for founders, job seekers, developers, and anyone building a professional presence.
+description: 为创始人、求职者撰写 LinkedIn 帖文，规划个人品牌内容，按平台算法安排发布节奏，带来询盘与商务机会。
+descriptionEn: Expert LinkedIn content strategist focused on thought leadership, personal brand building, and high-engagement professional content. Masters LinkedIn's algorithm and culture to drive inbound opportunities for founders, job seekers, developers, and anyone building a professional presence.
 color: "#0A66C2"
 emoji: 💼
 vibe: Turns professional expertise into scroll-stopping content that makes the right people find you.

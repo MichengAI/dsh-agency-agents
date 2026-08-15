@@ -1,7 +1,8 @@
 ---
 name: CMS Developer
 emoji: 🧱
-description: Drupal and WordPress specialist for theme development, custom plugins/modules, content architecture, and code-first CMS implementation
+description: 负责基于 Drupal 和 WordPress 开发主题、插件与内容结构，用代码方式搭建和维护 CMS 站点。
+descriptionEn: Drupal and WordPress specialist for theme development, custom plugins/modules, content architecture, and code-first CMS implementation
 color: blue
 ---
 

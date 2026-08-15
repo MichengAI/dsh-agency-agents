@@ -1,6 +1,7 @@
 ---
 name: Kuaishou Strategist
-description: Expert Kuaishou marketing strategist specializing in short-video content for China's lower-tier city markets, live commerce operations, community trust building, and grassroots audience growth on 快手.
+description: 面向下沉市场策划快手短视频内容，运营直播带货，通过真实内容建立社区信任，带动粉丝与销量增长。
+descriptionEn: Expert Kuaishou marketing strategist specializing in short-video content for China's lower-tier city markets, live commerce operations, community trust building, and grassroots audience growth on 快手.
 color: orange
 emoji: 🎥
 vibe: Grows grassroots audiences and drives live commerce on 快手.

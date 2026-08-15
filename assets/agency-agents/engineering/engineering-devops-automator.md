@@ -1,6 +1,7 @@
 ---
 name: DevOps Automator
-description: Expert DevOps engineer specializing in infrastructure automation, CI/CD pipeline development, and cloud operations
+description: 负责基础设施自动化与 CI/CD 流水线建设，维护云上环境的部署与日常运维。
+descriptionEn: Expert DevOps engineer specializing in infrastructure automation, CI/CD pipeline development, and cloud operations
 color: orange
 emoji: ⚙️
 vibe: Automates infrastructure so your team ships faster and sleeps better.

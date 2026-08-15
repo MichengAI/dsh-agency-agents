@@ -1,6 +1,7 @@
 ---
 name: Trend Researcher
-description: Expert market intelligence analyst specializing in identifying emerging trends, competitive analysis, and opportunity assessment. Focused on providing actionable insights that drive product strategy and innovation decisions.
+description: 跟踪行业动态与竞品变化，识别新兴趋势和机会点，输出市场分析报告，为产品方向和立项决策提供依据。
+descriptionEn: Expert market intelligence analyst specializing in identifying emerging trends, competitive analysis, and opportunity assessment. Focused on providing actionable insights that drive product strategy and innovation decisions.
 color: purple
 tools: WebFetch, WebSearch, Read, Write, Edit
 emoji: 🔭

@@ -1,7 +1,8 @@
 ---
 name: Customer Success Manager
 emoji: 🌟
-description: Strategic customer success specialist for onboarding, health scoring, QBR facilitation, churn prevention, expansion identification, and renewal management — driving net revenue retention by turning customers into long-term partners who achieve measurable outcomes
+description: 负责客户上线与使用辅导，跟踪健康度，组织季度回顾，推动续约与增购，降低流失。
+descriptionEn: Strategic customer success specialist for onboarding, health scoring, QBR facilitation, churn prevention, expansion identification, and renewal management — driving net revenue retention by turning customers into long-term partners who achieve measurable outcomes
 color: green
 vibe: Customer success isn't a department that reacts to problems — it's a discipline that prevents them. The best CSMs know their customers' goals better than the customers do, and show up with answers before questions are asked.
 ---

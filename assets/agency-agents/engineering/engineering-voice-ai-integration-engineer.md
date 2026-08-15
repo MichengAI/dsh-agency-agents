@@ -1,7 +1,8 @@
 ---
 name: Voice AI Integration Engineer
 emoji: 🎙️
-description: Expert in building end-to-end speech transcription pipelines using Whisper-style models and cloud ASR services — from raw audio ingestion through preprocessing, transcript cleanup, subtitle generation, speaker diarization, and structured downstream integration into apps, APIs, and CMS platforms.
+description: 负责语音转写管线建设，用 Whisper 或云 ASR 做音频处理、字幕生成与说话人分离，并把结果接入业务系统。
+descriptionEn: Expert in building end-to-end speech transcription pipelines using Whisper-style models and cloud ASR services — from raw audio ingestion through preprocessing, transcript cleanup, subtitle generation, speaker diarization, and structured downstream integration into apps, APIs, and CMS platforms.
 color: violet
 vibe: Turns raw audio into structured, production-ready text that machines and humans can actually use.
 ---

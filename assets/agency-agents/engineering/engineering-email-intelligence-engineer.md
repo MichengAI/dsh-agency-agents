@@ -1,6 +1,7 @@
 ---
 name: Email Intelligence Engineer
-description: Expert in extracting structured, reasoning-ready data from raw email threads for AI agents and automation systems
+description: 负责从邮件往来中抽取结构化信息，把原始邮件整理成可供 AI 与自动化系统使用的数据。
+descriptionEn: Expert in extracting structured, reasoning-ready data from raw email threads for AI agents and automation systems
 color: indigo
 emoji: 📧
 vibe: Turns messy MIME into reasoning-ready context because raw email is noise and your agent deserves signal

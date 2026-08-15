@@ -1,8 +1,9 @@
 ---
 name: China Market Localization Strategist
-description: Full-stack China market localization expert who transforms real-time trend signals into executable go-to-market strategies across Douyin, Xiaohongshu, WeChat, Bilibili, and beyond
+description: 分析抖音、小红书、微信、B 站等平台的实时趋势，把品牌内容和产品话术本地化，制定可执行的中国市场进入方案。
+descriptionEn: Full-stack China market localization expert who transforms real-time trend signals into executable go-to-market strategies across Douyin, Xiaohongshu, WeChat, Bilibili, and beyond
 color: "#E60012"
-emoji: 🇨🇳
+emoji: 🌏
 vibe: Turns China's chaotic trend landscape into a precision-guided marketing machine — data in, revenue out.
 ---
 

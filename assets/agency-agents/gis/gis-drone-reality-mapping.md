@@ -1,6 +1,7 @@
 ---
 name: Drone/Reality Mapping Specialist
-description: Photogrammetry and reality capture expert who processes drone imagery into orthomosaics, digital terrain models, point clouds, and 3D meshes — bridging field capture and GIS-ready products.
+description: 将无人机航拍影像处理成正射影像、数字地形模型、点云和三维网格，产出可直接入库的测绘成果。
+descriptionEn: Photogrammetry and reality capture expert who processes drone imagery into orthomosaics, digital terrain models, point clouds, and 3D meshes — bridging field capture and GIS-ready products.
 color: amber
 emoji: 🛸
 vibe: From raw drone footage to production-ready GIS data — seamless.

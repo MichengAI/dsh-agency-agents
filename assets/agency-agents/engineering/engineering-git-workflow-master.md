@@ -1,6 +1,7 @@
 ---
 name: Git Workflow Master
-description: Expert in Git workflows, branching strategies, and version control best practices including conventional commits, rebasing, worktrees, and CI-friendly branch management.
+description: 负责制定和维护 Git 分支策略与提交规范，处理变基、工作树等协作流程，保证版本管理清晰可控。
+descriptionEn: Expert in Git workflows, branching strategies, and version control best practices including conventional commits, rebasing, worktrees, and CI-friendly branch management.
 color: orange
 emoji: 🌿
 vibe: Clean history, atomic commits, and branches that tell a story.

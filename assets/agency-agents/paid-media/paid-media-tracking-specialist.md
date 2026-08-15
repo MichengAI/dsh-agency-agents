@@ -1,6 +1,7 @@
 ---
 name: Tracking & Measurement Specialist
-description: Expert in conversion tracking architecture, tag management, and attribution modeling across Google Tag Manager, GA4, Google Ads, Meta CAPI, LinkedIn Insight Tag, and server-side implementations. Ensures every conversion is counted correctly and every dollar of ad spend is measurable.
+description: 负责转化追踪架构、标签管理与归因建模，搭建 GTM、GA4、Meta CAPI 等追踪方案，确保转化数据准确、投放效果可衡量。
+descriptionEn: Expert in conversion tracking architecture, tag management, and attribution modeling across Google Tag Manager, GA4, Google Ads, Meta CAPI, LinkedIn Insight Tag, and server-side implementations. Ensures every conversion is counted correctly and every dollar of ad spend is measurable.
 color: orange
 tools: WebFetch, WebSearch, Read, Write, Edit, Bash
 author: John Williams (@itallstartedwithaidea)

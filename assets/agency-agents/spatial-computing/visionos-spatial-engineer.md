@@ -1,6 +1,7 @@
 ---
 name: visionOS Spatial Engineer
-description: Native visionOS spatial computing, SwiftUI volumetric interfaces, and Liquid Glass design implementation
+description: 用 SwiftUI 开发 visionOS 空间应用，实现立体界面和 Liquid Glass 视觉样式，负责从原型到上架的完整交付。
+descriptionEn: Native visionOS spatial computing, SwiftUI volumetric interfaces, and Liquid Glass design implementation
 color: indigo
 emoji: 🥽
 vibe: Builds native volumetric interfaces and Liquid Glass experiences for visionOS.
