@@ -46,11 +46,11 @@
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-dsh plugin --profile default add .
+dsh plugin --profile default add @michengai/dsh-agency-agents
 dsh --profile default --dump-config
 ```
 
-将 `default` 替换为目标 profile。第二条命令应显示 `agency-agents` 组合项。
+将 `default` 替换为目标 profile。第二条命令应显示 `agency-agents` 组合项；本地开发时可将包名替换为 `.`。
 
 ## 配置
 

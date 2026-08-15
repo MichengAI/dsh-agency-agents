@@ -46,11 +46,11 @@ Review the changes in the current workspace and list reproducible issues by seve
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-dsh plugin --profile default add .
+dsh plugin --profile default add @michengai/dsh-agency-agents
 dsh --profile default --dump-config
 ```
 
-Replace `default` with the target profile. The second command should show the `agency-agents` composition entry.
+Replace `default` with the target profile. The second command should show the `agency-agents` composition entry. For local development, replace the package name with `.`.
 
 ## Configuration
 

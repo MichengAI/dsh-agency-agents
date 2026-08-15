@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-agency-agents",
+  "name": "@michengai/dsh-agency-agents",
   "description": "Agency Experts — a summonable domain-expert roster for DSH (expert mode)",
   "version": "0.1.0",
   "type": "module",
@@ -38,6 +38,10 @@
     }
   },
   "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/dsh-llm": "^0.1.0-rc.5",

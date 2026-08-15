@@ -18,7 +18,7 @@
  * zero-width space is inserted between the opening braces so the text stays
  * visually identical while the interpolator no longer sees a `{{`.
  *
- * @module @deepseek-ai/dsh-agency-agents
+ * @module @michengai/dsh-agency-agents
  */
 
 import type { Context } from '@deepseek-ai/cordis'
