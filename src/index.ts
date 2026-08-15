@@ -53,12 +53,12 @@ const DEFAULT_DIVISIONS = [
   'testing',
 ]
 
-/** 额外扫描的源目录：不在标准 division 内、但仍是合法专家的集成（如 mcp-memory）。 */
+/** 额外扫描的源目录：不在标准 division 内、但仍是合法智能体的集成（如 mcp-memory）。 */
 const EXTRA_SOURCES: ReadonlyArray<{ readonly dir: string; readonly division: string }> = [
   { dir: 'integrations/mcp-memory', division: 'engineering' },
 ]
 
-/** 描述截断上限，避免无过滤列出全量专家时 token 开销过大。 */
+/** 描述截断上限，避免无过滤列出全量智能体时 token 开销过大。 */
 const DESCRIPTION_LIMIT = 120
 
 /** One resolved expert ready to be summoned. */
@@ -83,7 +83,7 @@ export interface Config {
   maxDepth?: number
 }
 
-/** 未在配置中显式提供 `root` 时，先读取该环境变量，再使用随包发布的专家目录。 */
+/** 未在配置中显式提供 `root` 时，先读取该环境变量，再使用随包发布的智能体目录。 */
 const ROOT_ENV = 'AGENCY_AGENTS_ROOT'
 const BUNDLED_ROOT = fileURLToPath(new URL('../assets/agency-agents/', import.meta.url))
 
@@ -94,7 +94,7 @@ export const Config: z<Config> = z.object({
   maxDepth: z.natural(),
 })
 
-/** 解析专家根目录：显式配置优先，其次使用包内资产。 */
+/** 解析智能体根目录：显式配置优先，其次使用包内资产。 */
 export function resolveCatalogRoot(root: string): string {
   return root.trim() === '' ? BUNDLED_ROOT : root
 }
@@ -157,10 +157,10 @@ function textBlocks(blocks: readonly ContentBlock[]): string {
 async function assertDirectory(root: string): Promise<void> {
   const info = await stat(root).catch(() => undefined)
   if (info === undefined) {
-    throw new Error(`专家目录 root 不存在或无法访问："${root}"。请设置环境变量 ${ROOT_ENV} 或提供正确路径。`)
+    throw new Error(`智能体目录 root 不存在或无法访问："${root}"。请设置环境变量 ${ROOT_ENV} 或提供正确路径。`)
   }
   if (!info.isDirectory()) {
-    throw new Error(`专家目录 root "${root}" 不是目录`)
+    throw new Error(`智能体目录 root "${root}" 不是目录`)
   }
 }
 
@@ -197,13 +197,13 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
       try {
         raw = stripBom(await readFile(filePath, 'utf8'))
       } catch (error: unknown) {
-        console.warn(`[agency-agents] 跳过无法读取的专家文件 ${filePath}: ${error instanceof Error ? error.message : String(error)}`)
+        console.warn(`[agency-agents] 跳过无法读取的智能体文件 ${filePath}: ${error instanceof Error ? error.message : String(error)}`)
         return
       }
       const parsed = parseFrontmatter(raw)
       if (parsed === undefined || parsed.name === undefined || parsed.description === undefined) return
       if (map.has(slug)) {
-        console.warn(`[agency-agents] 专家 slug 冲突，后加载者覆盖：${slug}`)
+        console.warn(`[agency-agents] 智能体 slug 冲突，后加载者覆盖：${slug}`)
       }
       map.set(slug, {
         slug,
@@ -216,12 +216,12 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
     })
   }
   if (map.size === 0) {
-    throw new Error(`在 root "${root}" 下未发现任何专家（*.md 文件）。请确认路径正确。`)
+    throw new Error(`在 root "${root}" 下未发现任何智能体（*.md 文件）。请确认路径正确。`)
   }
   return map
 }
 
-/** 根据 slug 或名称解析专家；任意多命中都必须要求调用者提供更精确的 slug。 */
+/** 根据 slug 或名称解析智能体；任意多命中都必须要求调用者提供更精确的 slug。 */
 export function resolveExpert<T extends { readonly slug: string; readonly name: string }>(experts: readonly T[], query: unknown): T {
   const q = String(query).trim().toLowerCase()
   if (q.length === 0) throw new Error('expert is required')

@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
+import type { Context } from '@deepseek-ai/cordis'
+import { apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
 
 describe('sanitize', () => {
   it('转义双花括号，避免模板插值', () => {
@@ -77,7 +78,7 @@ describe('loadCatalog', () => {
     await rm(dir, { recursive: true, force: true })
   })
 
-  it('递归加载 division 子目录中的专家', async () => {
+  it('递归加载 division 子目录中的智能体', async () => {
     await mkdir(join(dir, 'game-development', 'unity'), { recursive: true })
     await writeFile(join(dir, 'game-development', 'economy-designer.md'), '---\nname: E\ndescription: d\n---\nbody', 'utf8')
     await writeFile(join(dir, 'game-development', 'unity', 'unity-architect.md'), '---\nname: U\ndescription: d\n---\nbody', 'utf8')
@@ -110,24 +111,61 @@ describe('loadCatalog', () => {
     await expect(loadCatalog(join(dir, 'nope'), ['engineering'])).rejects.toThrow()
   })
 
-  it('root 存在但无任何专家时抛出', async () => {
+  it('root 存在但无任何智能体时抛出', async () => {
     await mkdir(join(dir, 'empty'), { recursive: true })
     await expect(loadCatalog(join(dir, 'empty'), ['engineering'])).rejects.toThrow()
   })
 
-  it('未配置 root 时加载随包发布的专家目录', async () => {
+  it('未配置 root 时加载随包发布的智能体目录', async () => {
     const map = await loadCatalog(resolveCatalogRoot(''), ['academic'])
     expect(map.size).toBeGreaterThan(0)
   })
 })
 
 describe('resolveExpert', () => {
-  it('精确名称对应多个专家时抛出歧义并列出 slug', () => {
+  it('精确名称对应多个智能体时抛出歧义并列出 slug', () => {
     const experts = [
       { slug: 'engineering-backend-architect', name: 'Backend Architect' },
       { slug: 'backend-architect-with-memory', name: 'Backend Architect' },
     ]
 
     expect(() => resolveExpert(experts, 'Backend Architect')).toThrow(/engineering-backend-architect, backend-architect-with-memory/)
+  })
+})
+
+describe('summon_expert', () => {
+  let dir: string
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'aag-'))
+    await mkdir(join(dir, 'engineering'), { recursive: true })
+    await mkdir(join(dir, 'integrations', 'mcp-memory'), { recursive: true })
+    await writeFile(join(dir, 'engineering', 'reviewer.md'), '---\nname: Reviewer\ndescription: d\n---\nbody', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true })
+  })
+
+  it('资源释放失败时向调用方抛出异常', async () => {
+    const tools: unknown[] = []
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        start: async () => ({
+          result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
+          dispose: async () => { throw new Error('dispose failed') },
+        }),
+      },
+      systemPrompt: { section: () => undefined },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
+      execute: (args: unknown, exec: unknown) => Promise<unknown>
+    }
+
+    await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow('dispose failed')
   })
 })

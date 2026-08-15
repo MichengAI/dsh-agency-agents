@@ -1,4 +1,4 @@
-# 外部专家目录覆盖示例。常规安装无需此配置，默认使用包内资产。
+# 外部智能体目录覆盖示例。常规安装无需此配置，默认使用包内资产。
 #
 # The subagent registry + its spawn/fork backends are HOST-side and shared; this
 # plugin only consumes them (`inject: ['subagents', ...]`) and contributes the
