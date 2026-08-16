@@ -93,7 +93,37 @@ function displayDescription(e: ExpertView, active: 'zh' | 'en'): string {
 const MENU_NAME_OVERRIDE = DIVISION_ORDER
   .map((d) => `[role="listbox"] div[data-source="division.${d}"] ~ button span:last-child`)
   .join(',')
-const CSS = '.aag-btn-wrap{position:relative;order:1;margin-right:-8px}.aag-btn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 4px 0 8px;border:none;border-radius:24px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100vh - 24px);overflow-y:auto;border:1px solid var(--dsw-alias-border-inverted);border-radius:12px;background:var(--dsw-specific-menu);box-shadow:var(--dsw-shadow-lv3);z-index:10000}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:10px;background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-emoji{flex:0 0 auto;font-size:16px}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}.aag-settings{box-sizing:border-box;max-width:760px;width:100%;margin:0 auto;padding:0 0 32px}.aag-head{margin:0 0 8px}.aag-title{margin:0;font-size:20px;line-height:28px;font-weight:650;letter-spacing:-.2px}.aag-intro{margin:4px 0 0;max-width:42em;color:var(--dsw-alias-label-tertiary);font-size:13px;line-height:1.5}.aag-group{margin:0}.aag-group-title{font-size:12px;font-weight:600;color:var(--dsw-alias-label-tertiary);margin:16px 0 0;padding:8px 0 4px}.aag-row{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px 0;border-top:1px solid var(--dsw-alias-border-l2)}.aag-group .aag-row:first-of-type{border-top:0;padding-top:8px}.aag-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.aag-name{font-size:13px;font-weight:500;color:var(--dsw-alias-label-primary)}.aag-desc{margin:0;font-size:12px;line-height:1.5;color:var(--dsw-alias-label-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.aag-switch{position:relative;width:42px;height:26px;flex:none;border:0;border-radius:999px;background:rgba(120,120,128,.36);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer}.aag-switch:after{content:\'\';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.28);transition:transform .16s ease}.aag-switch.is-on{background:#34c759}.aag-switch.is-on:after{transform:translateX(16px)}.aag-switch:disabled{opacity:.5;cursor:default}.aag-loading,.aag-empty,.aag-error{padding:20px 0;color:var(--dsw-alias-label-secondary);font-size:13px}[data-composer-card] :has(> button[aria-haspopup="listbox"]) > :nth-child(2){order:2}' + MENU_NAME_OVERRIDE + '{flex:1 1 auto;max-width:none;min-width:0}'
+const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;margin-right:-8px}.aag-btn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 4px 0 8px;border:none;border-radius:24px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100vh - 24px);overflow-y:auto;border:1px solid var(--dsw-alias-border-inverted);border-radius:12px;background:var(--dsw-specific-menu);box-shadow:var(--dsw-shadow-lv3);z-index:10000}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:10px;background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-emoji{flex:0 0 auto;font-size:16px}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}[data-composer-card] :has(> button[aria-haspopup="listbox"]) > :nth-child(2){order:2}'
+// 设置页版式对齐 dsh-skills-manager：工具栏 + 汇总条 + 分组卡片 + 行内启停按钮。
+const SETTINGS_CSS = `
+.aag-section{box-sizing:border-box;display:flex;min-width:0;max-width:760px;width:100%;margin:0 auto;flex-direction:column;gap:16px;padding:0 0 32px;color:var(--dsw-alias-label-primary)}
+.aag-toolbar{display:flex;align-items:flex-start;gap:16px;padding-bottom:12px}
+.aag-title{margin:0;font-size:20px;line-height:28px;font-weight:650;letter-spacing:-.2px}
+.aag-desc{margin:4px 0 0;max-width:42em;color:var(--dsw-alias-label-tertiary);font-size:13px;line-height:1.5}
+.aag-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.aag-action{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:0 12px;border:1px solid transparent;border-radius:8px;background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);font:inherit;font-size:13px;font-weight:550;cursor:pointer;transition:opacity 180ms ease,background 180ms ease,border-color 180ms ease}
+.aag-action:hover:not(:disabled){opacity:.9}.aag-action:disabled{opacity:.5;cursor:default}
+.aag-action-secondary{background:transparent;border-color:var(--dsw-alias-border-l2);color:var(--dsw-alias-label-primary)}
+.aag-action:focus-visible{outline:2px solid var(--dsw-alias-state-success-primary);outline-offset:2px}
+.aag-summary{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--dsw-alias-border-l2);border-radius:10px;background:var(--dsw-alias-bg-layer-2)}
+.aag-summary-count{font-size:18px;font-weight:650}.aag-summary-label{color:var(--dsw-alias-label-secondary);font-size:12px}.aag-summary-separator{width:1px;height:24px;background:var(--dsw-alias-border-l2)}
+.aag-group{display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-2)}
+.aag-group-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.aag-group-title{margin:0;font-size:14px;font-weight:600}.aag-count{color:var(--dsw-alias-label-tertiary);font-size:12px}
+.aag-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.aag-row:last-child{border-bottom:0}
+.aag-row-main{display:flex;min-width:0;flex:1;flex-direction:column;gap:3px}
+.aag-row-id{display:flex;align-items:center;gap:7px;min-width:0}
+.aag-row-name{overflow:hidden;font-size:13px;font-weight:500;line-height:20px;text-overflow:ellipsis;white-space:nowrap}
+.aag-tag{flex:none;padding:1px 6px;border:1px solid var(--dsw-alias-border-l3);border-radius:4px;color:var(--dsw-alias-label-secondary);font-size:11px;line-height:16px}
+.aag-tag-on{border-color:var(--dsw-alias-state-success-primary);color:var(--dsw-alias-state-success-primary)}
+.aag-tag-off{border-color:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-state-error-primary)}
+.aag-note{overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;text-overflow:ellipsis;white-space:nowrap}
+.aag-error{color:var(--dsw-alias-state-error-primary);font-size:13px;line-height:20px}
+@media (max-width:560px){.aag-toolbar{flex-wrap:wrap}.aag-actions{margin-left:0}.aag-row{align-items:flex-start;flex-wrap:wrap}.aag-row>.aag-action{margin-left:auto}}
+@media (prefers-reduced-motion:reduce){.aag-action{transition:none}}
+`
+const CSS = COMPOSER_CSS + SETTINGS_CSS + MENU_NAME_OVERRIDE + '{flex:1 1 auto;max-width:none;min-width:0}'
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
 interface AgencyAgentsRemoteApi {
@@ -225,6 +255,13 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
   const saving = React.useRef(false)
   const [isSaving, setIsSaving] = React.useState(false)
 
+  const load = React.useCallback((): void => {
+    void readEnabled(props.remote).then((current) => {
+      setState(current)
+      setError(null)
+    }).catch((err: unknown) => { setError(err instanceof Error ? err.message : String(err)) })
+  }, [props.remote])
+
   React.useEffect(() => {
     let alive = true
     void readEnabled(props.remote).then((current) => {
@@ -258,22 +295,45 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
       })
   }
 
-  if (error !== null) return React.createElement('div', { className: 'aag-error' }, error)
-  if (state === null) return React.createElement('div', { className: 'aag-loading' }, props.t('settings.loading'))
-  const groups = groupByDivision(EXPERTS)
-  return React.createElement('div', { className: 'aag-settings' },
-    React.createElement('header', { className: 'aag-head' },
-      React.createElement('h2', { className: 'aag-title' }, props.t('settings.nav')),
-      React.createElement('p', { className: 'aag-intro' }, props.t('settings.intro'))),
-    groups.map((g) => React.createElement('div', { key: g.division, className: 'aag-group' },
-      // 分部名也经 t 翻译：模板 {division} 由内层 t 按当前 locale 求值。
-      React.createElement('div', { className: 'aag-group-title' }, props.t('group.count', { division: props.t(`division.${g.division}` as AgencyKey), count: g.experts.length })),
-      g.experts.map((e) => React.createElement('div', { key: e.slug, className: 'aag-row' },
-        React.createElement('span', { className: 'aag-emoji' }, e.emoji),
-        React.createElement('div', { className: 'aag-info' },
-          React.createElement('div', { className: 'aag-name' }, displayName(e, props.getActive())),
-          React.createElement('div', { className: 'aag-desc' }, displayDescription(e, props.getActive()))),
-        React.createElement('button', { type: 'button', role: 'switch', 'aria-checked': state.enabled.has(e.slug), 'aria-label': props.t(state.enabled.has(e.slug) ? 'settings.enabled' : 'settings.disabled'), disabled: isSaving, className: `aag-switch ${state.enabled.has(e.slug) ? 'is-on' : ''}`, onClick: () => toggle(e.slug) }))))))
+  const nodes: React.ReactNode[] = []
+  if (error !== null) nodes.push(React.createElement('div', { key: 'error', className: 'aag-error', role: 'alert' }, error))
+  if (state === null) {
+    nodes.push(React.createElement('div', { key: 'loading', className: 'aag-note' }, props.t('settings.loading')))
+  } else {
+    const groups = groupByDivision(EXPERTS)
+    const enabledCount = [...state.enabled].filter((slug) => EXPERTS.some((e) => e.slug === slug)).length
+    const total = EXPERTS.length
+    nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
+      React.createElement('div', null,
+        React.createElement('h2', { className: 'aag-title' }, props.t('settings.nav')),
+        React.createElement('p', { className: 'aag-desc' }, props.t('settings.intro'))),
+      React.createElement('div', { className: 'aag-actions' },
+        React.createElement('button', { type: 'button', className: 'aag-action aag-action-secondary', disabled: isSaving, onClick: load }, props.t('btn.refresh')))))
+    nodes.push(React.createElement('div', { key: 'summary', className: 'aag-summary' },
+      React.createElement('span', { className: 'aag-summary-count' }, total),
+      React.createElement('span', { className: 'aag-summary-label' }, props.t(total === 1 ? 'summary.total.one' : 'summary.total.other', { count: total })),
+      React.createElement('span', { className: 'aag-summary-separator' }),
+      React.createElement('span', { className: 'aag-summary-count' }, enabledCount),
+      React.createElement('span', { className: 'aag-summary-label' }, props.t(enabledCount === 1 ? 'summary.enabled.one' : 'summary.enabled.other', { count: enabledCount }))))
+    for (const g of groups) {
+      nodes.push(React.createElement('div', { key: g.division, className: 'aag-group' },
+        React.createElement('div', { className: 'aag-group-head' },
+          React.createElement('h3', { className: 'aag-group-title' }, props.t(`division.${g.division}` as AgencyKey)),
+          React.createElement('span', { className: 'aag-count' }, props.t('summary.group', { count: g.experts.length }))),
+        g.experts.map((e) => {
+          const on = state.enabled.has(e.slug)
+          return React.createElement('div', { key: e.slug, className: 'aag-row' },
+            React.createElement('div', { className: 'aag-row-main' },
+              React.createElement('div', { className: 'aag-row-id' },
+                React.createElement('span', { className: 'aag-row-name' }, displayName(e, props.getActive())),
+                React.createElement('span', { className: 'aag-tag' }, e.slug),
+                React.createElement('span', { className: `aag-tag ${on ? 'aag-tag-on' : 'aag-tag-off'}` }, props.t(on ? 'settings.enabled' : 'settings.disabled'))),
+              React.createElement('div', { className: 'aag-note', title: displayDescription(e, props.getActive()) }, displayDescription(e, props.getActive()))),
+            React.createElement('button', { type: 'button', className: 'aag-action aag-action-secondary', disabled: isSaving, onClick: () => toggle(e.slug) }, props.t(on ? 'btn.disable' : 'btn.enable')))
+        })))
+    }
+  }
+  return React.createElement('section', { className: 'aag-section' }, nodes)
 }
 
 export const inject = ['slots', 'inputTriggers', 'locale', 'remote']
