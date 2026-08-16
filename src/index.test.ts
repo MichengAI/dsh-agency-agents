@@ -7,7 +7,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { writeErrorKey, writeErrorMessage } from './client/index.js'
+import { writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 
@@ -414,5 +414,41 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
     const setEnabled = TYPERT_REMOTE.descriptors.find((d) => d.method === 'setEnabled')
     expect(TYPERT_REMOTE.descriptors).toBe(AGENCY_AGENTS_DESCRIPTORS)
     expect(setEnabled?.parameters.map((p) => p.wire)).toEqual(['enabled', 'expectedRevision'])
+  })
+})
+
+describe('applyExpertSummon（输入框召唤）', () => {
+  const t = (key: AgencyKey, params?: Record<string, string>): string => {
+    let text = zh[key]
+    if (params !== undefined) {
+      for (const [name, value] of Object.entries(params)) text = text.replaceAll('{' + name + '}', value)
+    }
+    return text
+  }
+
+  it('输入框已有内容时只回填召唤指令，不自动发送', () => {
+    const calls: string[] = []
+    const inputActions = {
+      setDraft(draft: string): void { calls.push('setDraft:' + draft) },
+      submit(): void { calls.push('submit') },
+    }
+    const instruction = buildSummonInstruction(t as never, '代码审查', 'reviewer', '请审查这段代码')
+    applyExpertSummon({ inputActions, instruction })
+    expect(instruction).toContain('请审查这段代码')
+    expect(calls).toEqual(['setDraft:' + instruction])
+    expect(calls).not.toContain('submit')
+  })
+
+  it('输入框为空时只回填召唤指令，不发送', () => {
+    const calls: string[] = []
+    const inputActions = {
+      setDraft(draft: string): void { calls.push('setDraft:' + draft) },
+      submit(): void { calls.push('submit') },
+    }
+    const instruction = buildSummonInstruction(t as never, '代码审查', 'reviewer', '   ')
+    applyExpertSummon({ inputActions, instruction })
+    expect(instruction).toBe(t('summon.instruction', { name: '代码审查', slug: 'reviewer' }))
+    expect(calls).toEqual(['setDraft:' + instruction])
+    expect(calls).not.toContain('submit')
   })
 })

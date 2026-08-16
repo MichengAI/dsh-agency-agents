@@ -204,6 +204,30 @@ function openAgentSettings(t: TranslateNS<'agency'>): void {
 
 interface InputDraft { readonly draft?: string }
 interface InputActions { setDraft(draft: string): void; submit(): void }
+
+/** 根据当前草稿生成召唤指令。有内容时把原草稿包进 withTask 模板。 */
+export function buildSummonInstruction(
+  t: TranslateNS<'agency'>,
+  name: string,
+  slug: string,
+  draft: string,
+): string {
+  const hasTask = draft.trim().length > 0
+  // 用完整词条模板生成召唤指令（禁止字符串拼接）；withTask 模板含 {task} 占位，
+  // 无任务模板不含该占位，多传的 task 参数不会被使用。
+  return t(hasTask ? 'summon.instruction.withTask' : 'summon.instruction', { name, slug, task: draft })
+}
+
+/** 将召唤指令写入输入框。有草稿时也不自动发送，留给用户确认后再提交。 */
+export function applyExpertSummon(options: {
+  readonly inputActions?: InputActions
+  readonly instruction: string
+}): void {
+  if (options.inputActions !== undefined) {
+    options.inputActions.setDraft(options.instruction)
+  }
+}
+
 type ButtonProps = PropsLocale<'agency'> & {
   readonly input?: InputDraft
   readonly inputActions?: InputActions
@@ -238,14 +262,10 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
     const expert = EXPERTS.find((e) => e.slug === slug)
     const name = expert === undefined ? slug : displayName(expert, props.getActive())
     const draft = props.input !== undefined && typeof props.input.draft === 'string' ? props.input.draft : ''
-    const hasTask = draft.trim().length > 0
-    // 用完整词条模板生成召唤指令（禁止字符串拼接）；withTask 模板含 {task} 占位，
-    // 无任务模板不含该占位，多传的 task 参数不会被使用。
-    const instruction = props.t(hasTask ? 'summon.instruction.withTask' : 'summon.instruction', { name, slug, task: draft })
-    if (props.inputActions !== undefined) {
-      props.inputActions.setDraft(instruction)
-      if (hasTask) props.inputActions.submit()
-    }
+    applyExpertSummon({
+      inputActions: props.inputActions,
+      instruction: buildSummonInstruction(props.t, name, slug, draft),
+    })
     setOpen(false)
   }
 
