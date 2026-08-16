@@ -5,79 +5,117 @@
 
   **271 summonable specialist agents for DeepSeek Harness**
 
-  [中文](README.zh-CN.md) · [Documentation](docs/00-交接入口/00-阅读导航.md) · [Apache-2.0](LICENSE)
-
-  [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-  [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-271-0f766e.svg)](docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md)
+  [简体中文](README.zh-CN.md) · [Documentation](docs/00-交接入口/00-阅读导航.md) · [Apache-2.0](LICENSE)
 </div>
 
-`dsh-agency-agents` is a DeepSeek Harness (DSH) plugin. The parent session keeps task context, judgment, and final synthesis; it can delegate a complete task to a one-shot subagent with a persona from The Agency.
+> DSH Agency Agents is a community-maintained DeepSeek Harness (DSH) plugin, not an official DeepSeek AI product.
 
-## Use it in DSH
+## Features
 
-Browse and enable agents in the **Agents** settings panel. The plugin exposes the bundled agents by division, alongside their names, descriptions, and enabled state.
+- Browse, enable, and disable bundled experts across 17 divisions in **Settings → Agents**.
+- Summon enabled experts by name or slug from the composer’s **Agent** mode.
+- Use `list_experts` to discover experts and `summon_expert` to start a one-shot specialist subagent.
+- Use 271 bundled personas immediately, or connect a separately synchronized expert directory.
 
-![DSH Agents panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
+The parent session keeps task context, judgment, and the final answer. Expert children provide a specialist perspective only and cannot summon further experts.
 
-Choose **Agent** mode in the chat composer, then identify the agent by name and slug. For example:
+## Prerequisites
+
+- A working DeepSeek Harness Web installation with `dsh` available in PowerShell.
+- Examples use the `web` profile; replace it with the target profile.
+- Source installation and development require Node.js 22+ and pnpm. npm installation does not require running `pnpm install` separately.
+
+## Installation
+
+### Install from npm
+
+Run this from any PowerShell directory. `dsh plugin` installs the npm package and applies its bundled `cordis.patch.yml`:
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+dsh plugin --profile web add @michengai/dsh-agency-agents
+dsh --profile web --dump-config
+```
+
+The configuration output should contain `agency-agents` and `agency-agents-remote`. Restart DSH Web and hard-refresh the browser. Do not copy client files manually: the Settings page needs the mounted Remote service.
+
+If a package mirror has not synchronized the latest version, append `--registry=https://registry.npmjs.org/`.
+
+### Install from source
+
+Use this for debugging or unpublished changes. The cloned directory becomes the plugin source path:
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+Set-Location D:\Repository\deepseek-harness-plugin
+git clone https://github.com/MichengAI/dsh-agency-agents.git
+Set-Location .\dsh-agency-agents
+pnpm install --frozen-lockfile
+pnpm build
+dsh plugin --profile web add .
+dsh --profile web --dump-config
+```
+
+Restart DSH Web and hard-refresh the browser. `dsh plugin ... add .` reads the package metadata and `cordis.patch.yml`; do not install by copying `lib` directly.
+
+## Usage
+
+1. Open **Settings → Agents** and enable the needed experts.
+2. Select **Agent** mode in the composer.
+3. Name the expert and slug, then provide the complete task.
 
 ```text
 Summon the "Code Review Engineer" agent (engineering-code-reviewer) for this task:
 Review the changes in the current workspace and list reproducible issues by severity.
 ```
 
-![Summoning an agent from the composer](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
+The parent session can also call `list_experts(division?)`, then delegate with `summon_expert(expert, task)`. Use a slug when a name is ambiguous.
 
-## How it works
+## Configuration and limits
 
-| Stage | Parent session and plugin responsibility |
-| --- | --- |
-| Discover | `list_experts(division?)` returns compact division counts, or expands one division. |
-| Delegate | `summon_expert(expert, task)` starts a one-shot subagent by slug or unique name. |
-| Deliver | The subagent returns its specialist result; the parent session applies the original context and produces the final response. |
+| Key | Default | Purpose |
+| --- | --- | --- |
+| `root` | Bundled expert assets | External expert root; an explicit value takes priority. |
+| `provider` | `spawn` | DSH subagent provider; `fork` also works when it supports persona and tool filtering. |
+| `divisions` | 17 standard divisions | Top-level divisions to scan. |
+| `maxDepth` | Unset | Positive absolute subagent-depth limit. |
 
-- 271 agent personas are bundled; no external directory is required after installation.
-- Configure `root`, or set `AGENCY_AGENTS_ROOT`, to use a separately synchronized agent directory.
-- Agent children cannot call `summon_expert` or `list_experts`, preventing recursive delegation and unnecessary roster browsing.
-- `spawn` and `fork` are supported when the provider supports persona and tool filtering.
+Set `AGENCY_AGENTS_ROOT` to use an external expert directory. The provider must support persona and tool filtering.
 
-## Install
+## Secondary development
+
+- [src\index.ts](src/index.ts): host entry point for catalog loading, tools, and settings.
+- [src\remote-contract.ts](src/remote-contract.ts) and [src\remote.ts](src/remote.ts): Remote contract and implementation.
+- [src\client\index.ts](src/client/index.ts): Settings page, composer button, and `@` trigger.
+- `assets\agency-agents`: bundled personas; retain its MIT license and [NOTICE](NOTICE) attribution.
+
+After changing `src` or `assets`, rebuild, test, and install from the local directory:
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-dsh plugin --profile default add @michengai/dsh-agency-agents
-dsh --profile default --dump-config
+pnpm build
+pnpm test
+pnpm verify
+dsh plugin --profile web add .
 ```
 
-Replace `default` with the target profile. The second command should show both `agency-agents` and `agency-agents-remote`; the latter is the Host Remote service used by the settings page. Install through `dsh plugin`: copying only client files without applying `cordis.patch.yml` leaves that Remote unavailable. For local development, replace the package name with `.`.
+The published package includes `lib`, `assets`, the patch, and documentation only. Do not publish `node_modules` or local development files.
 
-## Configuration
-
-| Key | Default | Meaning |
-| --- | --- | --- |
-| `root` | Bundled agent assets | External agent root; an explicit value overrides bundled assets. |
-| `provider` | `spawn` | DSH subagent provider. |
-| `divisions` | All 17 standard divisions | Top-level divisions to scan. |
-| `maxDepth` | Unset | Optional positive absolute child-depth cap; the provider must support depth limiting. |
-
-## Bundled source and licensing
-
-The bundled agent personas originate from [The Agency](https://github.com/msitarzewski/agency-agents) and are copyrighted by AgentLand Contributors. The snapshot and its original license are in [assets\agency-agents](assets/agency-agents).
-
-**License boundary:** this plugin's TypeScript source, build scripts, and project documentation are licensed under [Apache License 2.0](LICENSE). The bundled upstream agent personas remain under the MIT License; see [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE). See [NOTICE](NOTICE) for attribution.
-
-The complete roster is split by division in the [agent roster](docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md).
-
-## Development and verification
+## Validation
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-pnpm install
 pnpm build
 pnpm test
 pnpm verify
 ```
 
-`prepublishOnly` runs build, test, and package-integrity verification automatically.
+`prepublishOnly` runs these build, test, and package-integrity checks before publishing.
+
+## License and attribution
+
+This project’s TypeScript source, build scripts, and documentation use [Apache License 2.0](LICENSE). Bundled personas originate from [The Agency](https://github.com/msitarzewski/agency-agents) and remain MIT-licensed; see [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE).

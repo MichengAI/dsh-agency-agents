@@ -6,78 +6,116 @@
   **为 DeepSeek Harness 提供 271 名可召唤的专业智能体**
 
   [English](README.md) · [完整文档](docs/00-交接入口/00-阅读导航.md) · [Apache-2.0](LICENSE)
-
-  [![许可证：Apache-2.0](https://img.shields.io/badge/许可证-Apache--2.0-blue.svg)](LICENSE)
-  [![内置智能体](https://img.shields.io/badge/内置智能体-271-0f766e.svg)](docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md)
 </div>
 
-`dsh-agency-agents` 是 DeepSeek Harness（DSH）插件。主会话负责理解上下文、判断与最终交付；需要专业视角时，可将完整任务交给带有 The Agency persona 的一次性子代理。
+> DSH Agency Agents 是社区维护的 DeepSeek Harness（DSH）插件，并非 DeepSeek AI 官方产品。
 
-## 在 DSH 中使用
+## 功能概览
 
-在设置的「智能体」面板中浏览并启用所需的智能体。插件按分区提供内置智能体，并在面板中保留名称、简介与启用状态。
+- 在「设置 → 智能体」中按 17 个分区浏览、启用或停用内置专家。
+- 在输入框的「智能体」模式中按名称或 slug 召唤已启用的专家处理完整任务。
+- 提供 `list_experts` 与 `summon_expert` 工具，分别用于发现专家和启动一次性子代理。
+- 内置 271 份 persona，无需额外下载；也可接入自行同步的专家目录。
 
-![DSH 智能体面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
+主会话保留任务上下文、判断和最终交付；专家子代理只提供专业视角，不能继续召唤专家，避免递归委派。
 
-在对话输入框选择「智能体」模式，然后用名称和 slug 明确指定要召唤的智能体。例如：
+## 前置条件
+
+- 已可正常运行 DeepSeek Harness Web，且可在 PowerShell 中使用 `dsh`。
+- 以下示例使用 `web` profile；请替换为实际目标 profile。
+- 从源码安装或二次开发需要 Node.js 22+ 与 pnpm；仅从 npm 安装无需单独执行 `pnpm install`。
+
+## 安装
+
+### 从 npm 安装
+
+在任意 PowerShell 目录执行。`dsh plugin` 会安装 npm 包并自动应用包内的 `cordis.patch.yml`：
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+dsh plugin --profile web add @michengai/dsh-agency-agents
+dsh --profile web --dump-config
+```
+
+配置输出中应包含 `agency-agents` 与 `agency-agents-remote`。安装后重启 DSH Web 并在浏览器硬刷新；请勿手工复制客户端文件，否则设置页所需的 Remote 服务不会被挂载。
+
+若镜像未同步最新版本，可在安装命令末尾追加 `--registry=https://registry.npmjs.org/`。
+
+### 从源码安装
+
+适用于调试或使用未发布改动。克隆后的本地路径就是插件安装路径：
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+Set-Location D:\Repository\deepseek-harness-plugin
+git clone https://github.com/MichengAI/dsh-agency-agents.git
+Set-Location .\dsh-agency-agents
+pnpm install --frozen-lockfile
+pnpm build
+dsh plugin --profile web add .
+dsh --profile web --dump-config
+```
+
+完成后重启 DSH Web 并硬刷新浏览器。`dsh plugin ... add .` 会读取当前目录的包信息和 `cordis.patch.yml`；不要改为直接复制 `lib` 目录。
+
+## 使用
+
+1. 打开「设置 → 智能体」，启用需要的专家。
+2. 在对话输入框选择「智能体」模式。
+3. 用名称和 slug 明确指定专家，并给出完整任务。例如：
 
 ```text
 召唤智能体「代码审查工程师」（engineering-code-reviewer）处理以下任务：
 审查当前工作区的改动，按严重程度列出可复现的问题。
 ```
 
-![召唤智能体的输入方式](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
+也可由主会话先调用 `list_experts(division?)` 查找专家，再使用 `summon_expert(expert, task)` 委派任务。名称不唯一时，请使用 slug。
 
-## 工作方式
+## 配置与边界
 
-| 阶段 | 主会话与插件的职责 |
-| --- | --- |
-| 发现 | `list_experts(division?)` 无参返回分区和数量；传入分区后展开对应智能体。 |
-| 委派 | `summon_expert(expert, task)` 按 slug 或唯一名称启动一次性子代理。 |
-| 交付 | 子代理返回专业结论；主会话结合原始上下文完成判断与汇总。 |
+| 配置项 | 默认值 | 作用 |
+| --- | --- | --- |
+| `root` | 包内专家资产 | 外部专家根目录；显式配置优先。 |
+| `provider` | `spawn` | DSH 子代理 provider，可使用支持 persona 与工具过滤的 `fork`。 |
+| `divisions` | 17 个标准分区 | 需要扫描的顶层分区。 |
+| `maxDepth` | 未设置 | 正整数形式的绝对子代理深度上限。 |
 
-- 默认内置 271 名智能体，安装后无需依赖外部目录。
-- 可通过 `root` 配置或 `AGENCY_AGENTS_ROOT` 环境变量覆盖为自行同步的智能体目录。
-- 子代理无法调用 `summon_expert` 或 `list_experts`，避免递归委派、无效花名册浏览和不可控消耗。
-- 支持 `spawn` 或 `fork` provider；provider 必须支持 persona 和工具过滤能力。
+也可设置 `AGENCY_AGENTS_ROOT` 环境变量指定外部专家目录。子代理 provider 必须支持 persona 和工具过滤能力。
 
-## 安装
+## 二次开发
+
+- Host 端入口：[src\index.ts](src/index.ts)，负责加载专家目录、注册工具和设置项。
+- Remote 契约与实现：[src\remote-contract.ts](src/remote-contract.ts)、[src\remote.ts](src/remote.ts)。
+- 客户端入口：[src\client\index.ts](src/client/index.ts)，负责设置页、输入框按钮与 `@` 触发器。
+- 内置 persona 位于 `assets\agency-agents`；保留其中的 MIT 许可证和 [NOTICE](NOTICE) 归属说明。
+
+修改 `src` 或 `assets` 后，重新构建并以本地目录安装验证：
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-dsh plugin --profile default add @michengai/dsh-agency-agents
-dsh --profile default --dump-config
+pnpm build
+pnpm test
+pnpm verify
+dsh plugin --profile web add .
 ```
 
-将 `default` 替换为目标 profile。第二条命令应显示 `agency-agents` 与 `agency-agents-remote` 两个组合项；后者是设置页读写启用状态所需的 Host Remote 服务。请通过 `dsh plugin` 安装，手工复制客户端文件而未应用 `cordis.patch.yml` 会使设置页显示 Remote 不可用。本地开发时可将包名替换为 `.`。
+发布包只包含 `lib`、`assets`、补丁和文档；不要将 `node_modules` 或本地开发文件加入发布内容。
 
-## 配置
-
-| 键 | 默认值 | 说明 |
-| --- | --- | --- |
-| `root` | 包内智能体资产 | 外部智能体根目录；显式配置优先于包内资产。 |
-| `provider` | `spawn` | DSH 子代理 provider。 |
-| `divisions` | 全部 17 个标准分区 | 需要扫描的顶层分区。 |
-| `maxDepth` | 不设置 | 可选的正整数绝对子代理深度上限；provider 必须支持深度限制。 |
-
-## 内置智能体来源与授权
-
-智能体 persona 来源于 [The Agency](https://github.com/msitarzewski/agency-agents)，版权归 AgentLand Contributors。内置快照及其原始许可证位于 [assets\agency-agents](assets/agency-agents)。
-
-**授权边界：**本插件的 TypeScript 源码、构建脚本与项目文档采用 [Apache License 2.0](LICENSE)；随包分发的上游智能体 persona 仍采用 MIT，完整文本见 [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE)。更多说明见 [NOTICE](NOTICE)。
-
-全部内置智能体按分区列在 [智能体清单](docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md)。
-
-## 开发与验证
+## 验证
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-pnpm install
 pnpm build
 pnpm test
 pnpm verify
 ```
 
-`prepublishOnly` 会自动执行构建、测试和发布完整性验证。
+`prepublishOnly` 会在发布前依次执行上述构建、测试和包完整性检查。
+
+## 许可证与归属
+
+本项目 TypeScript 源码、构建脚本和文档采用 [Apache License 2.0](LICENSE)。内置专家 persona 源自 [The Agency](https://github.com/msitarzewski/agency-agents)，仍采用 MIT，许可证位于 [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE)。
