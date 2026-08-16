@@ -7,7 +7,8 @@ import z from '@deepseek-ai/schemastery'
 import { Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { writeErrorMessage } from './client/index.js'
+import { writeErrorKey, writeErrorMessage } from './client/index.js'
+import { en, zh, type AgencyKey } from './client/locales.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 
 describe('Config', () => {
@@ -353,9 +354,24 @@ describe('summon_expert', () => {
 })
 
 describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
-  it('将 Settings revision 冲突映射为用户可理解的提示', () => {
-    expect(writeErrorMessage(new Error('settings namespace "agency-agents" changed since it was read (expected revision 0, now 1)')))
-      .toBe('配置已被其他窗口修改，已为您刷新。')
+  it('将 Settings revision 冲突映射到 i18n key，并区分刷新成败', () => {
+    const conflict = new Error('settings namespace "agency-agents" changed since it was read (expected revision 0, now 1)')
+    expect(writeErrorKey(conflict)).toBe('error.conflict')
+    expect(writeErrorKey(conflict, { refreshed: true })).toBe('error.conflict.refreshed')
+    expect(writeErrorKey(conflict, { refreshed: false })).toBe('error.conflict.refreshFailed')
+    expect(writeErrorMessage(conflict)).toBe(zh['error.conflict'])
+    expect(writeErrorMessage(conflict, { refreshed: true })).toBe(zh['error.conflict.refreshed'])
+    expect(writeErrorMessage(conflict, { refreshed: false })).toBe(zh['error.conflict.refreshFailed'])
+  })
+
+  it('冲突文案走传入的 t，非冲突错误忽略 refreshed 并原样返回', () => {
+    const conflict = new Error('settings namespace "agency-agents" changed since it was read (expected revision 0, now 1)')
+    const tEn = (key: AgencyKey): string => en[key]
+    expect(writeErrorMessage(conflict, { refreshed: true, t: tEn })).toBe(en['error.conflict.refreshed'])
+    expect(writeErrorMessage(conflict, { refreshed: false, t: tEn })).toBe(en['error.conflict.refreshFailed'])
+    expect(writeErrorKey(new Error('network down'))).toBeNull()
+    expect(writeErrorMessage(new Error('network down'), { refreshed: true, t: tEn })).toBe('network down')
+    expect(writeErrorMessage('plain')).toBe('plain')
   })
 
   it('getEnabled/setEnabled 通过 settings 服务读写启用列表', async () => {

@@ -136,10 +136,23 @@ interface EnabledState {
   readonly revision: number
 }
 
-const SETTINGS_CONFLICT_MESSAGE = '配置已被其他窗口修改，已为您刷新。'
+/** 将写失败映射到 agency 词条；非冲突错误返回 null，由调用方展示原始消息。 */
+export function writeErrorKey(error: unknown, options?: { readonly refreshed?: boolean }): AgencyKey | null {
+  if (error instanceof Error && error.message.includes('changed since it was read')) {
+    if (options?.refreshed === true) return 'error.conflict.refreshed'
+    if (options?.refreshed === false) return 'error.conflict.refreshFailed'
+    return 'error.conflict'
+  }
+  return null
+}
 
-export function writeErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.includes('changed since it was read')) return SETTINGS_CONFLICT_MESSAGE
+/** 写失败时的用户可见文案。冲突场景必须显式传入 refreshed；传入 t 时按当前语言翻译。 */
+export function writeErrorMessage(
+  error: unknown,
+  options?: { readonly refreshed?: boolean; readonly t?: (key: AgencyKey) => string },
+): string {
+  const key = writeErrorKey(error, options)
+  if (key !== null) return (options?.t ?? ((item: AgencyKey) => zh[item]))(key)
   return error instanceof Error ? error.message : String(error)
 }
 
@@ -273,6 +286,7 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
 
   const toggle = (slug: string): void => {
     if (state === null || saving.current) return
+    const previous = state
     const next = new Set(state.enabled)
     if (next.has(slug)) next.delete(slug)
     else next.add(slug)
@@ -280,14 +294,19 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
     setIsSaving(true)
     setState({ enabled: next, revision: state.revision })
     void writeEnabled(props.remote, next, state.revision)
-      .then(setState)
+      .then((current) => {
+        setState(current)
+        setError(null)
+      })
       .catch(async (err: unknown) => {
         try {
           setState(await readEnabled(props.remote))
+          setError(writeErrorMessage(err, { refreshed: true, t: props.t }))
         } catch {
-          // 保留当前乐观状态；原始错误仍会显示给用户。
+          // 读也失败时回滚乐观态，避免界面显示未落盘的开关结果。
+          setState(previous)
+          setError(writeErrorMessage(err, { refreshed: false, t: props.t }))
         }
-        setError(writeErrorMessage(err))
       })
       .finally(() => {
         saving.current = false
