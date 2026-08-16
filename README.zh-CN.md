@@ -18,8 +18,8 @@
 
 ## 功能概览
 
-- 在「设置 → 智能体」中按 17 个分区浏览、启用或停用内置专家。
-- 在输入框的「智能体」模式中按名称或 slug 召唤已启用的专家处理完整任务。
+- 在「设置 → 专家」中按 17 个分区浏览、启用或停用内置专家。
+- 在输入框的「专家」中按名称或 slug 召唤已启用的专家处理完整任务。
 - 提供 `list_experts` 与 `summon_expert` 工具，分别用于发现专家和启动一次性子代理。
 - 内置 271 份 persona，无需额外下载；也可接入自行同步的专家目录。
 
@@ -27,13 +27,17 @@
 
 ## 界面预览
 
-在「设置 → 智能体」中启用需要的专家：
+在「设置 → 专家」中启用需要的专家：
 
-![DSH 智能体面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
+![DSH 专家面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
 
-再把输入框切到「智能体」模式，按名称和 slug 召唤专家：
+在输入框点击「专家」，选择已启用的专家：
 
-![召唤智能体的输入方式](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
+![专家选择器](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-picker.png)
+
+再用名称和 slug 写出完整任务：
+
+![召唤专家的输入方式](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
 
 ## 前置条件
 
@@ -78,12 +82,12 @@ dsh --profile web --dump-config
 
 ## 使用
 
-1. 打开「设置 → 智能体」，启用需要的专家。
-2. 在对话输入框选择「智能体」模式。
+1. 打开「设置 → 专家」，启用需要的专家。
+2. 在对话输入框点击「专家」，选择已启用的专家。
 3. 用名称和 slug 明确指定专家，并给出完整任务。例如：
 
 ```text
-召唤智能体「代码审查工程师」（engineering-code-reviewer）处理以下任务：
+召唤专家「代码审查工程师」（engineering-code-reviewer）处理以下任务：
 审查当前工作区的改动，按严重程度列出可复现的问题。
 ```
 

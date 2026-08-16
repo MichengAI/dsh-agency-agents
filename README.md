@@ -18,8 +18,8 @@
 
 ## Features
 
-- Browse, enable, and disable bundled experts across 17 divisions in **Settings → Agents**.
-- Summon enabled experts by name or slug from the composer’s **Agent** mode.
+- Browse, enable, and disable bundled experts across 17 divisions in **Settings → Experts**.
+- Summon enabled experts by name or slug from the composer's **Experts** picker.
 - Use `list_experts` to discover experts and `summon_expert` to start a one-shot specialist subagent.
 - Use 271 bundled personas immediately, or connect a separately synchronized expert directory.
 
@@ -27,13 +27,17 @@ The parent session keeps task context, judgment, and the final answer. Expert ch
 
 ## Screenshots
 
-Enable the experts you need in **Settings → Agents**:
+Enable the experts you need in **Settings → Experts**:
 
-![DSH Agents panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
+![DSH Experts panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
 
-Then switch the composer to **Agent** mode and summon an expert by name and slug:
+Open the composer's **Experts** picker and choose an enabled expert:
 
-![Summoning an agent from the composer](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
+![Experts picker](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-picker.png)
+
+Then write the complete task with the expert name and slug:
+
+![Summoning an expert from the composer](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
 
 ## Prerequisites
 
@@ -78,12 +82,12 @@ Restart DSH Web and hard-refresh the browser. `dsh plugin ... add .` reads the p
 
 ## Usage
 
-1. Open **Settings → Agents** and enable the needed experts.
-2. Select **Agent** mode in the composer.
+1. Open **Settings → Experts** and enable the needed experts.
+2. Open the composer's **Experts** picker and choose an enabled expert.
 3. Name the expert and slug, then provide the complete task.
 
 ```text
-Summon the "Code Review Engineer" agent (engineering-code-reviewer) for this task:
+Summon the "Code Review Engineer" expert (engineering-code-reviewer) for this task:
 Review the changes in the current workspace and list reproducible issues by severity.
 ```
 
