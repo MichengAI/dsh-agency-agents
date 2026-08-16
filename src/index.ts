@@ -32,6 +32,7 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
+import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, type LocaleId } from './i18n.js'
 
 export const name = 'agency-agents'
 export const inject = ['tools', 'subagents', 'systemPrompt']
@@ -70,6 +71,7 @@ interface Expert {
   readonly name: string
   readonly nameEn: string
   readonly description: string
+  readonly descriptionEn: string
   readonly emoji: string
   readonly division: string
   readonly divisionZh: string
@@ -110,7 +112,7 @@ export function resolveCatalogRoot(root: string): string {
 function normalizeMaxDepth(value: unknown): number | undefined {
   if (value === undefined || value === null) return undefined
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) {
-    throw new Error('agency-agents config maxDepth must be a positive safe integer')
+    throw new Error(formatHost('zh', 'error.maxDepth'))
   }
   return value
 }
@@ -118,6 +120,7 @@ function normalizeMaxDepth(value: unknown): number | undefined {
 interface Frontmatter {
   name?: string
   description?: string
+  descriptionEn?: string
   emoji?: string
   body: string
 }
@@ -158,7 +161,7 @@ export function parseFrontmatter(raw: string): Frontmatter | undefined {
     const m = fm.match(new RegExp(`^${key}\\s*:\\s*(.*)$`, 'm'))
     return m === null ? undefined : unquote(m[1].trim())
   }
-  return { name: get('name'), description: get('description'), emoji: get('emoji'), body }
+  return { name: get('name'), description: get('description'), descriptionEn: get('descriptionEn'), emoji: get('emoji'), body }
 }
 
 /** Concatenate the text blocks of a subagent output. */
@@ -173,10 +176,10 @@ function textBlocks(blocks: readonly ContentBlock[]): string {
 async function assertDirectory(root: string): Promise<void> {
   const info = await stat(root).catch(() => undefined)
   if (info === undefined) {
-    throw new Error(`智能体目录 root 不存在或无法访问："${root}"。请设置环境变量 ${ROOT_ENV} 或提供正确路径。`)
+    throw new Error(formatHost('zh', 'error.rootMissing', { root, env: ROOT_ENV }))
   }
   if (!info.isDirectory()) {
-    throw new Error(`智能体目录 root "${root}" 不是目录`)
+    throw new Error(formatHost('zh', 'error.rootNotDir', { root }))
   }
 }
 
@@ -226,6 +229,7 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
         name: ZH_NAME[slug] ?? parsed.name,
         nameEn: parsed.name,
         description: parsed.description,
+        descriptionEn: parsed.descriptionEn ?? '',
         emoji: parsed.emoji ?? '',
         division: source.division,
         divisionZh: ZH_DIVISION[source.division] ?? source.division,
@@ -234,15 +238,15 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
     })
   }
   if (map.size === 0) {
-    throw new Error(`在 root "${root}" 下未发现任何智能体（*.md 文件）。请确认路径正确。`)
+    throw new Error(formatHost('zh', 'error.catalogEmpty', { root }))
   }
   return map
 }
 
 /** 根据 slug 或名称解析智能体；任意多命中都必须要求调用者提供更精确的 slug。 */
-export function resolveExpert<T extends { readonly slug: string; readonly name: string; readonly nameEn?: string }>(experts: readonly T[], query: unknown): T {
+export function resolveExpert<T extends { readonly slug: string; readonly name: string; readonly nameEn?: string }>(experts: readonly T[], query: unknown, locale: LocaleId = 'zh'): T {
   const q = String(query).trim().toLowerCase()
-  if (q.length === 0) throw new Error('expert is required')
+  if (q.length === 0) throw new Error(formatHost(locale, 'error.expertRequired'))
   const bySlug = experts.find((expert) => expert.slug.toLowerCase() === q)
   if (bySlug !== undefined) return bySlug
   const exactNames = experts.filter((expert) => expert.name.toLowerCase() === q || expert.nameEn?.toLowerCase() === q)
@@ -253,9 +257,9 @@ export function resolveExpert<T extends { readonly slug: string; readonly name: 
   if (matches.length === 1) return matches[0]
   if (matches.length > 1) {
     const preview = matches.slice(0, 12).map((expert) => expert.slug).join(', ')
-    throw new Error(`Ambiguous expert "${String(query)}"; candidates: ${preview}. Use list_experts to pick an exact slug.`)
+    throw new Error(formatHost(locale, 'error.expertAmbiguous', { query: String(query), candidates: preview }))
   }
-  throw new Error(`No expert matched "${String(query)}". Call list_experts to see the roster.`)
+  throw new Error(formatHost(locale, 'error.expertMissing', { query: String(query) }))
 }
 
 export function apply(ctx: Context, config: Config): void {
@@ -266,6 +270,7 @@ export function apply(ctx: Context, config: Config): void {
     onChange: () => {},
   })
   const enabledSet = (): ReadonlySet<string> => new Set(enabledSource())
+  const activeLocale = (): LocaleId => readHostLocale(ctx)
   let experts = new Map<string, Expert>()
   let loadError: string | null = null
   const ready = loadCatalog(resolveCatalogRoot(config.root), config.divisions)
@@ -274,10 +279,10 @@ export function apply(ctx: Context, config: Config): void {
 
   async function ensureReady(): Promise<void> {
     await ready
-    if (loadError !== null) throw new Error(`agency-agents catalog failed to load: ${loadError}`)
+    if (loadError !== null) throw new Error(formatHost(activeLocale(), 'error.catalogLoad', { detail: loadError }))
   }
 
-  function groupByDivision(withExperts: boolean): Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; emoji: string; description: string }> }> {
+  function groupByDivision(withExperts: boolean, locale: LocaleId): Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; emoji: string; description: string }> }> {
     const groups = new Map<string, Expert[]>()
     const enabled = enabledSet()
     for (const expert of experts.values()) {
@@ -295,7 +300,7 @@ export function apply(ctx: Context, config: Config): void {
           experts: list
             .slice()
             .sort((a, b) => a.slug.localeCompare(b.slug))
-            .map((e) => ({ slug: e.slug, name: e.name, emoji: e.emoji, description: truncate(e.description, DESCRIPTION_LIMIT) })),
+            .map((e) => ({ slug: e.slug, name: localizedExpertName(e, locale), emoji: e.emoji, description: truncate(localizedExpertDescription(e, locale), DESCRIPTION_LIMIT) })),
         } : {}),
       }))
   }
@@ -310,31 +315,17 @@ export function apply(ctx: Context, config: Config): void {
       schema: { type: 'object', additionalProperties: false, properties: { divisions: { type: 'array', required: true, items: { type: 'json' } }, total: { type: 'number', required: true } } },
       render: (args, value) => {
         const divisions = value.divisions as Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; emoji: string; description: string }> }>
-        if (divisions.length === 0) {
-          const division = args.division === undefined ? '' : String(args.division).trim()
-          return [{ type: 'text', text: division === '' ? 'No experts available.' : `No experts matched division "${division}".` }]
-        }
-        const lines: string[] = []
-        for (const group of divisions) {
-          lines.push(`## ${group.division} (${group.count})`)
-          for (const expert of group.experts ?? []) {
-            lines.push(`- ${expert.emoji ? `${expert.emoji} ` : ''}${expert.name} — \`${expert.slug}\` — ${expert.description}`)
-          }
-        }
-        lines.unshift(`${value.total as number} experts across ${divisions.length} divisions:`)
-        return [{ type: 'text', text: lines.join('\n') }]
+        return [{ type: 'text', text: renderExpertList(activeLocale(), args, { divisions, total: value.total as number }) }]
       },
     },
     async execute(args) {
       await ensureReady()
-      const query = args.division === undefined ? '' : String(args.division).trim().toLowerCase()
+      const query = args.division === undefined ? '' : String(args.division).trim()
       const hasFilter = query !== ''
-      const groups = groupByDivision(hasFilter)
+      const locale = activeLocale()
+      const groups = groupByDivision(hasFilter, locale)
       if (hasFilter) {
-        const filtered = groups.filter((g) => {
-          const division = g.division.toLowerCase()
-          return division === query
-        })
+        const filtered = groups.filter((g) => matchDivision(query, g.division))
         return { divisions: filtered, total: filtered.reduce((n, g) => n + g.count, 0) }
       }
       return { divisions: groups, total: experts.size }
@@ -342,14 +333,15 @@ export function apply(ctx: Context, config: Config): void {
   }))
 
   async function runExpert(query: unknown, task: unknown, exec: ToolRunContext): Promise<{ expert: string; answer: string }> {
-    if (exec.agent === undefined) throw new Error('summon_expert requires a calling agent')
+    const locale = activeLocale()
+    if (exec.agent === undefined) throw new Error(formatHost(locale, 'error.summonRequiresAgent'))
     const provider = ctx.subagents.getProvider(config.provider)
-    if (provider === undefined) throw new Error(`subagent provider "${config.provider}" is not registered`)
-    if (!provider.capabilities.persona) throw new Error(`subagent provider "${config.provider}" does not support expert personas`)
-    if (!provider.capabilities.toolFilter) throw new Error(`subagent provider "${config.provider}" cannot prevent recursive expert delegation`)
-    if (maxDepth !== undefined && !provider.capabilities.depthLimit) throw new Error(`subagent provider "${config.provider}" does not support maxDepth`)
-    const expert = resolveExpert([...experts.values()], query)
-    if (!enabledSet().has(expert.slug)) throw new Error(`expert "${expert.name}" is disabled`)
+    if (provider === undefined) throw new Error(formatHost(locale, 'error.providerMissing', { provider: config.provider }))
+    if (!provider.capabilities.persona) throw new Error(formatHost(locale, 'error.providerNoPersona', { provider: config.provider }))
+    if (!provider.capabilities.toolFilter) throw new Error(formatHost(locale, 'error.providerNoToolFilter', { provider: config.provider }))
+    if (maxDepth !== undefined && !provider.capabilities.depthLimit) throw new Error(formatHost(locale, 'error.providerNoMaxDepth', { provider: config.provider }))
+    const expert = resolveExpert([...experts.values()], query, locale)
+    if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
     const run: SubagentRun = await ctx.subagents.start(config.provider, {
       label: `expert:${expert.slug}`,
       prompt: [{ type: 'text', text: String(task) }],
@@ -363,8 +355,8 @@ export function apply(ctx: Context, config: Config): void {
       const result = await run.result
       const text = textBlocks(result.output)
       if (result.stopReason !== 'completed') {
-        const detail = text.length > 0 ? `\nPartial output:\n${text}` : ''
-        throw new Error(`expert run ended with "${result.stopReason}"${detail}`)
+        const detail = text.length > 0 ? formatHost(locale, 'error.partialOutput', { text }) : ''
+        throw new Error(formatHost(locale, 'error.expertRun', { reason: result.stopReason, detail }))
       }
       return { expert: expert.slug, answer: text }
     } finally {
@@ -416,9 +408,9 @@ export function apply(ctx: Context, config: Config): void {
     },
     async execute(args, exec) {
       await ensureReady()
-      if (exec.agent === undefined) throw new Error('summon_experts requires a calling agent')
+      if (exec.agent === undefined) throw new Error(formatHost(activeLocale(), 'error.summonManyRequiresAgent'))
       const specs = args.experts
-      if (!Array.isArray(specs) || specs.length === 0) throw new Error('experts must be a non-empty array')
+      if (!Array.isArray(specs) || specs.length === 0) throw new Error(formatHost(activeLocale(), 'error.expertsEmpty'))
       const results = await Promise.all(specs.map((spec) => runExpert(spec.expert, spec.task, exec)))
       return { results }
     },

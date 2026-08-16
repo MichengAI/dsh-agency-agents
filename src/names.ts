@@ -19,6 +19,27 @@ export const ZH_DIVISION: Readonly<Record<string, string>> = {
   testing: '测试',
 }
 
+/** 分区目录名 → 英文分区名。 */
+export const EN_DIVISION: Readonly<Record<string, string>> = {
+  academic: 'Academic',
+  design: 'Design',
+  engineering: 'Engineering',
+  finance: 'Finance',
+  'game-development': 'Game Development',
+  gis: 'GIS',
+  healthcare: 'Healthcare',
+  marketing: 'Marketing',
+  'paid-media': 'Paid Media',
+  product: 'Product',
+  'project-management': 'Project Management',
+  sales: 'Sales',
+  security: 'Security',
+  'spatial-computing': 'Spatial Computing',
+  specialized: 'Specialized',
+  support: 'Support',
+  testing: 'Testing',
+}
+
 /** 智能体 slug（文件名去 .md）→ 中文名（现实岗位）。缺省时回退英文 frontmatter name。 */
 export const ZH_NAME: Readonly<Record<string, string>> = {
   'academic-anthropologist': '人类学家',

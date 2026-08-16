@@ -3,7 +3,7 @@
  * 完全一致（缺 key 或多余 key 均为编译错误）。模板占位符使用平台约定的
  * {word} 形式（locale 服务 translate 以 /\{(\w+)\}/g 替换）。
  */
-import { ZH_DIVISION } from '../names.js'
+import { EN_DIVISION, ZH_DIVISION } from '../names.js'
 
 /** 简体中文词条（key 集真相源）。 */
 export const zh = {
@@ -25,7 +25,6 @@ export const zh = {
   'summary.group': '{count} 个',
   'button.title': '召唤专家',
   'menu.empty': '暂无可召唤的专家',
-  'group.count': '{division}（{count}）',
   'summon.instruction': '召唤专家「{name}」（{slug}）处理以下任务：',
   'summon.instruction.withTask': '召唤专家「{name}」（{slug}）处理以下任务：\n{task}',
   'division.academic': ZH_DIVISION.academic,
@@ -70,24 +69,23 @@ export const en = {
   'summary.group': '{count} items',
   'button.title': 'Summon expert',
   'menu.empty': 'No experts available yet',
-  'group.count': '{division} ({count})',
   'summon.instruction': 'Summon expert "{name}" ({slug}) to handle the following task:',
   'summon.instruction.withTask': 'Summon expert "{name}" ({slug}) to handle the following task:\n{task}',
-  'division.academic': 'Academic',
-  'division.design': 'Design',
-  'division.engineering': 'Engineering',
-  'division.finance': 'Finance',
-  'division.game-development': 'Game Development',
-  'division.gis': 'GIS',
-  'division.healthcare': 'Healthcare',
-  'division.marketing': 'Marketing',
-  'division.paid-media': 'Paid Media',
-  'division.product': 'Product',
-  'division.project-management': 'Project Management',
-  'division.sales': 'Sales',
-  'division.security': 'Security',
-  'division.spatial-computing': 'Spatial Computing',
-  'division.specialized': 'Specialized',
-  'division.support': 'Support',
-  'division.testing': 'Testing',
+  'division.academic': EN_DIVISION.academic,
+  'division.design': EN_DIVISION.design,
+  'division.engineering': EN_DIVISION.engineering,
+  'division.finance': EN_DIVISION.finance,
+  'division.game-development': EN_DIVISION['game-development'],
+  'division.gis': EN_DIVISION.gis,
+  'division.healthcare': EN_DIVISION.healthcare,
+  'division.marketing': EN_DIVISION.marketing,
+  'division.paid-media': EN_DIVISION['paid-media'],
+  'division.product': EN_DIVISION.product,
+  'division.project-management': EN_DIVISION['project-management'],
+  'division.sales': EN_DIVISION.sales,
+  'division.security': EN_DIVISION.security,
+  'division.spatial-computing': EN_DIVISION['spatial-computing'],
+  'division.specialized': EN_DIVISION.specialized,
+  'division.support': EN_DIVISION.support,
+  'division.testing': EN_DIVISION.testing,
 } satisfies Record<AgencyKey, string>

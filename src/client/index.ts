@@ -61,7 +61,18 @@ const EXPERTS: ReadonlyArray<ExpertView> = ROSTER
   }))
   .sort((a, b) => a.division.localeCompare(b.division) || a.slug.localeCompare(b.slug))
 
-function groupByDivision(list: ReadonlyArray<ExpertView>): ExpertGroup[] {
+/** 按当前语言比较专家显示名，供设置页和菜单分组排序。 */
+export function compareExpertName(
+  a: { readonly name: string; readonly nameEn: string },
+  b: { readonly name: string; readonly nameEn: string },
+  active: 'zh' | 'en',
+): number {
+  const left = active === 'en' ? a.nameEn : a.name
+  const right = active === 'en' ? b.nameEn : b.name
+  return left.localeCompare(right, active === 'en' ? 'en' : 'zh')
+}
+
+function groupByDivision(list: ReadonlyArray<ExpertView>, active: 'zh' | 'en'): ExpertGroup[] {
   const groups = new Map<string, ExpertView[]>()
   for (const e of list) {
     const arr = groups.get(e.division) ?? []
@@ -71,7 +82,7 @@ function groupByDivision(list: ReadonlyArray<ExpertView>): ExpertGroup[] {
   return DIVISION_ORDER.filter((d) => groups.has(d)).map((d) => ({
     division: d,
     divisionZh: ZH_DIVISION[d] ?? d,
-    experts: (groups.get(d) ?? []).slice().sort((a, b) => a.name.localeCompare(b.name, 'zh')),
+    experts: (groups.get(d) ?? []).slice().sort((a, b) => compareExpertName(a, b, active)),
   }))
 }
 
@@ -269,7 +280,7 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
     setOpen(false)
   }
 
-  const groups = groupByDivision(EXPERTS.filter((e) => enabled.has(e.slug)))
+  const groups = groupByDivision(EXPERTS.filter((e) => enabled.has(e.slug)), props.getActive())
   const menu = open
     ? React.createElement('div', { className: 'aag-menu' },
       groups.length === 0
@@ -339,7 +350,7 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
   if (state === null) {
     nodes.push(React.createElement('div', { key: 'loading', className: 'aag-note' }, props.t('settings.loading')))
   } else {
-    const groups = groupByDivision(EXPERTS)
+    const groups = groupByDivision(EXPERTS, props.getActive())
     const enabledCount = [...state.enabled].filter((slug) => EXPERTS.some((e) => e.slug === slug)).length
     const total = EXPERTS.length
     nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },

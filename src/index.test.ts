@@ -8,8 +8,9 @@ import z from '@deepseek-ai/schemastery'
 import { Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
+import { compareExpertName, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
+import { formatHost, matchDivision, readHostLocale, renderExpertList, resolveHostLocale } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 
 describe('Config', () => {
@@ -72,9 +73,10 @@ describe('truncate', () => {
 
 describe('parseFrontmatter', () => {
   it('解析带引号的 emoji', () => {
-    const parsed = parseFrontmatter('---\nname: X\ndescription: D\nemoji: "📘"\n---\nbody')
+    const parsed = parseFrontmatter('---\nname: X\ndescription: D\ndescriptionEn: E\nemoji: "📘"\n---\nbody')
     expect(parsed?.name).toBe('X')
     expect(parsed?.description).toBe('D')
+    expect(parsed?.descriptionEn).toBe('E')
     expect(parsed?.emoji).toBe('📘')
     expect(parsed?.body).toBe('body')
   })
@@ -97,10 +99,11 @@ describe('loadCatalog', () => {
 
   it('递归加载 division 子目录中的智能体', async () => {
     await mkdir(join(dir, 'game-development', 'unity'), { recursive: true })
-    await writeFile(join(dir, 'game-development', 'economy-designer.md'), '---\nname: E\ndescription: d\n---\nbody', 'utf8')
+    await writeFile(join(dir, 'game-development', 'economy-designer.md'), '---\nname: E\ndescription: 中文简介\ndescriptionEn: English intro\n---\nbody', 'utf8')
     await writeFile(join(dir, 'game-development', 'unity', 'unity-architect.md'), '---\nname: U\ndescription: d\n---\nbody', 'utf8')
     const map = await loadCatalog(dir, ['game-development'])
     expect(map.has('economy-designer')).toBe(true)
+    expect(map.get('economy-designer')?.descriptionEn).toBe('English intro')
     expect(map.has('unity-architect')).toBe(true)
     expect(map.get('unity-architect')?.division).toBe('game-development')
   })
@@ -167,7 +170,7 @@ describe('resolveExpert', () => {
 
   it('唯一部分匹配时返回智能体，无匹配时给出可操作错误', () => {
     expect(resolveExpert(experts, 'unity').slug).toBe('Unity-Architect')
-    expect(() => resolveExpert(experts, 'missing')).toThrow('Call list_experts')
+    expect(() => resolveExpert(experts, 'missing')).toThrow(formatHost('zh', 'error.expertMissing', { query: 'missing' }))
   })
 })
 
@@ -276,7 +279,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    expect(() => apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: 0 })).toThrow('positive safe integer')
+    expect(() => apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: 0 })).toThrow(formatHost('zh', 'error.maxDepth'))
   })
 
   it('分区筛选会去除空白并要求精确 division', async () => {
@@ -301,9 +304,9 @@ describe('summon_expert', () => {
   })
 
   it.each([
-    ['expert personas', { persona: false, toolFilter: true, depthLimit: true }, undefined, 'does not support expert personas'],
-    ['toolFilter', { persona: true, toolFilter: false, depthLimit: true }, undefined, 'cannot prevent recursive expert delegation'],
-    ['maxDepth', { persona: true, toolFilter: true, depthLimit: false }, 1, 'does not support maxDepth'],
+    ['expert personas', { persona: false, toolFilter: true, depthLimit: true }, undefined, formatHost('zh', 'error.providerNoPersona', { provider: 'spawn' })],
+    ['toolFilter', { persona: true, toolFilter: false, depthLimit: true }, undefined, formatHost('zh', 'error.providerNoToolFilter', { provider: 'spawn' })],
+    ['maxDepth', { persona: true, toolFilter: true, depthLimit: false }, 1, formatHost('zh', 'error.providerNoMaxDepth', { provider: 'spawn' })],
   ])('provider 缺少 %s 能力时给出明确错误', async (_capability, capabilities, maxDepth, message) => {
     const tools: unknown[] = []
     const ctx = {
@@ -350,7 +353,7 @@ describe('summon_expert', () => {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
 
-    await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow('Partial output:\npartial result')
+    await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow(formatHost('zh', 'error.expertRun', { reason: 'cancelled', detail: formatHost('zh', 'error.partialOutput', { text: 'partial result' }) }))
   })
 })
 
@@ -456,5 +459,122 @@ describe('applyExpertSummon（输入框召唤）', () => {
   it('没有 inputActions 时只生成指令，不抛错也不发送', () => {
     expect(() => applyExpertSummon({ instruction: t('summon.instruction', { name: '代码审查', slug: 'reviewer' }) })).not.toThrow()
     expect(() => applyExpertSummon({ inputActions: undefined, instruction: 'noop' })).not.toThrow()
+  })
+})
+describe('宿主 i18n', () => {
+  it('zh/en 词条 key 对齐，且只有显式 en 才切换语言', () => {
+    expect(Object.keys(zh).sort()).toEqual(Object.keys(en).sort())
+    expect(Object.hasOwn(zh, 'group.count')).toBe(false)
+    expect(resolveHostLocale('en')).toBe('en')
+    expect(resolveHostLocale('zh')).toBe('zh')
+    expect(resolveHostLocale('en-US')).toBe('zh')
+    expect(readHostLocale({})).toBe('zh')
+    expect(readHostLocale({ settings: { get: () => ({ preference: 'en' }) } })).toBe('en')
+    expect(readHostLocale({ settings: { get: () => { throw new Error('missing') } } })).toBe('zh')
+  })
+
+  it('分区查询同时认 key、中文名和英文名', () => {
+    expect(matchDivision('engineering', 'engineering')).toBe(true)
+    expect(matchDivision(' 工程 ', 'engineering')).toBe(true)
+    expect(matchDivision('Game Development', 'game-development')).toBe(true)
+    expect(matchDivision('en', 'engineering')).toBe(false)
+  })
+
+  it('list_experts 渲染按语言切换分区名和外壳句子', () => {
+    const value = {
+      divisions: [{
+        division: 'engineering',
+        count: 1,
+        experts: [{ slug: 'engineering-code-reviewer', name: '代码审查工程师', emoji: '🔍', description: '中文简介' }],
+      }],
+      total: 1,
+    }
+    expect(renderExpertList('zh', {}, value)).toContain('1 位专家，覆盖 1 个分区：')
+    expect(renderExpertList('zh', {}, value)).toContain('## 工程（1）')
+    expect(renderExpertList('en', {}, value)).toContain('1 experts across 1 divisions:')
+    expect(renderExpertList('en', {}, value)).toContain('## Engineering (1)')
+    expect(renderExpertList('zh', {}, { divisions: [], total: 0 })).toBe(formatHost('zh', 'list.empty'))
+    expect(renderExpertList('en', { division: 'security' }, { divisions: [], total: 0 })).toBe(formatHost('en', 'list.emptyDivision', { division: 'security' }))
+  })
+
+  it('resolveExpert 缺省中文报错，显式 en 走英文', () => {
+    const experts = [
+      { slug: 'a', name: '后端架构师', nameEn: 'Backend Architect' },
+      { slug: 'b', name: '后端架构师', nameEn: 'Backend Architect' },
+    ]
+    expect(() => resolveExpert(experts, '')).toThrow(formatHost('zh', 'error.expertRequired'))
+    expect(() => resolveExpert(experts, '', 'en')).toThrow(formatHost('en', 'error.expertRequired'))
+    expect(() => resolveExpert(experts, '后端架构师')).toThrow(formatHost('zh', 'error.expertAmbiguous', { query: '后端架构师', candidates: 'a, b' }))
+    expect(() => resolveExpert(experts, 'missing', 'en')).toThrow(formatHost('en', 'error.expertMissing', { query: 'missing' }))
+  })
+})
+
+describe('compareExpertName', () => {
+  const a = { name: '安全工程师', nameEn: 'ZZZ Security' }
+  const b = { name: '测试工程师', nameEn: 'AAA Test' }
+
+  it('中文界面按中文名排序，英文界面按英文名排序', () => {
+    expect(compareExpertName(a, b, 'zh')).toBeLessThan(0)
+    expect(compareExpertName(a, b, 'en')).toBeGreaterThan(0)
+  })
+})
+describe('list_experts 语言切换', () => {
+  let dir: string
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'aag-'))
+    await mkdir(join(dir, 'engineering'), { recursive: true })
+    await writeFile(join(dir, 'engineering', 'engineering-code-reviewer.md'), '---\nname: Code Reviewer\ndescription: 中文简介\ndescriptionEn: English intro\nemoji: "🔍"\n---\nbody', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true })
+  })
+
+  function install(locale?: 'zh' | 'en'): {
+    list: {
+      execute: (args: unknown) => Promise<{ divisions: Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; description: string }> }>; total: number }>
+      output: { render: (args: unknown, value: unknown) => Array<{ type: string; text: string }> }
+    }
+  } {
+    const tools: unknown[] = []
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: { getProvider: () => undefined },
+      systemPrompt: { section: () => undefined },
+      settings: locale === undefined ? undefined : { get: (ns: string) => ns === 'locale' ? { preference: locale } : undefined },
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['engineering-code-reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const list = tools.find((tool) => (tool as { name?: string }).name === 'list_experts') as {
+      execute: (args: unknown) => Promise<{ divisions: Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; description: string }> }>; total: number }>
+      output: { render: (args: unknown, value: unknown) => Array<{ type: string; text: string }> }
+    }
+    return { list }
+  }
+
+  it('默认中文：可用中文分区名筛选，并返回中文名和简介', async () => {
+    const { list } = install()
+    const result = await list.execute({ division: '工程' })
+    expect(result).toMatchObject({
+      divisions: [{
+        division: 'engineering',
+        experts: [{ slug: 'engineering-code-reviewer', name: '代码审查工程师', description: '中文简介' }],
+      }],
+      total: 1,
+    })
+    expect(list.output.render({ division: '工程' }, result)[0]?.text).toContain('## 工程（1）')
+  })
+
+  it('settings locale=en 时返回英文名和简介，分区标题用英文', async () => {
+    const { list } = install('en')
+    const result = await list.execute({ division: 'engineering' })
+    expect(result.divisions[0]?.experts).toEqual([
+      { slug: 'engineering-code-reviewer', name: 'Code Reviewer', emoji: '🔍', description: 'English intro' },
+    ])
+    expect(list.output.render({ division: 'engineering' }, result)[0]?.text).toContain('## Engineering (1)')
   })
 })

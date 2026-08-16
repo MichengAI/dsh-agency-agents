@@ -4,6 +4,7 @@ import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import type { TypertContribution } from '@deepseek-ai/dsh-typert-registry'
 import type {} from '@deepseek-ai/dsh-typert-registry'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
+import { formatHost } from './i18n.js'
 
 /**
  * Host 严格描述符。Gateway 优先读取它，避免启动期间的 SRC 扫描缓存遗漏
@@ -32,7 +33,7 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
     const value = this.ctx.settings.get(settingsNamespace('agency-agents')) as { enabled?: unknown } | undefined
     const enabled = value?.enabled
     const descriptor = this.ctx.settings.describe().find((candidate) => candidate.ns === settingsNamespace('agency-agents'))
-    if (descriptor === undefined) throw new Error('agency-agents 设置区尚未注册')
+    if (descriptor === undefined) throw new Error(formatHost('zh', 'error.settingsMissing'))
     return {
       enabled: Array.isArray(enabled) ? enabled.filter((slug): slug is string => typeof slug === 'string') : [],
       revision: descriptor.revision,
