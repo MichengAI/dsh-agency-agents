@@ -25,6 +25,16 @@
 
 主会话保留任务上下文、判断和最终交付；专家子代理只提供专业视角，不能继续召唤专家，避免递归委派。
 
+## 界面预览
+
+在「设置 → 智能体」中启用需要的专家：
+
+![DSH 智能体面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
+
+再把输入框切到「智能体」模式，按名称和 slug 召唤专家：
+
+![召唤智能体的输入方式](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
+
 ## 前置条件
 
 - 已可正常运行 DeepSeek Harness Web，且可在 PowerShell 中使用 `dsh`。
@@ -78,7 +88,6 @@ dsh --profile web --dump-config
 ```
 
 也可由主会话先调用 `list_experts(division?)` 查找专家，再使用 `summon_expert(expert, task)` 委派任务。名称不唯一时，请使用 slug。
-
 ## 配置与边界
 
 | 配置项 | 默认值 | 作用 |

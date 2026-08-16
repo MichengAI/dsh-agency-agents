@@ -25,6 +25,16 @@
 
 The parent session keeps task context, judgment, and the final answer. Expert children provide a specialist perspective only and cannot summon further experts.
 
+## Screenshots
+
+Enable the experts you need in **Settings → Agents**:
+
+![DSH Agents panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
+
+Then switch the composer to **Agent** mode and summon an expert by name and slug:
+
+![Summoning an agent from the composer](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
+
 ## Prerequisites
 
 - A working DeepSeek Harness Web installation with `dsh` available in PowerShell.
@@ -78,7 +88,6 @@ Review the changes in the current workspace and list reproducible issues by seve
 ```
 
 The parent session can also call `list_experts(division?)`, then delegate with `summon_expert(expert, task)`. Use a slug when a name is ambiguous.
-
 ## Configuration and limits
 
 | Key | Default | Purpose |
