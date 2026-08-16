@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
+import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import z from '@deepseek-ai/schemastery'
 import { Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
 import AgencyAgentsRemote from './remote.js'
@@ -418,10 +419,10 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
 })
 
 describe('applyExpertSummon（输入框召唤）', () => {
-  const t = (key: AgencyKey, params?: Record<string, string>): string => {
-    let text = zh[key]
+  const t: TranslateNS<'agency'> = (key, params) => {
+    let text = Object.hasOwn(zh, key) ? zh[key as AgencyKey] : key
     if (params !== undefined) {
-      for (const [name, value] of Object.entries(params)) text = text.replaceAll('{' + name + '}', value)
+      for (const [name, value] of Object.entries(params)) text = text.replaceAll('{' + name + '}', String(value))
     }
     return text
   }
@@ -432,7 +433,7 @@ describe('applyExpertSummon（输入框召唤）', () => {
       setDraft(draft: string): void { calls.push('setDraft:' + draft) },
       submit(): void { calls.push('submit') },
     }
-    const instruction = buildSummonInstruction(t as never, '代码审查', 'reviewer', '请审查这段代码')
+    const instruction = buildSummonInstruction(t, '代码审查', 'reviewer', '请审查这段代码')
     applyExpertSummon({ inputActions, instruction })
     expect(instruction).toContain('请审查这段代码')
     expect(calls).toEqual(['setDraft:' + instruction])
@@ -445,10 +446,15 @@ describe('applyExpertSummon（输入框召唤）', () => {
       setDraft(draft: string): void { calls.push('setDraft:' + draft) },
       submit(): void { calls.push('submit') },
     }
-    const instruction = buildSummonInstruction(t as never, '代码审查', 'reviewer', '   ')
+    const instruction = buildSummonInstruction(t, '代码审查', 'reviewer', '   ')
     applyExpertSummon({ inputActions, instruction })
     expect(instruction).toBe(t('summon.instruction', { name: '代码审查', slug: 'reviewer' }))
     expect(calls).toEqual(['setDraft:' + instruction])
     expect(calls).not.toContain('submit')
+  })
+
+  it('没有 inputActions 时只生成指令，不抛错也不发送', () => {
+    expect(() => applyExpertSummon({ instruction: t('summon.instruction', { name: '代码审查', slug: 'reviewer' }) })).not.toThrow()
+    expect(() => applyExpertSummon({ inputActions: undefined, instruction: 'noop' })).not.toThrow()
   })
 })
