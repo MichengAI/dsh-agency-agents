@@ -6,6 +6,9 @@
   **271 summonable specialist agents for DeepSeek Harness**
 
   [简体中文](README.zh-CN.md) · [Documentation](docs/00-交接入口/00-阅读导航.md) · [Apache-2.0](LICENSE)
+
+  [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+  [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-271-0f766e.svg)](docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md)
 </div>
 
 > DSH Agency Agents is a community-maintained DeepSeek Harness (DSH) plugin, not an official DeepSeek AI product.

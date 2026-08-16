@@ -6,6 +6,9 @@
   **为 DeepSeek Harness 提供 271 名可召唤的专业智能体**
 
   [English](README.md) · [完整文档](docs/00-交接入口/00-阅读导航.md) · [Apache-2.0](LICENSE)
+
+  [![许可证：Apache-2.0](https://img.shields.io/badge/许可证-Apache--2.0-blue.svg)](LICENSE)
+  [![内置智能体](https://img.shields.io/badge/内置智能体-271-0f766e.svg)](docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md)
 </div>
 
 > DSH Agency Agents 是社区维护的 DeepSeek Harness（DSH）插件，并非 DeepSeek AI 官方产品。
