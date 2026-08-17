@@ -126,7 +126,9 @@ pnpm verify
 dsh plugin --profile web add .
 ```
 
-发布包只包含 `lib`、`assets`、补丁和文档；不要将 `node_modules` 或本地开发文件加入发布内容。
+交接与迭代文档只保留在本机 `docs` 目录，不纳入 Git；克隆仓库后不会得到交接入口。
+
+发布包只包含 `lib`、`assets`、补丁和根目录说明/许可证；不要将 `node_modules` 或本地开发文件加入发布内容。
 
 ## 验证
 
