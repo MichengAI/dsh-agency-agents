@@ -80,10 +80,10 @@
     "@deepseek-ai/dsh-tools": "^0.1.0-rc.5",
     "@deepseek-ai/dsh-typert-protocol": "^0.1.0-rc.5",
     "@deepseek-ai/dsh-typert-registry": "^0.1.0-rc.5",
+    "@deepseek-ai/schemastery": "^3.18.1",
     "react": "^18.2.0"
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "^3.18.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -102,6 +102,7 @@
     "@deepseek-ai/dsh-settings": "^0.1.0-rc.5",
     "@deepseek-ai/dsh-typert-protocol": "^0.1.0-rc.5",
     "@deepseek-ai/dsh-typert-registry": "^0.1.0-rc.5",
+    "@deepseek-ai/schemastery": "^3.18.1",
     "@types/node": "^22.20.0",
     "@types/react": "~18.3.1",
     "react": "^18.2.0",
