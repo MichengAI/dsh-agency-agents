@@ -87,7 +87,27 @@ export interface SummonExpertItemResult {
   readonly error?: string
 }
 
-/** 校验批量召唤入参：非空、数量上限、任务非空且不超过码点上限。 */
+/**
+ * 校验并规范化任务文本：非空且不超过码点上限。
+ * index 存在时使用带序号的批量文案，否则使用单条召唤文案；返回规范化后的字符串。
+ */
+function normalizeTask(task: unknown, locale: LocaleId, index?: number): string {
+  const text = task === undefined || task === null ? '' : String(task)
+  const length = Array.from(text).length
+  if (text.trim() === '') {
+    throw new Error(index === undefined
+      ? formatHost(locale, 'error.taskRequired')
+      : formatHost(locale, 'error.taskEmpty', { index }))
+  }
+  if (length > SUMMON_TASK_MAX_CHARS) {
+    throw new Error(index === undefined
+      ? formatHost(locale, 'error.taskLimit', { length, max: SUMMON_TASK_MAX_CHARS })
+      : formatHost(locale, 'error.taskTooLong', { index, length, max: SUMMON_TASK_MAX_CHARS }))
+  }
+  return text
+}
+
+/** 校验批量召唤入参：非空、数量上限、专家名非空、任务非空且不超过码点上限。 */
 export function validateSummonSpecs(specs: unknown, locale: LocaleId): SummonExpertSpec[] {
   if (!Array.isArray(specs) || specs.length === 0) {
     throw new Error(formatHost(locale, 'error.expertsEmpty'))
@@ -97,16 +117,12 @@ export function validateSummonSpecs(specs: unknown, locale: LocaleId): SummonExp
   }
   return specs.map((item, index) => {
     const record = item as { expert?: unknown; task?: unknown } | null | undefined
-    const rawTask = record === null || record === undefined ? undefined : record.task
-    const task = rawTask === undefined || rawTask === null ? '' : String(rawTask)
-    const length = Array.from(task).length
-    if (task.trim() === '') {
-      throw new Error(formatHost(locale, 'error.taskEmpty', { index: index + 1 }))
+    const expert = record === null || record === undefined ? undefined : record.expert
+    if (expert === undefined || expert === null || String(expert).trim() === '') {
+      throw new Error(formatHost(locale, 'error.expertEmpty', { index: index + 1 }))
     }
-    if (length > SUMMON_TASK_MAX_CHARS) {
-      throw new Error(formatHost(locale, 'error.taskTooLong', { index: index + 1, length, max: SUMMON_TASK_MAX_CHARS }))
-    }
-    return { expert: record?.expert, task }
+    const task = normalizeTask(record?.task, locale, index + 1)
+    return { expert, task }
   })
 }
 
@@ -173,6 +189,7 @@ export const Config: z<Config> = z.object({
   root: z.string().default(''),
   provider: z.string().default('spawn'),
   divisions: z.array(z.string()).default(DEFAULT_DIVISIONS),
+  // schemastery 没有 .optional()：未调用 .required() 的字段本身即可选，缺省不参与校验
   maxDepth: z.natural().min(1),
 })
 
@@ -265,6 +282,8 @@ async function walkMarkdown(dir: string, onFile: (filePath: string, fileName: st
     return undefined
   })
   if (entries === undefined) return
+  // 排序让 slug 冲突时「后加载者覆盖」的顺序确定，不依赖 readdir 的返回顺序
+  entries.sort((a, b) => a.name.localeCompare(b.name))
   for (const entry of entries) {
     const full = join(dir, entry.name)
     if (entry.isDirectory()) {
@@ -409,6 +428,8 @@ export function apply(ctx: Context, config: Config): void {
 
   async function runExpert(query: unknown, task: unknown, exec: ToolRunContext): Promise<{ expert: string; answer: string }> {
     const locale = activeLocale()
+    // 单条与批量召唤共用同一套任务校验，避免单条路径绕过码点上限
+    const taskText = normalizeTask(task, locale)
     if (exec.agent === undefined) throw new Error(formatHost(locale, 'error.summonRequiresAgent'))
     const provider = ctx.subagents.getProvider(config.provider)
     if (provider === undefined) throw new Error(formatHost(locale, 'error.providerMissing', { provider: config.provider }))
@@ -419,7 +440,7 @@ export function apply(ctx: Context, config: Config): void {
     if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
     const run: SubagentRun = await ctx.subagents.start(config.provider, {
       label: `expert:${expert.slug}`,
-      prompt: [{ type: 'text', text: String(task) }],
+      prompt: [{ type: 'text', text: taskText }],
       parent: exec.agent,
       persona: expert.persona,
       toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts'] },

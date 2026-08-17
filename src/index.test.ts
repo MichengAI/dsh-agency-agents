@@ -18,6 +18,11 @@ describe('Config', () => {
     expect(() => z.resolve({ maxDepth: 0 }, Config, {})).toThrow()
   })
 
+  it('配置 schema 允许缺省 maxDepth，解析结果不含该字段', () => {
+    const resolved = z.resolve({}, Config, {})[0] as Record<string, unknown>
+    expect(resolved).not.toHaveProperty('maxDepth')
+  })
+
   it('宿主插件声明 settings 依赖，避免工具读取 locale 时被 Cordis 拒绝', () => {
     expect(inject).toEqual(['tools', 'subagents', 'systemPrompt', 'settings'])
   })
@@ -129,6 +134,15 @@ describe('loadCatalog', () => {
 
     expect(map.has('marketing-specialist')).toBe(true)
     expect(map.has('backend-architect-with-memory')).toBe(false)
+  })
+
+  it('同 slug 冲突时按文件名排序确定覆盖顺序', async () => {
+    await mkdir(join(dir, 'engineering', 'z-sub'), { recursive: true })
+    await writeFile(join(dir, 'engineering', 'reviewer.md'), '---\nname: Root\ndescription: d\n---\nbody', 'utf8')
+    await writeFile(join(dir, 'engineering', 'z-sub', 'reviewer.md'), '---\nname: Sub\ndescription: d\n---\nbody', 'utf8')
+    // 'reviewer.md' 按文件名排在 'z-sub' 之前，子目录中的同名文件后加载并覆盖
+    const map = await loadCatalog(dir, ['engineering'])
+    expect(map.get('reviewer')?.name).toBe('Sub')
   })
 
   it('root 不存在时抛出', async () => {
@@ -333,6 +347,31 @@ describe('summon_expert', () => {
     }
 
     await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow(message)
+  })
+
+  it('单条召唤拒绝空任务与超长任务，与批量上限一致', async () => {
+    const tools: unknown[] = []
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        start: async () => { throw new Error('must not start') },
+      },
+      systemPrompt: { section: () => undefined },
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
+      execute: (args: unknown, exec: unknown) => Promise<unknown>
+    }
+
+    await expect(summon.execute({ expert: 'reviewer', task: '   ' }, { agent: {} })).rejects.toThrow(formatHost('zh', 'error.taskRequired'))
+    const longTask = '汉'.repeat(SUMMON_TASK_MAX_CHARS + 1)
+    await expect(summon.execute({ expert: 'reviewer', task: longTask }, { agent: {} })).rejects.toThrow(formatHost('zh', 'error.taskLimit', { length: SUMMON_TASK_MAX_CHARS + 1, max: SUMMON_TASK_MAX_CHARS }))
   })
 
   it('非 completed 的专家运行会返回部分输出以便排障', async () => {
@@ -662,6 +701,12 @@ describe('validateSummonSpecs', () => {
     expect(() => validateSummonSpecs([{ expert: 'reviewer', task: '   ' }], 'zh')).toThrow(formatHost('zh', 'error.taskEmpty', { index: 1 }))
     const longTask = '汉'.repeat(SUMMON_TASK_MAX_CHARS + 1)
     expect(() => validateSummonSpecs([{ expert: 'reviewer', task: longTask }], 'en')).toThrow(formatHost('en', 'error.taskTooLong', { index: 1, length: SUMMON_TASK_MAX_CHARS + 1, max: SUMMON_TASK_MAX_CHARS }))
+  })
+
+  it('拒绝缺失或空白的专家名', () => {
+    expect(() => validateSummonSpecs([{ task: 'do' }], 'zh')).toThrow(formatHost('zh', 'error.expertEmpty', { index: 1 }))
+    expect(() => validateSummonSpecs([{ expert: '   ', task: 'do' }], 'zh')).toThrow(formatHost('zh', 'error.expertEmpty', { index: 1 }))
+    expect(() => validateSummonSpecs([{ expert: 'reviewer', task: 'do' }, { expert: null, task: 'do' }], 'en')).toThrow(formatHost('en', 'error.expertEmpty', { index: 2 }))
   })
 
   it('接受上限数量的合法任务', () => {

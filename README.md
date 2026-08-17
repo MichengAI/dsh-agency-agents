@@ -42,7 +42,8 @@
 - Filter by category or search, then enable or disable bundled experts in **Settings → Experts**.
 - Summon enabled experts by name or slug from the composer's **Experts** picker.
 - Use `list_experts` to discover experts and `summon_expert` to start a one-shot specialist subagent.
-- Use 271 bundled personas immediately, or connect a separately synchronized expert directory.`n- Paste one sentence into DSH, Codex, or WorkBuddy and let that agent install the plugin locally.
+- Use 271 bundled personas immediately, or connect a separately synchronized expert directory.
+- Paste one sentence into DSH, Codex, or WorkBuddy and let that agent install the plugin locally.
 
 The parent session keeps task context, judgment, and the final answer. Expert children provide a specialist perspective only and cannot summon further experts.
 
