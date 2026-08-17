@@ -1,39 +1,8 @@
 <div align="center">
-<table width="100%">
-<col width="50%">
-<col width="50%">
-<tr>
-<td width="50%" valign="middle" align="center">
-<pre>
-      █████████████      ████       ██
-   ██████████████████     ███████████
-  ██████████████████████   █████████
- ███   ███████████████████  ████
-███         █████████   ████████
- ███           ███████   ██████
- ████            █████████████
-  ████             ██████████
-    ████     ████   ███████
-      ███████████████  ███████
-          ███████████
-</pre>
-</td>
-<td width="50%" valign="middle" align="center">
-<pre>
-  _____   _____ _    _
- |  __ \ / ____| |  | |
- | |  | | (___ | |__| |
- | |  | |\___ \|  __  |
- | |__| |____) | |  | |
- |_____/|_____/|_|  |_|
+  <img src="assets/branding/banner.svg" alt="DSH Agency Agents" width="900">
+</div>
 
- AGENCY AGENTS
- 271 summonable specialists
- DeepSeek Harness plugin
-</pre>
-</td>
-</tr>
-</table>
+<div align="center">
 
   # DSH Agency Agents
 

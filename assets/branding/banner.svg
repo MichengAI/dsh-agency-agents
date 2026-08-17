@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="280" viewBox="0 0 900 280" role="img" aria-label="DSH Agency Agents">
+  <rect width="900" height="280" rx="8" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
+  <line x1="450" y1="12" x2="450" y2="268" stroke="#30363d" stroke-width="1"/>
+  <rect x="95" y="52" width="130" height="16" fill="#e6edf3"/>
+  <rect x="285" y="52" width="40" height="16" fill="#e6edf3"/>
+  <rect x="395" y="52" width="20" height="16" fill="#e6edf3"/>
+  <rect x="65" y="68" width="180" height="16" fill="#e6edf3"/>
+  <rect x="295" y="68" width="110" height="16" fill="#e6edf3"/>
+  <rect x="55" y="84" width="220" height="16" fill="#e6edf3"/>
+  <rect x="305" y="84" width="90" height="16" fill="#e6edf3"/>
+  <rect x="45" y="100" width="30" height="16" fill="#e6edf3"/>
+  <rect x="105" y="100" width="190" height="16" fill="#e6edf3"/>
+  <rect x="315" y="100" width="40" height="16" fill="#e6edf3"/>
+  <rect x="35" y="116" width="30" height="16" fill="#e6edf3"/>
+  <rect x="155" y="116" width="90" height="16" fill="#e6edf3"/>
+  <rect x="275" y="116" width="80" height="16" fill="#e6edf3"/>
+  <rect x="45" y="132" width="30" height="16" fill="#e6edf3"/>
+  <rect x="185" y="132" width="70" height="16" fill="#e6edf3"/>
+  <rect x="285" y="132" width="60" height="16" fill="#e6edf3"/>
+  <rect x="45" y="148" width="40" height="16" fill="#e6edf3"/>
+  <rect x="205" y="148" width="130" height="16" fill="#e6edf3"/>
+  <rect x="55" y="164" width="40" height="16" fill="#e6edf3"/>
+  <rect x="225" y="164" width="100" height="16" fill="#e6edf3"/>
+  <rect x="75" y="180" width="40" height="16" fill="#e6edf3"/>
+  <rect x="165" y="180" width="40" height="16" fill="#e6edf3"/>
+  <rect x="235" y="180" width="70" height="16" fill="#e6edf3"/>
+  <rect x="95" y="196" width="150" height="16" fill="#e6edf3"/>
+  <rect x="265" y="196" width="70" height="16" fill="#e6edf3"/>
+  <rect x="135" y="212" width="110" height="16" fill="#e6edf3"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" fill="#e6edf3" text-anchor="middle">
+    <text x="675" y="59" font-size="15" xml:space="preserve">  _____   _____ _    _</text>
+    <text x="675" y="78" font-size="15" xml:space="preserve"> |  __ \ / ____| |  | |</text>
+    <text x="675" y="97" font-size="15" xml:space="preserve"> | |  | | (___ | |__| |</text>
+    <text x="675" y="116" font-size="15" xml:space="preserve"> | |  | |\___ \|  __  |</text>
+    <text x="675" y="135" font-size="15" xml:space="preserve"> | |__| |____) | |  | |</text>
+    <text x="675" y="154" font-size="15" xml:space="preserve"> |_____/|_____/|_|  |_|</text>
+    <text x="675" y="191" font-size="13" font-weight="700">AGENCY AGENTS</text>
+    <text x="675" y="211" font-size="13">271 summonable specialists</text>
+    <text x="675" y="231" font-size="13">DeepSeek Harness plugin</text>
+  </g>
+</svg>
