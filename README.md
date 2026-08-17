@@ -1,23 +1,5 @@
 <div align="center">
-<table cellpadding="0" cellspacing="0">
-<tr>
-<td valign="middle" align="center">
-  <img src="assets/branding/dsh-logo.png" alt="DeepSeek Harness logo" width="168">
-</td>
-<td valign="middle">
-<pre>
-   ____  ____  _   _
-  |  _ \/ ___|| | | |
-  | | | \___ \| |_| |
-  | |_| |___) |  _  |
-  |____/|____/|_| |_|
-      AGENCY AGENTS
-271 summonable specialists
- DeepSeek Harness plugin
-</pre>
-</td>
-</tr>
-</table>
+  <img src="assets/branding/banner.png" alt="DSH Agency Agents" width="100%">
 </div>
 
 <div align="center">

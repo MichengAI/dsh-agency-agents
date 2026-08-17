@@ -1,11 +1,4 @@
-README 左侧使用 assets/branding/dsh-logo.png（宽 168，不随表格均分撑开）
-右侧字符：
-
-   ____  ____  _   _
-  |  _ \/ ___|| | | |
-  | | | \___ \| |_| |
-  | |_| |___) |  _  |
-  |____/|____/|_| |_|
-      AGENCY AGENTS
-271 summonable specialists
- DeepSeek Harness plugin
+README 顶部使用 assets/branding/banner.png
+尺寸：1983x793
+说明：完整产品横幅，含标识、卖点、功能入口与专家列表界面
+旧版 dsh-logo.png 与 ASCII 字标已不再作为 README 顶部展示
