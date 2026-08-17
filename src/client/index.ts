@@ -186,6 +186,17 @@ const SETTINGS_CSS = `
 .aag-label{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:16px}
 .aag-control{box-sizing:border-box;width:100%;min-height:32px;padding:0 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font:inherit;font-size:13px}
 .aag-control:focus-visible{outline:2px solid var(--dsw-alias-state-success-primary);outline-offset:2px}
+.aag-select{position:relative}
+.aag-select-trigger{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:32px;padding:0 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;text-align:left;cursor:pointer}
+.aag-select-trigger:hover{background:var(--dsw-alias-interactive-bg-hover)}
+.aag-select-trigger:focus-visible{outline:2px solid var(--dsw-alias-state-success-primary);outline-offset:2px}
+.aag-select-trigger[aria-expanded="true"]{border-color:var(--dsw-alias-state-success-primary)}
+.aag-select-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aag-select-caret{flex:none;width:12px;height:12px;color:var(--dsw-alias-label-tertiary)}
+.aag-select-menu{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;box-sizing:border-box;max-height:280px;overflow:auto;padding:4px;border:1px solid var(--dsw-alias-border-l2);border-radius:10px;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-2));box-shadow:var(--dsw-shadow-lv3)}
+.aag-select-option{box-sizing:border-box;display:flex;align-items:center;width:100%;min-height:32px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;text-align:left;cursor:pointer}
+.aag-select-option:hover,.aag-select-option[data-active="true"]{background:var(--dsw-alias-interactive-bg-hover)}
+.aag-select-option[aria-selected="true"]{color:var(--dsw-alias-state-success-primary)}
 .aag-search-wrap{position:relative;display:flex;align-items:center}
 .aag-search{padding-right:32px}.aag-search::-webkit-search-cancel-button,.aag-search::-webkit-search-decoration{-webkit-appearance:none;appearance:none}
 .aag-search-clear{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:var(--dsw-alias-label-tertiary);font:inherit;font-size:16px;line-height:1;cursor:pointer}
@@ -355,6 +366,124 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
     menu)
 }
 
+interface CategoryOption {
+  readonly value: string
+  readonly label: string
+}
+
+function CategorySelect(props: {
+  readonly id: string
+  readonly value: string
+  readonly options: ReadonlyArray<CategoryOption>
+  readonly onChange: (value: string) => void
+}): React.ReactElement {
+  const [open, setOpen] = React.useState(false)
+  const selectedIndex = Math.max(0, props.options.findIndex((option) => option.value === props.value))
+  const [active, setActive] = React.useState(selectedIndex)
+  const rootRef = React.useRef<HTMLDivElement | null>(null)
+  const triggerRef = React.useRef<HTMLButtonElement | null>(null)
+  const listRef = React.useRef<HTMLDivElement | null>(null)
+  const wasOpen = React.useRef(false)
+  const selected = props.options[selectedIndex]
+
+  React.useEffect(() => {
+    if (!open) return
+    setActive(selectedIndex)
+    const onPointerDown = (ev: PointerEvent): void => {
+      const target = ev.target
+      if (target instanceof Node && rootRef.current?.contains(target) === true) return
+      setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [open, selectedIndex])
+
+  React.useEffect(() => {
+    if (open) {
+      listRef.current?.focus()
+      wasOpen.current = true
+      return
+    }
+    if (wasOpen.current) {
+      triggerRef.current?.focus()
+      wasOpen.current = false
+    }
+  }, [open])
+
+  React.useEffect(() => {
+    if (!open) return
+    document.getElementById(props.id + '-opt-' + String(active))?.scrollIntoView({ block: 'nearest' })
+  }, [active, open, props.id])
+
+  const choose = (value: string): void => {
+    props.onChange(value)
+    setOpen(false)
+  }
+
+  const move = (next: number): void => {
+    if (props.options.length === 0) return
+    setActive(Math.min(props.options.length - 1, Math.max(0, next)))
+  }
+
+  const onTriggerKeyDown = (ev: React.KeyboardEvent): void => {
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp' || ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault()
+      setOpen(true)
+    }
+  }
+
+  const onListKeyDown = (ev: React.KeyboardEvent): void => {
+    if (ev.key === 'ArrowDown') { ev.preventDefault(); move(active + 1); return }
+    if (ev.key === 'ArrowUp') { ev.preventDefault(); move(active - 1); return }
+    if (ev.key === 'Home') { ev.preventDefault(); move(0); return }
+    if (ev.key === 'End') { ev.preventDefault(); move(props.options.length - 1); return }
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault()
+      const option = props.options[active]
+      if (option !== undefined) choose(option.value)
+      return
+    }
+    if (ev.key === 'Escape' || ev.key === 'Tab') setOpen(false)
+  }
+
+  return React.createElement('div', { className: 'aag-select', ref: rootRef },
+    React.createElement('button', {
+      id: props.id,
+      ref: triggerRef,
+      type: 'button',
+      className: 'aag-select-trigger',
+      'aria-haspopup': 'listbox',
+      'aria-expanded': open,
+      'aria-controls': props.id + '-list',
+      onClick: () => setOpen((current) => !current),
+      onKeyDown: onTriggerKeyDown,
+    },
+      React.createElement('span', { className: 'aag-select-value' }, selected === undefined ? '' : selected.label),
+      React.createElement('svg', { className: 'aag-select-caret', viewBox: '0 0 12 12', 'aria-hidden': true, focusable: false },
+        React.createElement('path', { d: 'M2.5 4.5L6 8l3.5-3.5', fill: 'none', stroke: 'currentColor', strokeWidth: '1.5', strokeLinecap: 'round', strokeLinejoin: 'round' }))),
+    open
+      ? React.createElement('div', {
+        id: props.id + '-list',
+        ref: listRef,
+        className: 'aag-select-menu',
+        role: 'listbox',
+        tabIndex: 0,
+        'aria-activedescendant': props.id + '-opt-' + String(active),
+        onKeyDown: onListKeyDown,
+      }, props.options.map((option, index) => React.createElement('button', {
+        key: option.value === '' ? 'all' : option.value,
+        id: props.id + '-opt-' + String(index),
+        type: 'button',
+        role: 'option',
+        className: 'aag-select-option',
+        'aria-selected': option.value === props.value,
+        'data-active': index === active,
+        onMouseEnter: () => setActive(index),
+        onClick: () => choose(option.value),
+      }, option.label)))
+      : null)
+}
+
 function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRemoteApi; getActive: () => 'zh' | 'en' }): React.ReactElement {
   const [state, setState] = React.useState<EnabledState | null>(null)
   const [error, setError] = React.useState<string | null>(null)
@@ -437,14 +566,18 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
     nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters' },
       React.createElement('div', { className: 'aag-field aag-field-category' },
         React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-category' }, props.t('settings.filter.category')),
-        React.createElement('select', {
+        React.createElement(CategorySelect, {
           id: 'aag-filter-category',
-          className: 'aag-control',
           value: division,
-          onChange: (ev: { currentTarget: { value: string } }) => setDivision(ev.currentTarget.value),
-        },
-          React.createElement('option', { value: '' }, props.t('settings.filter.option', { name: props.t('settings.filter.all'), count: total })),
-          DIVISION_ORDER.map((key) => React.createElement('option', { key, value: key }, props.t('settings.filter.option', { name: props.t(`division.${key}` as AgencyKey), count: DIVISION_COUNTS[key] ?? 0 }))))),
+          onChange: setDivision,
+          options: [
+            { value: '', label: props.t('settings.filter.option', { name: props.t('settings.filter.all'), count: total }) },
+            ...DIVISION_ORDER.map((key) => ({
+              value: key,
+              label: props.t('settings.filter.option', { name: props.t(`division.${key}` as AgencyKey), count: DIVISION_COUNTS[key] ?? 0 }),
+            })),
+          ],
+        })),
       React.createElement('div', { className: 'aag-field aag-field-search' },
         React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-search' }, props.t('settings.search')),
         React.createElement('div', { className: 'aag-search-wrap' },
