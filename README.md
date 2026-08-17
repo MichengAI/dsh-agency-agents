@@ -1,21 +1,18 @@
 <div align="center">
-<table width="100%">
-<col width="50%">
-<col width="50%">
+<table>
 <tr>
-<td width="50%" valign="middle" align="center">
+<td valign="middle" align="center">
   <img src="assets/branding/dsh-logo.png" alt="DeepSeek Harness logo" width="168">
 </td>
-<td width="50%" valign="middle" align="center">
+<td valign="middle" align="center">
 
 ```text
-  _____   _____ _    _
- |  __ \ / ____| |  | |
- | |  | | (___ | |__| |
- | |  | |\___ \|  __  |
- | |__| |____) | |  | |
- |_____/|_____/|_|  |_|
-  AGENCY AGENTS
+ ____  ____  _   _
+|  _ \/ ___|| | | |
+| | | \___ \| |_| |
+| |_| |___) |  _  |
+|____/|____/|_| |_|
+ AGENCY AGENTS
  271 summonable specialists
  DeepSeek Harness plugin
 ```
