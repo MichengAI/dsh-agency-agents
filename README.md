@@ -1,9 +1,10 @@
 <div align="center">
-<table>
+<table width="100%">
+<col width="50%">
+<col width="50%">
 <tr>
-<td valign="middle">
-
-```text
+<td width="50%" valign="middle" align="center">
+<pre>
       █████████████      ████       ██
    ██████████████████     ███████████
   ██████████████████████   █████████
@@ -15,12 +16,10 @@
     ████     ████   ███████
       ███████████████  ███████
           ███████████
-```
-
+</pre>
 </td>
-<td valign="middle">
-
-```text
+<td width="50%" valign="middle" align="center">
+<pre>
   _____   _____ _    _
  |  __ \ / ____| |  | |
  | |  | | (___ | |__| |
@@ -31,8 +30,7 @@
  AGENCY AGENTS
  271 summonable specialists
  DeepSeek Harness plugin
-```
-
+</pre>
 </td>
 </tr>
 </table>
