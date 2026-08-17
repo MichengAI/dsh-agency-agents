@@ -1,12 +1,11 @@
 <div align="center">
-<table>
+<table cellpadding="0" cellspacing="0">
 <tr>
 <td valign="middle" align="center">
   <img src="assets/branding/dsh-logo.png" alt="DeepSeek Harness 标识" width="168">
 </td>
-<td valign="middle" align="center">
-
-```text
+<td valign="middle">
+<pre>
  ____  ____  _   _
 |  _ \/ ___|| | | |
 | | | \___ \| |_| |
@@ -15,8 +14,7 @@
  AGENCY AGENTS
  271 summonable specialists
  DeepSeek Harness plugin
-```
-
+</pre>
 </td>
 </tr>
 </table>
