@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/branding/banner.svg" alt="DSH Agency Agents" width="900">
+  <img src="assets/branding/banner.svg" alt="DSH Agency Agents" width="640">
 </div>
 
 <div align="center">
