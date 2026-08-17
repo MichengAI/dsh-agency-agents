@@ -1,5 +1,18 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/branding/dsh-logo.png" width="88" alt="DeepSeek Harness 标识">
+
+```text
+      █████████████      ████       ██      _____   _____ _    _
+   ██████████████████     ███████████      |  __ \ / ____| |  | |
+  ██████████████████████   █████████      | |  | | (___ | |__| |
+ ███   ███████████████████  ████          | |  | |\___ \|  __  |
+███         █████████   ████████          | |__| |____) | |  | |
+ ███           ███████   ██████           |_____/|_____/|_|  |_|
+ ████            █████████████
+  ████             ██████████             AGENCY AGENTS
+    ████     ████   ███████               271 summonable specialists
+      ███████████████  ███████            DeepSeek Harness plugin
+          ███████████
+```
 
   # DSH Agency Agents
 
