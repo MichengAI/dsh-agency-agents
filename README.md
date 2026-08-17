@@ -6,13 +6,13 @@
 </td>
 <td valign="middle">
 <pre>
- ____  ____  _   _
-|  _ \/ ___|| | | |
-| | | \___ \| |_| |
-| |_| |___) |  _  |
-|____/|____/|_| |_|
- AGENCY AGENTS
- 271 summonable specialists
+   ____  ____  _   _
+  |  _ \/ ___|| | | |
+  | | | \___ \| |_| |
+  | |_| |___) |  _  |
+  |____/|____/|_| |_|
+      AGENCY AGENTS
+271 summonable specialists
  DeepSeek Harness plugin
 </pre>
 </td>
