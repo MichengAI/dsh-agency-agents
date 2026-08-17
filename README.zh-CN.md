@@ -5,10 +5,10 @@
 
   **为 DeepSeek Harness 提供 271 名可召唤的专业智能体**
 
-  [English](README.md) · [完整文档](docs/00-交接入口/00-阅读导航.md) · [Apache-2.0](LICENSE)
+  [English](README.md) · [Apache-2.0](LICENSE)
 
   [![许可证：Apache-2.0](https://img.shields.io/badge/许可证-Apache--2.0-blue.svg)](LICENSE)
-  [![内置智能体](https://img.shields.io/badge/内置智能体-271-0f766e.svg)](docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md)
+  [![内置智能体](https://img.shields.io/badge/内置智能体-271-0f766e.svg)](#功能概览)
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
   [![Node.js 22 or later](https://img.shields.io/badge/Node.js-22%20or%20later-339933.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -27,15 +27,15 @@
 
 ## 界面预览
 
-在「设置 → 专家」中启用需要的专家：
+在「设置 → 专家」中按分类筛选或搜索，再启用需要的专家：
 
 ![DSH 专家面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
 
-在输入框点击「专家」，选择已启用的专家：
+在输入框用 `@` 或「专家」选择已启用的专家：
 
 ![专家选择器](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-picker.png)
 
-再用名称和 slug 写出完整任务：
+回填名称和 slug 后，写出完整任务：
 
 ![召唤专家的输入方式](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
 
@@ -47,20 +47,22 @@
 
 ## 安装
 
-### 从 npm 安装
+`dsh plugin add` 会转发到 profile 目录里的 `pnpm add`。不写版本、不指定官方源时，本机镜像和最短发布间隔可能让你停在旧版。
 
-在任意 PowerShell 目录执行。`dsh plugin` 会安装 npm 包并自动应用包内的 `cordis.patch.yml`：
+### 从官方 npm 安装最新版
+
+在任意 PowerShell 目录执行：
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-dsh plugin --profile web add @michengai/dsh-agency-agents
+dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/
 dsh --profile web --dump-config
 ```
 
-配置输出中应包含 `agency-agents` 与 `agency-agents-remote`。安装后重启 DSH Web 并在浏览器硬刷新；请勿手工复制客户端文件，否则设置页所需的 Remote 服务不会被挂载。
+需要钉死某一版时，把 `@latest` 换成具体版本，例如 `@0.1.17`。
 
-若镜像未同步最新版本，可在安装命令末尾追加 `--registry=https://registry.npmjs.org/`。
+配置输出中应包含 `agency-agents` 与 `agency-agents-remote`。安装后重启 DSH Web 并在浏览器硬刷新；请勿手工复制客户端文件，否则设置页所需的 Remote 服务不会被挂载。
 
 ### 从源码安装
 
@@ -83,7 +85,7 @@ dsh --profile web --dump-config
 ## 使用
 
 1. 打开「设置 → 专家」，启用需要的专家。
-2. 在对话输入框点击「专家」，选择已启用的专家。
+2. 在对话输入框用 `@` 或点击「专家」，选择已启用的专家。
 3. 用名称和 slug 明确指定专家，并给出完整任务。例如：
 
 ```text
@@ -101,7 +103,7 @@ dsh --profile web --dump-config
 | `divisions` | 17 个标准分区 | 需要扫描的顶层分区。 |
 | `maxDepth` | 未设置 | 正整数形式的绝对子代理深度上限。 |
 
-也可设置 `AGENCY_AGENTS_ROOT` 环境变量指定外部专家目录。子代理 provider 必须支持 persona 和工具过滤能力。
+也可设置 `AGENCY_AGENTS_ROOT` 环境变量指定外部专家目录。外部目录里的 persona 正文会注入为子代理系统提示，只应从可信来源加载。子代理 provider 必须支持 persona 和工具过滤能力。`summon_experts` 一次最多 8 名专家，并发 4，部分失败仍返回成功结果。
 
 ## 二次开发
 
@@ -138,3 +140,4 @@ pnpm verify
 ## 许可证与归属
 
 本项目 TypeScript 源码、构建脚本和文档采用 [Apache License 2.0](LICENSE)。内置专家 persona 源自 [The Agency](https://github.com/msitarzewski/agency-agents)，仍采用 MIT，许可证位于 [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE)。
+

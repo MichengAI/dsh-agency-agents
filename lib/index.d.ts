@@ -1,14 +1,51 @@
 import z from "@deepseek-ai/schemastery";
+import "@deepseek-ai/dsh-settings";
 import { Context } from "@deepseek-ai/cordis";
+//#region src/names.d.ts
+/** 智能体 slug（文件名去 .md）→ 中文名（现实岗位）。缺省时回退英文 frontmatter name。 */
+declare const ZH_NAME: Readonly<Record<string, string>>;
+//#endregion
+//#region src/i18n.d.ts
+/** 与 DSH locale 插件一致的语言标识。 */
+type LocaleId = 'zh' | 'en';
+//#endregion
 //#region src/index.d.ts
 declare const name = "agency-agents";
 declare const inject: string[];
+/** 一次批量召唤的专家数量上限，避免无界并行拖垮宿主。 */
+declare const SUMMON_EXPERTS_MAX = 8;
+/** 批量召唤的并发上限。 */
+declare const SUMMON_EXPERTS_CONCURRENCY = 4;
+/** 单条任务的 Unicode 码点上限。 */
+declare const SUMMON_TASK_MAX_CHARS = 8000;
+/** 已校验的批量召唤条目。 */
+interface SummonExpertSpec {
+  readonly expert: unknown;
+  readonly task: string;
+}
+/** 批量召唤中单个专家的结果。 */
+interface SummonExpertItemResult {
+  readonly expert: string;
+  readonly ok: boolean;
+  readonly answer: string;
+  readonly error?: string;
+}
+/** 校验批量召唤入参：非空、数量上限、任务非空且不超过码点上限。 */
+declare function validateSummonSpecs(specs: unknown, locale: LocaleId): SummonExpertSpec[];
+/** 受限并发地映射异步任务，结果顺序与输入一致。 */
+declare function mapPool<T, R>(items: readonly T[], concurrency: number, mapper: (item: T, index: number) => Promise<R>): Promise<R[]>;
+/** 把单次专家运行结果收成批量条目；失败时保留原始查询作为专家名。 */
+declare function toSummonItemResult(query: unknown, result: {
+  expert: string;
+  answer: string;
+} | Error): SummonExpertItemResult;
 /** One resolved expert ready to be summoned. */
 interface Expert {
   readonly slug: string;
   readonly name: string;
   readonly nameEn: string;
   readonly description: string;
+  readonly descriptionEn: string;
   readonly emoji: string;
   readonly division: string;
   readonly divisionZh: string;
@@ -31,6 +68,7 @@ declare function resolveCatalogRoot(root: string): string;
 interface Frontmatter {
   name?: string;
   description?: string;
+  descriptionEn?: string;
   emoji?: string;
   body: string;
 }
@@ -51,7 +89,7 @@ declare function resolveExpert<T extends {
   readonly slug: string;
   readonly name: string;
   readonly nameEn?: string;
-}>(experts: readonly T[], query: unknown): T;
+}>(experts: readonly T[], query: unknown, locale?: LocaleId): T;
 declare function apply(ctx: Context, config: Config): void;
 //#endregion
-export { Config, apply, inject, loadCatalog, name, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote };
+export { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, SummonExpertItemResult, SummonExpertSpec, ZH_NAME, apply, inject, loadCatalog, mapPool, name, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs };

@@ -5,12 +5,12 @@ import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import z from '@deepseek-ai/schemastery'
-import { Config, apply, inject, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
+import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
 import { compareExpertName, filterExperts, matchExpertQuery, normalizeExpertQuery, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
-import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, resolveHostLocale, zhHost } from './i18n.js'
+import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 
 describe('Config', () => {
@@ -269,6 +269,7 @@ describe('summon_expert', () => {
     if (typeof text !== 'function') throw new Error('agency:experts must be dynamic')
 
     expect(text({ agent: { session: { header: {} } } })).toContain('parent session')
+    expect(text({ agent: { session: { header: {} } } })).toContain('summon_experts')
     expect(text({ agent: { session: { header: { parentSession: 'parent' } } } })).toBe('')
   })
 
@@ -649,5 +650,112 @@ describe('list_experts 语言切换', () => {
       { slug: 'engineering-code-reviewer', name: 'Code Reviewer', emoji: '🔍', description: 'English intro' },
     ])
     expect(list.output.render({ division: 'engineering' }, result)[0]?.text).toContain('## Engineering (1)')
+  })
+})
+
+
+describe('validateSummonSpecs', () => {
+  it('拒绝空数组、超量专家、空任务和超长任务', () => {
+    expect(() => validateSummonSpecs([], 'zh')).toThrow(formatHost('zh', 'error.expertsEmpty'))
+    const tooMany = Array.from({ length: SUMMON_EXPERTS_MAX + 1 }, (_, index) => ({ expert: `e${index}`, task: 'do' }))
+    expect(() => validateSummonSpecs(tooMany, 'zh')).toThrow(formatHost('zh', 'error.expertsTooMany', { max: SUMMON_EXPERTS_MAX, count: SUMMON_EXPERTS_MAX + 1 }))
+    expect(() => validateSummonSpecs([{ expert: 'reviewer', task: '   ' }], 'zh')).toThrow(formatHost('zh', 'error.taskEmpty', { index: 1 }))
+    const longTask = '汉'.repeat(SUMMON_TASK_MAX_CHARS + 1)
+    expect(() => validateSummonSpecs([{ expert: 'reviewer', task: longTask }], 'en')).toThrow(formatHost('en', 'error.taskTooLong', { index: 1, length: SUMMON_TASK_MAX_CHARS + 1, max: SUMMON_TASK_MAX_CHARS }))
+  })
+
+  it('接受上限数量的合法任务', () => {
+    const specs = Array.from({ length: SUMMON_EXPERTS_MAX }, (_, index) => ({ expert: `e${index}`, task: 'review' }))
+    expect(validateSummonSpecs(specs, 'zh')).toHaveLength(SUMMON_EXPERTS_MAX)
+  })
+})
+
+describe('mapPool', () => {
+  it('并发不超过上限，且保持输入顺序', async () => {
+    let inflight = 0
+    let peak = 0
+    const values = await mapPool([1, 2, 3, 4, 5], 2, async (item) => {
+      inflight += 1
+      peak = Math.max(peak, inflight)
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      inflight -= 1
+      return item * 10
+    })
+    expect(values).toEqual([10, 20, 30, 40, 50])
+    expect(peak).toBeLessThanOrEqual(2)
+    expect(SUMMON_EXPERTS_CONCURRENCY).toBe(4)
+  })
+})
+
+describe('toSummonItemResult / renderSummonResults', () => {
+  it('成功项保留答案，失败项走失败词条', () => {
+    const ok = toSummonItemResult('reviewer', { expert: 'reviewer', answer: 'done' })
+    const failed = toSummonItemResult('historian', new Error('boom'))
+    expect(ok).toEqual({ expert: 'reviewer', ok: true, answer: 'done' })
+    expect(failed).toEqual({ expert: 'historian', ok: false, answer: '', error: 'boom' })
+    const text = renderSummonResults('zh', [ok, failed])
+    expect(text).toContain('## reviewer\ndone')
+    expect(text).toContain(formatHost('zh', 'list.expertFailed', { error: 'boom' }))
+  })
+})
+
+describe('summon_experts', () => {
+  let dir: string
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'aag-'))
+    await mkdir(join(dir, 'engineering'), { recursive: true })
+    await writeFile(join(dir, 'engineering', 'reviewer.md'), '---\nname: Reviewer\ndescription: d\n---\nbody', 'utf8')
+    await writeFile(join(dir, 'engineering', 'historian.md'), '---\nname: Historian\ndescription: d\n---\nbody', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true })
+  })
+
+  it('一名专家失败时仍返回其余成功结果', async () => {
+    const tools: unknown[] = []
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        start: async (_provider: string, options: { label?: string }) => {
+          if (options.label === 'expert:historian') {
+            return {
+              result: Promise.resolve({ output: [{ type: 'text', text: 'partial' }], stopReason: 'cancelled' }),
+              dispose: async () => undefined,
+            }
+          }
+          return {
+            result: Promise.resolve({ output: [{ type: 'text', text: 'ok-review' }], stopReason: 'completed' }),
+            dispose: async () => undefined,
+          }
+        },
+      },
+      systemPrompt: { section: () => undefined },
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer', 'historian'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_experts') as {
+      execute: (args: unknown, exec: unknown) => Promise<{ results: Array<{ expert: string; ok: boolean; answer: string; error?: string }> }>
+      output: { render: (args: unknown, value: unknown) => Array<{ type: string; text: string }> }
+    }
+
+    const value = await summon.execute({
+      experts: [
+        { expert: 'reviewer', task: 'review' },
+        { expert: 'historian', task: 'summarize' },
+      ],
+    }, { agent: {} })
+    expect(value.results).toEqual([
+      { expert: 'reviewer', ok: true, answer: 'ok-review' },
+      { expert: 'historian', ok: false, answer: '', error: formatHost('zh', 'error.expertRun', { reason: 'cancelled', detail: formatHost('zh', 'error.partialOutput', { text: 'partial' }) }) },
+    ])
+    expect(summon.output.render({}, value)[0]?.text).toContain('ok-review')
+    expect(summon.output.render({}, value)[0]?.text).toContain('失败')
   })
 })

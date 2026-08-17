@@ -5,10 +5,10 @@
 
   **271 summonable specialist agents for DeepSeek Harness**
 
-  [简体中文](README.zh-CN.md) · [Documentation](docs/00-交接入口/00-阅读导航.md) · [Apache-2.0](LICENSE)
+  [简体中文](README.zh-CN.md) · [Apache-2.0](LICENSE)
 
   [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-  [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-271-0f766e.svg)](docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md)
+  [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-271-0f766e.svg)](#features)
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
   [![Node.js 22 or later](https://img.shields.io/badge/Node.js-22%20or%20later-339933.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -27,15 +27,15 @@ The parent session keeps task context, judgment, and the final answer. Expert ch
 
 ## Screenshots
 
-Enable the experts you need in **Settings → Experts**:
+Filter by category or search in **Settings → Experts**, then enable the experts you need:
 
-![DSH Experts panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
+![DSH Experts panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster-en.png)
 
-Open the composer's **Experts** picker and choose an enabled expert:
+Use `@` or the composer's **Experts** picker to choose an enabled expert:
 
 ![Experts picker](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-picker.png)
 
-Then write the complete task with the expert name and slug:
+The name and slug are filled in; write the complete task next:
 
 ![Summoning an expert from the composer](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
 
@@ -47,20 +47,22 @@ Then write the complete task with the expert name and slug:
 
 ## Installation
 
-### Install from npm
+`dsh plugin add` forwards to `pnpm add` in the profile directory. Without a version and official registry, a local mirror or minimum-release-age policy can leave you on an older build.
 
-Run this from any PowerShell directory. `dsh plugin` installs the npm package and applies its bundled `cordis.patch.yml`:
+### Install the latest package from the official npm registry
+
+Run this from any PowerShell directory:
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-dsh plugin --profile web add @michengai/dsh-agency-agents
+dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/
 dsh --profile web --dump-config
 ```
 
-The configuration output should contain `agency-agents` and `agency-agents-remote`. Restart DSH Web and hard-refresh the browser. Do not copy client files manually: the Settings page needs the mounted Remote service.
+To pin a release, replace `@latest` with a version such as `@0.1.17`.
 
-If a package mirror has not synchronized the latest version, append `--registry=https://registry.npmjs.org/`.
+The configuration output should contain `agency-agents` and `agency-agents-remote`. Restart DSH Web and hard-refresh the browser. Do not copy client files manually: the Settings page needs the mounted Remote service.
 
 ### Install from source
 
@@ -83,7 +85,7 @@ Restart DSH Web and hard-refresh the browser. `dsh plugin ... add .` reads the p
 ## Usage
 
 1. Open **Settings → Experts** and enable the needed experts.
-2. Open the composer's **Experts** picker and choose an enabled expert.
+2. Use `@` or the composer **Experts** picker to choose an enabled expert.
 3. Name the expert and slug, then provide the complete task.
 
 ```text
@@ -101,7 +103,7 @@ The parent session can also call `list_experts(division?)`, then delegate with `
 | `divisions` | 17 standard divisions | Top-level divisions to scan. |
 | `maxDepth` | Unset | Positive absolute subagent-depth limit. |
 
-Set `AGENCY_AGENTS_ROOT` to use an external expert directory. The provider must support persona and tool filtering.
+Set `AGENCY_AGENTS_ROOT` to use an external expert directory. Persona bodies from that directory are injected as the child system prompt, so load them only from a trusted source. The provider must support persona and tool filtering. `summon_experts` accepts at most 8 experts with a concurrency of 4 and still returns successful answers when some experts fail.
 
 ## Secondary development
 
@@ -138,3 +140,4 @@ pnpm verify
 ## License and attribution
 
 This project’s TypeScript source, build scripts, and documentation use [Apache License 2.0](LICENSE). Bundled personas originate from [The Agency](https://github.com/msitarzewski/agency-agents) and remain MIT-licensed; see [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE).
+

@@ -32,7 +32,8 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
-import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, type LocaleId } from './i18n.js'
+export { ZH_NAME }
+import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
 
 export const name = 'agency-agents'
 export const inject = ['tools', 'subagents', 'systemPrompt', 'settings']
@@ -65,6 +66,80 @@ const EXTRA_SOURCES: ReadonlyArray<{ readonly dir: string; readonly division: st
 /** 描述截断上限，避免无过滤列出全量智能体时 token 开销过大。 */
 const DESCRIPTION_LIMIT = 120
 
+/** 一次批量召唤的专家数量上限，避免无界并行拖垮宿主。 */
+export const SUMMON_EXPERTS_MAX = 8
+/** 批量召唤的并发上限。 */
+export const SUMMON_EXPERTS_CONCURRENCY = 4
+/** 单条任务的 Unicode 码点上限。 */
+export const SUMMON_TASK_MAX_CHARS = 8000
+
+/** 已校验的批量召唤条目。 */
+export interface SummonExpertSpec {
+  readonly expert: unknown
+  readonly task: string
+}
+
+/** 批量召唤中单个专家的结果。 */
+export interface SummonExpertItemResult {
+  readonly expert: string
+  readonly ok: boolean
+  readonly answer: string
+  readonly error?: string
+}
+
+/** 校验批量召唤入参：非空、数量上限、任务非空且不超过码点上限。 */
+export function validateSummonSpecs(specs: unknown, locale: LocaleId): SummonExpertSpec[] {
+  if (!Array.isArray(specs) || specs.length === 0) {
+    throw new Error(formatHost(locale, 'error.expertsEmpty'))
+  }
+  if (specs.length > SUMMON_EXPERTS_MAX) {
+    throw new Error(formatHost(locale, 'error.expertsTooMany', { max: SUMMON_EXPERTS_MAX, count: specs.length }))
+  }
+  return specs.map((item, index) => {
+    const record = item as { expert?: unknown; task?: unknown } | null | undefined
+    const rawTask = record === null || record === undefined ? undefined : record.task
+    const task = rawTask === undefined || rawTask === null ? '' : String(rawTask)
+    const length = Array.from(task).length
+    if (task.trim() === '') {
+      throw new Error(formatHost(locale, 'error.taskEmpty', { index: index + 1 }))
+    }
+    if (length > SUMMON_TASK_MAX_CHARS) {
+      throw new Error(formatHost(locale, 'error.taskTooLong', { index: index + 1, length, max: SUMMON_TASK_MAX_CHARS }))
+    }
+    return { expert: record?.expert, task }
+  })
+}
+
+/** 受限并发地映射异步任务，结果顺序与输入一致。 */
+export async function mapPool<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) return []
+  const limit = Math.max(1, Math.min(concurrency, items.length))
+  const results = new Array<R>(items.length)
+  let next = 0
+  const workers = Array.from({ length: limit }, async () => {
+    while (true) {
+      const index = next
+      next += 1
+      if (index >= items.length) return
+      results[index] = await mapper(items[index]!, index)
+    }
+  })
+  await Promise.all(workers)
+  return results
+}
+
+/** 把单次专家运行结果收成批量条目；失败时保留原始查询作为专家名。 */
+export function toSummonItemResult(query: unknown, result: { expert: string; answer: string } | Error): SummonExpertItemResult {
+  if (result instanceof Error) {
+    const expert = String(query ?? '').trim()
+    return { expert: expert === '' ? 'unknown' : expert, ok: false, answer: '', error: result.message }
+  }
+  return { expert: result.expert, ok: true, answer: result.answer }
+}
 /** One resolved expert ready to be summoned. */
 interface Expert {
   readonly slug: string
@@ -383,7 +458,7 @@ export function apply(ctx: Context, config: Config): void {
 
   ctx.tools.register(defineTool({
     name: 'summon_experts',
-    description: 'Summon multiple domain experts in parallel to work on one mission. Each expert gets its own task/role and runs as a specialist subagent with its own persona; results are returned per expert. Use this to assemble a specialist team. This call waits for all experts.',
+    description: 'Summon multiple domain experts in parallel to work on one mission. Each expert gets its own task/role and runs as a specialist subagent with its own persona. At most 8 experts run with concurrency 4; if some fail, successful answers are still returned. Use this to assemble a specialist team.',
     parameters: {
       experts: {
         type: 'array',
@@ -402,17 +477,30 @@ export function apply(ctx: Context, config: Config): void {
     output: {
       schema: { type: 'object', additionalProperties: false, properties: { results: { type: 'array', required: true, items: { type: 'json' } } } },
       render: (_args, value) => {
-        const parts = (value.results as Array<{ expert: string; answer: string }>).map((r) => `## ${r.expert}\n${r.answer}`)
-        return [{ type: 'text', text: parts.join('\n\n') }]
+        const results = value.results as Array<{ expert: string; ok: boolean; answer: string; error?: string }>
+        return [{ type: 'text', text: renderSummonResults(activeLocale(), results) }]
       },
     },
     async execute(args, exec) {
       await ensureReady()
-      if (exec.agent === undefined) throw new Error(formatHost(activeLocale(), 'error.summonManyRequiresAgent'))
-      const specs = args.experts
-      if (!Array.isArray(specs) || specs.length === 0) throw new Error(formatHost(activeLocale(), 'error.expertsEmpty'))
-      const results = await Promise.all(specs.map((spec) => runExpert(spec.expert, spec.task, exec)))
-      return { results }
+      const locale = activeLocale()
+      if (exec.agent === undefined) throw new Error(formatHost(locale, 'error.summonManyRequiresAgent'))
+      const specs = validateSummonSpecs(args.experts, locale)
+      const results = await mapPool(specs, SUMMON_EXPERTS_CONCURRENCY, async (spec) => {
+        try {
+          return toSummonItemResult(spec.expert, await runExpert(spec.expert, spec.task, exec))
+        } catch (error) {
+          return toSummonItemResult(spec.expert, error instanceof Error ? error : new Error(String(error)))
+        }
+      })
+      return {
+        results: results.map((item) => ({
+          expert: item.expert,
+          ok: item.ok,
+          answer: item.answer,
+          ...(item.error === undefined ? {} : { error: item.error }),
+        })),
+      }
     },
   }))
 
@@ -422,7 +510,7 @@ export function apply(ctx: Context, config: Config): void {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 17 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). In the parent session, call `list_experts()` to see enabled division names and counts, then call `list_experts(division)` to browse enabled experts and find an exact slug before using `summon_expert(expert, task)`. A disabled expert cannot be summoned.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 17 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). In the parent session, call `list_experts()` to see enabled division names and counts, then call `list_experts(division)` to browse enabled experts and find an exact slug before using `summon_expert(expert, task)` or `summon_experts` for a small parallel team (at most 8; partial results if some fail). A disabled expert cannot be summoned.'
     },
   })
 }

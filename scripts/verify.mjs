@@ -18,7 +18,7 @@ const packageJson = JSON.parse(await readFile(packageUrl, 'utf8'))
 check('DSH bundle 指向 Cordis patch', packageJson.dsh?.bundle?.patch === './cordis.patch.yml')
 check(
   '发布文件包含运行代码、智能体资产、patch、双语说明和授权文件',
-  ['lib', 'assets/agency-agents', 'cordis.patch.yml', 'README.md', 'README.zh-CN.md', 'LICENSE', 'NOTICE', 'docs']
+  ['lib', 'assets/agency-agents', 'cordis.patch.yml', 'README.md', 'README.zh-CN.md', 'LICENSE', 'NOTICE']
     .every((entry) => packageJson.files?.includes(entry)),
 )
 check('包许可证为 Apache-2.0', packageJson.license === 'Apache-2.0')
@@ -27,7 +27,7 @@ check(
   packageJson.repository?.type === 'git' && packageJson.repository?.url === 'https://github.com/MichengAI/dsh-agency-agents.git',
 )
 
-for (const file of ['../lib/index.js', '../lib/remote.js', '../cordis.patch.yml', '../LICENSE', '../NOTICE', '../README.zh-CN.md', '../assets/agency-agents/LICENSE', '../docs/04-Agent运行体系/01-内置智能体清单/00-清单索引.md']) {
+for (const file of ['../lib/index.js', '../lib/remote.js', '../lib/client.js', '../cordis.patch.yml', '../LICENSE', '../NOTICE', '../README.zh-CN.md', '../assets/agency-agents/LICENSE']) {
   try {
     await access(new URL(file, import.meta.url))
     check(`发布文件存在：${file.slice(3)}`, true)
@@ -57,6 +57,25 @@ check('Cordis patch 挂载顶层 Remote 服务', patch.includes(`name: '${packag
 const license = await readFile(new URL('../LICENSE', import.meta.url), 'utf8')
 check('根许可证为 Apache License 2.0 正文', license.startsWith('Apache License\n                           Version 2.0'))
 
+
+function collectExportTypes(exportsValue) {
+  if (exportsValue === null || typeof exportsValue !== 'object') return []
+  const paths = []
+  for (const value of Object.values(exportsValue)) {
+    if (value === null || typeof value !== 'object') continue
+    if (typeof value.types === 'string' && value.types.startsWith('./')) paths.push(value.types)
+  }
+  return paths
+}
+
+for (const typesPath of collectExportTypes(packageJson.exports)) {
+  try {
+    await access(new URL(typesPath, packageUrl))
+    check(`导出 types 路径存在：${typesPath.slice(2)}`, true)
+  } catch {
+    check(`导出 types 路径存在：${typesPath.slice(2)}`, false)
+  }
+}
 const plugin = await import(new URL('../lib/index.js', import.meta.url).href)
 check('编译入口导出 DSH 插件约定', ['name', 'Config', 'apply'].every((key) => key in plugin))
 
@@ -65,6 +84,9 @@ const bundledExperts = await plugin.loadCatalog(plugin.resolveCatalogRoot(''), d
 check('内置智能体总数为 271', bundledExperts.size === 271, `实际为 ${bundledExperts.size}`)
 const bundledDivisions = new Set([...bundledExperts.values()].map((expert) => expert.division))
 check('17 个标准分区均包含内置智能体', defaultConfig.divisions.every((division) => bundledDivisions.has(division)))
+const missingZh = [...bundledExperts.keys()].filter((slug) => plugin.ZH_NAME?.[slug] === undefined)
+check('内置智能体均有中文名', missingZh.length === 0, missingZh.slice(0, 8).join(', '))
+
 
 if (failures > 0) {
   console.error(`\n${failures} 项验证失败`)

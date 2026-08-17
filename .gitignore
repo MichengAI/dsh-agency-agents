@@ -1,3 +1,6 @@
 node_modules/
 *.tgz
 pnpm-debug.log*
+
+# 交接与迭代文档只留本机，不纳入版本库
+docs/

@@ -21,6 +21,9 @@ export const zhHost = {
   'error.summonRequiresAgent': 'summon_expert 需要由智能体调用',
   'error.summonManyRequiresAgent': 'summon_experts 需要由智能体调用',
   'error.expertsEmpty': 'experts 必须是非空数组',
+  'error.expertsTooMany': '一次最多召唤 {max} 名专家，当前为 {count}',
+  'error.taskEmpty': '第 {index} 个专家任务不能为空',
+  'error.taskTooLong': '第 {index} 个专家任务过长（{length} 个字符，上限 {max}）',
   'error.providerMissing': '子代理 provider "{provider}" 未注册',
   'error.providerNoPersona': '子代理 provider "{provider}" 不支持专家人格',
   'error.providerNoToolFilter': '子代理 provider "{provider}" 无法阻止递归专家委派',
@@ -33,6 +36,7 @@ export const zhHost = {
   'list.emptyDivision': '没有匹配分区 "{division}" 的专家。',
   'list.heading': '{total} 位专家，覆盖 {count} 个分区：',
   'list.group': '## {division}（{count}）',
+  'list.expertFailed': '失败：{error}',
 } satisfies Record<string, string>
 
 /** 宿主文案 key 联合。 */
@@ -51,6 +55,9 @@ export const enHost = {
   'error.summonRequiresAgent': 'summon_expert requires a calling agent',
   'error.summonManyRequiresAgent': 'summon_experts requires a calling agent',
   'error.expertsEmpty': 'experts must be a non-empty array',
+  'error.expertsTooMany': 'summon at most {max} experts at once, got {count}',
+  'error.taskEmpty': 'expert task #{index} must not be empty',
+  'error.taskTooLong': 'expert task #{index} is too long ({length} characters, limit {max})',
   'error.providerMissing': 'subagent provider "{provider}" is not registered',
   'error.providerNoPersona': 'subagent provider "{provider}" does not support expert personas',
   'error.providerNoToolFilter': 'subagent provider "{provider}" cannot prevent recursive expert delegation',
@@ -63,6 +70,7 @@ export const enHost = {
   'list.emptyDivision': 'No experts matched division "{division}".',
   'list.heading': '{total} experts across {count} divisions:',
   'list.group': '## {division} ({count})',
+  'list.expertFailed': 'Failed: {error}',
 } satisfies Record<HostKey, string>
 
 /** 将未知值收成 zh / en；只有显式 en 才走英文。 */
@@ -153,3 +161,15 @@ export function renderExpertList(
   lines.unshift(formatHost(locale, 'list.heading', { total: value.total, count: value.divisions.length }))
   return lines.join('\n')
 }
+
+/** 渲染批量召唤结果：成功项输出答案，失败项输出本地化失败句。 */
+export function renderSummonResults(
+  locale: LocaleId,
+  results: ReadonlyArray<{ readonly expert: string; readonly ok: boolean; readonly answer: string; readonly error?: string }>,
+): string {
+  return results.map((item) => {
+    const body = item.ok ? item.answer : formatHost(locale, 'list.expertFailed', { error: item.error ?? '' })
+    return '## ' + item.expert + '\n' + body
+  }).join('\n\n')
+}
+

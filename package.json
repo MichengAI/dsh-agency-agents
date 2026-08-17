@@ -11,7 +11,6 @@
       "default": "./lib/index.js"
     },
     "./client": {
-      "types": "./lib/types/client/index.d.ts",
       "default": "./lib/client.js"
     },
     "./remote": {
@@ -30,8 +29,7 @@
     "README.md",
     "README.zh-CN.md",
     "LICENSE",
-    "NOTICE",
-    "docs"
+    "NOTICE"
   ],
   "scripts": {
     "build": "pnpm typecheck && tsdown",
