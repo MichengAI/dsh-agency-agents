@@ -18,7 +18,7 @@
 
 ## Features
 
-- Browse, enable, and disable bundled experts across 17 divisions in **Settings → Experts**.
+- Filter by category or search, then enable or disable bundled experts in **Settings → Experts**.
 - Summon enabled experts by name or slug from the composer's **Experts** picker.
 - Use `list_experts` to discover experts and `summon_expert` to start a one-shot specialist subagent.
 - Use 271 bundled personas immediately, or connect a separately synchronized expert directory.

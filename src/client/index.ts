@@ -9,7 +9,7 @@ import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import { ZH_NAME, ZH_DIVISION } from '../names.js'
+import { ZH_NAME, ZH_DIVISION, EN_DIVISION } from '../names.js'
 import { ROSTER } from './roster.js'
 import { zh, en, type AgencyKey } from './locales.js'
 import { TYPERT_REMOTE, type AgencyAgentsEnabledState } from './remote.js'
@@ -38,6 +38,7 @@ interface ExpertView {
   readonly emoji: string
   readonly division: string
   readonly divisionZh: string
+  readonly divisionEn: string
   readonly description: string
   readonly descriptionEn: string
 }
@@ -56,6 +57,7 @@ const EXPERTS: ReadonlyArray<ExpertView> = ROSTER
     emoji: e.emoji,
     division: e.division,
     divisionZh: ZH_DIVISION[e.division] ?? e.division,
+    divisionEn: EN_DIVISION[e.division] ?? e.division,
     description: e.description,
     descriptionEn: e.descriptionEn,
   }))
@@ -85,6 +87,52 @@ function groupByDivision(list: ReadonlyArray<ExpertView>, active: 'zh' | 'en'): 
     experts: (groups.get(d) ?? []).slice().sort((a, b) => compareExpertName(a, b, active)),
   }))
 }
+
+/** 设置页检索用的专家字段，避免把完整视图类型泄漏到筛选逻辑。 */
+export interface ExpertSearchable {
+  readonly slug: string
+  readonly name: string
+  readonly nameEn: string
+  readonly division: string
+  readonly divisionZh: string
+  readonly divisionEn: string
+  readonly description: string
+  readonly descriptionEn: string
+}
+
+/** 规范化检索词：去首尾空白并转小写，便于中英和 slug 统一匹配。 */
+export function normalizeExpertQuery(query: string): string {
+  return query.trim().toLowerCase()
+}
+
+/** 按名称、slug、分区或简介做包含匹配；空检索视为全部命中。 */
+export function matchExpertQuery(expert: ExpertSearchable, query: string): boolean {
+  const q = normalizeExpertQuery(query)
+  if (q === '') return true
+  return [
+    expert.slug,
+    expert.name,
+    expert.nameEn,
+    expert.division,
+    expert.divisionZh,
+    expert.divisionEn,
+    expert.description,
+    expert.descriptionEn,
+  ].some((field) => field.toLowerCase().includes(q))
+}
+
+/** 先按分区收窄，再按检索词过滤。division 为空表示全部分类。 */
+export function filterExperts<T extends ExpertSearchable>(
+  list: ReadonlyArray<T>,
+  options: { readonly query?: string; readonly division?: string },
+): T[] {
+  const division = options.division ?? ''
+  return list.filter((expert) => (division === '' || expert.division === division) && matchExpertQuery(expert, options.query ?? ''))
+}
+
+const DIVISION_COUNTS: Readonly<Record<string, number>> = Object.fromEntries(
+  DIVISION_ORDER.map((division) => [division, EXPERTS.filter((expert) => expert.division === division).length]),
+)
 
 /** 按当前 locale 取专家显示名：en 用花名册英文名，其余用中文名。 */
 function displayName(e: ExpertView, active: 'zh' | 'en'): string {
@@ -131,7 +179,21 @@ const SETTINGS_CSS = `
 .aag-tag-off{border-color:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-state-error-primary)}
 .aag-note{overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;text-overflow:ellipsis;white-space:nowrap}
 .aag-error{color:var(--dsw-alias-state-error-primary);font-size:13px;line-height:20px}
-@media (max-width:560px){.aag-toolbar{flex-wrap:wrap}.aag-actions{margin-left:0}.aag-row{align-items:flex-start;flex-wrap:wrap}.aag-row>.aag-action{margin-left:auto}}
+.aag-filters{display:flex;align-items:flex-end;gap:10px}
+.aag-field{display:flex;min-width:0;flex:1;flex-direction:column;gap:6px}
+.aag-field-category{flex:0 1 220px}
+.aag-field-search{flex:1 1 240px}
+.aag-label{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:16px}
+.aag-control{box-sizing:border-box;width:100%;min-height:32px;padding:0 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font:inherit;font-size:13px}
+.aag-control:focus-visible{outline:2px solid var(--dsw-alias-state-success-primary);outline-offset:2px}
+.aag-search-wrap{position:relative;display:flex;align-items:center}
+.aag-search{padding-right:32px}.aag-search::-webkit-search-cancel-button,.aag-search::-webkit-search-decoration{-webkit-appearance:none;appearance:none}
+.aag-search-clear{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:var(--dsw-alias-label-tertiary);font:inherit;font-size:16px;line-height:1;cursor:pointer}
+.aag-search-clear:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+.aag-search-clear:focus-visible{outline:2px solid var(--dsw-alias-state-success-primary);outline-offset:2px}
+.aag-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 16px;border:1px dashed var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;text-align:center}
+.aag-filter-meta{margin-left:auto;color:var(--dsw-alias-label-tertiary);font-size:12px}
+@media (max-width:560px){.aag-toolbar{flex-wrap:wrap}.aag-actions{margin-left:0}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}.aag-row{align-items:flex-start;flex-wrap:wrap}.aag-row>.aag-action{margin-left:auto}.aag-filter-meta{margin-left:0}}
 @media (prefers-reduced-motion:reduce){.aag-action{transition:none}}
 `
 const CSS = COMPOSER_CSS + SETTINGS_CSS + MENU_NAME_OVERRIDE + '{flex:1 1 auto;max-width:none;min-width:0}'
@@ -296,6 +358,8 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
 function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRemoteApi; getActive: () => 'zh' | 'en' }): React.ReactElement {
   const [state, setState] = React.useState<EnabledState | null>(null)
   const [error, setError] = React.useState<string | null>(null)
+  const [query, setQuery] = React.useState('')
+  const [division, setDivision] = React.useState('')
   const saving = React.useRef(false)
   const [isSaving, setIsSaving] = React.useState(false)
 
@@ -350,9 +414,13 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
   if (state === null) {
     nodes.push(React.createElement('div', { key: 'loading', className: 'aag-note' }, props.t('settings.loading')))
   } else {
-    const groups = groupByDivision(EXPERTS, props.getActive())
+    const filtered = filterExperts(EXPERTS, { query, division })
+    const groups = groupByDivision(filtered, props.getActive())
     const enabledCount = [...state.enabled].filter((slug) => EXPERTS.some((e) => e.slug === slug)).length
     const total = EXPERTS.length
+    const filteredCount = filtered.length
+    const hasFilter = normalizeExpertQuery(query) !== '' || division !== ''
+    const resetFilters = (): void => { setQuery(''); setDivision('') }
     nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
       React.createElement('div', null,
         React.createElement('h2', { className: 'aag-title' }, props.t('settings.nav')),
@@ -364,7 +432,38 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
       React.createElement('span', { className: 'aag-summary-label' }, props.t(total === 1 ? 'summary.total.one' : 'summary.total.other', { count: total })),
       React.createElement('span', { className: 'aag-summary-separator' }),
       React.createElement('span', { className: 'aag-summary-count' }, enabledCount),
-      React.createElement('span', { className: 'aag-summary-label' }, props.t(enabledCount === 1 ? 'summary.enabled.one' : 'summary.enabled.other', { count: enabledCount }))))
+      React.createElement('span', { className: 'aag-summary-label' }, props.t(enabledCount === 1 ? 'summary.enabled.one' : 'summary.enabled.other', { count: enabledCount })),
+      hasFilter ? React.createElement('span', { className: 'aag-filter-meta', 'aria-live': 'polite' }, props.t(filteredCount === 1 ? 'settings.filter.showing.one' : 'settings.filter.showing.other', { count: filteredCount })) : null))
+    nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters' },
+      React.createElement('div', { className: 'aag-field aag-field-category' },
+        React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-category' }, props.t('settings.filter.category')),
+        React.createElement('select', {
+          id: 'aag-filter-category',
+          className: 'aag-control',
+          value: division,
+          onChange: (ev: { currentTarget: { value: string } }) => setDivision(ev.currentTarget.value),
+        },
+          React.createElement('option', { value: '' }, props.t('settings.filter.option', { name: props.t('settings.filter.all'), count: total })),
+          DIVISION_ORDER.map((key) => React.createElement('option', { key, value: key }, props.t('settings.filter.option', { name: props.t(`division.${key}` as AgencyKey), count: DIVISION_COUNTS[key] ?? 0 }))))),
+      React.createElement('div', { className: 'aag-field aag-field-search' },
+        React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-search' }, props.t('settings.search')),
+        React.createElement('div', { className: 'aag-search-wrap' },
+          React.createElement('input', {
+            id: 'aag-filter-search',
+            className: 'aag-control aag-search',
+            type: 'search',
+            value: query,
+            autoComplete: 'off',
+            spellCheck: false,
+            placeholder: props.t('settings.search.placeholder'),
+            onChange: (ev: { currentTarget: { value: string } }) => setQuery(ev.currentTarget.value),
+          }),
+          query !== '' ? React.createElement('button', { type: 'button', className: 'aag-search-clear', 'aria-label': props.t('settings.search.clear'), onClick: () => setQuery('') }, '×') : null))))
+    if (groups.length === 0) {
+      nodes.push(React.createElement('div', { key: 'empty', className: 'aag-empty' },
+        React.createElement('div', null, props.t('settings.empty', { all: props.t('settings.filter.all') })),
+        React.createElement('button', { type: 'button', className: 'aag-action aag-action-secondary', onClick: resetFilters }, props.t('settings.empty.reset'))))
+    }
     for (const g of groups) {
       nodes.push(React.createElement('div', { key: g.division, className: 'aag-group' },
         React.createElement('div', { className: 'aag-group-head' },

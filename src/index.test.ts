@@ -8,9 +8,9 @@ import z from '@deepseek-ai/schemastery'
 import { Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { compareExpertName, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
+import { compareExpertName, filterExperts, matchExpertQuery, normalizeExpertQuery, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
-import { formatHost, matchDivision, readHostLocale, renderExpertList, resolveHostLocale } from './i18n.js'
+import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 
 describe('Config', () => {
@@ -464,6 +464,7 @@ describe('applyExpertSummon（输入框召唤）', () => {
 describe('宿主 i18n', () => {
   it('zh/en 词条 key 对齐，且只有显式 en 才切换语言', () => {
     expect(Object.keys(zh).sort()).toEqual(Object.keys(en).sort())
+    expect(Object.keys(zhHost).sort()).toEqual(Object.keys(enHost).sort())
     expect(Object.hasOwn(zh, 'group.count')).toBe(false)
     expect(resolveHostLocale('en')).toBe('en')
     expect(resolveHostLocale('zh')).toBe('zh')
@@ -471,6 +472,20 @@ describe('宿主 i18n', () => {
     expect(readHostLocale({})).toBe('zh')
     expect(readHostLocale({ settings: { get: () => ({ preference: 'en' }) } })).toBe('en')
     expect(readHostLocale({ settings: { get: () => { throw new Error('missing') } } })).toBe('zh')
+  })
+
+  it('中英词条占位符一致，筛选空态跟随「全部」译文', () => {
+    const placeholders = (text: string): string[] => [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1] ?? '').sort()
+    for (const key of Object.keys(zh) as AgencyKey[]) {
+      expect(placeholders(en[key]), key).toEqual(placeholders(zh[key]))
+    }
+    for (const key of Object.keys(zhHost) as Array<keyof typeof zhHost>) {
+      expect(placeholders(enHost[key]), key).toEqual(placeholders(zhHost[key]))
+    }
+    expect(zh['settings.empty']).toContain('{all}')
+    expect(en['settings.empty']).toContain('{all}')
+    expect(en['settings.filter.showing.one']).toBe('Showing {count} expert')
+    expect(en['settings.filter.showing.other']).toBe('Showing {count} experts')
   })
 
   it('分区查询同时认 key、中文名和英文名', () => {
@@ -516,6 +531,55 @@ describe('compareExpertName', () => {
   it('中文界面按中文名排序，英文界面按英文名排序', () => {
     expect(compareExpertName(a, b, 'zh')).toBeLessThan(0)
     expect(compareExpertName(a, b, 'en')).toBeGreaterThan(0)
+  })
+})
+
+describe('filterExperts', () => {
+  const experts = [
+    {
+      slug: 'engineering-code-reviewer',
+      name: '代码审查工程师',
+      nameEn: 'Code Reviewer',
+      division: 'engineering',
+      divisionZh: '工程',
+      divisionEn: 'Engineering',
+      description: '审查代码并按严重程度列出问题',
+      descriptionEn: 'Review code and rank findings by severity',
+    },
+    {
+      slug: 'academic-historian',
+      name: '历史学家',
+      nameEn: 'Historian',
+      division: 'academic',
+      divisionZh: '学术',
+      divisionEn: 'Academic',
+      description: '梳理历史分期与史料',
+      descriptionEn: 'Trace historical periods and sources',
+    },
+  ]
+
+  it('空检索返回全部专家', () => {
+    expect(normalizeExpertQuery('  UI  ')).toBe('ui')
+    expect(filterExperts(experts, { query: '   ' })).toHaveLength(2)
+  })
+
+  it('按中文名、英文名、slug 和简介匹配', () => {
+    expect(matchExpertQuery(experts[0]!, '审查')).toBe(true)
+    expect(filterExperts(experts, { query: 'Historian' }).map((item) => item.slug)).toEqual(['academic-historian'])
+    expect(filterExperts(experts, { query: 'engineering-code' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
+    expect(filterExperts(experts, { query: 'severity' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
+  })
+
+  it('中英分区名都能检索到对应专家', () => {
+    expect(filterExperts(experts, { query: '工程' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
+    expect(filterExperts(experts, { query: 'Engineering' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
+    expect(filterExperts(experts, { query: 'Academic' }).map((item) => item.slug)).toEqual(['academic-historian'])
+  })
+
+  it('分类与检索同时生效，无匹配时返回空列表', () => {
+    expect(filterExperts(experts, { division: 'academic' }).map((item) => item.slug)).toEqual(['academic-historian'])
+    expect(filterExperts(experts, { division: 'academic', query: 'review' })).toEqual([])
+    expect(filterExperts(experts, { division: 'engineering', query: 'CODE' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
   })
 })
 describe('list_experts 语言切换', () => {
