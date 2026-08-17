@@ -35,7 +35,7 @@ import { ZH_DIVISION, ZH_NAME } from './names.js'
 import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, type LocaleId } from './i18n.js'
 
 export const name = 'agency-agents'
-export const inject = ['tools', 'subagents', 'systemPrompt']
+export const inject = ['tools', 'subagents', 'systemPrompt', 'settings']
 
 const DEFAULT_DIVISIONS = [
   'academic',

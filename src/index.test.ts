@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import z from '@deepseek-ai/schemastery'
-import { Config, apply, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
+import { Config, apply, inject, loadCatalog, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, truncate, unquote } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
 import { compareExpertName, filterExperts, matchExpertQuery, normalizeExpertQuery, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
@@ -16,6 +16,10 @@ import { TYPERT_REMOTE } from './client/remote.js'
 describe('Config', () => {
   it('配置 schema 拒绝零 maxDepth，避免设置界面展示为合法值', () => {
     expect(() => z.resolve({ maxDepth: 0 }, Config, {})).toThrow()
+  })
+
+  it('宿主插件声明 settings 依赖，避免工具读取 locale 时被 Cordis 拒绝', () => {
+    expect(inject).toEqual(['tools', 'subagents', 'systemPrompt', 'settings'])
   })
 })
 
@@ -472,6 +476,11 @@ describe('宿主 i18n', () => {
     expect(readHostLocale({})).toBe('zh')
     expect(readHostLocale({ settings: { get: () => ({ preference: 'en' }) } })).toBe('en')
     expect(readHostLocale({ settings: { get: () => { throw new Error('missing') } } })).toBe('zh')
+    expect(readHostLocale({
+      get settings(): never {
+        throw new Error('cannot get property "settings" without inject')
+      },
+    })).toBe('zh')
   })
 
   it('中英词条占位符一致，筛选空态跟随「全部」译文', () => {

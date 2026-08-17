@@ -82,9 +82,9 @@ export function formatHost(locale: LocaleId, key: HostKey, params?: Record<strin
 
 /** 从宿主 settings 的 locale.preference 读取语言，缺失或异常时回退 zh。 */
 export function readHostLocale(ctx: { settings?: { get?: (ns: SettingsNamespace) => unknown } }): LocaleId {
-  if (ctx.settings?.get === undefined) return 'zh'
   try {
-    const section = ctx.settings.get(settingsNamespace('locale')) as { preference?: unknown } | undefined
+    // Cordis 对未注入服务的属性访问会直接抛错，optional chaining 拦不住。
+    const section = ctx.settings?.get?.(settingsNamespace('locale')) as { preference?: unknown } | undefined
     return resolveHostLocale(section?.preference)
   } catch {
     return 'zh'
