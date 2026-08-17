@@ -42,7 +42,7 @@
 - 在「设置 → 专家」中按分类筛选或搜索，再启用或停用内置专家。
 - 在输入框的「专家」中按名称或 slug 召唤已启用的专家处理完整任务。
 - 提供 `list_experts` 与 `summon_expert` 工具，分别用于发现专家和启动一次性子代理。
-- 内置 271 份 persona，无需额外下载；也可接入自行同步的专家目录。
+- 内置 271 份 persona，无需额外下载；也可接入自行同步的专家目录。`n- 可把一句话复制到 DSH、Codex 或 WorkBuddy，让对方代装到本机 DSH。
 
 主会话保留任务上下文、判断和最终交付；专家子代理只提供专业视角，不能继续召唤专家，避免递归委派。
 
@@ -69,6 +69,38 @@
 ## 安装
 
 `dsh plugin add` 会转发到 profile 目录里的 `pnpm add`。不写版本、不指定官方源时，本机镜像和最短发布间隔可能让你停在旧版。
+
+### 交给其他 Agent 一句话安装
+
+本插件运行在 DeepSeek Harness Web 里。把下面其中一句复制到 DSH、Codex 或 WorkBuddy，让它代你安装到本机 `web` profile。
+
+从 npm 安装：
+
+```text
+请把 DSH 插件 @michengai/dsh-agency-agents 最新版装进本机 web profile，使用官方 npm 源执行：dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/。装完执行 dsh --profile web --dump-config，确认已挂载 agency-agents，并提醒我重启 DSH Web 后硬刷新浏览器。
+```
+
+从源码安装：
+
+```text
+请从源码安装 DSH 插件 https://github.com/MichengAI/dsh-agency-agents：克隆到本机后执行 pnpm install --frozen-lockfile 和 pnpm build，再用 dsh plugin --profile web add . 把当前目录装进 web profile。不要只复制 lib。装完执行 dsh --profile web --dump-config，确认已挂载 agency-agents，并提醒我重启 DSH Web 后硬刷新浏览器。
+```
+
+| 产品 | 怎么用 |
+| --- | --- |
+| DSH | 把上面其中一句发给当前会话。 |
+| Codex | 把上面其中一句发给 Codex，让它在本机执行安装。 |
+| WorkBuddy | 把上面其中一句发给 WorkBuddy；源码安装也可同时粘贴仓库地址 `https://github.com/MichengAI/dsh-agency-agents`。 |
+
+Codex 和 WorkBuddy 只负责代装；装好后仍要打开 DSH Web 使用「设置 → 专家」。
+
+也可以自己执行同一条 npm 命令：
+
+```powershell
+dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/
+```
+
+未把 `dsh` 装进 PATH 时，把开头的 `dsh` 换成 `npx --yes @deepseek-ai/dsh`。
 
 ### 从官方 npm 安装最新版
 

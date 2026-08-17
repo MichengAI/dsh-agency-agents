@@ -42,7 +42,7 @@
 - Filter by category or search, then enable or disable bundled experts in **Settings → Experts**.
 - Summon enabled experts by name or slug from the composer's **Experts** picker.
 - Use `list_experts` to discover experts and `summon_expert` to start a one-shot specialist subagent.
-- Use 271 bundled personas immediately, or connect a separately synchronized expert directory.
+- Use 271 bundled personas immediately, or connect a separately synchronized expert directory.`n- Paste one sentence into DSH, Codex, or WorkBuddy and let that agent install the plugin locally.
 
 The parent session keeps task context, judgment, and the final answer. Expert children provide a specialist perspective only and cannot summon further experts.
 
@@ -69,6 +69,38 @@ The name and slug are filled in; write the complete task next:
 ## Installation
 
 `dsh plugin add` forwards to `pnpm add` in the profile directory. Without a version and official registry, a local mirror or minimum-release-age policy can leave you on an older build.
+
+### Ask another agent to install it
+
+This plugin runs inside DeepSeek Harness Web. Copy one of the sentences below into DSH, Codex, or WorkBuddy and let that agent install it into your local `web` profile.
+
+From npm:
+
+```text
+Install the latest DSH plugin @michengai/dsh-agency-agents into my local web profile using the official npm registry: dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/. Then run dsh --profile web --dump-config, confirm agency-agents is mounted, and remind me to restart DSH Web and hard-refresh the browser.
+```
+
+From source:
+
+```text
+Install the DSH plugin from source at https://github.com/MichengAI/dsh-agency-agents: clone it, run pnpm install --frozen-lockfile and pnpm build, then run dsh plugin --profile web add . from that directory. Do not copy lib by itself. Then run dsh --profile web --dump-config, confirm agency-agents is mounted, and remind me to restart DSH Web and hard-refresh the browser.
+```
+
+| Product | How to use it |
+| --- | --- |
+| DSH | Send one of the sentences above to the current session. |
+| Codex | Send one of the sentences above to Codex and let it install locally. |
+| WorkBuddy | Send one of the sentences above to WorkBuddy; for a source install you can also paste `https://github.com/MichengAI/dsh-agency-agents`. |
+
+Codex and WorkBuddy only install the plugin. After that, open DSH Web and use **Settings → Experts**.
+
+You can also run the same npm command yourself:
+
+```powershell
+dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/
+```
+
+If `dsh` is not on PATH, replace the leading `dsh` with `npx --yes @deepseek-ai/dsh`.
 
 ### Install the latest package from the official npm registry
 
