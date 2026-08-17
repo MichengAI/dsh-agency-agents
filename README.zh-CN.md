@@ -4,19 +4,7 @@
 <col width="50%">
 <tr>
 <td width="50%" valign="middle" align="center">
-
-```text
-           ##    ##
-  ############   #########
- ###############  #######
-##   #################
-##       ###### #####
-###        ##########
- ####    #   ######
-   ########## ######
-      ########
-```
-
+  <img src="assets/branding/dsh-logo.png" alt="DeepSeek Harness 标识" width="168">
 </td>
 <td width="50%" valign="middle" align="center">
 
