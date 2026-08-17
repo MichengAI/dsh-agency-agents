@@ -30,7 +30,7 @@ interface SummonExpertItemResult {
   readonly answer: string;
   readonly error?: string;
 }
-/** 校验批量召唤入参：非空、数量上限、任务非空且不超过码点上限。 */
+/** 校验批量召唤入参：非空、数量上限、专家名非空、任务非空且不超过码点上限。 */
 declare function validateSummonSpecs(specs: unknown, locale: LocaleId): SummonExpertSpec[];
 /** 受限并发地映射异步任务，结果顺序与输入一致。 */
 declare function mapPool<T, R>(items: readonly T[], concurrency: number, mapper: (item: T, index: number) => Promise<R>): Promise<R[]>;
