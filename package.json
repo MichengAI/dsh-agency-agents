@@ -1,7 +1,7 @@
 {
   "name": "@michengai/dsh-agency-agents",
   "description": "Agency Experts — a summonable domain-expert roster for DSH (expert mode)",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -29,7 +29,9 @@
     "README.md",
     "README.zh-CN.md",
     "LICENSE",
-    "NOTICE"
+    "NOTICE",
+    "CHANGELOG.md",
+    "CHANGELOG.zh-CN.md"
   ],
   "scripts": {
     "build": "pnpm typecheck && tsdown",

@@ -191,3 +191,6 @@ pnpm verify
 
 This project’s TypeScript source, build scripts, and documentation use [Apache License 2.0](LICENSE). Bundled personas originate from [The Agency](https://github.com/msitarzewski/agency-agents) and remain MIT-licensed; see [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE).
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the five most recent releases.
