@@ -4,6 +4,12 @@
 
 以下记录最近发布的五个版本。
 
+## 0.1.22 — 2026-08-28
+
+- 在 README 标准头部导航中加入更新日志入口，位置位于语言切换与 Apache-2.0 许可证链接之间。
+
+发布包：[`@michengai/dsh-agency-agents@0.1.22`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.22)。
+
 ## 0.1.21 — 2026-08-23
 
 - 新增中英文更新日志，展示最近五个发布版本。
@@ -33,9 +39,3 @@
 - 优化仓库横幅，保证 GitHub 稳定渲染。
 
 发布标签：[`v0.1.18`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.18)。
-
-## 0.1.17 — 2026-08-17
-
-- 向专家工具注入设置，使其跟随宿主语言。
-
-发布标签：[`v0.1.17`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.17)。

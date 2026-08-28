@@ -4,6 +4,12 @@
 
 The five most recent published versions are listed below.
 
+## 0.1.22 — 2026-08-28
+
+- Added the Changelog link to the standard README header navigation, between the language switch and the Apache-2.0 license link.
+
+Published package: [`@michengai/dsh-agency-agents@0.1.22`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.22).
+
 ## 0.1.21 — 2026-08-23
 
 - Added bilingual changelogs covering the five most recent releases.
@@ -33,9 +39,3 @@ Release tag: [`v0.1.19`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.
 - Refined the repository banner for stable GitHub rendering.
 
 Release tag: [`v0.1.18`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.18).
-
-## 0.1.17 — 2026-08-17
-
-- Injected settings into expert tools so they follow the host locale.
-
-Release tag: [`v0.1.17`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.17).

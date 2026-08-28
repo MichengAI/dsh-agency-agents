@@ -8,7 +8,7 @@
 
   **271 summonable specialist agents for DeepSeek Harness**
 
-  [简体中文](README.zh-CN.md) · [Apache-2.0](LICENSE)
+  [简体中文](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [Apache-2.0](LICENSE)
 
   [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
   [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-271-0f766e.svg)](#features)

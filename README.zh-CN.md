@@ -8,7 +8,7 @@
 
   **为 DeepSeek Harness 提供 271 名可召唤的专业智能体**
 
-  [English](README.md) · [Apache-2.0](LICENSE)
+  [English](README.md) · [更新日志](CHANGELOG.zh-CN.md) · [Apache-2.0](LICENSE)
 
   [![许可证：Apache-2.0](https://img.shields.io/badge/许可证-Apache--2.0-blue.svg)](LICENSE)
   [![内置智能体](https://img.shields.io/badge/内置智能体-271-0f766e.svg)](#功能概览)
