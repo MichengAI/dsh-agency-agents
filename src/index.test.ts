@@ -12,6 +12,7 @@ import { compareExpertName, filterExperts, matchExpertQuery, normalizeExpertQuer
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
+import { installSettingsSectionCompat, settingsNamespaceCompat } from './settings-compat.js'
 
 describe('Config', () => {
   it('配置 schema 拒绝零 maxDepth，避免设置界面展示为合法值', () => {
@@ -25,6 +26,40 @@ describe('Config', () => {
 
   it('宿主插件声明 settings 依赖，避免工具读取 locale 时被 Cordis 拒绝', () => {
     expect(inject).toEqual(['tools', 'subagents', 'systemPrompt', 'settings'])
+  })
+})
+
+describe('DSH settings 兼容层', () => {
+  it('RC 使用旧模块 helper 与 branded namespace', () => {
+    const calls: unknown[][] = []
+    const namespace = settingsNamespaceCompat('agency-agents', {
+      settingsNamespace: (value: string) => `legacy:${value}`,
+    })
+    const ctx = {} as Context
+    const schema = {}
+    const entry = { enabled: [] as string[] }
+    const hooks = { setSource: () => {}, onChange: () => {} }
+    installSettingsSectionCompat(ctx, namespace, schema, entry, hooks, {
+      installSettingsSection: (...args: unknown[]) => { calls.push(args) },
+    })
+
+    expect(namespace).toBe('legacy:agency-agents')
+    expect(calls).toEqual([[ctx, namespace, schema, entry, hooks]])
+  })
+
+  it('alpha.2 使用纯字符串 namespace 与 settings.installSection', () => {
+    const calls: unknown[][] = []
+    const namespace = settingsNamespaceCompat('agency-agents', {})
+    const ctx = {
+      settings: { installSection: (...args: unknown[]) => { calls.push(args) } },
+    } as unknown as Context
+    const schema = {}
+    const entry = { enabled: [] as string[] }
+    const hooks = { setSource: () => {}, onChange: () => {} }
+    installSettingsSectionCompat(ctx, namespace, schema, entry, hooks, {})
+
+    expect(namespace).toBe('agency-agents')
+    expect(calls).toEqual([[ctx, namespace, schema, entry, hooks]])
   })
 })
 

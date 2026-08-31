@@ -25,7 +25,6 @@ import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { SubagentRun } from '@deepseek-ai/dsh-subagent'
 import { readdir, readFile, stat } from 'node:fs/promises'
@@ -34,6 +33,7 @@ import { fileURLToPath } from 'node:url'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
+import { installSettingsSectionCompat, settingsNamespaceCompat } from './settings-compat.js'
 
 export const name = 'agency-agents'
 export const inject = ['tools', 'subagents', 'systemPrompt', 'settings']
@@ -359,7 +359,7 @@ export function resolveExpert<T extends { readonly slug: string; readonly name: 
 export function apply(ctx: Context, config: Config): void {
   const maxDepth = normalizeMaxDepth(config.maxDepth)
   let enabledSource: () => readonly string[] = () => []
-  installSettingsSection(ctx, settingsNamespace('agency-agents'), z.object({ enabled: z.array(z.string()) }), { enabled: [] }, {
+  installSettingsSectionCompat(ctx, settingsNamespaceCompat('agency-agents'), z.object({ enabled: z.array(z.string()) }), { enabled: [] }, {
     setSource: (current) => { enabledSource = () => current().enabled },
     onChange: () => {},
   })

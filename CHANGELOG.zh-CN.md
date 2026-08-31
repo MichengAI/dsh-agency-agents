@@ -4,6 +4,13 @@
 
 以下记录最近发布的五个版本。
 
+## 0.1.23 — 2026-08-31
+
+- 新增 DSH 设置 API 兼容适配层，同时兼容旧 RC 运行时与 `@deepseek-ai/dsh@0.1.2-alpha.2`。
+- 新增两种设置 API 形态的回归测试，并重新构建发布产物。
+
+发布包：[`@michengai/dsh-agency-agents@0.1.23`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.23)。
+
 ## 0.1.22 — 2026-08-28
 
 - 在 README 标准头部导航中加入更新日志入口，位置位于语言切换与 Apache-2.0 许可证链接之间。
@@ -31,11 +38,3 @@
 - 调度前增加专家名称校验。
 
 发布标签：[`v0.1.19`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.19)。
-
-## 0.1.18 — 2026-08-17
-
-- 收紧插件依赖声明并纳入最终 README 素材。
-- 增加 npm 与源码安装的一句话 Agent 提示词。
-- 优化仓库横幅，保证 GitHub 稳定渲染。
-
-发布标签：[`v0.1.18`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.18)。

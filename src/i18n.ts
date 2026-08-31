@@ -2,8 +2,11 @@
  * 宿主侧用户可见文案。zh 为 key 集真相源；en 用 satisfies 校验完整性。
  * 模板占位符使用 {word}，与客户端 locale 服务约定一致。
  */
-import { settingsNamespace, type SettingsNamespace } from '@deepseek-ai/dsh-settings'
+import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import { EN_DIVISION, ZH_DIVISION } from './names.js'
+import { settingsNamespaceCompat } from './settings-compat.js'
+
+const LOCALE_SETTINGS_NAMESPACE = settingsNamespaceCompat('locale')
 
 /** 与 DSH locale 插件一致的语言标识。 */
 export type LocaleId = 'zh' | 'en'
@@ -98,7 +101,7 @@ export function formatHost(locale: LocaleId, key: HostKey, params?: Record<strin
 export function readHostLocale(ctx: { settings?: { get?: (ns: SettingsNamespace) => unknown } }): LocaleId {
   try {
     // Cordis 对未注入服务的属性访问会直接抛错，optional chaining 拦不住。
-    const section = ctx.settings?.get?.(settingsNamespace('locale')) as { preference?: unknown } | undefined
+    const section = ctx.settings?.get?.(LOCALE_SETTINGS_NAMESPACE) as { preference?: unknown } | undefined
     return resolveHostLocale(section?.preference)
   } catch {
     return 'zh'
@@ -178,4 +181,3 @@ export function renderSummonResults(
     return '## ' + item.expert + '\n' + body
   }).join('\n\n')
 }
-
