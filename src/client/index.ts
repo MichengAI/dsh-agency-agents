@@ -139,18 +139,33 @@ function displayName(e: ExpertView, active: 'zh' | 'en'): string {
   return active === 'en' ? e.nameEn : e.name
 }
 
+/** 按当前 locale 取 @ 菜单分组标题；未知分区保留原值，便于扩展来源安全降级。 */
+export function inputTriggerSourceName(division: string, active: 'zh' | 'en'): string {
+  const divisions = active === 'en' ? EN_DIVISION : ZH_DIVISION
+  return divisions[division] ?? division
+}
+
 /** 按当前 locale 取专家简介：en 用原始英文描述（缺失时回退中文），其余用中文描述。 */
 function displayDescription(e: ExpertView, active: 'zh' | 'en'): string {
   return active === 'en' && e.descriptionEn !== '' ? e.descriptionEn : e.description
 }
 
 // @ 菜单里我注册的分部来源：框架把名字列限死在菜单宽度 40% 并省略号截断
-// （MenuView.module.css .itemName），这里放开名字列，让专家名称整行显示，
-// 选择器只匹配我的分组（data-source 为分部 key「division.<div>」——MenuView
-// 渲染分组标题时用 t(source.name)，但 data-source 属性保持原始 key，故选择器
-// 必须与注册的 source.name 一致，不能用翻译后的标题文本），不影响其他来源。
-const MENU_NAME_OVERRIDE = DIVISION_ORDER
-  .map((d) => `[role="listbox"] div[data-source="division.${d}"] ~ button span:last-child`)
+// （MenuView.module.css .itemName），这里放开名字列，让专家名称整行显示。
+// data-source 使用本地化后的 source.name，因此同时覆盖中英文标题，不影响其他来源。
+const EXPERT_SOURCE_NAMES = [...new Set(DIVISION_ORDER.flatMap((division) => [
+  inputTriggerSourceName(division, 'zh'),
+  inputTriggerSourceName(division, 'en'),
+]))]
+const EXPERT_MENU_ITEM_SELECTORS = EXPERT_SOURCE_NAMES
+  .map((name) => `[role="listbox"] div[data-source=${JSON.stringify(name)}] ~ button`)
+const MENU_NAME_OVERRIDE = EXPERT_MENU_ITEM_SELECTORS
+  .map((selector) => `${selector} span:last-child`)
+  .join(',')
+/** Windows 优先使用彩色 emoji 字体，避免宿主字体栈让专家图标只占位不显示。 */
+export const EXPERT_EMOJI_FONT_FAMILY = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif'
+const MENU_ICON_OVERRIDE = EXPERT_MENU_ITEM_SELECTORS
+  .map((selector) => `${selector} span:first-child:not(:last-child)`)
   .join(',')
 const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;margin-right:-8px}.aag-btn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 4px 0 8px;border:none;border-radius:24px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100vh - 24px);overflow-y:auto;border:1px solid var(--dsw-alias-border-inverted);border-radius:12px;background:var(--dsw-specific-menu);box-shadow:var(--dsw-shadow-lv3);z-index:10000}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:10px;background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-emoji{flex:0 0 auto;font-size:16px}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}[data-composer-card] :has(> button[aria-haspopup="listbox"]) > :nth-child(2){order:2}'
 // 设置页版式对齐 dsh-skills-manager：工具栏 + 汇总条 + 分组卡片 + 行内启停按钮。
@@ -207,7 +222,9 @@ const SETTINGS_CSS = `
 @media (max-width:560px){.aag-toolbar{flex-wrap:wrap}.aag-actions{margin-left:0}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}.aag-row{align-items:flex-start;flex-wrap:wrap}.aag-row>.aag-action{margin-left:auto}.aag-filter-meta{margin-left:0}}
 @media (prefers-reduced-motion:reduce){.aag-action{transition:none}}
 `
-const CSS = COMPOSER_CSS + SETTINGS_CSS + MENU_NAME_OVERRIDE + '{flex:1 1 auto;max-width:none;min-width:0}'
+const CSS = COMPOSER_CSS + SETTINGS_CSS
+  + MENU_NAME_OVERRIDE + '{flex:1 1 auto;max-width:none;min-width:0}'
+  + MENU_ICON_OVERRIDE + `{font-family:${EXPERT_EMOJI_FONT_FAMILY};font-size:16px;line-height:1;font-variant-emoji:emoji}`
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
 interface AgencyAgentsRemoteApi {
@@ -656,24 +673,57 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     (props) => React.createElement(AgentsButton, { ...props, remote, getActive }),
   ))
 
-  for (const [i, div] of DIVISION_ORDER.entries()) {
-    const source: InputTriggerSource = {
-      trigger: '@',
-      // source.name 是词条 key：MenuView 用 t(source.name) 渲染分组标题，
-      // 未注册的 key 会原样显示（MenuView 开放 key 模式）。
-      name: `division.${div}`,
-      order: 100 + i,
-      candidates: async (_session, req) => {
-        const enabled = await readEnabled(remote).then((state) => state.enabled).catch(() => new Set<string>())
-        const q = String(req.query ?? '').toLowerCase()
-        return EXPERTS
-          .filter((e) => e.division === div && enabled.has(e.slug) && (q === '' || e.name.toLowerCase().includes(q) || e.nameEn.toLowerCase().includes(q) || e.slug.includes(q)))
-          .map((e) => ({ name: displayName(e, ctx.locale.getSnapshot().active), icon: e.emoji, hint: e.slug }))
-      },
-      onPick: (pick) => ({ text: t('summon.instruction', { name: pick.candidate.name, slug: pick.candidate.hint ?? '' }) }),
+  const registerInputTriggerSources = (active: 'zh' | 'en'): (() => void) => {
+    const disposers: Array<() => void> = []
+    try {
+      for (const [i, div] of DIVISION_ORDER.entries()) {
+        const source: InputTriggerSource = {
+          trigger: '@',
+          // MenuView 固定使用 slash.menu 命名空间，无法读取 agency 词条；
+          // 直接注册当前语言的显示名，并在语言切换时重建来源。
+          name: inputTriggerSourceName(div, active),
+          order: 100 + i,
+          candidates: async (_session, req) => {
+            const enabled = await readEnabled(remote).then((state) => state.enabled).catch(() => new Set<string>())
+            const q = String(req.query ?? '').toLowerCase()
+            return EXPERTS
+              .filter((e) => e.division === div && enabled.has(e.slug) && (q === '' || e.name.toLowerCase().includes(q) || e.nameEn.toLowerCase().includes(q) || e.slug.includes(q)))
+              .map((e) => ({ name: displayName(e, ctx.locale.getSnapshot().active), icon: e.emoji, hint: e.slug }))
+          },
+          onPick: (pick) => ({ text: t('summon.instruction', { name: pick.candidate.name, slug: pick.candidate.hint ?? '' }) }),
+        }
+        disposers.push(ctx.inputTriggers.registerSource(source))
+      }
+    } catch (error) {
+      for (const dispose of disposers.reverse()) dispose()
+      throw error
     }
-    ctx.effect(() => ctx.inputTriggers.registerSource(source), `agency-agents: @${div}`)
+    return () => {
+      for (const dispose of disposers.reverse()) dispose()
+    }
   }
+
+  ctx.effect(() => {
+    let active = getActive()
+    let disposeSources = registerInputTriggerSources(active)
+    const unsubscribe = ctx.locale.subscribe(() => {
+      const next = getActive()
+      if (next === active) return
+
+      disposeSources()
+      try {
+        disposeSources = registerInputTriggerSources(next)
+        active = next
+      } catch (error) {
+        disposeSources = registerInputTriggerSources(active)
+        console.error('[agency-agents] @ 菜单分组语言切换失败，已恢复原语言来源：', error)
+      }
+    })
+    return () => {
+      unsubscribe()
+      disposeSources()
+    }
+  }, 'agency-agents: @ menu sources')
 
   return () => { void disposeRemote() }
 }

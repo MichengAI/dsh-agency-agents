@@ -8,7 +8,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { compareExpertName, filterExperts, matchExpertQuery, normalizeExpertQuery, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
+import { compareExpertName, EXPERT_EMOJI_FONT_FAMILY, filterExperts, inputTriggerSourceName, matchExpertQuery, normalizeExpertQuery, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
@@ -666,6 +666,18 @@ describe('filterExperts', () => {
     expect(filterExperts(experts, { division: 'engineering', query: 'CODE' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
   })
 })
+describe('@ 菜单分组标题本地化', () => {
+  it('按当前语言返回分区显示名，未知分区回退原值', () => {
+    expect(inputTriggerSourceName('design', 'zh')).toBe('设计')
+    expect(inputTriggerSourceName('design', 'en')).toBe('Design')
+    expect(inputTriggerSourceName('custom', 'zh')).toBe('custom')
+  })
+
+  it('Windows 优先使用彩色 emoji 字体显示专家图标', () => {
+    expect(EXPERT_EMOJI_FONT_FAMILY.split(',')[0]).toBe('"Segoe UI Emoji"')
+  })
+})
+
 describe('list_experts 语言切换', () => {
   let dir: string
 

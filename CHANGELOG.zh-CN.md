@@ -4,6 +4,14 @@
 
 以下记录最近发布的五个版本。
 
+## 0.1.24 — 2026-09-01
+
+- 修复中文界面中 `@` 专家菜单分组标题显示 `division.design`、`division.engineering` 等原始英文键的问题。
+- 修复 Windows 下专家 emoji 图标只占位但不可见的问题，为专家菜单定向补充彩色 emoji 字体栈。
+- 分组标题现在跟随界面语言显示，并在语言切换后自动刷新；新增中英文与未知分区回退测试。
+
+发布包：[`@michengai/dsh-agency-agents@0.1.24`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.24)。
+
 ## 0.1.23 — 2026-08-31
 
 - 新增 DSH 设置 API 兼容适配层，同时兼容旧 RC 运行时与 `@deepseek-ai/dsh@0.1.2-alpha.2`。
@@ -31,10 +39,3 @@
 - 使用最终产品视觉更新 README。
 
 发布标签：[`v0.1.20`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.20)。
-
-## 0.1.19 — 2026-08-17
-
-- 对单专家召唤强制执行任务数量限制。
-- 调度前增加专家名称校验。
-
-发布标签：[`v0.1.19`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.19)。

@@ -4,6 +4,14 @@
 
 The five most recent published versions are listed below.
 
+## 0.1.24 — 2026-09-01
+
+- Fixed raw keys such as `division.design` and `division.engineering` appearing as group titles in the Chinese `@` expert menu.
+- Fixed expert emoji icons taking up space without rendering on Windows by applying a color-emoji font stack to expert menu items.
+- Group titles now follow the active interface language and refresh after locale changes; added coverage for Chinese, English, and unknown-division fallback behavior.
+
+Published package: [`@michengai/dsh-agency-agents@0.1.24`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.24).
+
 ## 0.1.23 — 2026-08-31
 
 - Added a compatibility adapter for the DSH settings API so the plugin works with both the legacy RC runtime and `@deepseek-ai/dsh@0.1.2-alpha.2`.
@@ -31,10 +39,3 @@ Published package: [`@michengai/dsh-agency-agents@0.1.21`](https://www.npmjs.com
 - Refreshed the README with final product artwork.
 
 Release tag: [`v0.1.20`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.20).
-
-## 0.1.19 — 2026-08-17
-
-- Enforced task limits for single-agent summons.
-- Added validation for expert names before dispatch.
-
-Release tag: [`v0.1.19`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.19).
