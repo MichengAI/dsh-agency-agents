@@ -4,6 +4,14 @@
 
 The five most recent published versions are listed below.
 
+## 0.1.25 — 2026-09-01
+
+- Fixed expert emoji icons disappearing on DSH `0.1.2-alpha.3`, where candidate `icon` values are restricted to built-in reference icon names.
+- Moved each emoji into the visible candidate name and resolved the clean expert name from its slug when picked, so summon instructions remain unchanged.
+- Added regression coverage for Chinese and English labels, clean pick names, and unknown-expert fallback behavior.
+
+Published package: [`@michengai/dsh-agency-agents@0.1.25`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.25).
+
 ## 0.1.24 — 2026-09-01
 
 - Fixed raw keys such as `division.design` and `division.engineering` appearing as group titles in the Chinese `@` expert menu.
@@ -31,11 +39,3 @@ Published package: [`@michengai/dsh-agency-agents@0.1.22`](https://www.npmjs.com
 - Linked the release history from both README editions and included it in the npm package.
 
 Published package: [`@michengai/dsh-agency-agents@0.1.21`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.21).
-
-## 0.1.20 — 2026-08-18
-
-- Declared official DeepSeek packages as peer dependencies.
-- Rebuilt the client bundle after strengthening summon validation.
-- Refreshed the README with final product artwork.
-
-Release tag: [`v0.1.20`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.20).

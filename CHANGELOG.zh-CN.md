@@ -4,6 +4,14 @@
 
 以下记录最近发布的五个版本。
 
+## 0.1.25 — 2026-09-01
+
+- 修复 DSH `0.1.2-alpha.3` 将候选 `icon` 限制为内置引用图标名称后，专家 emoji 消失的问题。
+- 将 emoji 合并到可见候选名称，并在选中时通过 slug 还原纯专家名，确保召唤指令保持不变。
+- 新增中英文候选名称、纯专家名还原和未知专家回退行为的回归测试。
+
+发布包：[`@michengai/dsh-agency-agents@0.1.25`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.25)。
+
 ## 0.1.24 — 2026-09-01
 
 - 修复中文界面中 `@` 专家菜单分组标题显示 `division.design`、`division.engineering` 等原始英文键的问题。
@@ -31,11 +39,3 @@
 - 在中英文 README 中加入更新日志入口，并将日志纳入 npm 包。
 
 发布包：[`@michengai/dsh-agency-agents@0.1.21`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.21)。
-
-## 0.1.20 — 2026-08-18
-
-- 将 DeepSeek 官方包声明为 peerDependencies。
-- 加强专家召唤校验后重新构建客户端产物。
-- 使用最终产品视觉更新 README。
-
-发布标签：[`v0.1.20`](https://github.com/MichengAI/dsh-agency-agents/tree/v0.1.20)。

@@ -8,7 +8,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { compareExpertName, EXPERT_EMOJI_FONT_FAMILY, filterExperts, inputTriggerSourceName, matchExpertQuery, normalizeExpertQuery, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
+import { compareExpertName, filterExperts, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceName, matchExpertQuery, normalizeExpertQuery, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
@@ -673,8 +673,13 @@ describe('@ 菜单分组标题本地化', () => {
     expect(inputTriggerSourceName('custom', 'zh')).toBe('custom')
   })
 
-  it('Windows 优先使用彩色 emoji 字体显示专家图标', () => {
-    expect(EXPERT_EMOJI_FONT_FAMILY.split(',')[0]).toBe('"Segoe UI Emoji"')
+  it('把 emoji 合并到可见名称，并在选中时恢复纯专家名', () => {
+    const expert = { name: '代码审查工程师', nameEn: 'Code Reviewer', emoji: '🔍' }
+    expect(inputTriggerCandidateName(expert, 'zh')).toBe('🔍 代码审查工程师')
+    expect(inputTriggerCandidateName(expert, 'en')).toBe('🔍 Code Reviewer')
+    expect(inputTriggerPickName('engineering-code-reviewer', '🔍 代码审查工程师', 'zh')).toBe('代码审查工程师')
+    expect(inputTriggerPickName('engineering-code-reviewer', '🔍 Code Reviewer', 'en')).toBe('Code Reviewer')
+    expect(inputTriggerPickName('missing', '未知专家', 'zh')).toBe('未知专家')
   })
 })
 
