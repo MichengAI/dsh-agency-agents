@@ -206,9 +206,14 @@ export function buildExpertReference(
   }
 }
 
-function expertMentionFromReference(slug: string, active: 'zh' | 'en'): string {
+/** 名册更新后仍可发送旧草稿，但不向用户或模型泄露已失效的内部标识。 */
+export function expertMentionFromReference(slug: string, active: 'zh' | 'en'): string {
   const expert = EXPERTS.find((item) => item.slug === slug)
-  if (expert === undefined) throw new Error('专家引用已失效')
+  if (expert === undefined) {
+    return active === 'en'
+      ? '@Removed expert (please reselect)'
+      : '@已移除专家（请重新选择）'
+  }
   return formatExpertMention(displayName(expert, active))
 }
 
@@ -366,11 +371,6 @@ function openAgentSettings(t: TranslateNS<'agency'>): void {
   window.requestAnimationFrame(() => { window.requestAnimationFrame(select) })
 }
 
-interface InputActions {
-  setDraft(draft: string): void
-  submit(): void
-}
-
 /** 输入机暴露给工具栏的最小原子引用写入面，避免依赖 slot 的非标准 owner 参数。 */
 export interface ReferenceInsertionTarget {
   readonly state: { getSnapshot(): { readonly draftRev: number } }
@@ -390,13 +390,13 @@ export interface ReferenceConversationAccess {
 
 export function resolveReferenceInsertionTarget(
   sessions: ReferenceSessionAccess,
-  conversation: ReferenceConversationAccess,
   sessionId?: SessionId,
+  getConversation?: (actx: ClientContext) => ReferenceConversationAccess | undefined,
 ): ReferenceInsertionTarget | undefined {
   const targetSessionId = sessionId ?? sessions.list?.getSnapshot().current
   if (targetSessionId === undefined) return undefined
   const actx = sessions.scope?.(targetSessionId) ?? sessions.binding?.(targetSessionId)?.ctx
-  return actx === undefined ? undefined : conversation.input.for(actx)
+  return actx === undefined ? undefined : getConversation?.(actx)?.input.for(actx)
 }
 
 /** 通过当前会话的输入机插入 chip；工具栏绝不能降级写入普通 @ 文本。 */
@@ -412,24 +412,14 @@ export function insertExpertReference(
   })
 }
 
-/** 根据当前草稿生成简短、可本地化的专家名称标签，任务内容另起一段。 */
-export function buildSummonInstruction(
-  t: TranslateNS<'agency'>,
-  name: string,
-  draft: string,
-): string {
-  const hasTask = draft.trim().length > 0
-  return t(hasTask ? 'summon.instruction.withTask' : 'summon.instruction', { name: formatExpertMention(name), task: draft })
-}
-
-/** 将召唤指令写入输入框。有草稿时也不自动发送，留给用户确认后再提交。 */
-export function applyExpertSummon(options: {
-  readonly inputActions?: InputActions
-  readonly instruction: string
-}): void {
-  if (options.inputActions !== undefined) {
-    options.inputActions.setDraft(options.instruction)
-  }
+/** 工具栏只能写入原生 chip；返回 false 供界面保留菜单并提示失败原因。 */
+export function insertSelectedExpert(
+  slug: string,
+  active: 'zh' | 'en',
+  insertReference: ((reference: ReferenceInsert) => boolean) | undefined,
+): boolean {
+  const expert = EXPERTS.find((item) => item.slug === slug)
+  return expert !== undefined && insertReference?.(buildExpertReference(expert, active)) === true
 }
 
 type ButtonProps = PropsLocale<'agency'> & {
@@ -444,6 +434,7 @@ type ButtonProps = PropsLocale<'agency'> & {
 function AgentsButton(props: ButtonProps): React.ReactElement {
   const [open, setOpen] = React.useState(false)
   const [enabled, setEnabled] = React.useState<ReadonlySet<string>>(new Set())
+  const [insertError, setInsertError] = React.useState<string | null>(null)
   React.useEffect(() => {
     if (!open) return
     const onPointerDown = (ev: PointerEvent): void => {
@@ -460,19 +451,24 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
       setEnabled(current.enabled)
       props.onEnabledChange?.(current.enabled)
       if (current.enabled.size === 0) { openAgentSettings(props.t); return }
+      setInsertError(null)
       setOpen((prev) => !prev)
     }).catch(() => { setOpen((prev) => !prev) })
   }
 
   const pick = (slug: string): void => {
-    const expert = EXPERTS.find((e) => e.slug === slug)
-    if (expert !== undefined) props.insertReference?.(buildExpertReference(expert, props.getActive()))
+    if (!insertSelectedExpert(slug, props.getActive(), props.insertReference)) {
+      setInsertError(props.t('error.insertFailed'))
+      return
+    }
+    setInsertError(null)
     setOpen(false)
   }
 
   const groups = groupByDivision(EXPERTS.filter((e) => enabled.has(e.slug)), props.getActive())
   const menu = open
     ? React.createElement('div', { className: 'aag-menu' },
+      insertError === null ? null : React.createElement('div', { className: 'aag-error', role: 'alert' }, insertError),
       groups.length === 0
         ? React.createElement('div', { className: 'aag-menu-empty' }, props.t('menu.empty'))
         : groups.map((g) => menuGroup(g, pick, props.t, props.getActive)))
@@ -782,15 +778,14 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   const refreshEnabledForMentions = (): void => {
     void readEnabled(remote).then((current) => updateEnabledForMentions(current.enabled)).catch(() => undefined)
   }
-  const bindExpertInsertion = (sessionId: SessionId): { readonly insertReference: (reference: ReferenceInsert) => boolean } => {
-    // 必须在 slot 注入时绑定 session scope。根上下文读取 sessions 会被 Cordis 拒绝，
-    // 且不能保证对应屏幕上的编辑器。
-    const sessions = ctx.sessions as unknown as ReferenceSessionAccess
-    const actx = sessions.scope?.(sessionId) ?? sessions.binding?.(sessionId)?.ctx
-    const conversation = actx?.get('conversation') as ReferenceConversationAccess | undefined
+  const bindExpertInsertion = (sessionId?: SessionId): { readonly insertReference: (reference: ReferenceInsert) => boolean } => {
     return {
       insertReference: (reference) => insertExpertReference(
-        actx === undefined ? undefined : conversation?.input.for(actx),
+        resolveReferenceInsertionTarget(
+          ctx.sessions as unknown as ReferenceSessionAccess,
+          sessionId,
+          (actx) => actx.get('conversation') as ReferenceConversationAccess | undefined,
+        ),
         reference,
       ),
     }

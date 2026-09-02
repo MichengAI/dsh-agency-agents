@@ -17,8 +17,8 @@ export const zhHost = {
   'error.rootNotDir': '智能体目录 root "{root}" 不是目录',
   'error.catalogEmpty': '在 root "{root}" 下未发现任何智能体（*.md 文件）。请确认路径正确。',
   'error.catalogLoad': 'agency-agents 花名册加载失败：{detail}',
-  'error.expertRequired': '必须提供专家 slug 或名称',
-  'error.expertAmbiguous': '专家 "{query}" 有歧义；候选：{candidates}。请用 list_experts 选择精确 slug。',
+  'error.expertRequired': '必须提供专家名称',
+  'error.expertAmbiguous': '专家 "{query}" 有歧义；候选：{candidates}。请用 list_experts 选择唯一名称。',
   'error.expertMissing': '没有匹配 "{query}" 的专家。请调用 list_experts 查看花名册。',
   'error.expertDisabled': '专家 "{name}" 已停用',
   'error.summonRequiresAgent': 'summon_expert 需要由智能体调用',
@@ -54,8 +54,8 @@ export const enHost = {
   'error.rootNotDir': 'Agent catalog root "{root}" is not a directory',
   'error.catalogEmpty': 'No agents (*.md files) found under root "{root}". Check the path.',
   'error.catalogLoad': 'agency-agents catalog failed to load: {detail}',
-  'error.expertRequired': 'expert is required',
-  'error.expertAmbiguous': 'Ambiguous expert "{query}"; candidates: {candidates}. Use list_experts to pick an exact slug.',
+  'error.expertRequired': 'expert name is required',
+  'error.expertAmbiguous': 'Ambiguous expert "{query}"; candidates: {candidates}. Use list_experts to pick a unique name.',
   'error.expertMissing': 'No expert matched "{query}". Call list_experts to see the roster.',
   'error.expertDisabled': 'expert "{name}" is disabled',
   'error.summonRequiresAgent': 'summon_expert requires a calling agent',
@@ -141,7 +141,7 @@ export function localizedExpertDescription(expert: { readonly description: strin
 export interface ExpertListGroup {
   readonly division: string
   readonly count: number
-  readonly experts?: ReadonlyArray<{ readonly slug: string; readonly name: string; readonly emoji: string; readonly description: string }>
+  readonly experts?: ReadonlyArray<{ readonly name: string; readonly emoji: string; readonly description: string }>
 }
 
 /** 渲染 list_experts 的用户可见文本。 */
@@ -164,7 +164,7 @@ export function renderExpertList(
     }))
     for (const expert of group.experts ?? []) {
       const mark = expert.emoji !== '' ? expert.emoji + ' ' : ''
-      lines.push('- ' + mark + expert.name + ' — `' + expert.slug + '` — ' + expert.description)
+      lines.push('- ' + mark + expert.name + ' — ' + expert.description)
     }
   }
   lines.unshift(formatHost(locale, 'list.heading', { total: value.total, count: value.divisions.length }))

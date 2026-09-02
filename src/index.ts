@@ -327,23 +327,35 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
   if (map.size === 0) {
     throw new Error(formatHost('zh', 'error.catalogEmpty', { root }))
   }
+  const nameOwners = new Map<string, Expert>()
+  for (const expert of map.values()) {
+    for (const name of [expert.name, expert.nameEn]) {
+      const normalized = name.trim().toLocaleLowerCase()
+      if (normalized === '') continue
+      const owner = nameOwners.get(normalized)
+      if (owner !== undefined && owner.slug !== expert.slug) {
+        throw new Error(`花名册包含重复专家名称：${name}`)
+      }
+      nameOwners.set(normalized, expert)
+    }
+  }
   return map
 }
 
-/** 根据名称或内部 slug 解析智能体；名称重名时拒绝调用，防止召唤到错误角色。 */
+/** 仅按本地化名称解析智能体；名称重名时拒绝调用，防止召唤到错误角色。 */
 export function resolveExpert<T extends { readonly slug: string; readonly name: string; readonly nameEn?: string }>(experts: readonly T[], query: unknown, locale: LocaleId = 'zh'): T {
   const q = String(query).trim().toLowerCase()
   if (q.length === 0) throw new Error(formatHost(locale, 'error.expertRequired'))
-  const bySlug = experts.find((expert) => expert.slug.toLowerCase() === q)
-  if (bySlug !== undefined) return bySlug
   const exactNames = experts.filter((expert) => expert.name.toLowerCase() === q || expert.nameEn?.toLowerCase() === q)
   if (exactNames.length === 1) return exactNames[0]
   const matches = exactNames.length > 1
     ? exactNames
-    : experts.filter((expert) => expert.slug.toLowerCase().includes(q) || expert.name.toLowerCase().includes(q) || expert.nameEn?.toLowerCase().includes(q))
+    : experts.filter((expert) => expert.name.toLowerCase().includes(q) || expert.nameEn?.toLowerCase().includes(q))
   if (matches.length === 1) return matches[0]
   if (matches.length > 1) {
-    const preview = matches.slice(0, 12).map((expert) => expert.slug).join(', ')
+    const preview = matches.slice(0, 12)
+      .map((expert) => locale === 'en' ? expert.nameEn ?? expert.name : expert.name)
+      .join(', ')
     throw new Error(formatHost(locale, 'error.expertAmbiguous', { query: String(query), candidates: preview }))
   }
   throw new Error(formatHost(locale, 'error.expertMissing', { query: String(query) }))
@@ -369,7 +381,7 @@ export function apply(ctx: Context, config: Config): void {
     if (loadError !== null) throw new Error(formatHost(activeLocale(), 'error.catalogLoad', { detail: loadError }))
   }
 
-  function groupByDivision(withExperts: boolean, locale: LocaleId): Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; emoji: string; description: string }> }> {
+  function groupByDivision(withExperts: boolean, locale: LocaleId): Array<{ division: string; count: number; experts?: Array<{ name: string; emoji: string; description: string }> }> {
     const groups = new Map<string, Expert[]>()
     const enabled = enabledSet()
     for (const expert of experts.values()) {
@@ -387,21 +399,21 @@ export function apply(ctx: Context, config: Config): void {
           experts: list
             .slice()
             .sort((a, b) => a.slug.localeCompare(b.slug))
-            .map((e) => ({ slug: e.slug, name: localizedExpertName(e, locale), emoji: e.emoji, description: truncate(localizedExpertDescription(e, locale), DESCRIPTION_LIMIT) })),
+            .map((e) => ({ name: localizedExpertName(e, locale), emoji: e.emoji, description: truncate(localizedExpertDescription(e, locale), DESCRIPTION_LIMIT) })),
         } : {}),
       }))
   }
 
   ctx.tools.register(defineTool({
     name: 'list_experts',
-    description: 'List the available Agency domain experts grouped by division. Without a division filter it returns only division names and counts (compact); pass a division to expand it with expert names, identifiers, and descriptions. Call this before summon_expert when you need to choose an expert.',
+    description: 'List the available Agency domain experts grouped by division. Without a division filter it returns only division names and counts (compact); pass a division to expand it with expert names and descriptions. Call this before summon_expert when you need to choose an expert by name.',
     parameters: {
       division: { type: 'string', description: 'Optional division key to filter (e.g. engineering, marketing, security, finance, design).' },
     },
     output: {
       schema: { type: 'object', additionalProperties: false, properties: { divisions: { type: 'array', required: true, items: { type: 'json' } }, total: { type: 'number', required: true } } },
       render: (args, value) => {
-        const divisions = value.divisions as Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; emoji: string; description: string }> }>
+        const divisions = value.divisions as Array<{ division: string; count: number; experts?: Array<{ name: string; emoji: string; description: string }> }>
         return [{ type: 'text', text: renderExpertList(activeLocale(), args, { divisions, total: value.total as number }) }]
       },
     },
@@ -447,7 +459,7 @@ export function apply(ctx: Context, config: Config): void {
         const detail = text.length > 0 ? formatHost(locale, 'error.partialOutput', { text }) : ''
         throw new Error(formatHost(locale, 'error.expertRun', { reason: result.stopReason, detail }))
       }
-      return { expert: expert.slug, answer: text }
+      return { expert: localizedExpertName(expert, locale), answer: text }
     } finally {
       await run.dispose()
     }
@@ -524,7 +536,7 @@ export function apply(ctx: Context, config: Config): void {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 18 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection writes the enabled expert name alone on the first line; all text after the following blank line is that expert\'s task. In the parent session, call `list_experts()` to see enabled division names and counts, then call `list_experts(division)` to browse enabled experts and select a unique name before using `summon_expert(expert, task)` or `summon_experts` for a small parallel team (at most 8; partial results if some fail). A disabled expert cannot be summoned.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 18 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. In the parent session, call `list_experts()` to see enabled division names and counts, then call `list_experts(division)` to browse enabled experts and select a unique name before using `summon_expert(expert, task)` or `summon_experts` for a small parallel team (at most 8; partial results if some fail). A disabled expert cannot be summoned.'
     },
   })
 }

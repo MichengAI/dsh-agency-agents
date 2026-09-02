@@ -9,7 +9,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveReferenceInsertionTarget, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveReferenceInsertionTarget, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
@@ -173,7 +173,7 @@ describe('loadCatalog', () => {
     expect(map.has('backend-architect-with-memory')).toBe(false)
   })
 
-  it('未选择 engineering 时不加载 mcp-memory 额外源', async () => {
+  it('未配置对应分区时不加载 integrations 下的转换输出', async () => {
     await mkdir(join(dir, 'marketing'), { recursive: true })
     await mkdir(join(dir, 'integrations', 'mcp-memory'), { recursive: true })
     await writeFile(join(dir, 'marketing', 'marketing-specialist.md'), '---\nname: Marketing Specialist\ndescription: d\n---\nbody', 'utf8')
@@ -192,6 +192,14 @@ describe('loadCatalog', () => {
     // 'reviewer.md' 按文件名排在 'z-sub' 之前，子目录中的同名文件后加载并覆盖
     const map = await loadCatalog(dir, ['engineering'])
     expect(map.get('reviewer')?.name).toBe('Sub')
+  })
+
+  it('不同专家名称重复时拒绝加载，保证名称可唯一召唤', async () => {
+    await mkdir(join(dir, 'engineering'), { recursive: true })
+    await writeFile(join(dir, 'engineering', 'reviewer-a.md'), '---\nname: Reviewer\ndescription: d\n---\nbody', 'utf8')
+    await writeFile(join(dir, 'engineering', 'reviewer-b.md'), '---\nname: Reviewer\ndescription: d\n---\nbody', 'utf8')
+
+    await expect(loadCatalog(dir, ['engineering'])).rejects.toThrow('重复专家名称')
   })
 
   it('root 不存在时抛出', async () => {
@@ -227,12 +235,12 @@ describe('resolveExpert', () => {
     { slug: 'Unity-Architect', name: 'Unity Architect' },
   ]
 
-  it('精确名称对应多个智能体时抛出歧义并列出 slug', () => {
-    expect(() => resolveExpert(experts, 'Backend Architect')).toThrow(/engineering-backend-architect, backend-architect-with-memory/)
+  it('精确名称对应多个智能体时抛出歧义，但不泄露 slug', () => {
+    expect(() => resolveExpert(experts, 'Backend Architect')).toThrow(/Backend Architect, Backend Architect/)
   })
 
-  it('按 slug 不区分大小写匹配外部目录中的文件名', () => {
-    expect(resolveExpert(experts, 'unity-architect').name).toBe('Unity Architect')
+  it('拒绝按 slug 召唤，只接受专家名称', () => {
+    expect(() => resolveExpert(experts, 'unity-architect')).toThrow(formatHost('zh', 'error.expertMissing', { query: 'unity-architect' }))
   })
 
   it('唯一部分匹配时返回智能体，无匹配时给出可操作错误', () => {
@@ -308,7 +316,7 @@ describe('summon_expert', () => {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
 
-    await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).resolves.toEqual({ expert: 'reviewer', answer: 'done' })
+    await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).resolves.toEqual({ expert: 'Reviewer', answer: 'done' })
     expect(startOptions).toMatchObject({ toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts'] } })
     expect(startOptions).not.toHaveProperty('maxDepth')
   })
@@ -514,47 +522,6 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
   })
 })
 
-describe('applyExpertSummon（输入框召唤）', () => {
-  const t: TranslateNS<'agency'> = (key, params) => {
-    let text = Object.hasOwn(zh, key) ? zh[key as AgencyKey] : key
-    if (params !== undefined) {
-      for (const [name, value] of Object.entries(params)) text = text.replaceAll('{' + name + '}', String(value))
-    }
-    return text
-  }
-
-  it('输入框已有内容时只回填召唤指令，不自动发送', () => {
-    const calls: string[] = []
-    const inputActions = {
-      setDraft(draft: string): void { calls.push('setDraft:' + draft) },
-      submit(): void { calls.push('submit') },
-    }
-    const instruction = buildSummonInstruction(t, '代码审查专家', '请审查这段代码')
-    applyExpertSummon({ inputActions, instruction })
-    expect(instruction).toBe('@代码审查专家\n\n请审查这段代码')
-    expect(instruction).not.toContain('reviewer')
-    expect(calls).toEqual(['setDraft:' + instruction])
-    expect(calls).not.toContain('submit')
-  })
-
-  it('输入框为空时只回填召唤指令，不发送', () => {
-    const calls: string[] = []
-    const inputActions = {
-      setDraft(draft: string): void { calls.push('setDraft:' + draft) },
-      submit(): void { calls.push('submit') },
-    }
-    const instruction = buildSummonInstruction(t, '代码审查专家', '   ')
-    applyExpertSummon({ inputActions, instruction })
-    expect(instruction).toBe(t('summon.instruction', { name: '@代码审查专家' }))
-    expect(calls).toEqual(['setDraft:' + instruction])
-    expect(calls).not.toContain('submit')
-  })
-
-  it('没有 inputActions 时只生成指令，不抛错也不发送', () => {
-    expect(() => applyExpertSummon({ instruction: t('summon.instruction', { name: '代码审查专家' }) })).not.toThrow()
-    expect(() => applyExpertSummon({ inputActions: undefined, instruction: 'noop' })).not.toThrow()
-  })
-})
 describe('宿主 i18n', () => {
   it('zh/en 词条 key 对齐，且只有显式 en 才切换语言', () => {
     expect(Object.keys(zh).sort()).toEqual(Object.keys(en).sort())
@@ -599,7 +566,7 @@ describe('宿主 i18n', () => {
       divisions: [{
         division: 'engineering',
         count: 1,
-        experts: [{ slug: 'engineering-code-reviewer', name: '代码审查工程师', emoji: '🔍', description: '中文简介' }],
+        experts: [{ name: '代码审查工程师', emoji: '🔍', description: '中文简介' }],
       }],
       total: 1,
     }
@@ -618,7 +585,7 @@ describe('宿主 i18n', () => {
     ]
     expect(() => resolveExpert(experts, '')).toThrow(formatHost('zh', 'error.expertRequired'))
     expect(() => resolveExpert(experts, '', 'en')).toThrow(formatHost('en', 'error.expertRequired'))
-    expect(() => resolveExpert(experts, '后端架构师')).toThrow(formatHost('zh', 'error.expertAmbiguous', { query: '后端架构师', candidates: 'a, b' }))
+    expect(() => resolveExpert(experts, '后端架构师')).toThrow(formatHost('zh', 'error.expertAmbiguous', { query: '后端架构师', candidates: '后端架构师, 后端架构师' }))
     expect(() => resolveExpert(experts, 'missing', 'en')).toThrow(formatHost('en', 'error.expertMissing', { query: 'missing' }))
   })
 })
@@ -757,6 +724,25 @@ describe('@ 菜单分组标题本地化', () => {
     expect(insertExpertReference(undefined, reference)).toBe(false)
   })
 
+  it('工具栏仅在原生 chip 插入成功后才视为选择成功', () => {
+    const calls: unknown[] = []
+    const insertReference = (reference: unknown): boolean => {
+      calls.push(reference)
+      return true
+    }
+
+    expect(insertSelectedExpert('engineering-code-reviewer', 'zh', insertReference)).toBe(true)
+    expect(calls).toHaveLength(1)
+    expect(insertSelectedExpert('missing-expert', 'zh', insertReference)).toBe(false)
+    expect(insertSelectedExpert('engineering-code-reviewer', 'zh', () => false)).toBe(false)
+    expect(insertSelectedExpert('engineering-code-reviewer', 'zh', undefined)).toBe(false)
+  })
+
+  it('历史 chip 的专家已移除时不抛错、不泄露内部 slug', () => {
+    expect(expertMentionFromReference('missing-expert', 'zh')).toBe('@已移除专家（请重新选择）')
+    expect(expertMentionFromReference('missing-expert', 'en')).toBe('@Removed expert (please reselect)')
+  })
+
   it('slot 未提供 sessionId 时回退解析当前会话输入机', () => {
     const actx = {} as Context
     const target = {
@@ -771,9 +757,9 @@ describe('@ 菜单分组标题本地化', () => {
         calls.push(id)
         return { ctx: actx }
       },
-    }, {
-      input: { for: (context: Context) => context === actx ? target : undefined },
-    })
+    }, undefined, (context: Context) => context === actx
+      ? { input: { for: (candidate: Context) => candidate === actx ? target : undefined } }
+      : undefined)
 
     expect(resolved).toBe(target)
     expect(calls).toEqual(['current-session'])
@@ -803,7 +789,7 @@ describe('list_experts 语言切换', () => {
 
   function install(locale?: 'zh' | 'en'): {
     list: {
-      execute: (args: unknown) => Promise<{ divisions: Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; description: string }> }>; total: number }>
+      execute: (args: unknown) => Promise<{ divisions: Array<{ division: string; count: number; experts?: Array<{ name: string; description: string }> }>; total: number }>
       output: { render: (args: unknown, value: unknown) => Array<{ type: string; text: string }> }
     }
   } {
@@ -820,7 +806,7 @@ describe('list_experts 语言切换', () => {
     } as unknown as Context
     apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const list = tools.find((tool) => (tool as { name?: string }).name === 'list_experts') as {
-      execute: (args: unknown) => Promise<{ divisions: Array<{ division: string; count: number; experts?: Array<{ slug: string; name: string; description: string }> }>; total: number }>
+      execute: (args: unknown) => Promise<{ divisions: Array<{ division: string; count: number; experts?: Array<{ name: string; description: string }> }>; total: number }>
       output: { render: (args: unknown, value: unknown) => Array<{ type: string; text: string }> }
     }
     return { list }
@@ -832,7 +818,7 @@ describe('list_experts 语言切换', () => {
     expect(result).toMatchObject({
       divisions: [{
         division: 'engineering',
-        experts: [{ slug: 'engineering-code-reviewer', name: '代码审查工程师', description: '中文简介' }],
+        experts: [{ name: '代码审查工程师', description: '中文简介' }],
       }],
       total: 1,
     })
@@ -843,7 +829,7 @@ describe('list_experts 语言切换', () => {
     const { list } = install('en')
     const result = await list.execute({ division: 'engineering' })
     expect(result.divisions[0]?.experts).toEqual([
-      { slug: 'engineering-code-reviewer', name: 'Code Reviewer', emoji: '🔍', description: 'English intro' },
+      { name: 'Code Reviewer', emoji: '🔍', description: 'English intro' },
     ])
     expect(list.output.render({ division: 'engineering' }, result)[0]?.text).toContain('## Engineering (1)')
   })
@@ -954,7 +940,7 @@ describe('summon_experts', () => {
       ],
     }, { agent: {} })
     expect(value.results).toEqual([
-      { expert: 'reviewer', ok: true, answer: 'ok-review' },
+      { expert: 'Reviewer', ok: true, answer: 'ok-review' },
       { expert: 'historian', ok: false, answer: '', error: formatHost('zh', 'error.expertRun', { reason: 'cancelled', detail: formatHost('zh', 'error.partialOutput', { text: 'partial' }) }) },
     ])
     expect(summon.output.render({}, value)[0]?.text).toContain('ok-review')

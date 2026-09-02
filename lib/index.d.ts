@@ -84,7 +84,7 @@ declare function truncate(text: string, limit: number): string;
 declare function parseFrontmatter(raw: string): Frontmatter | undefined;
 /** 加载已配置分区中的所有 persona，按 slug 建立索引；目录无效或为空时抛出明确错误。 */
 declare function loadCatalog(root: string, divisions: readonly string[]): Promise<Map<string, Expert>>;
-/** 根据名称或内部 slug 解析智能体；名称重名时拒绝调用，防止召唤到错误角色。 */
+/** 仅按本地化名称解析智能体；名称重名时拒绝调用，防止召唤到错误角色。 */
 declare function resolveExpert<T extends {
   readonly slug: string;
   readonly name: string;

@@ -4,6 +4,12 @@
 
 The five most recent published versions are listed below.
 
+## Unreleased
+
+- Replaced composer text injection with native expert-reference chips. Chips display only the localized expert name and the host icon; internal identifiers remain private.
+- Kept the expert picker open and displayed a localized error when chip insertion is rejected.
+- Required DSH RC.6 or newer, removed slug-based listing and selection guidance, and made removed-expert chips serializable without exposing their internal identifier.
+
 ## 0.1.25 — 2026-09-01
 
 - Fixed expert emoji icons disappearing on DSH `0.1.2-alpha.3`, where candidate `icon` values are restricted to built-in reference icon names.
