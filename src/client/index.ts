@@ -373,7 +373,7 @@ function openAgentSettings(t: TranslateNS<'agency'>): void {
 
 /** 输入机暴露给工具栏的最小原子引用写入面，避免依赖 slot 的非标准 owner 参数。 */
 export interface ReferenceInsertionTarget {
-  readonly state: { getSnapshot(): { readonly draftRev: number } }
+  readonly state: { getSnapshot(): { readonly draft: string; readonly draftRev: number } }
   insertReference(reference: ReferenceInsert, span: TokenSpan): boolean
 }
 
@@ -399,16 +399,28 @@ export function resolveReferenceInsertionTarget(
   return actx === undefined ? undefined : getConversation?.(actx)?.input.for(actx)
 }
 
-/** 通过当前会话的输入机插入 chip；工具栏绝不能降级写入普通 @ 文本。 */
+/** 返回草稿开头专家 chip 前缀的末端，兼容旧版 chip 与空格交替的草稿格式。 */
+function expertReferencePrefixEnd(draft: string): number {
+  let end = 0
+  while (draft[end] === '\uFFFC') {
+    end += 1
+    if (draft[end] === ' ') end += 1
+  }
+  return end
+}
+
+/** 通过当前会话的输入机插入 chip；新增专家始终追加在已有专家之后。 */
 export function insertExpertReference(
   target: ReferenceInsertionTarget | undefined,
   reference: ReferenceInsert,
 ): boolean {
   if (target === undefined) return false
+  const snapshot = target.state.getSnapshot()
+  const offset = expertReferencePrefixEnd(snapshot.draft)
   return target.insertReference(reference, {
-    start: 0,
-    end: 0,
-    draftRev: target.state.getSnapshot().draftRev,
+    start: offset,
+    end: offset,
+    draftRev: snapshot.draftRev,
   })
 }
 

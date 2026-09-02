@@ -702,7 +702,7 @@ describe('@ 菜单分组标题本地化', () => {
     })
   })
 
-  it('工具栏选择专家时直接插入原生引用，不写入会再次触发菜单的普通 @ 文本', () => {
+  it('工具栏选择专家时将 chip 追加到既有专家后，不写入普通 @ 文本', () => {
     const calls: unknown[] = []
     const reference = {
       source: '@michengai/dsh-agency-agents:engineering',
@@ -712,7 +712,7 @@ describe('@ 菜单分组标题本地化', () => {
       clipboardText: '@代码审查工程师',
     }
     const target = {
-      state: { getSnapshot: () => ({ draftRev: 42 }) },
+      state: { getSnapshot: () => ({ draft: '\uFFFC ', draftRev: 42 }) },
       insertReference: (value: unknown, span: unknown): boolean => {
         calls.push(value, span)
         return true
@@ -720,8 +720,29 @@ describe('@ 菜单分组标题本地化', () => {
     }
 
     expect(insertExpertReference(target, reference)).toBe(true)
-    expect(calls).toEqual([reference, { start: 0, end: 0, draftRev: 42 }])
+    expect(calls).toEqual([reference, { start: 2, end: 2, draftRev: 42 }])
     expect(insertExpertReference(undefined, reference)).toBe(false)
+  })
+
+  it('兼容旧格式的 chip 与空格交替前缀，仍追加到最后一个 chip 后', () => {
+    const calls: unknown[] = []
+    const reference = {
+      source: '@michengai/dsh-agency-agents:engineering',
+      ref: 'engineering-code-reviewer',
+      label: '代码审查工程师',
+      appearance: 'session' as const,
+      clipboardText: '@代码审查工程师',
+    }
+    const target = {
+      state: { getSnapshot: () => ({ draft: '\uFFFC \uFFFC 请审查这段代码', draftRev: 8 }) },
+      insertReference: (value: unknown, span: unknown): boolean => {
+        calls.push(value, span)
+        return true
+      },
+    }
+
+    expect(insertExpertReference(target, reference)).toBe(true)
+    expect(calls).toEqual([reference, { start: 4, end: 4, draftRev: 8 }])
   })
 
   it('工具栏仅在原生 chip 插入成功后才视为选择成功', () => {
@@ -746,7 +767,7 @@ describe('@ 菜单分组标题本地化', () => {
   it('slot 未提供 sessionId 时回退解析当前会话输入机', () => {
     const actx = {} as Context
     const target = {
-      state: { getSnapshot: () => ({ draftRev: 1 }) },
+      state: { getSnapshot: () => ({ draft: '', draftRev: 1 }) },
       insertReference: (): boolean => true,
     }
     const calls: string[] = []
