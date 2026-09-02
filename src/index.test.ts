@@ -9,7 +9,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, expertMentionFromReference, expertReferenceInsertionCaret, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveReferenceInsertionTarget, writeErrorKey, writeErrorMessage } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveReferenceInsertionTarget, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
@@ -672,7 +672,7 @@ describe('@ 菜单分组标题本地化', () => {
 
     expect(formatExpertMention('创意设计师')).toBe('@创意设计师')
     expect(formatExpertMention('@创意设计师')).toBe('@创意设计师')
-    expect(formatExpertMentionInsertion('创意设计师')).toBe('@创意设计师 ')
+    expect(formatExpertMentionInsertion('创意设计师')).toBe('@创意设计师\u00A0')
     expect(buildExpertMentionLexicon(experts, new Set(['design-creative-designer']), 'zh')).toEqual(['创意设计师'])
     expect(buildExpertMentionLexicon(experts, new Set(['design-creative-designer']), 'en')).toEqual(['Creative Designer'])
   })
@@ -692,13 +692,13 @@ describe('@ 菜单分组标题本地化', () => {
       ref: 'engineering-code-reviewer',
       label: '代码审查工程师',
       appearance: 'session',
-      clipboardText: '@代码审查工程师',
+      clipboardText: '@代码审查工程师\u00A0',
     })
     expect(buildExpertReference(expert, 'en')).toMatchObject({
       source: '@michengai/dsh-agency-agents:engineering',
       label: 'Code Reviewer',
       appearance: 'session',
-      clipboardText: '@Code Reviewer',
+      clipboardText: '@Code Reviewer\u00A0',
     })
   })
 
@@ -711,7 +711,7 @@ describe('@ 菜单分组标题本地化', () => {
       ref: 'engineering-code-reviewer',
       label: '代码审查工程师',
       appearance: 'session' as const,
-      clipboardText: '@代码审查工程师',
+      clipboardText: '@代码审查工程师\u00A0',
     }
     const target = {
       state: { getSnapshot: () => ({ draft, draftRev }) },
@@ -740,7 +740,7 @@ describe('@ 菜单分组标题本地化', () => {
       ref: 'engineering-code-reviewer',
       label: '代码审查工程师',
       appearance: 'session' as const,
-      clipboardText: '@代码审查工程师',
+      clipboardText: '@代码审查工程师\u00A0',
     }
     const target = {
       state: { getSnapshot: () => ({ draft: '\uFFFC \uFFFC 请审查这段代码', draftRev: 8 }) },
@@ -760,7 +760,7 @@ describe('@ 菜单分组标题本地化', () => {
       source: '@michengai/dsh-agency-agents:engineering',
       ref: 'engineering-code-reviewer',
       label: '代码审查工程师',
-      clipboardText: '@代码审查工程师',
+      clipboardText: '@代码审查工程师\u00A0',
     }
     const target = {
       state: {
@@ -780,12 +780,6 @@ describe('@ 菜单分组标题本地化', () => {
     expect(calls).toEqual([{ start: 2, end: 2, draftRev: 9 }])
   })
 
-  it('将工具栏插入后的光标放到 chip 与分隔空格之后', () => {
-    expect(expertReferenceInsertionCaret('', 0)).toBe(2)
-    expect(expertReferenceInsertionCaret('\uFFFC ', 2)).toBe(4)
-    expect(expertReferenceInsertionCaret('\uFFFC 请审查', 1)).toBe(2)
-  })
-
   it('工具栏仅在原生 chip 插入成功后才视为选择成功', () => {
     const calls: unknown[] = []
     const insertReference = (reference: unknown): boolean => {
@@ -801,8 +795,10 @@ describe('@ 菜单分组标题本地化', () => {
   })
 
   it('历史 chip 的专家已移除时不抛错、不泄露内部 slug', () => {
-    expect(expertMentionFromReference('missing-expert', 'zh')).toBe('@已移除专家（请重新选择）')
-    expect(expertMentionFromReference('missing-expert', 'en')).toBe('@Removed expert (please reselect)')
+    expect(expertMentionFromReference('engineering-code-reviewer', 'zh')).toBe('@代码审查工程师\u00A0')
+    expect(expertMentionFromReference('engineering-code-reviewer', 'en')).toBe('@Code Reviewer\u00A0')
+    expect(expertMentionFromReference('missing-expert', 'zh')).toBe('@已移除专家（请重新选择）\u00A0')
+    expect(expertMentionFromReference('missing-expert', 'en')).toBe('@Removed expert (please reselect)\u00A0')
   })
 
   it('slot 未提供 sessionId 时回退解析当前会话输入机', () => {

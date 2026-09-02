@@ -158,9 +158,9 @@ export function formatExpertMention(name: string): string {
   return `@${name.trim().replace(/^@+/, '')}`
 }
 
-/** 菜单选中后补一个分隔空格，避免新插入的 @名称立即再次触发候选菜单。 */
+/** 使用不换行空格分隔专家引用，避免消息渲染层折叠相邻 chip 的普通空格。 */
 export function formatExpertMentionInsertion(name: string): string {
-  return `${formatExpertMention(name)} `
+  return `${formatExpertMention(name)}\u00A0`
 }
 
 /** 仅公开已启用专家的本地化名称，供宿主扫描并装饰 @名称 纯文本引用。 */
@@ -202,7 +202,7 @@ export function buildExpertReference(
     label: name,
     // dsh-client-ui-input-trigger RC.6 尚未声明该运行时字段；新版宿主将其渲染为内置代理图标。
     appearance: 'session',
-    clipboardText: formatExpertMention(name),
+    clipboardText: formatExpertMentionInsertion(name),
   }
 }
 
@@ -211,10 +211,10 @@ export function expertMentionFromReference(slug: string, active: 'zh' | 'en'): s
   const expert = EXPERTS.find((item) => item.slug === slug)
   if (expert === undefined) {
     return active === 'en'
-      ? '@Removed expert (please reselect)'
-      : '@已移除专家（请重新选择）'
+      ? '@Removed expert (please reselect)\u00A0'
+      : '@已移除专家（请重新选择）\u00A0'
   }
-  return formatExpertMention(displayName(expert, active))
+  return formatExpertMentionInsertion(displayName(expert, active))
 }
 
 /** 按当前 locale 取专家简介：en 用原始英文描述（缺失时回退中文），其余用中文描述。 */
@@ -423,29 +423,6 @@ function expertReferencePrefixEnd(snapshot: ReturnType<ReferenceInsertionTarget[
   return end
 }
 
-/** 宿主会在 chip 后补足一个分隔空格，光标必须越过该空格，避免停在两个 chip 之间。 */
-export function expertReferenceInsertionCaret(draft: string, offset: number): number {
-  const tail = draft.slice(offset)
-  return offset + 1 + (tail === '' || tail[0] !== ' ' ? 1 : 0)
-}
-
-function restoreComposerCaret(target: ReferenceInsertionTarget, caret: number): void {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return
-  const apply = (retries: number): void => {
-    window.requestAnimationFrame(() => {
-      // 点击专家菜单后焦点在按钮上，且输入框可能尚未完成 React 渲染。
-      const textarea = document.querySelector('textarea')
-      if (!(textarea instanceof HTMLTextAreaElement) || textarea.value !== target.state.getSnapshot().draft) {
-        if (retries > 0) apply(retries - 1)
-        return
-      }
-      textarea.focus({ preventScroll: true })
-      textarea.setSelectionRange(caret, caret)
-    })
-  }
-  apply(2)
-}
-
 /** 通过当前会话的输入机插入 chip；新增专家始终追加在已有专家之后。 */
 export function insertExpertReference(
   target: ReferenceInsertionTarget | undefined,
@@ -459,7 +436,6 @@ export function insertExpertReference(
     end: offset,
     draftRev: snapshot.draftRev,
   })
-  if (inserted) restoreComposerCaret(target, expertReferenceInsertionCaret(snapshot.draft, offset))
   return inserted
 }
 
