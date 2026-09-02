@@ -261,13 +261,13 @@ function textBlocks(blocks: readonly ContentBlock[]): string {
 }
 
 /** 校验 root 目录存在且为目录，否则抛出明确错误（避免静默得到空列表）。 */
-async function assertDirectory(root: string): Promise<void> {
+async function assertDirectory(root: string, locale: LocaleId): Promise<void> {
   const info = await stat(root).catch(() => undefined)
   if (info === undefined) {
-    throw new Error(formatHost('zh', 'error.rootMissing', { root, env: ROOT_ENV }))
+    throw new Error(formatHost(locale, 'error.rootMissing', { root, env: ROOT_ENV }))
   }
   if (!info.isDirectory()) {
-    throw new Error(formatHost('zh', 'error.rootNotDir', { root }))
+    throw new Error(formatHost(locale, 'error.rootNotDir', { root }))
   }
 }
 
@@ -291,8 +291,8 @@ async function walkMarkdown(dir: string, onFile: (filePath: string, fileName: st
 }
 
 /** 加载已配置分区中的所有 persona，按 slug 建立索引；目录无效或为空时抛出明确错误。 */
-export async function loadCatalog(root: string, divisions: readonly string[]): Promise<Map<string, Expert>> {
-  await assertDirectory(root)
+export async function loadCatalog(root: string, divisions: readonly string[], locale: LocaleId = 'zh'): Promise<Map<string, Expert>> {
+  await assertDirectory(root, locale)
 
   const sources = divisions.map((division) => ({ dir: division, division }))
   const map = new Map<string, Expert>()
@@ -325,16 +325,16 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
     })
   }
   if (map.size === 0) {
-    throw new Error(formatHost('zh', 'error.catalogEmpty', { root }))
+    throw new Error(formatHost(locale, 'error.catalogEmpty', { root }))
   }
   const nameOwners = new Map<string, Expert>()
   for (const expert of map.values()) {
     for (const name of [expert.name, expert.nameEn]) {
-      const normalized = name.trim().toLocaleLowerCase()
+      const normalized = normalizeExpertName(name)
       if (normalized === '') continue
       const owner = nameOwners.get(normalized)
       if (owner !== undefined && owner.slug !== expert.slug) {
-        throw new Error(`花名册包含重复专家名称：${name}`)
+        throw new Error(formatHost(locale, 'error.catalogDuplicateName', { name }))
       }
       nameOwners.set(normalized, expert)
     }
@@ -342,19 +342,25 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
   return map
 }
 
+/** 统一专家名称的比较规则，避免名册校验和运行时查询出现不一致。 */
+function normalizeExpertName(value: unknown): string {
+  return String(value ?? '').trim().toLowerCase()
+}
+
 /** 仅按本地化名称解析智能体；名称重名时拒绝调用，防止召唤到错误角色。 */
 export function resolveExpert<T extends { readonly slug: string; readonly name: string; readonly nameEn?: string }>(experts: readonly T[], query: unknown, locale: LocaleId = 'zh'): T {
-  const q = String(query).trim().toLowerCase()
+  const q = normalizeExpertName(query)
   if (q.length === 0) throw new Error(formatHost(locale, 'error.expertRequired'))
-  const exactNames = experts.filter((expert) => expert.name.toLowerCase() === q || expert.nameEn?.toLowerCase() === q)
+  const exactNames = experts.filter((expert) => normalizeExpertName(expert.name) === q || normalizeExpertName(expert.nameEn) === q)
   if (exactNames.length === 1) return exactNames[0]
   const matches = exactNames.length > 1
     ? exactNames
-    : experts.filter((expert) => expert.name.toLowerCase().includes(q) || expert.nameEn?.toLowerCase().includes(q))
+    : experts.filter((expert) => normalizeExpertName(expert.name).includes(q) || normalizeExpertName(expert.nameEn).includes(q))
   if (matches.length === 1) return matches[0]
   if (matches.length > 1) {
-    const preview = matches.slice(0, 12)
-      .map((expert) => locale === 'en' ? expert.nameEn ?? expert.name : expert.name)
+    const preview = [...new Set(matches
+      .map((expert) => locale === 'en' ? expert.nameEn ?? expert.name : expert.name))]
+      .slice(0, 12)
       .join(', ')
     throw new Error(formatHost(locale, 'error.expertAmbiguous', { query: String(query), candidates: preview }))
   }
@@ -372,7 +378,7 @@ export function apply(ctx: Context, config: Config): void {
   const activeLocale = (): LocaleId => readHostLocale(ctx)
   let experts = new Map<string, Expert>()
   let loadError: string | null = null
-  const ready = loadCatalog(resolveCatalogRoot(config.root), config.divisions)
+  const ready = loadCatalog(resolveCatalogRoot(config.root), config.divisions, activeLocale())
     .then((map) => { experts = map })
     .catch((error: unknown) => { loadError = String(error) })
 

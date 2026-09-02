@@ -173,7 +173,7 @@ describe('loadCatalog', () => {
     expect(map.has('backend-architect-with-memory')).toBe(false)
   })
 
-  it('未配置对应分区时不加载 integrations 下的转换输出', async () => {
+  it('未配置的分区不会参与名册加载', async () => {
     await mkdir(join(dir, 'marketing'), { recursive: true })
     await mkdir(join(dir, 'integrations', 'mcp-memory'), { recursive: true })
     await writeFile(join(dir, 'marketing', 'marketing-specialist.md'), '---\nname: Marketing Specialist\ndescription: d\n---\nbody', 'utf8')
@@ -194,12 +194,13 @@ describe('loadCatalog', () => {
     expect(map.get('reviewer')?.name).toBe('Sub')
   })
 
-  it('不同专家名称重复时拒绝加载，保证名称可唯一召唤', async () => {
+  it('名称仅大小写或首尾空白不同时仍拒绝加载，并按界面语言报错', async () => {
     await mkdir(join(dir, 'engineering'), { recursive: true })
     await writeFile(join(dir, 'engineering', 'reviewer-a.md'), '---\nname: Reviewer\ndescription: d\n---\nbody', 'utf8')
-    await writeFile(join(dir, 'engineering', 'reviewer-b.md'), '---\nname: Reviewer\ndescription: d\n---\nbody', 'utf8')
+    await writeFile(join(dir, 'engineering', 'reviewer-b.md'), '---\nname:  reviewer  \ndescription: d\n---\nbody', 'utf8')
 
-    await expect(loadCatalog(dir, ['engineering'])).rejects.toThrow('重复专家名称')
+    await expect(loadCatalog(dir, ['engineering'])).rejects.toThrow(formatHost('zh', 'error.catalogDuplicateName', { name: 'reviewer' }))
+    await expect(loadCatalog(dir, ['engineering'], 'en')).rejects.toThrow(formatHost('en', 'error.catalogDuplicateName', { name: 'reviewer' }))
   })
 
   it('root 不存在时抛出', async () => {
@@ -235,8 +236,8 @@ describe('resolveExpert', () => {
     { slug: 'Unity-Architect', name: 'Unity Architect' },
   ]
 
-  it('精确名称对应多个智能体时抛出歧义，但不泄露 slug', () => {
-    expect(() => resolveExpert(experts, 'Backend Architect')).toThrow(/Backend Architect, Backend Architect/)
+  it('精确名称对应多个智能体时抛出歧义，候选名称去重且不泄露 slug', () => {
+    expect(() => resolveExpert(experts, 'Backend Architect')).toThrow(formatHost('zh', 'error.expertAmbiguous', { query: 'Backend Architect', candidates: 'Backend Architect' }))
   })
 
   it('拒绝按 slug 召唤，只接受专家名称', () => {
@@ -246,6 +247,10 @@ describe('resolveExpert', () => {
   it('唯一部分匹配时返回智能体，无匹配时给出可操作错误', () => {
     expect(resolveExpert(experts, 'unity').slug).toBe('Unity-Architect')
     expect(() => resolveExpert(experts, 'missing')).toThrow(formatHost('zh', 'error.expertMissing', { query: 'missing' }))
+  })
+
+  it('查询名称按与名册校验一致的规则忽略大小写和首尾空白', () => {
+    expect(resolveExpert([{ slug: 'ui-designer', name: 'UI Designer' }], ' ui designer ').slug).toBe('ui-designer')
   })
 })
 
@@ -585,7 +590,7 @@ describe('宿主 i18n', () => {
     ]
     expect(() => resolveExpert(experts, '')).toThrow(formatHost('zh', 'error.expertRequired'))
     expect(() => resolveExpert(experts, '', 'en')).toThrow(formatHost('en', 'error.expertRequired'))
-    expect(() => resolveExpert(experts, '后端架构师')).toThrow(formatHost('zh', 'error.expertAmbiguous', { query: '后端架构师', candidates: '后端架构师, 后端架构师' }))
+    expect(() => resolveExpert(experts, '后端架构师')).toThrow(formatHost('zh', 'error.expertAmbiguous', { query: '后端架构师', candidates: '后端架构师' }))
     expect(() => resolveExpert(experts, 'missing', 'en')).toThrow(formatHost('en', 'error.expertMissing', { query: 'missing' }))
   })
 })
