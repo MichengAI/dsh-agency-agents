@@ -702,8 +702,10 @@ describe('@ 菜单分组标题本地化', () => {
     })
   })
 
-  it('工具栏选择专家时将 chip 追加到既有专家后，不写入普通 @ 文本', () => {
+  it('工具栏连续选择专家时将 chip 追加到既有专家后，并保留一个分隔空格', () => {
     const calls: unknown[] = []
+    let draft = '\uFFFC '
+    let draftRev = 42
     const reference = {
       source: '@michengai/dsh-agency-agents:engineering',
       ref: 'engineering-code-reviewer',
@@ -712,15 +714,22 @@ describe('@ 菜单分组标题本地化', () => {
       clipboardText: '@代码审查工程师',
     }
     const target = {
-      state: { getSnapshot: () => ({ draft: '\uFFFC ', draftRev: 42 }) },
+      state: { getSnapshot: () => ({ draft, draftRev }) },
       insertReference: (value: unknown, span: unknown): boolean => {
         calls.push(value, span)
+        const token = span as { readonly start: number; readonly end: number; readonly draftRev: number }
+        if (token.draftRev !== draftRev) return false
+        const tail = draft.slice(token.end)
+        const inserted = `\uFFFC${tail === '' || tail[0] !== ' ' ? ' ' : ''}`
+        draft = draft.slice(0, token.start) + inserted + tail
+        draftRev += 1
         return true
       },
     }
 
     expect(insertExpertReference(target, reference)).toBe(true)
     expect(calls).toEqual([reference, { start: 2, end: 2, draftRev: 42 }])
+    expect(draft).toBe('\uFFFC \uFFFC ')
     expect(insertExpertReference(undefined, reference)).toBe(false)
   })
 
@@ -769,42 +778,6 @@ describe('@ 菜单分组标题本地化', () => {
 
     expect(insertExpertReference(target, reference)).toBe(false)
     expect(calls).toEqual([{ start: 2, end: 2, draftRev: 9 }])
-  })
-
-  it('补齐旧草稿中相邻 chip 的间隔，避免第二个标签并入第一个', () => {
-    let draft = '\uFFFC\uFFFC '
-    let draftRev = 9
-    const calls: unknown[] = []
-    const reference = {
-      source: '@michengai/dsh-agency-agents:engineering',
-      ref: 'engineering-code-reviewer',
-      label: '代码审查工程师',
-      clipboardText: '@代码审查工程师',
-    }
-    const target = {
-      state: {
-        getSnapshot: () => ({
-          draft,
-          draftRev,
-          occurrences: [
-            { source: '@michengai/dsh-agency-agents:engineering', offset: 0 },
-            { source: '@michengai/dsh-agency-agents:design', offset: draft.indexOf('\uFFFC', 1) },
-          ],
-        }),
-      },
-      setDraft: (next: string): void => {
-        draft = next
-        draftRev += 1
-      },
-      insertReference: (_value: unknown, span: unknown): boolean => {
-        calls.push(span)
-        return true
-      },
-    }
-
-    expect(insertExpertReference(target, reference)).toBe(true)
-    expect(draft).toBe('\uFFFC \uFFFC ')
-    expect(calls).toEqual([{ start: 4, end: 4, draftRev: 10 }])
   })
 
   it('将工具栏插入后的光标放到 chip 与分隔空格之后', () => {

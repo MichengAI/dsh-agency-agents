@@ -381,7 +381,6 @@ export interface ReferenceInsertionTarget {
     }
   }
   insertReference(reference: ReferenceInsert, span: TokenSpan): boolean
-  setDraft?(text: string): void
 }
 
 /** 从当前或指定会话取得输入机；兼容未向工具栏 slot 注入 sessionId 的宿主版本。 */
@@ -424,27 +423,6 @@ function expertReferencePrefixEnd(snapshot: ReturnType<ReferenceInsertionTarget[
   return end
 }
 
-/** 补齐旧草稿中相邻 chip 的间隔，避免后一项被视觉上并入前一项标签。 */
-function normalizeExpertReferencePrefix(target: ReferenceInsertionTarget): ReturnType<ReferenceInsertionTarget['state']['getSnapshot']> {
-  for (;;) {
-    const snapshot = target.state.getSnapshot()
-    const expertOffsets = new Set((snapshot.occurrences ?? []).map((occurrence) => occurrence.offset))
-    let end = 0
-    let gap: number | undefined
-    while (expertOffsets.has(end)) {
-      end += 1
-      if (snapshot.draft[end] === ' ') {
-        end += 1
-        continue
-      }
-      gap = end
-      break
-    }
-    if (gap === undefined || target.setDraft === undefined) return snapshot
-    target.setDraft(snapshot.draft.slice(0, gap) + ' ' + snapshot.draft.slice(gap))
-  }
-}
-
 /** 宿主会在 chip 后补足一个分隔空格，光标必须越过该空格，避免停在两个 chip 之间。 */
 export function expertReferenceInsertionCaret(draft: string, offset: number): number {
   const tail = draft.slice(offset)
@@ -474,7 +452,7 @@ export function insertExpertReference(
   reference: ReferenceInsert,
 ): boolean {
   if (target === undefined) return false
-  const snapshot = normalizeExpertReferencePrefix(target)
+  const snapshot = target.state.getSnapshot()
   const offset = expertReferencePrefixEnd(snapshot)
   const inserted = target.insertReference(reference, {
     start: offset,
