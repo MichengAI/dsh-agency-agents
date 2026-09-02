@@ -1,5 +1,6 @@
 import React from 'react'
-import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { InputTriggerSource, ReferenceInsert, TokenSpan } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
 // Type-only: 拉入 api-remotes 的 ctx.remote 合并（client 侧 TypertClientRemote）。
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
@@ -8,6 +9,8 @@ import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 // Type-only: 拉入 ctx.locale 的 Context merge（跨插件协作只走服务，不做值导入）。
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { ZH_NAME, ZH_DIVISION, EN_DIVISION } from '../names.js'
 import { ROSTER } from './roster.js'
@@ -24,6 +27,24 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const PLUGIN_ID = '@michengai/dsh-agency-agents'
 /** 本插件客户端词条字典命名空间。 */
 const NS = 'agency'
+
+/** 设置页标题旁的公开项目入口，和归档管理器保持一致。 */
+export const SETTINGS_GITHUB_LINKS = [
+  {
+    href: 'https://github.com/MichengAI/dsh-agency-agents',
+    labelKey: 'settings.viewProject',
+    icon: 'github',
+  },
+  {
+    href: 'https://github.com/MichengAI/dsh-agency-agents/issues',
+    labelKey: 'settings.feedback',
+    icon: 'feedback',
+  },
+] as const satisfies ReadonlyArray<{
+  readonly href: string
+  readonly labelKey: AgencyKey
+  readonly icon: 'github' | 'feedback'
+}>
 
 const DIVISION_ORDER = [
   'academic', 'design', 'engineering', 'finance', 'game-development', 'gis',
@@ -236,6 +257,7 @@ const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;margin-right:-8px}
 const SETTINGS_CSS = `
 .aag-section{box-sizing:border-box;display:flex;min-width:0;max-width:760px;width:100%;margin:0 auto;flex-direction:column;gap:16px;padding:0 0 32px;color:var(--dsw-alias-label-primary)}
 .aag-toolbar{display:flex;align-items:flex-start;gap:16px;padding-bottom:12px}
+.aag-title-row{display:flex;align-items:center;gap:8px;min-width:0}.aag-settings-links{display:flex;align-items:center;gap:4px}.aag-settings-link{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:0 8px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:12px;font-weight:500;line-height:18px;text-decoration:none;white-space:nowrap}.aag-settings-link:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-settings-link:focus-visible{outline:2px solid var(--dsw-alias-state-success-primary);outline-offset:2px}.aag-settings-link svg{flex:none}
 .aag-title{margin:0;font-size:20px;line-height:28px;font-weight:650;letter-spacing:-.2px}
 .aag-desc{margin:4px 0 0;max-width:42em;color:var(--dsw-alias-label-tertiary);font-size:13px;line-height:1.5}
 .aag-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
@@ -283,7 +305,7 @@ const SETTINGS_CSS = `
 .aag-search-clear:focus-visible{outline:2px solid var(--dsw-alias-state-success-primary);outline-offset:2px}
 .aag-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 16px;border:1px dashed var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;text-align:center}
 .aag-filter-meta{margin-left:auto;color:var(--dsw-alias-label-tertiary);font-size:12px}
-@media (max-width:560px){.aag-toolbar{flex-wrap:wrap}.aag-actions{margin-left:0}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}.aag-row{align-items:flex-start;flex-wrap:wrap}.aag-row>.aag-action{margin-left:auto}.aag-filter-meta{margin-left:0}}
+@media (max-width:560px){.aag-toolbar,.aag-title-row{flex-wrap:wrap}.aag-actions{margin-left:0}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}.aag-row{align-items:flex-start;flex-wrap:wrap}.aag-row>.aag-action{margin-left:auto}.aag-filter-meta{margin-left:0}}
 @media (prefers-reduced-motion:reduce){.aag-action{transition:none}}
 `
 const CSS = COMPOSER_CSS + SETTINGS_CSS
@@ -336,6 +358,34 @@ function expertIcon(): React.ReactElement {
   return React.createElement('svg', { viewBox: '0 0 16 16', width: 14, height: 14, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
     React.createElement('path', { d: 'M8 2.5l1.15 2.35 2.35 1.15-2.35 1.15L8 9.5l-1.15-2.35L4.5 6l2.35-1.15z' }),
     React.createElement('path', { d: 'M12.75 10.25l.55 1.2 1.2.55-1.2.55-.55 1.2-.55-1.2-1.2-.55 1.2-.55z' }))
+}
+
+/** GitHub 品牌标识未由宿主图标库提供，内联以保持离线可用和主题适配。 */
+function githubMark16(): React.ReactElement {
+  return React.createElement('svg', { viewBox: '0 0 16 16', width: 16, height: 16, 'aria-hidden': true, focusable: false },
+    React.createElement('path', { fill: 'currentColor', d: 'M8 0a8 8 0 0 0-2.53 15.59c.4.074.547-.173.547-.385 0-.19-.007-.693-.01-1.36-2.226.484-2.695-1.073-2.695-1.073-.364-.924-.89-1.17-.89-1.17-.726-.496.055-.486.055-.486.803.056 1.225.824 1.225.824.714 1.223 1.872.87 2.328.665.072-.517.28-.87.508-1.07-1.777-.202-3.645-.888-3.645-3.956 0-.874.31-1.588.823-2.148-.083-.202-.357-1.017.078-2.12 0 0 .672-.215 2.2.82A7.65 7.65 0 0 1 8 4.8c.68.003 1.365.092 2.004.27 1.527-1.035 2.197-.82 2.197-.82.437 1.103.162 1.918.08 2.12.513.56.822 1.274.822 2.148 0 3.076-1.872 3.752-3.654 3.95.288.248.544.735.544 1.482 0 1.07-.01 1.932-.01 2.195 0 .214.144.463.55.384A8.001 8.001 0 0 0 8 0Z' }))
+}
+
+/** 与归档插件的 IconListPenOutline16 保持相同的矢量路径，避免引入整包 CSS。 */
+function feedbackMark16(): React.ReactElement {
+  return React.createElement('svg', { viewBox: '0 0 16 16', width: 16, height: 16, fill: 'none', xmlns: 'http://www.w3.org/2000/svg', 'aria-hidden': true, focusable: false },
+    React.createElement('path', { d: 'M10.8239 3.54733V4.78443H4.63437V3.54733H10.8239Z', fill: 'currentColor' }),
+    React.createElement('path', { d: 'M10.8239 6.12629V7.36338H4.63437V6.12629H10.8239Z', fill: 'currentColor' }),
+    React.createElement('path', { d: 'M9.073 8.70524V9.94234H4.63437V8.70524H9.073Z', fill: 'currentColor' }),
+    React.createElement('path', { d: 'M9.13321 0.573526C10.0076 0.573525 10.7179 0.572522 11.285 0.63397C11.8645 0.696791 12.3743 0.831648 12.8193 1.1548C13.0776 1.34246 13.3056 1.57047 13.4933 1.82875C13.8164 2.2737 13.9513 2.7836 14.0141 3.36303C14.0755 3.93015 14.0745 4.64049 14.0745 5.51485V6.1757L12.7327 7.5629V5.51485C12.7327 4.61092 12.732 3.9862 12.6803 3.5081C12.6298 3.0427 12.5379 2.79497 12.4083 2.61654C12.3033 2.47211 12.176 2.34472 12.0315 2.23977C11.8531 2.11016 11.6054 2.01823 11.14 1.96777C10.6618 1.91601 10.0372 1.91539 9.13321 1.91539H6.32658C5.42262 1.91539 4.79796 1.91604 4.31983 1.96777C3.85451 2.01819 3.60672 2.11029 3.42827 2.23977C3.28392 2.34465 3.15643 2.47223 3.0515 2.61654C2.9219 2.79496 2.82997 3.04274 2.7795 3.5081C2.72774 3.9862 2.72712 4.61092 2.72712 5.51485V10.023C2.72712 10.9273 2.72773 11.5525 2.7795 12.0307C2.82992 12.4959 2.92205 12.7429 3.0515 12.9213C3.15645 13.0657 3.28384 13.1931 3.42827 13.2981C3.60676 13.4277 3.85408 13.5206 4.31983 13.5711C4.79797 13.6228 5.42259 13.6234 6.32658 13.6234H6.87057L5.57707 14.9593C5.03527 14.9556 4.57031 14.9467 4.17476 14.9039C3.59508 14.841 3.08558 14.7063 2.64048 14.383C2.38215 14.1953 2.15422 13.9684 1.96653 13.7101C1.64319 13.2649 1.50851 12.7546 1.4457 12.1748C1.38432 11.6076 1.38525 10.8974 1.38525 10.023V5.51485C1.38525 4.64049 1.38426 3.93015 1.4457 3.36303C1.50853 2.78363 1.64341 2.27368 1.96653 1.82875C2.15417 1.57059 2.38228 1.34239 2.64048 1.1548C3.08544 0.831805 3.59533 0.696762 4.17476 0.63397C4.74193 0.572552 5.45218 0.573525 6.32658 0.573526H9.13321Z', fill: 'currentColor' }),
+    React.createElement('path', { d: 'M14.2193 14.9553H10.0124L11.3744 13.6134H14.2193V14.9553Z', fill: 'currentColor' }),
+    React.createElement('path', { d: 'M8.24493 13.3711L7.49015 14.8806C7.40148 15.058 7.58961 15.2461 7.76695 15.1574L9.27651 14.4027L14.6147 9.09934L13.5832 8.06775L8.24493 13.3711Z', fill: 'currentColor' }))
+}
+
+function settingsGithubLinks(t: TranslateNS<'agency'>): React.ReactElement {
+  return React.createElement('div', { className: 'aag-settings-links' }, SETTINGS_GITHUB_LINKS.map((link) => React.createElement('a', {
+    key: link.href,
+    className: 'aag-settings-link',
+    href: link.href,
+    target: '_blank',
+    rel: 'noreferrer',
+    'aria-label': t(link.labelKey),
+  }, link.icon === 'github' ? githubMark16() : feedbackMark16(), t(link.labelKey))))
 }
 
 /** 工具栏菜单不能接管焦点，否则 Lexical 无法按检测坐标插入原子引用。 */
@@ -703,7 +753,9 @@ function AgentsSettings(props: PropsLocale<'agency'> & {
     const resetFilters = (): void => { setQuery(''); setDivision('') }
     nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
       React.createElement('div', null,
-        React.createElement('h2', { className: 'aag-title' }, props.t('settings.nav')),
+        React.createElement('div', { className: 'aag-title-row' },
+          React.createElement('h2', { className: 'aag-title' }, props.t('settings.nav')),
+          settingsGithubLinks(props.t)),
         React.createElement('p', { className: 'aag-desc' }, props.t('settings.intro'))),
       React.createElement('div', { className: 'aag-actions' },
         React.createElement('button', { type: 'button', className: 'aag-action aag-action-secondary', disabled: isSaving, onClick: load }, props.t('btn.refresh')))))
@@ -783,7 +835,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   // framework 以 (namespace, revision) 重新派生注入的 t 并触发重渲染。
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'agency-agents: dictionaries')
   const t = ctx.locale.bind(NS)
-  const getActive = (): 'zh' | 'en' => ctx.locale.getSnapshot().active
+  const getActive = (): 'zh' | 'en' => ctx.locale.getSnapshot().active === 'en' ? 'en' : 'zh'
 
   // 挂载本插件的 Typert Remote：host 端由 gateway 的 SRC 自动发现（@Remote
   // markers）。namespace 是独立的 Cordis 服务，必须在挂载后通过 ctx.get()
@@ -851,9 +903,9 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
             return EXPERTS
               .filter((e) => e.division === div && enabled.has(e.slug) && (q === '' || e.name.toLowerCase().includes(q) || e.nameEn.toLowerCase().includes(q)))
               .map((e) => ({
-                name: inputTriggerCandidateName(e, ctx.locale.getSnapshot().active),
+                name: inputTriggerCandidateName(e, getActive()),
                 hint: e.slug,
-                section: inputTriggerSourceName(div, ctx.locale.getSnapshot().active),
+                section: inputTriggerSourceName(div, getActive()),
               }))
           },
           onPick: (pick) => {

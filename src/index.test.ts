@@ -3,17 +3,37 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveReferenceInsertionTarget, writeErrorKey, writeErrorMessage } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 import { installSettingsSectionCompat, settingsNamespaceCompat } from './settings-compat.js'
+
+function alphaSettings(enabled: readonly string[], locale?: 'zh' | 'en') {
+  return {
+    get: (namespace: string): unknown => {
+      if (namespace === 'agency-agents') return { enabled: [...enabled] }
+      if (namespace === 'locale' && locale !== undefined) return { preference: locale }
+      return undefined
+    },
+    installSection: (
+      _owner: unknown,
+      _namespace: string,
+      _schema: unknown,
+      _entry: unknown,
+      hooks: { setSource(current: () => { enabled: string[] }): void; onChange(): void },
+    ): void => {
+      hooks.setSource(() => ({ enabled: [...enabled] }))
+      hooks.onChange()
+    },
+  }
+}
 
 describe('Config', () => {
   it('配置 schema 拒绝零 maxDepth，避免设置界面展示为合法值', () => {
@@ -280,6 +300,7 @@ describe('summon_expert', () => {
         }),
       },
       systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -310,6 +331,7 @@ describe('summon_expert', () => {
         },
       },
       systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -333,6 +355,7 @@ describe('summon_expert', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: (section: { name: string; text: string | ((context: unknown) => string) }) => sections.push(section) },
+      settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -354,6 +377,7 @@ describe('summon_expert', () => {
       tools: { register: () => undefined },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -369,6 +393,7 @@ describe('summon_expert', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -397,6 +422,7 @@ describe('summon_expert', () => {
         start: async () => { throw new Error('must not start') },
       },
       systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -420,6 +446,7 @@ describe('summon_expert', () => {
         start: async () => { throw new Error('must not start') },
       },
       systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -448,6 +475,7 @@ describe('summon_expert', () => {
         }),
       },
       systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -654,6 +682,25 @@ describe('filterExperts', () => {
   })
 })
 describe('@ 菜单分组标题本地化', () => {
+  it('设置标题提供 GitHub 与问题反馈两个入口', () => {
+    expect(SETTINGS_GITHUB_LINKS).toEqual([
+      {
+        href: 'https://github.com/MichengAI/dsh-agency-agents',
+        labelKey: 'settings.viewProject',
+        icon: 'github',
+      },
+      {
+        href: 'https://github.com/MichengAI/dsh-agency-agents/issues',
+        labelKey: 'settings.feedback',
+        icon: 'feedback',
+      },
+    ])
+    expect(zh['settings.viewProject']).toBe('GitHub')
+    expect(zh['settings.feedback']).toBe('问题反馈')
+    expect(en['settings.viewProject']).toBe('GitHub')
+    expect(en['settings.feedback']).toBe('Issues')
+  })
+
   it('按当前语言返回分区显示名，未知分区回退原值', () => {
     expect(inputTriggerSourceName('design', 'zh')).toBe('设计')
     expect(inputTriggerSourceName('design', 'en')).toBe('Design')
@@ -861,7 +908,7 @@ describe('list_experts 语言切换', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: () => undefined },
-      settings: locale === undefined ? undefined : { get: (ns: string) => ns === 'locale' ? { preference: locale } : undefined },
+      settings: alphaSettings(['engineering-code-reviewer'], locale),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['engineering-code-reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -984,6 +1031,7 @@ describe('summon_experts', () => {
         },
       },
       systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['reviewer', 'historian']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer', 'historian'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
