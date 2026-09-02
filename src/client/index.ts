@@ -373,13 +373,21 @@ function openAgentSettings(t: TranslateNS<'agency'>): void {
 
 /** 输入机暴露给工具栏的最小原子引用写入面，避免依赖 slot 的非标准 owner 参数。 */
 export interface ReferenceInsertionTarget {
-  readonly state: { getSnapshot(): { readonly draft: string; readonly draftRev: number } }
+  readonly state: {
+    getSnapshot(): {
+      readonly draft: string
+      readonly draftRev: number
+      readonly occurrences?: ReadonlyArray<{ readonly source: string; readonly offset: number }>
+    }
+  }
   insertReference(reference: ReferenceInsert, span: TokenSpan): boolean
 }
 
 /** 从当前或指定会话取得输入机；兼容未向工具栏 slot 注入 sessionId 的宿主版本。 */
 export interface ReferenceSessionAccess {
-  readonly list?: { getSnapshot(): { readonly current?: SessionId } }
+  readonly list?: {
+    getSnapshot(): { readonly current?: SessionId }
+  }
   scope?(id: SessionId): ClientContext | undefined
   binding?(id: SessionId): { readonly ctx: ClientContext } | undefined
 }
@@ -399,14 +407,43 @@ export function resolveReferenceInsertionTarget(
   return actx === undefined ? undefined : getConversation?.(actx)?.input.for(actx)
 }
 
-/** 返回草稿开头专家 chip 前缀的末端，兼容旧版 chip 与空格交替的草稿格式。 */
-function expertReferencePrefixEnd(draft: string): number {
+/** 返回草稿开头原生引用前缀的末端，避免来源字段差异使连续 chip 漏算。 */
+function expertReferencePrefixEnd(snapshot: ReturnType<ReferenceInsertionTarget['state']['getSnapshot']>): number {
+  const expertOffsets = new Set((snapshot.occurrences ?? []).map((occurrence) => occurrence.offset))
   let end = 0
-  while (draft[end] === '\uFFFC') {
+  while (expertOffsets.has(end)) {
     end += 1
-    if (draft[end] === ' ') end += 1
+    if (snapshot.draft[end] === ' ') end += 1
+  }
+  // 兼容未公开 occurrence 的旧版宿主。
+  while (snapshot.draft[end] === '\uFFFC') {
+    end += 1
+    if (snapshot.draft[end] === ' ') end += 1
   }
   return end
+}
+
+/** 宿主会在 chip 后补足一个分隔空格，光标必须越过该空格，避免停在两个 chip 之间。 */
+export function expertReferenceInsertionCaret(draft: string, offset: number): number {
+  const tail = draft.slice(offset)
+  return offset + 1 + (tail === '' || tail[0] !== ' ' ? 1 : 0)
+}
+
+function restoreComposerCaret(target: ReferenceInsertionTarget, caret: number): void {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return
+  const apply = (retries: number): void => {
+    window.requestAnimationFrame(() => {
+      // 点击专家菜单后焦点在按钮上，且输入框可能尚未完成 React 渲染。
+      const textarea = document.querySelector('textarea')
+      if (!(textarea instanceof HTMLTextAreaElement) || textarea.value !== target.state.getSnapshot().draft) {
+        if (retries > 0) apply(retries - 1)
+        return
+      }
+      textarea.focus({ preventScroll: true })
+      textarea.setSelectionRange(caret, caret)
+    })
+  }
+  apply(2)
 }
 
 /** 通过当前会话的输入机插入 chip；新增专家始终追加在已有专家之后。 */
@@ -416,12 +453,14 @@ export function insertExpertReference(
 ): boolean {
   if (target === undefined) return false
   const snapshot = target.state.getSnapshot()
-  const offset = expertReferencePrefixEnd(snapshot.draft)
-  return target.insertReference(reference, {
+  const offset = expertReferencePrefixEnd(snapshot)
+  const inserted = target.insertReference(reference, {
     start: offset,
     end: offset,
     draftRev: snapshot.draftRev,
   })
+  if (inserted) restoreComposerCaret(target, expertReferenceInsertionCaret(snapshot.draft, offset))
+  return inserted
 }
 
 /** 工具栏只能写入原生 chip；返回 false 供界面保留菜单并提示失败原因。 */
@@ -790,17 +829,15 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   const refreshEnabledForMentions = (): void => {
     void readEnabled(remote).then((current) => updateEnabledForMentions(current.enabled)).catch(() => undefined)
   }
-  const bindExpertInsertion = (sessionId?: SessionId): { readonly insertReference: (reference: ReferenceInsert) => boolean } => {
-    return {
-      insertReference: (reference) => insertExpertReference(
-        resolveReferenceInsertionTarget(
-          ctx.sessions as unknown as ReferenceSessionAccess,
-          sessionId,
-          (actx) => actx.get('conversation') as ReferenceConversationAccess | undefined,
-        ),
-        reference,
-      ),
-    }
+  const bindExpertInsertion = (sessionId?: SessionId): {
+    readonly insertReference: (reference: ReferenceInsert) => boolean
+  } => {
+    const target = (): ReferenceInsertionTarget | undefined => resolveReferenceInsertionTarget(
+      ctx.sessions as unknown as ReferenceSessionAccess,
+      sessionId,
+      (actx) => actx.get('conversation') as ReferenceConversationAccess | undefined,
+    )
+    return { insertReference: (reference) => insertExpertReference(target(), reference) }
   }
 
   ctx.slots.inject('settings.section', () => ctx.slots.register(

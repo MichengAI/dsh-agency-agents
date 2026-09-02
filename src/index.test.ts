@@ -9,7 +9,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveReferenceInsertionTarget, writeErrorKey, writeErrorMessage } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, expertMentionFromReference, expertReferenceInsertionCaret, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveReferenceInsertionTarget, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
@@ -743,6 +743,38 @@ describe('@ 菜单分组标题本地化', () => {
 
     expect(insertExpertReference(target, reference)).toBe(true)
     expect(calls).toEqual([reference, { start: 4, end: 4, draftRev: 8 }])
+  })
+
+  it('优先采用宿主 occurrence 偏移，避免草稿投影隐藏占位符时把专家插到开头', () => {
+    const calls: unknown[] = []
+    const reference = {
+      source: '@michengai/dsh-agency-agents:engineering',
+      ref: 'engineering-code-reviewer',
+      label: '代码审查工程师',
+      clipboardText: '@代码审查工程师',
+    }
+    const target = {
+      state: {
+        getSnapshot: () => ({
+          draft: '? ',
+          draftRev: 9,
+          occurrences: [{ source: '@michengai/dsh-agency-agents:design', offset: 0 }],
+        }),
+      },
+      insertReference: (_value: unknown, span: unknown): boolean => {
+        calls.push(span)
+        return false
+      },
+    }
+
+    expect(insertExpertReference(target, reference)).toBe(false)
+    expect(calls).toEqual([{ start: 2, end: 2, draftRev: 9 }])
+  })
+
+  it('将工具栏插入后的光标放到 chip 与分隔空格之后', () => {
+    expect(expertReferenceInsertionCaret('', 0)).toBe(2)
+    expect(expertReferenceInsertionCaret('\uFFFC ', 2)).toBe(4)
+    expect(expertReferenceInsertionCaret('\uFFFC 请审查', 1)).toBe(2)
   })
 
   it('工具栏仅在原生 chip 插入成功后才视为选择成功', () => {
