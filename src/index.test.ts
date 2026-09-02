@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
@@ -14,6 +14,13 @@ import { en, zh, type AgencyKey } from './client/locales.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 import { installSettingsSectionCompat, settingsNamespaceCompat } from './settings-compat.js'
+
+const PACKAGE_MANIFEST = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
+  peerDependencies?: Record<string, string>
+  peerDependenciesMeta?: Record<string, { optional?: boolean }>
+  devDependencies?: Record<string, string>
+  dsh?: { client?: { inject?: string[] } }
+}
 
 function alphaSettings(enabled: readonly string[], locale?: 'zh' | 'en') {
   return {
@@ -682,6 +689,28 @@ describe('filterExperts', () => {
   })
 })
 describe('@ 菜单分组标题本地化', () => {
+  it('DSH peer 兼容 rc.5 至 0.2.0 前版本', () => {
+    const range = '>=0.1.0-rc.5 <0.2.0'
+    const peers = PACKAGE_MANIFEST.peerDependencies
+
+    for (const [name, version] of Object.entries(peers ?? {})) {
+      if (name.startsWith('@deepseek-ai/dsh-')) {
+        expect(version).toBe(range)
+      }
+    }
+    expect(PACKAGE_MANIFEST.peerDependenciesMeta?.['@deepseek-ai/dsh-client-runtime']?.optional).toBe(true)
+    expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain('@deepseek-ai/dsh-client-ui-renderer')
+    expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain('@deepseek-ai/dsh-client-ui-session')
+  })
+
+  it('DSH 开发依赖固定为 alpha.5', () => {
+    for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
+      if (name.startsWith('@deepseek-ai/dsh-')) {
+        expect(version).toBe('0.1.2-alpha.5')
+      }
+    }
+  })
+
   it('设置标题提供 GitHub 与问题反馈两个入口', () => {
     expect(SETTINGS_GITHUB_LINKS).toEqual([
       {

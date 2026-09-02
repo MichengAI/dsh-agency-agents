@@ -38,10 +38,7 @@ const PLATFORM_MODULES = [
   '@deepseek-ai/dsh-client-schema-form',
 ] as const
 
-/** 运行时 store 豁免（与 harness tsdown.client.ts 的 RUNTIME_STORE_EXEMPTION 一致）。 */
-const RUNTIME_STORE_EXEMPTION = '@deepseek-ai/dsh-client-runtime/client'
-
-const CLIENT_EXTERNALS: readonly string[] = [...PLATFORM_MODULES, RUNTIME_STORE_EXEMPTION]
+const CLIENT_EXTERNALS: readonly string[] = PLATFORM_MODULES
 
 const ID = '@michengai/dsh-agency-agents'
 

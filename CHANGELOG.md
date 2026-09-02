@@ -6,6 +6,12 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+## 0.1.27 — 2026-09-03
+
+- Added GitHub and Issues actions beside the plugin settings title, matching the archive manager's labels and icons.
+- Added DSH `0.1.2-alpha.5` compatibility, removed obsolete renderer/session injection and the unused Runtime bundling exemption, and isolated RC Runtime types from the alpha slot registry.
+- Set DSH peer dependencies to `>=0.1.0-rc.5 <0.2.0`, pinned development DSH packages to `0.1.2-alpha.5`, and added manifest regression coverage.
+
 ## 0.1.26 — 2026-09-02
 
 - Replaced composer text injection with native expert-reference chips. Chips display only the localized expert name and the host icon; internal identifiers remain private.
@@ -36,16 +42,3 @@ Published package: [`@michengai/dsh-agency-agents@0.1.24`](https://www.npmjs.com
 - Added regression coverage for both settings API shapes and rebuilt the published bundles.
 
 Published package: [`@michengai/dsh-agency-agents@0.1.23`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.23).
-
-## 0.1.22 — 2026-08-28
-
-- Added the Changelog link to the standard README header navigation, between the language switch and the Apache-2.0 license link.
-
-Published package: [`@michengai/dsh-agency-agents@0.1.22`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.22).
-
-## 0.1.21 — 2026-08-23
-
-- Added bilingual changelogs covering the five most recent releases.
-- Linked the release history from both README editions and included it in the npm package.
-
-Published package: [`@michengai/dsh-agency-agents@0.1.21`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.21).

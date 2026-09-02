@@ -6,6 +6,12 @@
 
 ## 未发布
 
+## 0.1.27 — 2026-09-03
+
+- 在插件设置标题旁新增 GitHub 和问题反馈入口，文案与图标和归档管理器保持一致。
+- 兼容 DSH `0.1.2-alpha.5`，移除过时的 renderer/session 注入与无效 Runtime 打包豁免，并隔离 RC Runtime 类型和 alpha 槽位注册表。
+- DSH peer 依赖统一为 `>=0.1.0-rc.5 <0.2.0`，开发期 DSH 包固定为 `0.1.2-alpha.5`，并新增清单回归测试。
+
 ## 0.1.26 — 2026-09-02
 
 - 输入框专家选择改为宿主原生引用 chip，仅显示当前语言的专家名称和宿主图标，内部标识不对用户或模型暴露。
@@ -36,16 +42,3 @@
 - 新增两种设置 API 形态的回归测试，并重新构建发布产物。
 
 发布包：[`@michengai/dsh-agency-agents@0.1.23`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.23)。
-
-## 0.1.22 — 2026-08-28
-
-- 在 README 标准头部导航中加入更新日志入口，位置位于语言切换与 Apache-2.0 许可证链接之间。
-
-发布包：[`@michengai/dsh-agency-agents@0.1.22`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.22)。
-
-## 0.1.21 — 2026-08-23
-
-- 新增中英文更新日志，展示最近五个发布版本。
-- 在中英文 README 中加入更新日志入口，并将日志纳入 npm 包。
-
-发布包：[`@michengai/dsh-agency-agents@0.1.21`](https://www.npmjs.com/package/@michengai/dsh-agency-agents/v/0.1.21)。

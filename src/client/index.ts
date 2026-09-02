@@ -1,16 +1,14 @@
 import React from 'react'
-import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { Context as CordisClientContext } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { InputTriggerSource, ReferenceInsert, TokenSpan } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
 // Type-only: 拉入 api-remotes 的 ctx.remote 合并（client 侧 TypertClientRemote）。
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
-import type { PropsLocale, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
+import type { PropsLocale, SlotCore, SlotMap, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 // Type-only: 拉入 ctx.locale 的 Context merge（跨插件协作只走服务，不做值导入）。
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { ZH_NAME, ZH_DIVISION, EN_DIVISION } from '../names.js'
 import { ROSTER } from './roster.js'
@@ -27,6 +25,19 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const PLUGIN_ID = '@michengai/dsh-agency-agents'
 /** 本插件客户端词条字典命名空间。 */
 const NS = 'agency'
+
+/**
+ * RC Runtime 与 alpha UI 包会各自解析 dsh-client-ui-slots 的类型副本。
+ * 仅收窄本插件实际使用的服务面，避免旧 Runtime 声明覆盖 alpha 槽位表。
+ */
+type ClientSlots = Pick<SlotCore, 'register'> & {
+  inject(key: keyof SlotMap & string, callback: () => () => void): () => void
+}
+
+type ClientContext = CordisClientContext & {
+  readonly slots: ClientSlots
+  readonly sessions: unknown
+}
 
 /** 设置页标题旁的公开项目入口，和归档管理器保持一致。 */
 export const SETTINGS_GITHUB_LINKS = [
@@ -438,18 +449,18 @@ export interface ReferenceSessionAccess {
   readonly list?: {
     getSnapshot(): { readonly current?: SessionId }
   }
-  scope?(id: SessionId): ClientContext | undefined
-  binding?(id: SessionId): { readonly ctx: ClientContext } | undefined
+  scope?(id: SessionId): CordisClientContext | undefined
+  binding?(id: SessionId): { readonly ctx: CordisClientContext } | undefined
 }
 
 export interface ReferenceConversationAccess {
-  readonly input: { for(actx: ClientContext): ReferenceInsertionTarget | undefined }
+  readonly input: { for(actx: CordisClientContext): ReferenceInsertionTarget | undefined }
 }
 
 export function resolveReferenceInsertionTarget(
   sessions: ReferenceSessionAccess,
   sessionId?: SessionId,
-  getConversation?: (actx: ClientContext) => ReferenceConversationAccess | undefined,
+  getConversation?: (actx: CordisClientContext) => ReferenceConversationAccess | undefined,
 ): ReferenceInsertionTarget | undefined {
   const targetSessionId = sessionId ?? sessions.list?.getSnapshot().current
   if (targetSessionId === undefined) return undefined
