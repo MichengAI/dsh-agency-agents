@@ -6,11 +6,12 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
-## 0.1.27 — 2026-09-03
+## 0.1.28 — 2026-09-03
 
 - Added GitHub and Issues actions beside the plugin settings title, matching the archive manager's labels and icons.
 - Added DSH `0.1.2-alpha.5` compatibility, removed obsolete renderer/session injection and the unused Runtime bundling exemption, and isolated RC Runtime types from the alpha slot registry.
 - Set DSH peer dependencies to `>=0.1.0-rc.5 <0.2.0`, pinned development DSH packages to `0.1.2-alpha.5`, and added manifest regression coverage.
+- Added a narrowly scoped pnpm release-age exemption for the locked DSH alpha.5 packages so trusted publishing can install the newly released compatibility baseline.
 
 ## 0.1.26 — 2026-09-02
 
