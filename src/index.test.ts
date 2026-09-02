@@ -771,6 +771,42 @@ describe('@ 菜单分组标题本地化', () => {
     expect(calls).toEqual([{ start: 2, end: 2, draftRev: 9 }])
   })
 
+  it('补齐旧草稿中相邻 chip 的间隔，避免第二个标签并入第一个', () => {
+    let draft = '\uFFFC\uFFFC '
+    let draftRev = 9
+    const calls: unknown[] = []
+    const reference = {
+      source: '@michengai/dsh-agency-agents:engineering',
+      ref: 'engineering-code-reviewer',
+      label: '代码审查工程师',
+      clipboardText: '@代码审查工程师',
+    }
+    const target = {
+      state: {
+        getSnapshot: () => ({
+          draft,
+          draftRev,
+          occurrences: [
+            { source: '@michengai/dsh-agency-agents:engineering', offset: 0 },
+            { source: '@michengai/dsh-agency-agents:design', offset: draft.indexOf('\uFFFC', 1) },
+          ],
+        }),
+      },
+      setDraft: (next: string): void => {
+        draft = next
+        draftRev += 1
+      },
+      insertReference: (_value: unknown, span: unknown): boolean => {
+        calls.push(span)
+        return true
+      },
+    }
+
+    expect(insertExpertReference(target, reference)).toBe(true)
+    expect(draft).toBe('\uFFFC \uFFFC ')
+    expect(calls).toEqual([{ start: 4, end: 4, draftRev: 10 }])
+  })
+
   it('将工具栏插入后的光标放到 chip 与分隔空格之后', () => {
     expect(expertReferenceInsertionCaret('', 0)).toBe(2)
     expect(expertReferenceInsertionCaret('\uFFFC ', 2)).toBe(4)
