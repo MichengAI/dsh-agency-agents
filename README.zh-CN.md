@@ -6,12 +6,12 @@
 
   # DSH Agency Agents
 
-  **为 DeepSeek Harness 提供 271 名可召唤的专业智能体**
+  **为 DeepSeek Harness 提供 273 名可召唤的专业智能体**
 
   [English](README.md) · [更新日志](CHANGELOG.zh-CN.md) · [Apache-2.0](LICENSE)
 
   [![许可证：Apache-2.0](https://img.shields.io/badge/许可证-Apache--2.0-blue.svg)](LICENSE)
-  [![内置智能体](https://img.shields.io/badge/内置智能体-271-0f766e.svg)](#功能概览)
+  [![内置智能体](https://img.shields.io/badge/内置智能体-273-0f766e.svg)](#功能概览)
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm 下载量](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
@@ -23,9 +23,9 @@
 ## 功能概览
 
 - 在「设置 → 专家」中按分类筛选或搜索，再启用或停用内置专家。
-- 在输入框的「专家」中按名称或 slug 召唤已启用的专家处理完整任务。
+- 在输入框的「专家」中按当前语言的名称召唤已启用的专家处理完整任务。
 - 提供 `list_experts` 与 `summon_expert` 工具，分别用于发现专家和启动一次性子代理。
-- 内置 271 份 persona，无需额外下载；也可接入自行同步的专家目录。
+- 内置 273 份 persona，无需额外下载；也可接入自行同步的专家目录。
 - 可把一句话复制到 DSH、Codex 或 WorkBuddy，让对方代装到本机 DSH。
 
 主会话保留任务上下文、判断和最终交付；专家子代理只提供专业视角，不能继续召唤专家，避免递归委派。
@@ -40,7 +40,7 @@
 
 ![专家选择器](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-picker.png)
 
-回填名称和 slug 后，写出完整任务：
+回填当前语言的专家名称标签后，写出完整任务：
 
 ![召唤专家的输入方式](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
 
@@ -133,21 +133,22 @@ dsh --profile web --dump-config
 
 1. 打开「设置 → 专家」，启用需要的专家。
 2. 在对话输入框用 `@` 或点击「专家」，选择已启用的专家。
-3. 用名称和 slug 明确指定专家，并给出完整任务。例如：
+3. 当前语言的专家名称会以短标签写入输入框；在其后补充完整任务。例如：
 
 ```text
-召唤专家「代码审查工程师」（engineering-code-reviewer）处理以下任务：
+代码审查工程师
+
 审查当前工作区的改动，按严重程度列出可复现的问题。
 ```
 
-也可由主会话先调用 `list_experts(division?)` 查找专家，再使用 `summon_expert(expert, task)` 委派任务。名称不唯一时，请使用 slug。
+也可由主会话先调用 `list_experts(division?)` 查找专家，再使用 `summon_expert(expert, task)` 按专家名称委派任务。内置名册会校验中英文名称唯一。
 ## 配置与边界
 
 | 配置项 | 默认值 | 作用 |
 | --- | --- | --- |
 | `root` | 包内专家资产 | 外部专家根目录；显式配置优先。 |
 | `provider` | `spawn` | DSH 子代理 provider，可使用支持 persona 与工具过滤的 `fork`。 |
-| `divisions` | 17 个标准分区 | 需要扫描的顶层分区。 |
+| `divisions` | 18 个标准分区 | 需要扫描的顶层分区。 |
 | `maxDepth` | 未设置 | 正整数形式的绝对子代理深度上限。 |
 
 也可设置 `AGENCY_AGENTS_ROOT` 环境变量指定外部专家目录。外部目录里的 persona 正文会注入为子代理系统提示，只应从可信来源加载。子代理 provider 必须支持 persona 和工具过滤能力。`summon_experts` 一次最多 8 名专家，并发 4，部分失败仍返回成功结果。

@@ -50,17 +50,13 @@ const DEFAULT_DIVISIONS = [
   'paid-media',
   'product',
   'project-management',
+  'research',
   'sales',
   'security',
   'spatial-computing',
   'specialized',
   'support',
   'testing',
-]
-
-/** 额外扫描的源目录：不在标准 division 内、但仍是合法智能体的集成（如 mcp-memory）。 */
-const EXTRA_SOURCES: ReadonlyArray<{ readonly dir: string; readonly division: string }> = [
-  { dir: 'integrations/mcp-memory', division: 'engineering' },
 ]
 
 /** 描述截断上限，避免无过滤列出全量智能体时 token 开销过大。 */
@@ -294,14 +290,11 @@ async function walkMarkdown(dir: string, onFile: (filePath: string, fileName: st
   }
 }
 
-/** Load every `<division>/**\/*.md` persona file (plus extra sources) into a slug-keyed map. Throws when root is invalid or empty. */
+/** 加载已配置分区中的所有 persona，按 slug 建立索引；目录无效或为空时抛出明确错误。 */
 export async function loadCatalog(root: string, divisions: readonly string[]): Promise<Map<string, Expert>> {
   await assertDirectory(root)
 
-  const sources: Array<{ dir: string; division: string }> = [
-    ...divisions.map((division) => ({ dir: division, division })),
-    ...EXTRA_SOURCES.filter((source) => divisions.includes(source.division)),
-  ]
+  const sources = divisions.map((division) => ({ dir: division, division }))
   const map = new Map<string, Expert>()
   for (const source of sources) {
     await walkMarkdown(join(root, source.dir), async (filePath, fileName) => {
@@ -337,7 +330,7 @@ export async function loadCatalog(root: string, divisions: readonly string[]): P
   return map
 }
 
-/** 根据 slug 或名称解析智能体；任意多命中都必须要求调用者提供更精确的 slug。 */
+/** 根据名称或内部 slug 解析智能体；名称重名时拒绝调用，防止召唤到错误角色。 */
 export function resolveExpert<T extends { readonly slug: string; readonly name: string; readonly nameEn?: string }>(experts: readonly T[], query: unknown, locale: LocaleId = 'zh'): T {
   const q = String(query).trim().toLowerCase()
   if (q.length === 0) throw new Error(formatHost(locale, 'error.expertRequired'))
@@ -401,7 +394,7 @@ export function apply(ctx: Context, config: Config): void {
 
   ctx.tools.register(defineTool({
     name: 'list_experts',
-    description: 'List the available Agency domain experts grouped by division. Without a division filter it returns only division names and counts (compact); pass a division to expand it with expert names, slugs, and descriptions. Call this before summon_expert when you need an exact expert slug.',
+    description: 'List the available Agency domain experts grouped by division. Without a division filter it returns only division names and counts (compact); pass a division to expand it with expert names, identifiers, and descriptions. Call this before summon_expert when you need to choose an expert.',
     parameters: {
       division: { type: 'string', description: 'Optional division key to filter (e.g. engineering, marketing, security, finance, design).' },
     },
@@ -462,9 +455,9 @@ export function apply(ctx: Context, config: Config): void {
 
   ctx.tools.register(defineTool({
     name: 'summon_expert',
-    description: "Summon a domain expert from The Agency roster to complete a task: a specialist subagent runs with that expert's full persona and returns its result. Use for tasks that clearly belong to a specialist domain (frontend work, security review, marketing copy, etc.). This call waits for the expert's result. Call list_experts first if you do not know the exact expert slug.",
+    description: "Summon a domain expert from The Agency roster to complete a task: a specialist subagent runs with that expert's full persona and returns its result. Use for tasks that clearly belong to a specialist domain (frontend work, security review, marketing copy, etc.). This call waits for the expert's result. Call list_experts first if you do not know the expert name.",
     parameters: {
-      expert: { type: 'string', required: true, description: 'Expert slug or name to summon (e.g. engineering-frontend-developer, or "Frontend Developer").' },
+      expert: { type: 'string', required: true, description: 'Expert name to summon (e.g. "Frontend Developer").' },
       task: { type: 'string', required: true, description: 'The complete, self-contained task to give the expert. Include all necessary context; fork providers may additionally inherit completed conversation turns.' },
     },
     output: {
@@ -484,12 +477,12 @@ export function apply(ctx: Context, config: Config): void {
       experts: {
         type: 'array',
         required: true,
-        description: 'The experts to summon, each with an expert slug/name and its own task.',
+        description: 'The experts to summon, each with an expert name and its own task.',
         items: {
           type: 'object',
           additionalProperties: false,
           properties: {
-            expert: { type: 'string', required: true, description: 'Expert slug or name (e.g. engineering-frontend-developer, or "Frontend Developer").' },
+            expert: { type: 'string', required: true, description: 'Expert name (e.g. "Frontend Developer").' },
             task: { type: 'string', required: true, description: 'The complete, self-contained task/role for this expert.' },
           },
         },
@@ -531,7 +524,7 @@ export function apply(ctx: Context, config: Config): void {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 17 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). In the parent session, call `list_experts()` to see enabled division names and counts, then call `list_experts(division)` to browse enabled experts and find an exact slug before using `summon_expert(expert, task)` or `summon_experts` for a small parallel team (at most 8; partial results if some fail). A disabled expert cannot be summoned.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 18 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection writes the enabled expert name alone on the first line; all text after the following blank line is that expert\'s task. In the parent session, call `list_experts()` to see enabled division names and counts, then call `list_experts(division)` to browse enabled experts and select a unique name before using `summon_expert(expert, task)` or `summon_experts` for a small parallel team (at most 8; partial results if some fail). A disabled expert cannot be summoned.'
     },
   })
 }

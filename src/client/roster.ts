@@ -90,14 +90,6 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Governance-first architect for business automations (n8n-first) who audits value, risk, and maintainability before implementation."
   },
   {
-    "slug": "backend-architect-with-memory",
-    "nameEn": "Backend Architect",
-    "emoji": "💾",
-    "division": "engineering",
-    "description": "负责服务端系统架构设计，规划数据库与微服务拆分，搭建云基础设施，交付高并发、高可用的后端服务。",
-    "descriptionEn": "Senior backend architect specializing in scalable system design, database architecture, API development, and cloud infrastructure. Builds robust, secure, performant server-side applications and microservices"
-  },
-  {
     "slug": "blender-addon-engineer",
     "nameEn": "Blender Add-on Engineer",
     "emoji": "🧩",
@@ -496,6 +488,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "engineering",
     "description": "负责 IT 服务流程管理，按 ITIL 规范建设服务目录、事件与变更流程，维护 SLA 和配置库，保证服务质量可衡量。",
     "descriptionEn": "Expert IT service management specialist using ITIL 4 framework for service catalog design, incident and problem management, change control, SLA governance, CMDB maintenance, and continual service improvement — ensuring IT delivers reliable, measurable business value across any organization size"
+  },
+  {
+    "slug": "engineering-knowledge-graph-engineer",
+    "nameEn": "Knowledge Graph Engineer",
+    "emoji": "🧠",
+    "division": "engineering",
+    "description": "Structures information and capabilities into interconnected nodes (entities) and edges (relationships) — enabling dynamic context navigation, modular competency chaining, lower token costs, and hallucination reduction.",
+    "descriptionEn": ""
   },
   {
     "slug": "engineering-llm-post-training-engineer",
@@ -1578,6 +1578,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "AI agent that automates distribution of consolidated sales reports to representatives based on territorial parameters"
   },
   {
+    "slug": "research-synthesist",
+    "nameEn": "Research Synthesist",
+    "emoji": "🔍",
+    "division": "research",
+    "description": "Expert in literature review, source evaluation, and evidence synthesis — turns a scattered pile of sources into a structured, honestly-weighted map of what the evidence actually supports",
+    "descriptionEn": ""
+  },
+  {
     "slug": "resume-tailor",
     "nameEn": "Resume Tailor",
     "emoji": "🧾",
@@ -1872,6 +1880,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "specialized",
     "description": "为外籍人士讲解韩国商务文化，涵盖决策流程、职场礼仪与沟通习惯，指导商务合作。",
     "descriptionEn": "Korean business culture for foreign professionals — 품의 decision process, nunchi reading, KakaoTalk business etiquette, hierarchy navigation, and relationship-first deal mechanics"
+  },
+  {
+    "slug": "specialized-master-plan-architect",
+    "nameEn": "Master Plan Architect",
+    "emoji": "🏛️",
+    "division": "specialized",
+    "description": "Master planning architect, technical educator, and ruthless plan critic who specializes in deep architectural teaching, Red Teaming / risk critique, and crafting comprehensive Implementation Plans in Markdown with ZERO code execution.",
+    "descriptionEn": ""
   },
   {
     "slug": "specialized-mcp-builder",

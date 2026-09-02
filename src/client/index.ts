@@ -1,6 +1,6 @@
 import React from 'react'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type { InputTriggerSource } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
+import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { InputTriggerSource, ReferenceInsert, TokenSpan } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
 // Type-only: 拉入 api-remotes 的 ctx.remote 合并（client 侧 TypertClientRemote）。
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type { PropsLocale, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
@@ -28,7 +28,7 @@ const NS = 'agency'
 const DIVISION_ORDER = [
   'academic', 'design', 'engineering', 'finance', 'game-development', 'gis',
   'healthcare', 'marketing', 'paid-media', 'product', 'project-management',
-  'sales', 'security', 'spatial-computing', 'specialized', 'support', 'testing',
+  'research', 'sales', 'security', 'spatial-computing', 'specialized', 'support', 'testing',
 ]
 
 interface ExpertView {
@@ -100,17 +100,16 @@ export interface ExpertSearchable {
   readonly descriptionEn: string
 }
 
-/** 规范化检索词：去首尾空白并转小写，便于中英和 slug 统一匹配。 */
+/** 规范化检索词：去首尾空白并转小写，便于中英文统一匹配。 */
 export function normalizeExpertQuery(query: string): string {
   return query.trim().toLowerCase()
 }
 
-/** 按名称、slug、分区或简介做包含匹配；空检索视为全部命中。 */
+/** 按名称、分区或简介做包含匹配；空检索视为全部命中。 */
 export function matchExpertQuery(expert: ExpertSearchable, query: string): boolean {
   const q = normalizeExpertQuery(query)
   if (q === '') return true
   return [
-    expert.slug,
     expert.name,
     expert.nameEn,
     expert.division,
@@ -148,10 +147,31 @@ export function inputTriggerCandidateName(
   return expert.emoji === '' ? name : `${expert.emoji} ${name}`
 }
 
-/** 选中候选后按 slug 还原纯专家名，防止展示用 emoji 进入召唤指令。 */
+/** 选中候选后按内部标识还原纯专家名，防止展示用 emoji 进入召唤标签。 */
 export function inputTriggerPickName(slug: string, fallbackName: string, active: 'zh' | 'en'): string {
   const expert = EXPERTS.find((item) => item.slug === slug)
   return expert === undefined ? fallbackName : displayName(expert, active)
+}
+
+/** 统一生成宿主可识别的专家提及文本，避免重复 @ 或将展示 emoji 写入草稿。 */
+export function formatExpertMention(name: string): string {
+  return `@${name.trim().replace(/^@+/, '')}`
+}
+
+/** 菜单选中后补一个分隔空格，避免新插入的 @名称立即再次触发候选菜单。 */
+export function formatExpertMentionInsertion(name: string): string {
+  return `${formatExpertMention(name)} `
+}
+
+/** 仅公开已启用专家的本地化名称，供宿主扫描并装饰 @名称 纯文本引用。 */
+export function buildExpertMentionLexicon(
+  experts: ReadonlyArray<{ readonly slug: string; readonly name: string; readonly nameEn: string }>,
+  enabled: ReadonlySet<string>,
+  active: 'zh' | 'en',
+): string[] {
+  return experts
+    .filter((expert) => enabled.has(expert.slug))
+    .map((expert) => active === 'en' ? expert.nameEn : expert.name)
 }
 
 /** 按当前 locale 取 @ 菜单分组标题；未知分区保留原值，便于扩展来源安全降级。 */
@@ -160,19 +180,46 @@ export function inputTriggerSourceName(division: string, active: 'zh' | 'en'): s
   return divisions[division] ?? division
 }
 
+/** 引用所有者必须跨语言稳定，避免草稿中的 chip 在切换界面语言后失去序列化器。 */
+export function inputTriggerSourceId(division: string): string {
+  return `${PLUGIN_ID}:${division}`
+}
+
+/** 专家引用在新版宿主采用内置代理图标；旧宿主会忽略 appearance 并保留默认 @ 标记。 */
+export interface ExpertReference extends ReferenceInsert {
+  readonly appearance: 'session'
+}
+
+/** 将专家投影为宿主的原子引用；slug 仅作为内部 ref，不进入标签、剪贴板或模型文本。 */
+export function buildExpertReference(
+  expert: Pick<ExpertView, 'slug' | 'name' | 'nameEn' | 'emoji' | 'division'>,
+  active: 'zh' | 'en',
+): ExpertReference {
+  const name = active === 'en' ? expert.nameEn : expert.name
+  return {
+    source: inputTriggerSourceId(expert.division),
+    ref: expert.slug,
+    label: name,
+    // dsh-client-ui-input-trigger RC.6 尚未声明该运行时字段；新版宿主将其渲染为内置代理图标。
+    appearance: 'session',
+    clipboardText: formatExpertMention(name),
+  }
+}
+
+function expertMentionFromReference(slug: string, active: 'zh' | 'en'): string {
+  const expert = EXPERTS.find((item) => item.slug === slug)
+  if (expert === undefined) throw new Error('专家引用已失效')
+  return formatExpertMention(displayName(expert, active))
+}
+
 /** 按当前 locale 取专家简介：en 用原始英文描述（缺失时回退中文），其余用中文描述。 */
 function displayDescription(e: ExpertView, active: 'zh' | 'en'): string {
   return active === 'en' && e.descriptionEn !== '' ? e.descriptionEn : e.description
 }
 
-// @ 菜单里我注册的分部来源：框架把名字列限死在菜单宽度 40% 并省略号截断
-// （MenuView.module.css .itemName），这里放开名字列，让专家名称整行显示。
-// data-source 使用本地化后的 source.name，因此同时覆盖中英文标题，不影响其他来源。
-const EXPERT_SOURCE_NAMES = [...new Set(DIVISION_ORDER.flatMap((division) => [
-  inputTriggerSourceName(division, 'zh'),
-  inputTriggerSourceName(division, 'en'),
-]))]
-const EXPERT_MENU_ITEM_SELECTORS = EXPERT_SOURCE_NAMES
+// @ 菜单里使用稳定分区 ID；这里放开名称列，让带图标的专家名称整行显示。
+const EXPERT_MENU_ITEM_SELECTORS = DIVISION_ORDER
+  .map((division) => inputTriggerSourceId(division))
   .map((name) => `[role="listbox"] div[data-source=${JSON.stringify(name)}] ~ button`)
 const MENU_NAME_OVERRIDE = EXPERT_MENU_ITEM_SELECTORS
   .map((selector) => `${selector} span:last-child`)
@@ -286,8 +333,13 @@ function expertIcon(): React.ReactElement {
     React.createElement('path', { d: 'M12.75 10.25l.55 1.2 1.2.55-1.2.55-.55 1.2-.55-1.2-1.2-.55 1.2-.55z' }))
 }
 
+/** 工具栏菜单不能接管焦点，否则 Lexical 无法按检测坐标插入原子引用。 */
+export function keepComposerFocus(event: { preventDefault(): void }): void {
+  event.preventDefault()
+}
+
 function menuItem(e: ExpertView, pick: (slug: string) => void, getActive: () => 'zh' | 'en'): React.ReactElement {
-  return React.createElement('button', { key: e.slug, type: 'button', className: 'aag-menu-item', onMouseDown: (ev: React.MouseEvent) => { ev.preventDefault(); pick(e.slug) } },
+  return React.createElement('button', { key: e.slug, type: 'button', className: 'aag-menu-item', onMouseDown: (ev: React.MouseEvent) => { keepComposerFocus(ev); pick(e.slug) } },
     React.createElement('span', { className: 'aag-emoji' }, e.emoji),
     React.createElement('span', null, displayName(e, getActive())))
 }
@@ -314,20 +366,60 @@ function openAgentSettings(t: TranslateNS<'agency'>): void {
   window.requestAnimationFrame(() => { window.requestAnimationFrame(select) })
 }
 
-interface InputDraft { readonly draft?: string }
-interface InputActions { setDraft(draft: string): void; submit(): void }
+interface InputActions {
+  setDraft(draft: string): void
+  submit(): void
+}
 
-/** 根据当前草稿生成召唤指令。有内容时把原草稿包进 withTask 模板。 */
+/** 输入机暴露给工具栏的最小原子引用写入面，避免依赖 slot 的非标准 owner 参数。 */
+export interface ReferenceInsertionTarget {
+  readonly state: { getSnapshot(): { readonly draftRev: number } }
+  insertReference(reference: ReferenceInsert, span: TokenSpan): boolean
+}
+
+/** 从当前或指定会话取得输入机；兼容未向工具栏 slot 注入 sessionId 的宿主版本。 */
+export interface ReferenceSessionAccess {
+  readonly list?: { getSnapshot(): { readonly current?: SessionId } }
+  scope?(id: SessionId): ClientContext | undefined
+  binding?(id: SessionId): { readonly ctx: ClientContext } | undefined
+}
+
+export interface ReferenceConversationAccess {
+  readonly input: { for(actx: ClientContext): ReferenceInsertionTarget | undefined }
+}
+
+export function resolveReferenceInsertionTarget(
+  sessions: ReferenceSessionAccess,
+  conversation: ReferenceConversationAccess,
+  sessionId?: SessionId,
+): ReferenceInsertionTarget | undefined {
+  const targetSessionId = sessionId ?? sessions.list?.getSnapshot().current
+  if (targetSessionId === undefined) return undefined
+  const actx = sessions.scope?.(targetSessionId) ?? sessions.binding?.(targetSessionId)?.ctx
+  return actx === undefined ? undefined : conversation.input.for(actx)
+}
+
+/** 通过当前会话的输入机插入 chip；工具栏绝不能降级写入普通 @ 文本。 */
+export function insertExpertReference(
+  target: ReferenceInsertionTarget | undefined,
+  reference: ReferenceInsert,
+): boolean {
+  if (target === undefined) return false
+  return target.insertReference(reference, {
+    start: 0,
+    end: 0,
+    draftRev: target.state.getSnapshot().draftRev,
+  })
+}
+
+/** 根据当前草稿生成简短、可本地化的专家名称标签，任务内容另起一段。 */
 export function buildSummonInstruction(
   t: TranslateNS<'agency'>,
   name: string,
-  slug: string,
   draft: string,
 ): string {
   const hasTask = draft.trim().length > 0
-  // 用完整词条模板生成召唤指令（禁止字符串拼接）；withTask 模板含 {task} 占位，
-  // 无任务模板不含该占位，多传的 task 参数不会被使用。
-  return t(hasTask ? 'summon.instruction.withTask' : 'summon.instruction', { name, slug, task: draft })
+  return t(hasTask ? 'summon.instruction.withTask' : 'summon.instruction', { name: formatExpertMention(name), task: draft })
 }
 
 /** 将召唤指令写入输入框。有草稿时也不自动发送，留给用户确认后再提交。 */
@@ -341,9 +433,10 @@ export function applyExpertSummon(options: {
 }
 
 type ButtonProps = PropsLocale<'agency'> & {
-  readonly input?: InputDraft
-  readonly inputActions?: InputActions
   readonly remote: AgencyAgentsRemoteApi
+  readonly onEnabledChange?: (enabled: ReadonlySet<string>) => void
+  /** 由 session slot 的 inject 回调注入，永远绑定当前编辑器所属会话。 */
+  readonly insertReference?: (reference: ReferenceInsert) => boolean
   /** 当前 locale 读取器（locale 切换后框架以新 t 重渲染，名称随之刷新）。 */
   readonly getActive: () => 'zh' | 'en'
 }
@@ -365,6 +458,7 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
   const onClick = (): void => {
     void readEnabled(props.remote).then((current) => {
       setEnabled(current.enabled)
+      props.onEnabledChange?.(current.enabled)
       if (current.enabled.size === 0) { openAgentSettings(props.t); return }
       setOpen((prev) => !prev)
     }).catch(() => { setOpen((prev) => !prev) })
@@ -372,12 +466,7 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
 
   const pick = (slug: string): void => {
     const expert = EXPERTS.find((e) => e.slug === slug)
-    const name = expert === undefined ? slug : displayName(expert, props.getActive())
-    const draft = props.input !== undefined && typeof props.input.draft === 'string' ? props.input.draft : ''
-    applyExpertSummon({
-      inputActions: props.inputActions,
-      instruction: buildSummonInstruction(props.t, name, slug, draft),
-    })
+    if (expert !== undefined) props.insertReference?.(buildExpertReference(expert, props.getActive()))
     setOpen(false)
   }
 
@@ -390,7 +479,7 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
     : null
 
   return React.createElement('div', { className: 'aag-btn-wrap' },
-    React.createElement('button', { type: 'button', className: 'aag-btn', title: props.t('button.title'), onClick }, expertIcon(), React.createElement('span', null, props.t('settings.nav'))),
+    React.createElement('button', { type: 'button', className: 'aag-btn', title: props.t('button.title'), onMouseDown: keepComposerFocus, onClick }, expertIcon(), React.createElement('span', null, props.t('settings.nav'))),
     menu)
 }
 
@@ -512,7 +601,11 @@ function CategorySelect(props: {
       : null)
 }
 
-function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRemoteApi; getActive: () => 'zh' | 'en' }): React.ReactElement {
+function AgentsSettings(props: PropsLocale<'agency'> & {
+  remote: AgencyAgentsRemoteApi
+  getActive: () => 'zh' | 'en'
+  onEnabledChange?: (enabled: ReadonlySet<string>) => void
+}): React.ReactElement {
   const [state, setState] = React.useState<EnabledState | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [query, setQuery] = React.useState('')
@@ -524,17 +617,19 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
     void readEnabled(props.remote).then((current) => {
       setState(current)
       setError(null)
+      props.onEnabledChange?.(current.enabled)
     }).catch((err: unknown) => { setError(err instanceof Error ? err.message : String(err)) })
-  }, [props.remote])
+  }, [props.onEnabledChange, props.remote])
 
   React.useEffect(() => {
     let alive = true
     void readEnabled(props.remote).then((current) => {
       if (!alive) return
       setState(current)
+      props.onEnabledChange?.(current.enabled)
     }).catch((err: unknown) => { if (alive) setError(err instanceof Error ? err.message : String(err)) })
     return () => { alive = false }
-  }, [props.remote])
+  }, [props.onEnabledChange, props.remote])
 
   const toggle = (slug: string): void => {
     if (state === null || saving.current) return
@@ -545,18 +640,23 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
     saving.current = true
     setIsSaving(true)
     setState({ enabled: next, revision: state.revision })
+    props.onEnabledChange?.(next)
     void writeEnabled(props.remote, next, state.revision)
       .then((current) => {
         setState(current)
         setError(null)
+        props.onEnabledChange?.(current.enabled)
       })
       .catch(async (err: unknown) => {
         try {
-          setState(await readEnabled(props.remote))
+          const refreshed = await readEnabled(props.remote)
+          setState(refreshed)
+          props.onEnabledChange?.(refreshed.enabled)
           setError(writeErrorMessage(err, { refreshed: true, t: props.t }))
         } catch {
           // 读也失败时回滚乐观态，避免界面显示未落盘的开关结果。
           setState(previous)
+          props.onEnabledChange?.(previous.enabled)
           setError(writeErrorMessage(err, { refreshed: false, t: props.t }))
         }
       })
@@ -636,7 +736,6 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
             React.createElement('div', { className: 'aag-row-main' },
               React.createElement('div', { className: 'aag-row-id' },
                 React.createElement('span', { className: 'aag-row-name' }, displayName(e, props.getActive())),
-                React.createElement('span', { className: 'aag-tag' }, e.slug),
                 React.createElement('span', { className: `aag-tag ${on ? 'aag-tag-on' : 'aag-tag-off'}` }, props.t(on ? 'settings.enabled' : 'settings.disabled'))),
               React.createElement('div', { className: 'aag-note', title: displayDescription(e, props.getActive()) }, displayDescription(e, props.getActive()))),
             React.createElement('button', { type: 'button', className: 'aag-action aag-action-secondary', disabled: isSaving, onClick: () => toggle(e.slug) }, props.t(on ? 'btn.disable' : 'btn.enable')))
@@ -646,7 +745,7 @@ function AgentsSettings(props: PropsLocale<'agency'> & { remote: AgencyAgentsRem
   return React.createElement('section', { className: 'aag-section' }, nodes)
 }
 
-export const inject = ['slots', 'inputTriggers', 'locale', 'remote']
+export const inject = ['slots', 'inputTriggers', 'locale', 'remote', 'sessions', 'conversation']
 
 export async function apply(ctx: ClientContext): Promise<() => void> {
   ctx.effect(() => {
@@ -670,42 +769,91 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   const remote = ctx.get('remote.agencyAgents') as AgencyAgentsRemoteApi | undefined
   if (remote === undefined) throw new Error('agency-agents Remote 挂载后不可用')
 
+  let enabledForMentions: ReadonlySet<string> | undefined
+  const lexiconListeners = new Set<() => void>()
+  const updateEnabledForMentions = (enabled: ReadonlySet<string>): void => {
+    const unchanged = enabledForMentions !== undefined
+      && enabledForMentions.size === enabled.size
+      && [...enabled].every((slug) => enabledForMentions?.has(slug) === true)
+    if (unchanged) return
+    enabledForMentions = new Set(enabled)
+    for (const listener of lexiconListeners) listener()
+  }
+  const refreshEnabledForMentions = (): void => {
+    void readEnabled(remote).then((current) => updateEnabledForMentions(current.enabled)).catch(() => undefined)
+  }
+  const bindExpertInsertion = (sessionId: SessionId): { readonly insertReference: (reference: ReferenceInsert) => boolean } => {
+    // 必须在 slot 注入时绑定 session scope。根上下文读取 sessions 会被 Cordis 拒绝，
+    // 且不能保证对应屏幕上的编辑器。
+    const sessions = ctx.sessions as unknown as ReferenceSessionAccess
+    const actx = sessions.scope?.(sessionId) ?? sessions.binding?.(sessionId)?.ctx
+    const conversation = actx?.get('conversation') as ReferenceConversationAccess | undefined
+    return {
+      insertReference: (reference) => insertExpertReference(
+        actx === undefined ? undefined : conversation?.input.for(actx),
+        reference,
+      ),
+    }
+  }
+
   ctx.slots.inject('settings.section', () => ctx.slots.register(
     // label 是 thunk：nav 行每渲染读一次，locale 切换后自动跟随。
     {
       name: 'settings.section', id: 'agency-agents', order: 16, label: () => t('settings.nav'), locale: NS,
       ...({ icon: 'expert' } as Record<string, unknown>),
     },
-    (props) => React.createElement(AgentsSettings, { ...props, remote, getActive }),
+    (props) => React.createElement(AgentsSettings, { ...props, remote, getActive, onEnabledChange: updateEnabledForMentions }),
   ))
 
   ctx.slots.inject('conversation.input.left', () => ctx.slots.register(
-    { name: 'conversation.input.left', id: 'agency-agents', order: 0, locale: NS },
-    (props) => React.createElement(AgentsButton, { ...props, remote, getActive }),
+    {
+      name: 'conversation.input.left', id: 'agency-agents', order: 0, locale: NS,
+      ...({ inject: bindExpertInsertion } as Record<string, unknown>),
+    },
+    (props) => React.createElement(AgentsButton, { ...props, remote, getActive, onEnabledChange: updateEnabledForMentions }),
   ))
 
   const registerInputTriggerSources = (active: 'zh' | 'en'): (() => void) => {
     const disposers: Array<() => void> = []
     try {
       for (const [i, div] of DIVISION_ORDER.entries()) {
-        const source: InputTriggerSource = {
+        const source = {
           trigger: '@',
-          // MenuView 固定使用 slash.menu 命名空间，无法读取 agency 词条；
-          // 直接注册当前语言的显示名，并在语言切换时重建来源。
-          name: inputTriggerSourceName(div, active),
+          name: inputTriggerSourceId(div),
           order: 100 + i,
+          showGroupTitle: false,
           candidates: async (_session, req) => {
-            const enabled = await readEnabled(remote).then((state) => state.enabled).catch(() => new Set<string>())
+            const current = await readEnabled(remote).catch(() => undefined)
+            if (current === undefined) return []
+            const enabled = current.enabled
+            updateEnabledForMentions(enabled)
             const q = String(req.query ?? '').toLowerCase()
             return EXPERTS
-              .filter((e) => e.division === div && enabled.has(e.slug) && (q === '' || e.name.toLowerCase().includes(q) || e.nameEn.toLowerCase().includes(q) || e.slug.includes(q)))
-              .map((e) => ({ name: inputTriggerCandidateName(e, ctx.locale.getSnapshot().active), hint: e.slug }))
+              .filter((e) => e.division === div && enabled.has(e.slug) && (q === '' || e.name.toLowerCase().includes(q) || e.nameEn.toLowerCase().includes(q)))
+              .map((e) => ({
+                name: inputTriggerCandidateName(e, ctx.locale.getSnapshot().active),
+                hint: e.slug,
+                section: inputTriggerSourceName(div, ctx.locale.getSnapshot().active),
+              }))
           },
           onPick: (pick) => {
             const slug = pick.candidate.hint ?? ''
-            return { text: t('summon.instruction', { name: inputTriggerPickName(slug, pick.candidate.name, getActive()), slug }) }
+            const expert = EXPERTS.find((item) => item.slug === slug)
+            return expert === undefined ? undefined : { insert: buildExpertReference(expert, getActive()) }
           },
-        }
+          ...(i === 0 ? { warm: () => refreshEnabledForMentions() } : {}),
+          lexicon: () => enabledForMentions === undefined
+            ? undefined
+            : buildExpertMentionLexicon(EXPERTS.filter((expert) => expert.division === div), enabledForMentions, getActive()),
+          subscribeLexicon: (_session, listener) => {
+            lexiconListeners.add(listener)
+            return () => { lexiconListeners.delete(listener) }
+          },
+          codec: {
+            clipboardText: (slug) => expertMentionFromReference(slug, getActive()),
+            serialize: async (slug) => expertMentionFromReference(slug, getActive()),
+          },
+        } as InputTriggerSource & { readonly showGroupTitle?: boolean }
         disposers.push(ctx.inputTriggers.registerSource(source))
       }
     } catch (error) {

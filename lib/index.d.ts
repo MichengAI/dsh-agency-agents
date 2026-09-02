@@ -82,9 +82,9 @@ declare function unquote(value: string): string;
 declare function truncate(text: string, limit: number): string;
 /** Parse the `key: value` frontmatter block of one agency agent file. */
 declare function parseFrontmatter(raw: string): Frontmatter | undefined;
-/** Load every `<division>/**\/*.md` persona file (plus extra sources) into a slug-keyed map. Throws when root is invalid or empty. */
+/** 加载已配置分区中的所有 persona，按 slug 建立索引；目录无效或为空时抛出明确错误。 */
 declare function loadCatalog(root: string, divisions: readonly string[]): Promise<Map<string, Expert>>;
-/** 根据 slug 或名称解析智能体；任意多命中都必须要求调用者提供更精确的 slug。 */
+/** 根据名称或内部 slug 解析智能体；名称重名时拒绝调用，防止召唤到错误角色。 */
 declare function resolveExpert<T extends {
   readonly slug: string;
   readonly name: string;

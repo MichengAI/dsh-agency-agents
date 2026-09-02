@@ -7,9 +7,8 @@ const ROOT = new URL('../assets/agency-agents/', import.meta.url)
 const DIVISIONS = [
   'academic', 'design', 'engineering', 'finance', 'game-development', 'gis',
   'healthcare', 'marketing', 'paid-media', 'product', 'project-management',
-  'sales', 'security', 'spatial-computing', 'specialized', 'support', 'testing',
+  'research', 'sales', 'security', 'spatial-computing', 'specialized', 'support', 'testing',
 ]
-const EXTRA = [{ dir: 'integrations/mcp-memory', division: 'engineering' }]
 
 function parseFrontmatter(raw) {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/)
@@ -36,7 +35,7 @@ async function walk(dir, cb) {
 }
 
 const roster = []
-for (const source of [...DIVISIONS.map((d) => ({ dir: d, division: d })), ...EXTRA]) {
+for (const source of DIVISIONS.map((division) => ({ dir: division, division }))) {
   await walk(new URL(source.dir + '/', ROOT), async (fileUrl, fileName) => {
     const slug = fileName.slice(0, -3)
     const raw = await readFile(fileUrl, 'utf8')

@@ -3,12 +3,13 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
+import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { compareExpertName, filterExperts, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceName, matchExpertQuery, normalizeExpertQuery, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveReferenceInsertionTarget, writeErrorKey, writeErrorMessage, buildSummonInstruction, applyExpertSummon } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
@@ -24,8 +25,18 @@ describe('Config', () => {
     expect(resolved).not.toHaveProperty('maxDepth')
   })
 
+  it('默认加载 research 分区', () => {
+    const resolved = z.resolve({}, Config, {})[0] as { divisions: string[] }
+    expect(resolved.divisions).toContain('research')
+  })
+
   it('宿主插件声明 settings 依赖，避免工具读取 locale 时被 Cordis 拒绝', () => {
     expect(inject).toEqual(['tools', 'subagents', 'systemPrompt', 'settings'])
+  })
+
+  it('客户端声明会话与会话输入服务，允许工具栏在 session slot 内插入引用', () => {
+    expect(clientInject).toContain('sessions')
+    expect(clientInject).toContain('conversation')
   })
 })
 
@@ -152,11 +163,14 @@ describe('loadCatalog', () => {
     expect(map.get('unity-architect')?.division).toBe('game-development')
   })
 
-  it('加载 integrations/mcp-memory 额外源并归入 engineering', async () => {
+  it('不将 integrations/mcp-memory 转换输出作为工程专家加载', async () => {
+    await mkdir(join(dir, 'engineering'), { recursive: true })
     await mkdir(join(dir, 'integrations', 'mcp-memory'), { recursive: true })
+    await writeFile(join(dir, 'engineering', 'engineering-backend-architect.md'), '---\nname: Backend Architect\ndescription: d\n---\nbody', 'utf8')
     await writeFile(join(dir, 'integrations', 'mcp-memory', 'backend-architect-with-memory.md'), '---\nname: Backend Architect\ndescription: d\n---\nbody', 'utf8')
     const map = await loadCatalog(dir, ['engineering'])
-    expect(map.get('backend-architect-with-memory')?.division).toBe('engineering')
+    expect(map.has('engineering-backend-architect')).toBe(true)
+    expect(map.has('backend-architect-with-memory')).toBe(false)
   })
 
   it('未选择 engineering 时不加载 mcp-memory 额外源', async () => {
@@ -515,9 +529,10 @@ describe('applyExpertSummon（输入框召唤）', () => {
       setDraft(draft: string): void { calls.push('setDraft:' + draft) },
       submit(): void { calls.push('submit') },
     }
-    const instruction = buildSummonInstruction(t, '代码审查', 'reviewer', '请审查这段代码')
+    const instruction = buildSummonInstruction(t, '代码审查专家', '请审查这段代码')
     applyExpertSummon({ inputActions, instruction })
-    expect(instruction).toContain('请审查这段代码')
+    expect(instruction).toBe('@代码审查专家\n\n请审查这段代码')
+    expect(instruction).not.toContain('reviewer')
     expect(calls).toEqual(['setDraft:' + instruction])
     expect(calls).not.toContain('submit')
   })
@@ -528,15 +543,15 @@ describe('applyExpertSummon（输入框召唤）', () => {
       setDraft(draft: string): void { calls.push('setDraft:' + draft) },
       submit(): void { calls.push('submit') },
     }
-    const instruction = buildSummonInstruction(t, '代码审查', 'reviewer', '   ')
+    const instruction = buildSummonInstruction(t, '代码审查专家', '   ')
     applyExpertSummon({ inputActions, instruction })
-    expect(instruction).toBe(t('summon.instruction', { name: '代码审查', slug: 'reviewer' }))
+    expect(instruction).toBe(t('summon.instruction', { name: '@代码审查专家' }))
     expect(calls).toEqual(['setDraft:' + instruction])
     expect(calls).not.toContain('submit')
   })
 
   it('没有 inputActions 时只生成指令，不抛错也不发送', () => {
-    expect(() => applyExpertSummon({ instruction: t('summon.instruction', { name: '代码审查', slug: 'reviewer' }) })).not.toThrow()
+    expect(() => applyExpertSummon({ instruction: t('summon.instruction', { name: '代码审查专家' }) })).not.toThrow()
     expect(() => applyExpertSummon({ inputActions: undefined, instruction: 'noop' })).not.toThrow()
   })
 })
@@ -647,10 +662,10 @@ describe('filterExperts', () => {
     expect(filterExperts(experts, { query: '   ' })).toHaveLength(2)
   })
 
-  it('按中文名、英文名、slug 和简介匹配', () => {
+  it('按中文名、英文名和简介匹配', () => {
     expect(matchExpertQuery(experts[0]!, '审查')).toBe(true)
     expect(filterExperts(experts, { query: 'Historian' }).map((item) => item.slug)).toEqual(['academic-historian'])
-    expect(filterExperts(experts, { query: 'engineering-code' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
+    expect(filterExperts(experts, { query: 'engineering-code' })).toEqual([])
     expect(filterExperts(experts, { query: 'severity' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
   })
 
@@ -680,6 +695,96 @@ describe('@ 菜单分组标题本地化', () => {
     expect(inputTriggerPickName('engineering-code-reviewer', '🔍 代码审查工程师', 'zh')).toBe('代码审查工程师')
     expect(inputTriggerPickName('engineering-code-reviewer', '🔍 Code Reviewer', 'en')).toBe('Code Reviewer')
     expect(inputTriggerPickName('missing', '未知专家', 'zh')).toBe('未知专家')
+  })
+
+  it('将专家名称格式化为 @ 提及，并只把已启用专家加入输入框词典', () => {
+    const experts = [
+      { slug: 'engineering-code-reviewer', name: '代码审查工程师', nameEn: 'Code Reviewer' },
+      { slug: 'design-creative-designer', name: '创意设计师', nameEn: 'Creative Designer' },
+    ]
+
+    expect(formatExpertMention('创意设计师')).toBe('@创意设计师')
+    expect(formatExpertMention('@创意设计师')).toBe('@创意设计师')
+    expect(formatExpertMentionInsertion('创意设计师')).toBe('@创意设计师 ')
+    expect(buildExpertMentionLexicon(experts, new Set(['design-creative-designer']), 'zh')).toEqual(['创意设计师'])
+    expect(buildExpertMentionLexicon(experts, new Set(['design-creative-designer']), 'en')).toEqual(['Creative Designer'])
+  })
+
+  it('将专家插入投影为带图标的原生引用 chip，内部 ID 不泄露到文本', () => {
+    const expert = {
+      slug: 'engineering-code-reviewer',
+      name: '代码审查工程师',
+      nameEn: 'Code Reviewer',
+      emoji: '🔍',
+      division: 'engineering',
+    }
+
+    expect(inputTriggerSourceId('engineering')).toBe('@michengai/dsh-agency-agents:engineering')
+    expect(buildExpertReference(expert, 'zh')).toEqual({
+      source: '@michengai/dsh-agency-agents:engineering',
+      ref: 'engineering-code-reviewer',
+      label: '代码审查工程师',
+      appearance: 'session',
+      clipboardText: '@代码审查工程师',
+    })
+    expect(buildExpertReference(expert, 'en')).toMatchObject({
+      source: '@michengai/dsh-agency-agents:engineering',
+      label: 'Code Reviewer',
+      appearance: 'session',
+      clipboardText: '@Code Reviewer',
+    })
+  })
+
+  it('工具栏选择专家时直接插入原生引用，不写入会再次触发菜单的普通 @ 文本', () => {
+    const calls: unknown[] = []
+    const reference = {
+      source: '@michengai/dsh-agency-agents:engineering',
+      ref: 'engineering-code-reviewer',
+      label: '代码审查工程师',
+      appearance: 'session' as const,
+      clipboardText: '@代码审查工程师',
+    }
+    const target = {
+      state: { getSnapshot: () => ({ draftRev: 42 }) },
+      insertReference: (value: unknown, span: unknown): boolean => {
+        calls.push(value, span)
+        return true
+      },
+    }
+
+    expect(insertExpertReference(target, reference)).toBe(true)
+    expect(calls).toEqual([reference, { start: 0, end: 0, draftRev: 42 }])
+    expect(insertExpertReference(undefined, reference)).toBe(false)
+  })
+
+  it('slot 未提供 sessionId 时回退解析当前会话输入机', () => {
+    const actx = {} as Context
+    const target = {
+      state: { getSnapshot: () => ({ draftRev: 1 }) },
+      insertReference: (): boolean => true,
+    }
+    const calls: string[] = []
+
+    const resolved = resolveReferenceInsertionTarget({
+      list: { getSnapshot: () => ({ current: 'current-session' as SessionId }) },
+      binding: (id: string) => {
+        calls.push(id)
+        return { ctx: actx }
+      },
+    }, {
+      input: { for: (context: Context) => context === actx ? target : undefined },
+    })
+
+    expect(resolved).toBe(target)
+    expect(calls).toEqual(['current-session'])
+  })
+
+  it('打开专家菜单时保持编辑器焦点，保证候选项可定位 chip 插入位置', () => {
+    let prevented = false
+
+    keepComposerFocus({ preventDefault: () => { prevented = true } })
+
+    expect(prevented).toBe(true)
   })
 })
 
