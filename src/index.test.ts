@@ -9,7 +9,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, writeErrorKey, writeErrorMessage } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, pickHostSettingsTrigger, resolveExpertToolbarClick, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
@@ -910,6 +910,33 @@ describe('@ 菜单分组标题本地化', () => {
     keepComposerFocus({ preventDefault: () => { prevented = true } })
 
     expect(prevented).toBe(true)
+  })
+
+  it('未启用专家时打开设置页，有可用专家时打开本地菜单', () => {
+    expect(resolveExpertToolbarClick(0)).toBe('settings')
+    expect(resolveExpertToolbarClick(3)).toBe('menu')
+    expect(zh['menu.empty']).toContain('设置')
+    expect(en['menu.empty']).toContain('Settings')
+  })
+
+  it('设置入口只认明确的设置按钮，忽略输入区「+」和其他弹窗', () => {
+    expect(pickHostSettingsTrigger([
+      { label: '', inComposer: true, hasDialogPopup: true },
+      { label: '设置', inComposer: false, hasDialogPopup: true },
+    ])).toEqual({ label: '设置', inComposer: false, hasDialogPopup: true })
+    expect(pickHostSettingsTrigger([
+      { label: 'Settings', inComposer: false, hasDialogPopup: true },
+      { label: '', inComposer: true, hasDialogPopup: true },
+    ])?.label).toBe('Settings')
+    expect(pickHostSettingsTrigger([
+      { label: '', inComposer: true, hasDialogPopup: true },
+      { label: '', inComposer: false, hasDialogPopup: true },
+      { label: '', inComposer: false, hasDialogPopup: true },
+    ])).toBeUndefined()
+    expect(pickHostSettingsTrigger([
+      { label: '', inComposer: true, hasDialogPopup: true },
+      { label: '', inComposer: false, hasDialogPopup: true },
+    ])).toEqual({ label: '', inComposer: false, hasDialogPopup: true })
   })
 })
 

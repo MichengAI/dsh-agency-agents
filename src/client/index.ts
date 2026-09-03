@@ -418,18 +418,94 @@ function menuGroup(g: ExpertGroup, pick: (slug: string) => void, t: TranslateNS<
     g.experts.map((e) => menuItem(e, pick, getActive)))
 }
 
-function openAgentSettings(t: TranslateNS<'agency'>): void {
-  if (document.querySelector('[role="dialog"]') === null) {
-    const trigger = document.querySelector('button[aria-haspopup="dialog"]')
-    if (trigger instanceof HTMLElement) trigger.click()
+export type ExpertToolbarAction = 'menu' | 'settings'
+
+/** 没有可召唤专家时打开设置页，否则打开本地菜单。 */
+export function resolveExpertToolbarClick(enabledCount: number): ExpertToolbarAction {
+  return enabledCount === 0 ? 'settings' : 'menu'
+}
+
+const SETTINGS_TRIGGER_LABELS = new Set(['设置', 'Settings'])
+const COMPOSER_TRIGGER_SCOPE = '[data-composer-card], .aag-btn-wrap'
+
+export function isSettingsTriggerLabel(label: string): boolean {
+  return SETTINGS_TRIGGER_LABELS.has(label.trim())
+}
+
+export interface SettingsTriggerCandidate {
+  readonly label: string
+  readonly inComposer: boolean
+  readonly hasDialogPopup: boolean
+}
+
+/** 只认明确的设置按钮；输入区里的「+」和其他弹窗一律排除。 */
+export function pickHostSettingsTrigger<T extends SettingsTriggerCandidate>(
+  candidates: ReadonlyArray<T>,
+): T | undefined {
+  const labeled = candidates.filter((item) => !item.inComposer && isSettingsTriggerLabel(item.label))
+  if (labeled.length === 1) return labeled[0]
+  if (labeled.length > 1) return undefined
+  const dialogs = candidates.filter((item) => !item.inComposer && item.hasDialogPopup)
+  return dialogs.length === 1 ? dialogs[0] : undefined
+}
+
+function buttonAccessibleLabel(button: Element): string {
+  return (button.getAttribute('aria-label') ?? button.textContent ?? '').trim()
+}
+
+function collectSettingsTriggerCandidates(
+  root: ParentNode,
+): Array<SettingsTriggerCandidate & { readonly button: HTMLElement }> {
+  const result: Array<SettingsTriggerCandidate & { readonly button: HTMLElement }> = []
+  for (const node of root.querySelectorAll('button')) {
+    if (!(node instanceof HTMLElement)) continue
+    result.push({
+      button: node,
+      label: buttonAccessibleLabel(node),
+      inComposer: node.closest(COMPOSER_TRIGGER_SCOPE) !== null,
+      hasDialogPopup: node.getAttribute('aria-haspopup') === 'dialog',
+    })
   }
-  const select = (): void => {
-    const buttons = document.querySelectorAll('[role="dialog"] nav button')
-    for (const button of buttons) {
-      if (button.textContent !== null && button.textContent.trim() === t('settings.nav')) { (button as HTMLElement).click(); return }
+  return result
+}
+
+export function findHostSettingsTrigger(root: ParentNode): HTMLElement | undefined {
+  return pickHostSettingsTrigger(collectSettingsTriggerCandidates(root))?.button
+}
+
+export function findExpertSettingsNavButton(root: ParentNode, navLabel: string): HTMLElement | undefined {
+  for (const dialog of root.querySelectorAll('[role="dialog"]')) {
+    for (const button of dialog.querySelectorAll('nav button')) {
+      if (button instanceof HTMLElement && (button.textContent ?? '').trim() === navLabel) return button
     }
   }
-  window.requestAnimationFrame(() => { window.requestAnimationFrame(select) })
+  return undefined
+}
+
+function queueSettingsNav(work: () => void): void {
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => { requestAnimationFrame(work) })
+    return
+  }
+  work()
+}
+
+/** 打开宿主设置并选中专家分区；找不到唯一设置入口时返回 false，由调用方回退到本地菜单。 */
+export function openAgentSettings(
+  navLabel: string,
+  root: ParentNode = document,
+  schedule: (work: () => void) => void = queueSettingsNav,
+): boolean {
+  const existing = findExpertSettingsNavButton(root, navLabel)
+  if (existing !== undefined) {
+    existing.click()
+    return true
+  }
+  const trigger = findHostSettingsTrigger(root)
+  if (trigger === undefined) return false
+  trigger.click()
+  schedule(() => { findExpertSettingsNavButton(root, navLabel)?.click() })
+  return true
 }
 
 /** 输入机暴露给工具栏的最小原子引用写入面，避免依赖 slot 的非标准 owner 参数。 */
@@ -538,7 +614,12 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
     void readEnabled(props.remote).then((current) => {
       setEnabled(current.enabled)
       props.onEnabledChange?.(current.enabled)
-      if (current.enabled.size === 0) { openAgentSettings(props.t); return }
+      if (resolveExpertToolbarClick(current.enabled.size) === 'settings') {
+        if (openAgentSettings(props.t('settings.nav'))) {
+          setOpen(false)
+          return
+        }
+      }
       setInsertError(null)
       setOpen((prev) => !prev)
     }).catch(() => { setOpen((prev) => !prev) })

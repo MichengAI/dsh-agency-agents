@@ -6,6 +6,10 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+## 0.1.30 — 2026-09-03
+
+- When no experts are enabled, the composer Experts button opens Settings → Experts. It only clicks a uniquely labeled Settings trigger and ignores composer dialogs such as the + button.
+
 ## 0.1.29 — 2026-09-03
 
 - Updated the DSH development baseline to `0.1.2-rc.1` while retaining the existing `>=0.1.0-rc.5 <0.2.0` peer compatibility range.
