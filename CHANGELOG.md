@@ -6,6 +6,11 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+## 0.1.29 — 2026-09-03
+
+- Updated the DSH development baseline to `0.1.2-rc.1` while retaining the existing `>=0.1.0-rc.5 <0.2.0` peer compatibility range.
+- Added the RC.1-required `dsh-session-projection` and `dsh-util-time` development peers, refreshed the pnpm release-age exemptions and lockfile, and updated manifest regression coverage.
+
 ## 0.1.28 — 2026-09-03
 
 - Added GitHub and Issues actions beside the plugin settings title, matching the archive manager's labels and icons.

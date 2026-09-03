@@ -703,10 +703,10 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain('@deepseek-ai/dsh-client-ui-session')
   })
 
-  it('DSH 开发依赖固定为 alpha.5', () => {
+  it('DSH 开发依赖固定为 RC.1', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.1.2-alpha.5')
+        expect(version).toBe('0.1.2-rc.1')
       }
     }
   })
