@@ -3,7 +3,7 @@ import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import type { TypertContribution } from '@deepseek-ai/dsh-typert-registry'
 import type {} from '@deepseek-ai/dsh-typert-registry'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { AGENCY_PERSONA_SERVICE, createAgencyPersonaSource, DEFAULT_DIVISIONS, resolveCatalogRoot, type AgencyPersonaSource } from './index.js'
+import { AGENCY_PERSONA_SERVICE, type AgencyPersonaSource } from './index.js'
 import { formatHost, readHostLocale } from './i18n.js'
 import { settingsNamespaceCompat } from './settings-compat.js'
 
@@ -15,10 +15,10 @@ function personaSource(ctx: Context): AgencyPersonaSource {
   try {
     const source = ctx.get(AGENCY_PERSONA_SERVICE) as AgencyPersonaSource | undefined
     if (source !== undefined) return source
-  } catch {
-    // 主插件尚未挂载时保留内置目录回退，避免加载顺序影响设置页。
+  } catch (cause: unknown) {
+    throw new Error(formatHost(readHostLocale(ctx), 'error.personaSourceUnavailable'), { cause })
   }
-  return createAgencyPersonaSource(resolveCatalogRoot(''), DEFAULT_DIVISIONS)
+  throw new Error(formatHost(readHostLocale(ctx), 'error.personaSourceUnavailable'))
 }
 
 /**

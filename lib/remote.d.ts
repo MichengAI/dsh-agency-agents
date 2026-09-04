@@ -1,4 +1,4 @@
-import { _ as readExpertPrompt, v as readLocalizedExpertPrompt } from "./index-B47ZQQ-Q.js";
+import { _ as readExpertPrompt, v as readLocalizedExpertPrompt } from "./index-Cj9YDkgr.js";
 import { TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
 import { Context } from "@deepseek-ai/cordis";
 //#region src/remote.d.ts

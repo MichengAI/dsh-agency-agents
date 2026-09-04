@@ -12,6 +12,7 @@ The five most recent published versions are listed below.
 - Unified the persona source used by view, copy, and summon. Chinese sessions now inject the Chinese persona with English fallback, while custom `root` catalogs no longer display unrelated bundled prompts.
 - Kept search and division filters active together, made copied feedback expire automatically, and removed duplicate Chinese assets, the obsolete list view, and unused filter labels.
 - Replaced five bundled Lucide component imports with equivalent inline paths so the client bundle no longer contains the complete icon library.
+- Loaded only frontmatter metadata in bounded chunks when building the roster instead of reading or retaining all 321 persona bodies at startup. Prompt requests now fail explicitly while the shared source is unavailable, preventing custom catalogs from silently falling back to bundled prose, and obsolete list-view locale entries were removed.
 
 ## 0.1.30 — 2026-09-03
 

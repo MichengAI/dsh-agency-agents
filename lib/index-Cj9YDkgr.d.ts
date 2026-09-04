@@ -50,7 +50,6 @@ interface Expert {
   readonly emoji: string;
   readonly division: string;
   readonly divisionZh: string;
-  readonly persona: string;
 }
 /** Plugin config: the persona root, the subagent provider, and the divisions to scan. */
 interface Config {
@@ -99,7 +98,7 @@ interface AgencyPersonaSource {
 }
 /** 创建展示与召唤共用的 persona 来源；外部目录不会混入内置中文翻译。 */
 declare function createAgencyPersonaSource(root: string, divisions: readonly string[]): AgencyPersonaSource;
-/** 加载已配置分区中的所有 persona，按 slug 建立索引；目录无效或为空时抛出明确错误。 */
+/** 加载已配置分区中的专家元数据，按 slug 建立索引；persona 正文在召唤时按需读取。 */
 declare function loadCatalog(root: string, divisions: readonly string[], locale?: LocaleId): Promise<Map<string, Expert>>;
 /** 仅按本地化名称解析智能体；名称重名时拒绝调用，防止召唤到错误角色。 */
 declare function resolveExpert<T extends {

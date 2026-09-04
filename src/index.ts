@@ -28,9 +28,10 @@ import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { SubagentRun } from '@deepseek-ai/dsh-subagent'
 import type {} from '@deepseek-ai/dsh-system-prompt'
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { open, readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
@@ -167,7 +168,6 @@ interface Expert {
   readonly emoji: string
   readonly division: string
   readonly divisionZh: string
-  readonly persona: string
 }
 
 /** Plugin config: the persona root, the subagent provider, and the divisions to scan. */
@@ -220,6 +220,11 @@ interface Frontmatter {
   body: string
 }
 
+type FrontmatterMetadata = Omit<Frontmatter, 'body'>
+
+const FRONTMATTER_READ_CHUNK_BYTES = 1_024
+const FRONTMATTER_MAX_BYTES = 64 * 1_024
+
 /** Neutralize strict `{{...}}` template interpolation inside expert prose. */
 export function sanitize(text: string): string {
   // 逐个匹配「后面紧跟 {」的 {，避免三连花括号 '{{{' 残留 '{{'
@@ -246,17 +251,46 @@ export function truncate(text: string, limit: number): string {
   return codePoints.length <= limit ? text : `${codePoints.slice(0, limit).join('')}…`
 }
 
-/** Parse the `key: value` frontmatter block of one agency agent file. */
-export function parseFrontmatter(raw: string): Frontmatter | undefined {
-  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/)
-  if (match === null) return undefined
-  const fm = match[1]
-  const body = match[2].trim()
+function parseFrontmatterMetadata(fm: string): FrontmatterMetadata {
   const get = (key: string): string | undefined => {
     const m = fm.match(new RegExp(`^${key}\\s*:\\s*(.*)$`, 'm'))
     return m === null ? undefined : unquote(m[1].trim())
   }
-  return { name: get('name'), description: get('description'), descriptionEn: get('descriptionEn'), emoji: get('emoji'), body }
+  return { name: get('name'), description: get('description'), descriptionEn: get('descriptionEn'), emoji: get('emoji') }
+}
+
+/** Parse the `key: value` frontmatter block of one agency agent file. */
+export function parseFrontmatter(raw: string): Frontmatter | undefined {
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/)
+  if (match === null) return undefined
+  return { ...parseFrontmatterMetadata(match[1]), body: match[2].trim() }
+}
+
+/** 仅读取文件头部的 YAML frontmatter，避免启动时把全部 persona 正文读入内存。 */
+async function readFrontmatterMetadata(filePath: string): Promise<FrontmatterMetadata | undefined> {
+  const file = await open(filePath, 'r')
+  const decoder = new TextDecoder('utf-8')
+  let raw = ''
+  let position = 0
+  try {
+    while (position < FRONTMATTER_MAX_BYTES) {
+      const size = Math.min(FRONTMATTER_READ_CHUNK_BYTES, FRONTMATTER_MAX_BYTES - position)
+      const buffer = Buffer.allocUnsafe(size)
+      const { bytesRead } = await file.read(buffer, 0, size, position)
+      if (bytesRead === 0) {
+        raw += decoder.decode()
+        const match = stripBom(raw).match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
+        return match === null ? undefined : parseFrontmatterMetadata(match[1])
+      }
+      position += bytesRead
+      raw += decoder.decode(buffer.subarray(0, bytesRead), { stream: true })
+      const match = stripBom(raw).match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/)
+      if (match !== null) return parseFrontmatterMetadata(match[1])
+    }
+    return undefined
+  } finally {
+    await file.close()
+  }
 }
 
 const EXPERT_PATH_SEGMENT_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -352,7 +386,7 @@ async function walkMarkdown(dir: string, onFile: (filePath: string, fileName: st
   }
 }
 
-/** 加载已配置分区中的所有 persona，按 slug 建立索引；目录无效或为空时抛出明确错误。 */
+/** 加载已配置分区中的专家元数据，按 slug 建立索引；persona 正文在召唤时按需读取。 */
 export async function loadCatalog(root: string, divisions: readonly string[], locale: LocaleId = 'zh'): Promise<Map<string, Expert>> {
   await assertDirectory(root, locale)
 
@@ -361,14 +395,13 @@ export async function loadCatalog(root: string, divisions: readonly string[], lo
   for (const source of sources) {
     await walkMarkdown(join(root, source.dir), async (filePath, fileName) => {
       const slug = fileName.slice(0, -3)
-      let raw: string
+      let parsed: FrontmatterMetadata | undefined
       try {
-        raw = stripBom(await readFile(filePath, 'utf8'))
+        parsed = await readFrontmatterMetadata(filePath)
       } catch (error: unknown) {
         console.warn(`[agency-agents] 跳过无法读取的智能体文件 ${filePath}: ${error instanceof Error ? error.message : String(error)}`)
         return
       }
-      const parsed = parseFrontmatter(raw)
       if (parsed === undefined || parsed.name === undefined || parsed.description === undefined) return
       if (map.has(slug)) {
         console.warn(`[agency-agents] 智能体 slug 冲突，后加载者覆盖：${slug}`)
@@ -382,7 +415,6 @@ export async function loadCatalog(root: string, divisions: readonly string[], lo
         emoji: parsed.emoji ?? '',
         division: source.division,
         divisionZh: ZH_DIVISION[source.division] ?? source.division,
-        persona: sanitize(parsed.body),
       })
     })
   }

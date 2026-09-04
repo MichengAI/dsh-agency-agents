@@ -187,6 +187,7 @@ describe('loadCatalog', () => {
     const map = await loadCatalog(dir, ['game-development'])
     expect(map.has('economy-designer')).toBe(true)
     expect(map.get('economy-designer')?.descriptionEn).toBe('English intro')
+    expect(map.get('economy-designer')).not.toHaveProperty('persona')
     expect(map.has('unity-architect')).toBe(true)
     expect(map.get('unity-architect')?.division).toBe('game-development')
   })
@@ -661,6 +662,21 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
     }
   })
 
+  it('persona 服务尚未挂载时失败关闭，不回退到其他目录', async () => {
+    const ctx = {
+      reflect: { provide: () => undefined },
+      get: () => undefined,
+      typert: { register: () => undefined },
+      settings: {
+        get: (namespace: string) => namespace === 'locale' ? { preference: 'zh' } : { enabled: [] },
+        describe: () => [{ ns: 'agency-agents', revision: 0 }],
+      },
+    } as unknown as Context
+    const remote = new AgencyAgentsRemote(ctx)
+
+    await expect(remote.getPrompt('chief-executive-officer', 'company')).rejects.toThrow('专家提示词服务尚未就绪')
+  })
+
   it('TYPERT_REMOTE 贡献描述符与 host 方法对齐（client $mount 契约）', () => {
     const endpoints = TYPERT_REMOTE.descriptors.map((d) => `${d.namespace}/${d.method}`)
     expect(endpoints).toContain('agencyAgents/getEnabled')
@@ -708,8 +724,19 @@ describe('宿主 i18n', () => {
     }
     expect(zh['settings.empty']).toContain('{all}')
     expect(en['settings.empty']).toContain('{all}')
-    expect(en['settings.filter.showing.one']).toBe('Showing {count} expert')
-    expect(en['settings.filter.showing.other']).toBe('Showing {count} experts')
+    for (const key of [
+      'settings.intro',
+      'settings.filter.showing.one',
+      'settings.filter.showing.other',
+      'btn.enable',
+      'btn.disable',
+      'summary.enabled.one',
+      'summary.enabled.other',
+      'summary.group',
+    ]) {
+      expect(Object.hasOwn(zh, key), key).toBe(false)
+      expect(Object.hasOwn(en, key), key).toBe(false)
+    }
   })
 
   it('分区查询同时认 key、中文名和英文名', () => {
