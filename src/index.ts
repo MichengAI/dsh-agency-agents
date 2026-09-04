@@ -29,7 +29,7 @@ import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { SubagentRun } from '@deepseek-ai/dsh-subagent'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { readdir, readFile, stat } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
@@ -185,6 +185,8 @@ export interface Config {
 /** 未在配置中显式提供 `root` 时，先读取该环境变量，再使用随包发布的智能体目录。 */
 const ROOT_ENV = 'AGENCY_AGENTS_ROOT'
 const BUNDLED_ROOT = fileURLToPath(new URL('../assets/agency-agents/', import.meta.url))
+const BUNDLED_CHINESE_ROOT = fileURLToPath(new URL('../assets/agency-agents-zh/', import.meta.url))
+export const AGENCY_PERSONA_SERVICE = 'agencyAgentsPersona'
 
 export const Config: z<Config> = z.object({
   root: z.string().default(''),
@@ -255,6 +257,61 @@ export function parseFrontmatter(raw: string): Frontmatter | undefined {
     return m === null ? undefined : unquote(m[1].trim())
   }
   return { name: get('name'), description: get('description'), descriptionEn: get('descriptionEn'), emoji: get('emoji'), body }
+}
+
+const EXPERT_PATH_SEGMENT_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+/** 读取一个受允许分区约束的 persona 正文，拒绝路径穿越和无效文档。 */
+export async function readExpertPrompt(
+  root: string,
+  slug: string,
+  division: string,
+  divisions: readonly string[] = DEFAULT_DIVISIONS,
+): Promise<{ prompt: string }> {
+  if (!divisions.includes(division) || !EXPERT_PATH_SEGMENT_PATTERN.test(slug)) {
+    throw new Error('无效的专家提示词请求。')
+  }
+  let raw: string
+  try {
+    raw = stripBom(await readFile(join(root, division, `${slug}.md`), 'utf8'))
+  } catch {
+    throw new Error('未找到专家提示词。')
+  }
+  const parsed = parseFrontmatter(raw)
+  if (parsed === undefined || parsed.name === undefined || parsed.description === undefined || parsed.body === '') {
+    throw new Error('专家提示词格式无效。')
+  }
+  return { prompt: parsed.body }
+}
+
+/** 按界面语言读取 persona；没有中文目录或中文译文时回退主目录正文。 */
+export async function readLocalizedExpertPrompt(
+  root: string,
+  chineseRoot: string | undefined,
+  slug: string,
+  division: string,
+  locale: LocaleId,
+  divisions: readonly string[] = DEFAULT_DIVISIONS,
+): Promise<{ prompt: string }> {
+  if (locale === 'en' || chineseRoot === undefined) return readExpertPrompt(root, slug, division, divisions)
+  try {
+    return await readExpertPrompt(chineseRoot, slug, division, divisions)
+  } catch (error: unknown) {
+    if (!(error instanceof Error) || error.message !== '未找到专家提示词。') throw error
+    return readExpertPrompt(root, slug, division, divisions)
+  }
+}
+
+export interface AgencyPersonaSource {
+  getPrompt(slug: string, division: string, locale: LocaleId): Promise<{ prompt: string }>
+}
+
+/** 创建展示与召唤共用的 persona 来源；外部目录不会混入内置中文翻译。 */
+export function createAgencyPersonaSource(root: string, divisions: readonly string[]): AgencyPersonaSource {
+  const chineseRoot = resolve(root) === resolve(BUNDLED_ROOT) ? BUNDLED_CHINESE_ROOT : undefined
+  return {
+    getPrompt: (slug, division, locale) => readLocalizedExpertPrompt(root, chineseRoot, slug, division, locale, divisions),
+  }
 }
 
 /** Concatenate the text blocks of a subagent output. */
@@ -381,9 +438,12 @@ export function apply(ctx: Context, config: Config): void {
   })
   const enabledSet = (): ReadonlySet<string> => new Set(enabledSource())
   const activeLocale = (): LocaleId => readHostLocale(ctx)
+  const catalogRoot = resolveCatalogRoot(config.root)
+  const personaSource = createAgencyPersonaSource(catalogRoot, config.divisions)
+  ctx.reflect.provide(AGENCY_PERSONA_SERVICE, personaSource)
   let experts = new Map<string, Expert>()
   let loadError: string | null = null
-  const ready = loadCatalog(resolveCatalogRoot(config.root), config.divisions, activeLocale())
+  const ready = loadCatalog(catalogRoot, config.divisions, activeLocale())
     .then((map) => { experts = map })
     .catch((error: unknown) => { loadError = String(error) })
 
@@ -454,11 +514,12 @@ export function apply(ctx: Context, config: Config): void {
     if (maxDepth !== undefined && !provider.capabilities.depthLimit) throw new Error(formatHost(locale, 'error.providerNoMaxDepth', { provider: config.provider }))
     const expert = resolveExpert([...experts.values()], query, locale)
     if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
+    const { prompt: persona } = await personaSource.getPrompt(expert.slug, expert.division, locale)
     const run: SubagentRun = await ctx.subagents.start(config.provider, {
       label: `expert:${expert.slug}`,
       prompt: [{ type: 'text', text: taskText }],
       parent: exec.agent,
-      persona: expert.persona,
+      persona: sanitize(persona),
       toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts'] },
       ...(maxDepth === undefined ? {} : { maxDepth }),
       signal: exec.signal,
@@ -547,7 +608,7 @@ export function apply(ctx: Context, config: Config): void {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 18 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. In the parent session, call `list_experts()` to see enabled division names and counts, then call `list_experts(division)` to browse enabled experts and select a unique name before using `summon_expert(expert, task)` or `summon_experts` for a small parallel team (at most 8; partial results if some fail). A disabled expert cannot be summoned.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. In the parent session, call `list_experts()` to see enabled division names and counts, then call `list_experts(division)` to browse enabled experts and select a unique name before using `summon_expert(expert, task)` or `summon_experts` for a small parallel team (at most 8; partial results if some fail). A disabled expert cannot be summoned.'
     },
   })
 }

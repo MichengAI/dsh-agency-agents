@@ -1,7 +1,7 @@
 {
   "name": "@michengai/dsh-agency-agents",
   "description": "Agency Experts — a summonable domain-expert roster for DSH (expert mode)",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -92,7 +92,6 @@
     }
   },
   "dependencies": {
-    "lucide-react": "^0.468.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

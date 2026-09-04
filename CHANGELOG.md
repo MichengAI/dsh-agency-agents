@@ -6,6 +6,13 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+## 0.1.31 — 2026-09-05
+
+- Expanded the bundled roster to 321 experts across 22 divisions, merged localized specialists, and redesigned Expert Settings with compact two-column cards, avatars, category search, and enable switches.
+- Unified the persona source used by view, copy, and summon. Chinese sessions now inject the Chinese persona with English fallback, while custom `root` catalogs no longer display unrelated bundled prompts.
+- Kept search and division filters active together, made copied feedback expire automatically, and removed duplicate Chinese assets, the obsolete list view, and unused filter labels.
+- Replaced five bundled Lucide component imports with equivalent inline paths so the client bundle no longer contains the complete icon library.
+
 ## 0.1.30 — 2026-09-03
 
 - When no experts are enabled, the composer Experts button opens Settings → Experts. It only clicks a uniquely labeled Settings trigger and ignores composer dialogs such as the + button.

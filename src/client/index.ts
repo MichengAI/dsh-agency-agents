@@ -1,5 +1,4 @@
 import React from 'react'
-import { Copy, Eye, RefreshCw, Search, X } from 'lucide-react'
 import type { Context as CordisClientContext } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { InputTriggerSource, ReferenceInsert, TokenSpan } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
@@ -27,6 +26,62 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const PLUGIN_ID = '@michengai/dsh-agency-agents'
 /** 本插件客户端词条字典命名空间。 */
 const NS = 'agency'
+export const COPY_PROMPT_FEEDBACK_MS = 1_600
+
+interface LineIconProps {
+  readonly className?: string
+  readonly size?: number
+  readonly strokeWidth?: number
+  readonly 'aria-hidden'?: boolean
+}
+
+function lineIcon(props: LineIconProps, ...children: React.ReactNode[]): React.ReactElement {
+  const { size = 24, strokeWidth = 2, ...rest } = props
+  return React.createElement('svg', {
+    ...rest,
+    viewBox: '0 0 24 24',
+    width: size,
+    height: size,
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    focusable: false,
+  }, ...children)
+}
+
+function Copy(props: LineIconProps): React.ReactElement {
+  return lineIcon(props,
+    React.createElement('rect', { x: 9, y: 9, width: 13, height: 13, rx: 2 }),
+    React.createElement('path', { d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' }))
+}
+
+function Eye(props: LineIconProps): React.ReactElement {
+  return lineIcon(props,
+    React.createElement('path', { d: 'M2.06 12a10.7 10.7 0 0 1 19.88 0 10.7 10.7 0 0 1-19.88 0' }),
+    React.createElement('circle', { cx: 12, cy: 12, r: 3 }))
+}
+
+function RefreshCw(props: LineIconProps): React.ReactElement {
+  return lineIcon(props,
+    React.createElement('path', { d: 'M21 12a9 9 0 0 0-15.17-6.53L3 8' }),
+    React.createElement('path', { d: 'M3 3v5h5' }),
+    React.createElement('path', { d: 'M3 12a9 9 0 0 0 15.17 6.53L21 16' }),
+    React.createElement('path', { d: 'M16 16h5v5' }))
+}
+
+function Search(props: LineIconProps): React.ReactElement {
+  return lineIcon(props,
+    React.createElement('circle', { cx: 11, cy: 11, r: 8 }),
+    React.createElement('path', { d: 'm21 21-4.3-4.3' }))
+}
+
+function X(props: LineIconProps): React.ReactElement {
+  return lineIcon(props,
+    React.createElement('path', { d: 'M18 6 6 18' }),
+    React.createElement('path', { d: 'm6 6 12 12' }))
+}
 
 /**
  * RC Runtime 与 alpha UI 包会各自解析 dsh-client-ui-slots 的类型副本。
@@ -66,10 +121,10 @@ const DIVISION_ORDER = [
   'supply-chain', 'academic',
 ]
 
-export type ExpertCategory = '' | 'development' | 'design' | 'product' | 'research' | 'writing'
+type AvatarCategory = 'development' | 'design' | 'product' | 'research' | 'writing'
 
-/** 将细分专业归并为目标稿中的五个高层分类，且完整覆盖内置分区。 */
-const EXPERT_CATEGORY_DIVISIONS: Readonly<Record<Exclude<ExpertCategory, ''>, ReadonlySet<string>>> = {
+/** 头像只按视觉领域分池，设置页筛选始终使用完整的 22 个原始分区。 */
+const AVATAR_CATEGORY_DIVISIONS: Readonly<Record<AvatarCategory, ReadonlySet<string>>> = {
   development: new Set(['engineering', 'game-development', 'gis', 'security', 'spatial-computing', 'testing']),
   design: new Set(['design']),
   product: new Set(['company', 'hr', 'product', 'project-management', 'sales', 'supply-chain', 'support']),
@@ -196,16 +251,6 @@ export function sortExpertsByEnabled<T extends { readonly slug: string }>(
   return [...active, ...inactive]
 }
 
-/** 按目标稿的五个高层分类与检索词筛选；空分类表示全部。 */
-export function filterExpertsByCategory<T extends ExpertSearchable>(
-  list: ReadonlyArray<T>,
-  options: { readonly query?: string; readonly category?: ExpertCategory },
-): T[] {
-  const category = options.category ?? ''
-  const divisions = category === '' ? null : EXPERT_CATEGORY_DIVISIONS[category]
-  return list.filter((expert) => (divisions === null || divisions.has(expert.division)) && matchExpertQuery(expert, options.query ?? ''))
-}
-
 const DIVISION_COUNTS: Readonly<Record<string, number>> = Object.fromEntries(
   DIVISION_ORDER.map((division) => [division, EXPERTS.filter((expert) => expert.division === division).length]),
 )
@@ -227,13 +272,13 @@ export const EXPERT_AVATAR_POOL_INDEXES = {
   product: [0, 8, 25, 26, 27, 28],
   research: [2, 4, 29, 30, 31, 32],
   design: [6, 33, 34, 35],
-} as const satisfies Readonly<Record<Exclude<ExpertCategory, ''>, ReadonlyArray<number>>>
+} as const satisfies Readonly<Record<AvatarCategory, ReadonlyArray<number>>>
 
 const ALL_EXPERT_AVATAR_INDEXES = Object.values(EXPERT_AVATAR_POOL_INDEXES).flat()
 
-function expertCategoryForDivision(division: string): Exclude<ExpertCategory, ''> | undefined {
-  return (Object.entries(EXPERT_CATEGORY_DIVISIONS) as ReadonlyArray<
-    readonly [Exclude<ExpertCategory, ''>, ReadonlySet<string>]
+function expertCategoryForDivision(division: string): AvatarCategory | undefined {
+  return (Object.entries(AVATAR_CATEGORY_DIVISIONS) as ReadonlyArray<
+    readonly [AvatarCategory, ReadonlySet<string>]
   >).find(([, divisions]) => divisions.has(division))?.[0]
 }
 
@@ -247,10 +292,10 @@ function expertAvatarKey(slug: string, division: string): string {
  */
 const EXPERT_AVATAR_INDEX_BY_KEY = new Map<string, number>()
 for (const [category, pool] of Object.entries(EXPERT_AVATAR_POOL_INDEXES) as ReadonlyArray<
-  readonly [Exclude<ExpertCategory, ''>, ReadonlyArray<number>]
+  readonly [AvatarCategory, ReadonlyArray<number>]
 >) {
   const experts = EXPERTS
-    .filter((expert) => EXPERT_CATEGORY_DIVISIONS[category].has(expert.division))
+    .filter((expert) => AVATAR_CATEGORY_DIVISIONS[category].has(expert.division))
     .slice()
     .sort((left, right) => left.slug.localeCompare(right.slug, 'en'))
   experts.forEach((expert, index) => {
@@ -380,19 +425,6 @@ const SETTINGS_CSS = `
 .aag-action:hover:not(:disabled){opacity:.9}.aag-action:disabled{opacity:.5;cursor:default}
 .aag-action-secondary{background:transparent;border-color:var(--dsw-alias-border-l2);color:var(--dsw-alias-label-primary)}
 .aag-action:focus-visible{outline:2px solid var(--dsw-alias-state-success-primary);outline-offset:2px}
-.aag-summary{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--dsw-alias-border-l2);border-radius:10px;background:var(--dsw-alias-bg-layer-2)}
-.aag-summary-count{font-size:18px;font-weight:650}.aag-summary-label{color:var(--dsw-alias-label-secondary);font-size:12px}.aag-summary-separator{width:1px;height:24px;background:var(--dsw-alias-border-l2)}
-.aag-group{display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-2)}
-.aag-group-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--dsw-alias-border-l1)}
-.aag-group-title{margin:0;font-size:14px;font-weight:600}.aag-count{color:var(--dsw-alias-label-tertiary);font-size:12px}
-.aag-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--dsw-alias-border-l1)}
-.aag-row:last-child{border-bottom:0}
-.aag-row-main{display:flex;min-width:0;flex:1;flex-direction:column;gap:3px}
-.aag-row-id{display:flex;align-items:center;gap:7px;min-width:0}
-.aag-row-name{overflow:hidden;font-size:13px;font-weight:500;line-height:20px;text-overflow:ellipsis;white-space:nowrap}
-.aag-tag{flex:none;padding:1px 6px;border:1px solid var(--dsw-alias-border-l3);border-radius:4px;color:var(--dsw-alias-label-secondary);font-size:11px;line-height:16px}
-.aag-tag-on{border-color:var(--dsw-alias-state-success-primary);color:var(--dsw-alias-state-success-primary)}
-.aag-tag-off{border-color:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-state-error-primary)}
 .aag-note{overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;text-overflow:ellipsis;white-space:nowrap}
 .aag-error{color:var(--dsw-alias-state-error-primary);font-size:13px;line-height:20px}
 .aag-filters{display:flex;align-items:flex-end;gap:10px}
@@ -419,8 +451,7 @@ const SETTINGS_CSS = `
 .aag-search-clear:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
 .aag-search-clear:focus-visible{outline:2px solid var(--dsw-alias-state-success-primary);outline-offset:2px}
 .aag-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 16px;border:1px dashed var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;text-align:center}
-.aag-filter-meta{margin-left:auto;color:var(--dsw-alias-label-tertiary);font-size:12px}
-@media (max-width:560px){.aag-toolbar,.aag-title-row{flex-wrap:wrap}.aag-actions{margin-left:0}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}.aag-row{align-items:flex-start;flex-wrap:wrap}.aag-row>.aag-action{margin-left:auto}.aag-filter-meta{margin-left:0}}
+@media (max-width:560px){.aag-toolbar,.aag-title-row{flex-wrap:wrap}.aag-actions{margin-left:0}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}}
 @media (prefers-reduced-motion:reduce){.aag-action{transition:none}}
 `
 export const CARD_SETTINGS_CSS = `
@@ -931,155 +962,6 @@ function CategorySelect(props: {
       : null)
 }
 
-function AgentsSettings(props: PropsLocale<'agency'> & {
-  remote: AgencyAgentsRemoteApi
-  getActive: () => 'zh' | 'en'
-  onEnabledChange?: (enabled: ReadonlySet<string>) => void
-}): React.ReactElement {
-  const [state, setState] = React.useState<EnabledState | null>(null)
-  const [error, setError] = React.useState<string | null>(null)
-  const [query, setQuery] = React.useState('')
-  const [division, setDivision] = React.useState('')
-  const saving = React.useRef(false)
-  const [isSaving, setIsSaving] = React.useState(false)
-
-  const load = React.useCallback((): void => {
-    void readEnabled(props.remote).then((current) => {
-      setState(current)
-      setError(null)
-      props.onEnabledChange?.(current.enabled)
-    }).catch((err: unknown) => { setError(err instanceof Error ? err.message : String(err)) })
-  }, [props.onEnabledChange, props.remote])
-
-  React.useEffect(() => {
-    let alive = true
-    void readEnabled(props.remote).then((current) => {
-      if (!alive) return
-      setState(current)
-      props.onEnabledChange?.(current.enabled)
-    }).catch((err: unknown) => { if (alive) setError(err instanceof Error ? err.message : String(err)) })
-    return () => { alive = false }
-  }, [props.onEnabledChange, props.remote])
-
-  const toggle = (slug: string): void => {
-    if (state === null || saving.current) return
-    const previous = state
-    const next = new Set(state.enabled)
-    if (next.has(slug)) next.delete(slug)
-    else next.add(slug)
-    saving.current = true
-    setIsSaving(true)
-    setState({ enabled: next, revision: state.revision })
-    props.onEnabledChange?.(next)
-    void writeEnabled(props.remote, next, state.revision)
-      .then((current) => {
-        setState(current)
-        setError(null)
-        props.onEnabledChange?.(current.enabled)
-      })
-      .catch(async (err: unknown) => {
-        try {
-          const refreshed = await readEnabled(props.remote)
-          setState(refreshed)
-          props.onEnabledChange?.(refreshed.enabled)
-          setError(writeErrorMessage(err, { refreshed: true, t: props.t }))
-        } catch {
-          // 读也失败时回滚乐观态，避免界面显示未落盘的开关结果。
-          setState(previous)
-          props.onEnabledChange?.(previous.enabled)
-          setError(writeErrorMessage(err, { refreshed: false, t: props.t }))
-        }
-      })
-      .finally(() => {
-        saving.current = false
-        setIsSaving(false)
-      })
-  }
-
-  const nodes: React.ReactNode[] = []
-  if (error !== null) nodes.push(React.createElement('div', { key: 'error', className: 'aag-error', role: 'alert' }, error))
-  if (state === null) {
-    nodes.push(React.createElement('div', { key: 'loading', className: 'aag-note' }, props.t('settings.loading')))
-  } else {
-    const filtered = filterExperts(EXPERTS, { query, division })
-    const groups = groupByDivision(filtered, props.getActive())
-    const enabledCount = [...state.enabled].filter((slug) => EXPERTS.some((e) => e.slug === slug)).length
-    const total = EXPERTS.length
-    const filteredCount = filtered.length
-    const hasFilter = normalizeExpertQuery(query) !== '' || division !== ''
-    const resetFilters = (): void => { setQuery(''); setDivision('') }
-    nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
-      React.createElement('div', null,
-        React.createElement('div', { className: 'aag-title-row' },
-          React.createElement('h2', { className: 'aag-title' }, props.t('settings.nav')),
-          settingsGithubLinks(props.t)),
-        React.createElement('p', { className: 'aag-desc' }, props.t('settings.intro'))),
-      React.createElement('div', { className: 'aag-actions' },
-        React.createElement('button', { type: 'button', className: 'aag-action aag-action-secondary', disabled: isSaving, onClick: load }, props.t('btn.refresh')))))
-    nodes.push(React.createElement('div', { key: 'summary', className: 'aag-summary' },
-      React.createElement('span', { className: 'aag-summary-count' }, total),
-      React.createElement('span', { className: 'aag-summary-label' }, props.t(total === 1 ? 'summary.total.one' : 'summary.total.other', { count: total })),
-      React.createElement('span', { className: 'aag-summary-separator' }),
-      React.createElement('span', { className: 'aag-summary-count' }, enabledCount),
-      React.createElement('span', { className: 'aag-summary-label' }, props.t(enabledCount === 1 ? 'summary.enabled.one' : 'summary.enabled.other', { count: enabledCount })),
-      hasFilter ? React.createElement('span', { className: 'aag-filter-meta', 'aria-live': 'polite' }, props.t(filteredCount === 1 ? 'settings.filter.showing.one' : 'settings.filter.showing.other', { count: filteredCount })) : null))
-    nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters' },
-      React.createElement('div', { className: 'aag-field aag-field-category' },
-        React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-category' }, props.t('settings.filter.category')),
-        React.createElement(CategorySelect, {
-          id: 'aag-filter-category',
-          value: division,
-          onChange: setDivision,
-          options: [
-            { value: '', label: props.t('settings.filter.option', { name: props.t('settings.filter.all'), count: total }) },
-            ...DIVISION_ORDER.map((key) => ({
-              value: key,
-              label: props.t('settings.filter.option', { name: props.t(`division.${key}` as AgencyKey), count: DIVISION_COUNTS[key] ?? 0 }),
-            })),
-          ],
-        })),
-      React.createElement('div', { className: 'aag-field aag-field-search' },
-        React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-search' }, props.t('settings.search')),
-        React.createElement('div', { className: 'aag-search-wrap' },
-          React.createElement('input', {
-            id: 'aag-filter-search',
-            className: 'aag-control aag-search',
-            type: 'search',
-            value: query,
-            autoComplete: 'off',
-            spellCheck: false,
-            placeholder: props.t('settings.search.placeholder'),
-            onChange: (ev: { currentTarget: { value: string } }) => {
-              const value = ev.currentTarget.value
-              setQuery(value)
-              if (normalizeExpertQuery(value) !== '') setDivision('')
-            },
-          }),
-          query !== '' ? React.createElement('button', { type: 'button', className: 'aag-search-clear', 'aria-label': props.t('settings.search.clear'), onClick: () => setQuery('') }, '×') : null))))
-    if (groups.length === 0) {
-      nodes.push(React.createElement('div', { key: 'empty', className: 'aag-empty' },
-        React.createElement('div', null, props.t('settings.empty', { all: props.t('settings.filter.all') })),
-        React.createElement('button', { type: 'button', className: 'aag-action aag-action-secondary', onClick: resetFilters }, props.t('settings.empty.reset'))))
-    }
-    for (const g of groups) {
-      nodes.push(React.createElement('div', { key: g.division, className: 'aag-group' },
-        React.createElement('div', { className: 'aag-group-head' },
-          React.createElement('h3', { className: 'aag-group-title' }, props.t(`division.${g.division}` as AgencyKey)),
-          React.createElement('span', { className: 'aag-count' }, props.t('summary.group', { count: g.experts.length }))),
-        g.experts.map((e) => {
-          const on = state.enabled.has(e.slug)
-          return React.createElement('div', { key: e.slug, className: 'aag-row' },
-            React.createElement('div', { className: 'aag-row-main' },
-              React.createElement('div', { className: 'aag-row-id' },
-                React.createElement('span', { className: 'aag-row-name' }, displayName(e, props.getActive())),
-                React.createElement('span', { className: `aag-tag ${on ? 'aag-tag-on' : 'aag-tag-off'}` }, props.t(on ? 'settings.enabled' : 'settings.disabled'))),
-              React.createElement('div', { className: 'aag-note', title: displayDescription(e, props.getActive()) }, displayDescription(e, props.getActive()))),
-            React.createElement('button', { type: 'button', className: 'aag-action aag-action-secondary', disabled: isSaving, onClick: () => toggle(e.slug) }, props.t(on ? 'btn.disable' : 'btn.enable')))
-        })))
-    }
-  }
-  return React.createElement('section', { className: 'aag-section' }, nodes)
-}
 
 interface OpenPrompt {
   readonly name: string
@@ -1123,6 +1005,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   const [openPrompt, setOpenPrompt] = React.useState<OpenPrompt | null>(null)
   const [promptBusySlug, setPromptBusySlug] = React.useState<string | null>(null)
   const [copiedSlug, setCopiedSlug] = React.useState<string | null>(null)
+  const copiedResetTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const saving = React.useRef(false)
   const [isSaving, setIsSaving] = React.useState(false)
 
@@ -1143,6 +1026,10 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     }).catch((err: unknown) => { if (alive) setError(err instanceof Error ? err.message : String(err)) })
     return () => { alive = false }
   }, [props.onEnabledChange, props.remote])
+
+  React.useEffect(() => () => {
+    if (copiedResetTimer.current !== undefined) clearTimeout(copiedResetTimer.current)
+  }, [])
 
   const toggle = (slug: string): void => {
     if (state === null || saving.current) return
@@ -1196,7 +1083,12 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     withPrompt(expert, async (prompt) => {
       if (navigator.clipboard === undefined) throw new Error(props.t('error.promptCopy'))
       await navigator.clipboard.writeText(prompt)
+      if (copiedResetTimer.current !== undefined) clearTimeout(copiedResetTimer.current)
       setCopiedSlug(expert.slug)
+      copiedResetTimer.current = setTimeout(() => {
+        copiedResetTimer.current = undefined
+        setCopiedSlug(null)
+      }, COPY_PROMPT_FEEDBACK_MS)
     })
   }
 
@@ -1248,9 +1140,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
             id: 'aag-filter-search', className: 'aag-control aag-search', type: 'search', value: query,
             autoComplete: 'off', spellCheck: false, placeholder: props.t('settings.search.placeholder'),
             onChange: (event: { currentTarget: { value: string } }) => {
-              const value = event.currentTarget.value
-              setQuery(value)
-              if (normalizeExpertQuery(value) !== '') setDivision('')
+              setQuery(event.currentTarget.value)
             },
           }),
           query !== '' ? React.createElement('button', {

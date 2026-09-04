@@ -9,7 +9,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote, { readExpertPrompt, readLocalizedExpertPrompt } from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, filterExpertsByCategory, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, pickHostSettingsTrigger, resolveExpertToolbarClick, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, writeErrorKey, writeErrorMessage } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, COPY_PROMPT_FEEDBACK_MS, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, pickHostSettingsTrigger, resolveExpertToolbarClick, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
@@ -356,6 +356,46 @@ describe('summon_expert', () => {
     expect(startOptions).not.toHaveProperty('maxDepth')
   })
 
+  it('中文界面展示正文经安全处理后与实际召唤 persona 一致', async () => {
+    const tools: unknown[] = []
+    let startOptions: Record<string, unknown> | undefined
+    let promptSource: { getPrompt(slug: string, division: string, locale: 'zh' | 'en'): Promise<{ prompt: string }> } | undefined
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        start: async (_provider: string, options: Record<string, unknown>) => {
+          startOptions = options
+          return {
+            result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
+            dispose: async () => undefined,
+          }
+        },
+      },
+      systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['chief-executive-officer'], 'zh'),
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['chief-executive-officer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: {
+        provide: (name: string, value: unknown) => {
+          if (name === 'agencyAgentsPersona') promptSource = value as typeof promptSource
+          return undefined
+        },
+      },
+    } as unknown as Context
+
+    apply(ctx, { root: '', provider: 'spawn', divisions: ['company'] })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
+      execute: (args: unknown, exec: unknown) => Promise<unknown>
+    }
+    await expect(summon.execute({ expert: '首席执行官', task: '制定战略' }, { agent: {} })).resolves.toEqual({ expert: '首席执行官（CEO）', answer: 'done' })
+
+    const displayed = await promptSource!.getPrompt('chief-executive-officer', 'company', 'zh')
+    expect(displayed.prompt).toContain('首席执行官')
+    expect(startOptions?.persona).toBe(sanitize(displayed.prompt))
+  })
+
   it('只向父会话注入花名册协议', () => {
     const tools: unknown[] = []
     const sections: Array<{ name: string; text: string | ((context: unknown) => string) }> = []
@@ -581,6 +621,46 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
     await expect(remote.setEnabled(['writer'], 0)).rejects.toThrow('stale revision')
   })
 
+  it('显式自定义目录通过主插件 persona 服务同步给设置页', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aag-custom-prompt-'))
+    try {
+      await mkdir(join(root, 'engineering'), { recursive: true })
+      await writeFile(join(root, 'engineering', 'reviewer.md'), '---\nname: Reviewer\ndescription: desc\n---\nCustom persona', 'utf8')
+      let promptSource: { getPrompt(slug: string, division: string, locale: 'zh' | 'en'): Promise<{ prompt: string }> } | undefined
+      const pluginCtx = {
+        tools: { register: () => undefined },
+        subagents: { getProvider: () => undefined },
+        systemPrompt: { section: () => undefined },
+        settings: alphaSettings([], 'zh'),
+        inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+          cb({ settings: { register: () => ({ get: () => ({ enabled: [] }), watch: () => () => {} }) }, effect: () => () => {} })
+        },
+        reflect: {
+          provide: (name: string, value: unknown) => {
+            if (name === 'agencyAgentsPersona') promptSource = value as typeof promptSource
+            return undefined
+          },
+        },
+      } as unknown as Context
+      apply(pluginCtx, { root, provider: 'spawn', divisions: ['engineering'] })
+
+      const remoteCtx = {
+        reflect: { provide: () => undefined },
+        get: (name: string) => name === 'agencyAgentsPersona' ? promptSource : undefined,
+        typert: { register: () => undefined },
+        settings: {
+          get: (namespace: string) => namespace === 'locale' ? { preference: 'zh' } : { enabled: [] },
+          describe: () => [{ ns: 'agency-agents', revision: 0 }],
+        },
+      } as unknown as Context
+      const remote = new AgencyAgentsRemote(remoteCtx)
+
+      await expect(remote.getPrompt('reviewer', 'engineering')).resolves.toEqual({ prompt: 'Custom persona' })
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
   it('TYPERT_REMOTE 贡献描述符与 host 方法对齐（client $mount 契约）', () => {
     const endpoints = TYPERT_REMOTE.descriptors.map((d) => `${d.namespace}/${d.method}`)
     expect(endpoints).toContain('agencyAgents/getEnabled')
@@ -731,22 +811,6 @@ describe('filterExperts', () => {
     expect(filterExperts(experts, { division: 'engineering', query: 'CODE' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
   })
 
-  it('宽屏分类把原始分区归并为开发、设计、产品、研究和写作', () => {
-    const categorized = [
-      ...experts,
-      { ...experts[0]!, slug: 'security-auditor', division: 'security' },
-      { ...experts[0]!, slug: 'product-manager', division: 'product' },
-      { ...experts[0]!, slug: 'copywriter', division: 'marketing' },
-    ]
-
-    expect(filterExpertsByCategory(categorized, { category: 'development' }).map((item) => item.slug)).toEqual([
-      'engineering-code-reviewer',
-      'security-auditor',
-    ])
-    expect(filterExpertsByCategory(categorized, { category: 'research' }).map((item) => item.slug)).toEqual(['academic-historian'])
-    expect(filterExpertsByCategory(categorized, { category: 'writing', query: 'CODE' }).map((item) => item.slug)).toEqual(['copywriter'])
-  })
-
   it('已启用专家排在前面，且两组内部保持原有顺序', () => {
     const list = [
       { slug: 'first' },
@@ -807,6 +871,9 @@ describe('expertAvatarIndex', () => {
 })
 
 describe('专家库目标稿样式契约', () => {
+  it('复制成功反馈使用短暂状态，避免卡片永久显示已复制', () => {
+    expect(COPY_PROMPT_FEEDBACK_MS).toBe(1_600)
+  })
   it('保留宿主原设置位置，不改写对话框、导航或全屏尺寸', () => {
     expect(CARD_SETTINGS_CSS).not.toContain('[role="dialog"]')
     expect(CARD_SETTINGS_CSS).not.toContain('width:100vw!important')
