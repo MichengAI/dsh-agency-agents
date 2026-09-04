@@ -192,6 +192,23 @@ describe('loadCatalog', () => {
     expect(map.get('unity-architect')?.division).toBe('game-development')
   })
 
+  it('frontmatter 跨 1KB 分块且多字节 UTF-8 字符落在边界时仍能解析', async () => {
+    await mkdir(join(dir, 'engineering'), { recursive: true })
+    const prefix = '---\nname: Boundary Expert\ndescription: '
+    const padding = 'a'.repeat(1_023 - Buffer.byteLength(prefix, 'utf8'))
+    const description = `${padding}中`
+    await writeFile(
+      join(dir, 'engineering', 'boundary-expert.md'),
+      `${prefix}${description}\n---\nPersona body must not be read while loading metadata.`,
+      'utf8',
+    )
+
+    const map = await loadCatalog(dir, ['engineering'])
+
+    expect(map.get('boundary-expert')?.description).toBe(description)
+    expect(map.get('boundary-expert')).not.toHaveProperty('persona')
+  })
+
   it('不将 integrations/mcp-memory 转换输出作为工程专家加载', async () => {
     await mkdir(join(dir, 'engineering'), { recursive: true })
     await mkdir(join(dir, 'integrations', 'mcp-memory'), { recursive: true })
@@ -662,19 +679,23 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
     }
   })
 
-  it('persona 服务尚未挂载时失败关闭，不回退到其他目录', async () => {
-    const ctx = {
-      reflect: { provide: () => undefined },
-      get: () => undefined,
-      typert: { register: () => undefined },
-      settings: {
-        get: (namespace: string) => namespace === 'locale' ? { preference: 'zh' } : { enabled: [] },
-        describe: () => [{ ns: 'agency-agents', revision: 0 }],
-      },
-    } as unknown as Context
-    const remote = new AgencyAgentsRemote(ctx)
+  it('persona 服务尚未挂载时按中英文失败关闭，不回退到其他目录', async () => {
+    for (const locale of ['zh', 'en'] as const) {
+      const ctx = {
+        reflect: { provide: () => undefined },
+        get: () => undefined,
+        typert: { register: () => undefined },
+        settings: {
+          get: (namespace: string) => namespace === 'locale' ? { preference: locale } : { enabled: [] },
+          describe: () => [{ ns: 'agency-agents', revision: 0 }],
+        },
+      } as unknown as Context
+      const remote = new AgencyAgentsRemote(ctx)
 
-    await expect(remote.getPrompt('chief-executive-officer', 'company')).rejects.toThrow('专家提示词服务尚未就绪')
+      await expect(remote.getPrompt('chief-executive-officer', 'company')).rejects.toThrow(
+        formatHost(locale, 'error.personaSourceUnavailable'),
+      )
+    }
   })
 
   it('TYPERT_REMOTE 贡献描述符与 host 方法对齐（client $mount 契约）', () => {
