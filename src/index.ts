@@ -39,14 +39,17 @@ import { installSettingsSectionCompat, settingsNamespaceCompat } from './setting
 export const name = 'agency-agents'
 export const inject = ['tools', 'subagents', 'systemPrompt', 'settings']
 
-const DEFAULT_DIVISIONS = [
+export const DEFAULT_DIVISIONS = [
   'academic',
+  'company',
   'design',
   'engineering',
   'finance',
   'game-development',
   'gis',
   'healthcare',
+  'hr',
+  'legal',
   'marketing',
   'paid-media',
   'product',
@@ -57,6 +60,7 @@ const DEFAULT_DIVISIONS = [
   'spatial-computing',
   'specialized',
   'support',
+  'supply-chain',
   'testing',
 ]
 

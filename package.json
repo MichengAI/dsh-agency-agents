@@ -23,6 +23,7 @@
   "files": [
     "lib",
     "assets/agency-agents",
+    "assets/agency-agents-zh",
     "assets/branding",
     "assets/screenshots",
     "cordis.patch.yml",
@@ -46,6 +47,7 @@
     },
     "client": {
       "inject": [
+        "@deepseek-ai/dsh-client-runtime",
         "@deepseek-ai/dsh-client-connection",
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-api-remotes",
@@ -90,6 +92,7 @@
     }
   },
   "dependencies": {
+    "lucide-react": "^0.468.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -3,7 +3,10 @@ Copyright 2026 dsh-agency-agents contributors
 
 本项目的 TypeScript 源码、构建脚本与项目文档采用 Apache License 2.0。
 
-本项目在 assets\agency-agents 中分发的智能体 persona 快照来源于：
+本项目在 assets\agency-agents 与 assets\agency-agents-zh 中分发的智能体 persona 快照来源于：
 https://github.com/msitarzewski/agency-agents
 Copyright (c) 2025 AgentLand Contributors
-该部分继续采用 MIT License；完整许可证文本见 assets\agency-agents\LICENSE。
+https://github.com/jnMetaCode/agency-agents-zh
+Copyright (c) 2025 Michael Sitarzewski（英文原版）
+Copyright (c) 2026 jnMetaCode（中文翻译与本地化）
+该部分继续采用 MIT License；完整许可证文本见 assets\agency-agents\LICENSE 与 assets\agency-agents-zh\LICENSE。

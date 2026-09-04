@@ -5,9 +5,10 @@ import { readdir, readFile, writeFile } from 'node:fs/promises'
 
 const ROOT = new URL('../assets/agency-agents/', import.meta.url)
 const DIVISIONS = [
-  'academic', 'design', 'engineering', 'finance', 'game-development', 'gis',
-  'healthcare', 'marketing', 'paid-media', 'product', 'project-management',
+  'academic', 'company', 'design', 'engineering', 'finance', 'game-development', 'gis',
+  'healthcare', 'hr', 'legal', 'marketing', 'paid-media', 'product', 'project-management',
   'research', 'sales', 'security', 'spatial-computing', 'specialized', 'support', 'testing',
+  'supply-chain',
 ]
 
 function parseFrontmatter(raw) {

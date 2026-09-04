@@ -7,10 +7,11 @@ import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
-import AgencyAgentsRemote from './remote.js'
+import AgencyAgentsRemote, { readExpertPrompt, readLocalizedExpertPrompt } from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, compareExpertName, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, pickHostSettingsTrigger, resolveExpertToolbarClick, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, writeErrorKey, writeErrorMessage } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, filterExpertsByCategory, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, pickHostSettingsTrigger, resolveExpertToolbarClick, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
+import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 import { installSettingsSectionCompat, settingsNamespaceCompat } from './settings-compat.js'
@@ -499,6 +500,38 @@ describe('summon_expert', () => {
 })
 
 describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
+  it('提示词读取剥离 frontmatter，并拒绝路径穿越参数', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aag-prompt-'))
+    try {
+      await mkdir(join(root, 'engineering'), { recursive: true })
+      await writeFile(join(root, 'engineering', 'reviewer.md'), '---\nname: Reviewer\ndescription: desc\n---\nPersona body', 'utf8')
+      await expect(readExpertPrompt(root, 'reviewer', 'engineering')).resolves.toEqual({ prompt: 'Persona body' })
+      await expect(readExpertPrompt(root, '../package', 'engineering')).rejects.toThrow('无效的专家提示词请求。')
+      await expect(readExpertPrompt(root, 'reviewer', '../engineering')).rejects.toThrow('无效的专家提示词请求。')
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  it('提示词正文按界面语言读取，中文缺失时回退英文', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aag-localized-prompt-'))
+    const englishRoot = join(root, 'en')
+    const chineseRoot = join(root, 'zh')
+    try {
+      await mkdir(join(englishRoot, 'engineering'), { recursive: true })
+      await mkdir(join(chineseRoot, 'engineering'), { recursive: true })
+      await writeFile(join(englishRoot, 'engineering', 'reviewer.md'), '---\nname: Reviewer\ndescription: desc\n---\nEnglish persona', 'utf8')
+      await writeFile(join(chineseRoot, 'engineering', 'reviewer.md'), '---\nname: 审查员\ndescription: 简介\n---\n中文角色设定', 'utf8')
+      await writeFile(join(englishRoot, 'engineering', 'fallback.md'), '---\nname: Fallback\ndescription: desc\n---\nFallback persona', 'utf8')
+
+      await expect(readLocalizedExpertPrompt(englishRoot, chineseRoot, 'reviewer', 'engineering', 'zh')).resolves.toEqual({ prompt: '中文角色设定' })
+      await expect(readLocalizedExpertPrompt(englishRoot, chineseRoot, 'reviewer', 'engineering', 'en')).resolves.toEqual({ prompt: 'English persona' })
+      await expect(readLocalizedExpertPrompt(englishRoot, chineseRoot, 'fallback', 'engineering', 'zh')).resolves.toEqual({ prompt: 'Fallback persona' })
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
   it('将 Settings revision 冲突映射到 i18n key，并区分刷新成败', () => {
     const conflict = new Error('settings namespace "agency-agents" changed since it was read (expected revision 0, now 1)')
     expect(writeErrorKey(conflict)).toBe('error.conflict')
@@ -552,13 +585,16 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
     const endpoints = TYPERT_REMOTE.descriptors.map((d) => `${d.namespace}/${d.method}`)
     expect(endpoints).toContain('agencyAgents/getEnabled')
     expect(endpoints).toContain('agencyAgents/setEnabled')
+    expect(endpoints).toContain('agencyAgents/getPrompt')
     for (const d of TYPERT_REMOTE.descriptors) {
       expect(d.service).toBe('agencyAgents')
       expect(d.result.mode).toBe('strict')
     }
     const setEnabled = TYPERT_REMOTE.descriptors.find((d) => d.method === 'setEnabled')
+    const getPrompt = TYPERT_REMOTE.descriptors.find((d) => d.method === 'getPrompt')
     expect(TYPERT_REMOTE.descriptors).toBe(AGENCY_AGENTS_DESCRIPTORS)
     expect(setEnabled?.parameters.map((p) => p.wire)).toEqual(['enabled', 'expectedRevision'])
+    expect(getPrompt?.parameters.map((p) => p.wire)).toEqual(['slug', 'division'])
   })
 })
 
@@ -572,6 +608,8 @@ describe('宿主 i18n', () => {
     expect(resolveHostLocale('en-US')).toBe('zh')
     expect(readHostLocale({})).toBe('zh')
     expect(readHostLocale({ settings: { get: () => ({ preference: 'en' }) } })).toBe('en')
+    expect(zh['settings.nav']).toBe('专家')
+    expect(en['settings.nav']).toBe('Experts')
     expect(readHostLocale({ settings: { get: () => { throw new Error('missing') } } })).toBe('zh')
     expect(readHostLocale({
       get settings(): never {
@@ -665,15 +703,20 @@ describe('filterExperts', () => {
   ]
 
   it('空检索返回全部专家', () => {
-    expect(normalizeExpertQuery('  UI  ')).toBe('ui')
+    expect(normalizeExpertQuery('  ＵＩ   设计  ')).toBe('ui 设计')
     expect(filterExperts(experts, { query: '   ' })).toHaveLength(2)
   })
 
-  it('按中文名、英文名和简介匹配', () => {
+  it('按 slug、中文名、英文名和简介匹配', () => {
     expect(matchExpertQuery(experts[0]!, '审查')).toBe(true)
     expect(filterExperts(experts, { query: 'Historian' }).map((item) => item.slug)).toEqual(['academic-historian'])
-    expect(filterExperts(experts, { query: 'engineering-code' })).toEqual([])
+    expect(filterExperts(experts, { query: 'engineering-code' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
     expect(filterExperts(experts, { query: 'severity' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
+  })
+
+  it('多个关键词可跨名称、分区与简介字段匹配', () => {
+    expect(filterExperts(experts, { query: '工程 severity' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
+    expect(filterExperts(experts, { query: '代码 historian' })).toEqual([])
   })
 
   it('中英分区名都能检索到对应专家', () => {
@@ -687,7 +730,124 @@ describe('filterExperts', () => {
     expect(filterExperts(experts, { division: 'academic', query: 'review' })).toEqual([])
     expect(filterExperts(experts, { division: 'engineering', query: 'CODE' }).map((item) => item.slug)).toEqual(['engineering-code-reviewer'])
   })
+
+  it('宽屏分类把原始分区归并为开发、设计、产品、研究和写作', () => {
+    const categorized = [
+      ...experts,
+      { ...experts[0]!, slug: 'security-auditor', division: 'security' },
+      { ...experts[0]!, slug: 'product-manager', division: 'product' },
+      { ...experts[0]!, slug: 'copywriter', division: 'marketing' },
+    ]
+
+    expect(filterExpertsByCategory(categorized, { category: 'development' }).map((item) => item.slug)).toEqual([
+      'engineering-code-reviewer',
+      'security-auditor',
+    ])
+    expect(filterExpertsByCategory(categorized, { category: 'research' }).map((item) => item.slug)).toEqual(['academic-historian'])
+    expect(filterExpertsByCategory(categorized, { category: 'writing', query: 'CODE' }).map((item) => item.slug)).toEqual(['copywriter'])
+  })
+
+  it('已启用专家排在前面，且两组内部保持原有顺序', () => {
+    const list = [
+      { slug: 'first' },
+      { slug: 'second' },
+      { slug: 'third' },
+      { slug: 'fourth' },
+    ]
+    const sorted = sortExpertsByEnabled(list, new Set(['second', 'fourth']))
+    expect(sorted.map((expert) => expert.slug)).toEqual(['second', 'fourth', 'first', 'third'])
+    expect(list.map((expert) => expert.slug)).toEqual(['first', 'second', 'third', 'fourth'])
+  })
 })
+
+describe('expertAvatarIndex', () => {
+  it('同一 slug 始终映射到相同的复用头像，并限制在有效范围', () => {
+    const first = expertAvatarIndex('engineering-code-reviewer', 8)
+    expect(first).toBe(expertAvatarIndex('engineering-code-reviewer', 8))
+    expect(first).toBeGreaterThanOrEqual(0)
+    expect(first).toBeLessThan(8)
+    expect(expertAvatarIndex('engineering-code-reviewer', 0)).toBe(0)
+  })
+
+  it('36 张头像按五大分类完整且不重复分配', () => {
+    expect(EXPERT_AVATAR_POOL_INDEXES.development).toHaveLength(12)
+    expect(EXPERT_AVATAR_POOL_INDEXES.writing).toHaveLength(8)
+    expect(EXPERT_AVATAR_POOL_INDEXES.product).toHaveLength(6)
+    expect(EXPERT_AVATAR_POOL_INDEXES.research).toHaveLength(6)
+    expect(EXPERT_AVATAR_POOL_INDEXES.design).toHaveLength(4)
+
+    const indexes = Object.values(EXPERT_AVATAR_POOL_INDEXES).flat()
+    expect(indexes).toHaveLength(36)
+    expect(new Set(indexes).size).toBe(36)
+    expect(Math.min(...indexes)).toBe(0)
+    expect(Math.max(...indexes)).toBe(35)
+  })
+
+  it('专家只在所属分类头像池内稳定映射', () => {
+    const developmentIndex = expertAvatarIndexForDivision('engineering-code-reviewer', 'engineering')
+    const writingIndex = expertAvatarIndexForDivision('marketing-copywriter', 'marketing')
+    expect(EXPERT_AVATAR_POOL_INDEXES.development).toContain(developmentIndex)
+    expect(EXPERT_AVATAR_POOL_INDEXES.writing).toContain(writingIndex)
+    expect(developmentIndex).toBe(expertAvatarIndexForDivision('engineering-code-reviewer', 'engineering'))
+  })
+
+  it('321 位专家覆盖全部头像，且分类池内均衡复用', () => {
+    const usage = new Map<number, number>()
+    for (const expert of ROSTER) {
+      const index = expertAvatarIndexForDivision(expert.slug, expert.division)
+      usage.set(index, (usage.get(index) ?? 0) + 1)
+    }
+
+    expect(usage.size).toBe(36)
+    for (const pool of Object.values(EXPERT_AVATAR_POOL_INDEXES)) {
+      const counts = pool.map((index) => usage.get(index) ?? 0)
+      expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(1)
+    }
+  })
+})
+
+describe('专家库目标稿样式契约', () => {
+  it('保留宿主原设置位置，不改写对话框、导航或全屏尺寸', () => {
+    expect(CARD_SETTINGS_CSS).not.toContain('[role="dialog"]')
+    expect(CARD_SETTINGS_CSS).not.toContain('width:100vw!important')
+    expect(CARD_SETTINGS_CSS).not.toContain('flex:0 0 225px!important')
+    expect(CARD_SETTINGS_CSS).not.toContain('grid-template-columns:403px 403px minmax(0,1fr)')
+    expect(CARD_SETTINGS_CSS).toContain('.aag-section{container-type:inline-size}')
+  })
+
+  it('圆形小头像释放正文宽度，简介独占整行并展示三行', () => {
+    expect(CARD_SETTINGS_CSS).toContain('.aag-expert-avatar{display:block;width:44px;height:44px')
+    expect(CARD_SETTINGS_CSS).toContain('border-radius:50%')
+    expect(CARD_SETTINGS_CSS).toContain('.aag-card-description{grid-column:1/-1')
+    expect(CARD_SETTINGS_CSS).toContain('-webkit-line-clamp:3')
+  })
+
+  it('分类筛选覆盖全部原始分区，专家卡片默认两列且保持紧凑', () => {
+    const expectedDivisions = new Set(ROSTER.map((expert) => expert.division))
+    const values = expertDivisionFilterValues()
+    expect(values[0]).toBe('')
+    expect(values.at(-1)).toBe('academic')
+    expect(values).toHaveLength(expectedDivisions.size + 1)
+    expect(new Set(values.slice(1))).toEqual(expectedDivisions)
+    expect(CARD_SETTINGS_CSS).toContain('.aag-expert-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))')
+    expect(CARD_SETTINGS_CSS).not.toContain('width:80px;height:107px')
+    expect(CARD_SETTINGS_CSS).toContain('min-height:48px')
+  })
+
+  it('分类与搜索筛选等宽，并与双列卡片保持相同分栏比例', () => {
+    expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters{align-items:flex-end;gap:12px}')
+    expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-search{flex:1 1 0}')
+    expect(CARD_SETTINGS_CSS).not.toContain('.aag-field-category{flex:0 1 220px}')
+    expect(CARD_SETTINGS_CSS).not.toContain('.aag-field-search{flex:1 1 240px}')
+  })
+
+  it('卡片设置页使用宿主主题表面和边框颜色', () => {
+    expect(CARD_SETTINGS_CSS).not.toMatch(/#[0-9a-f]{6}/iu)
+    expect(CARD_SETTINGS_CSS).toContain('background:var(--dsw-alias-bg-layer-2)')
+    expect(CARD_SETTINGS_CSS).toContain('border:1px solid var(--dsw-alias-border-l2)')
+  })
+})
+
 describe('@ 菜单分组标题本地化', () => {
   it('DSH peer 兼容 rc.5 至 0.2.0 前版本', () => {
     const range = '>=0.1.0-rc.5 <0.2.0'

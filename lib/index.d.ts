@@ -12,6 +12,7 @@ type LocaleId = 'zh' | 'en';
 //#region src/index.d.ts
 declare const name = "agency-agents";
 declare const inject: string[];
+declare const DEFAULT_DIVISIONS: string[];
 /** 一次批量召唤的专家数量上限，避免无界并行拖垮宿主。 */
 declare const SUMMON_EXPERTS_MAX = 8;
 /** 批量召唤的并发上限。 */
@@ -92,4 +93,4 @@ declare function resolveExpert<T extends {
 }>(experts: readonly T[], query: unknown, locale?: LocaleId): T;
 declare function apply(ctx: Context, config: Config): void;
 //#endregion
-export { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, SummonExpertItemResult, SummonExpertSpec, ZH_NAME, apply, inject, loadCatalog, mapPool, name, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs };
+export { Config, DEFAULT_DIVISIONS, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, SummonExpertItemResult, SummonExpertSpec, ZH_NAME, apply, inject, loadCatalog, mapPool, name, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs };

@@ -18,7 +18,7 @@ const packageJson = JSON.parse(await readFile(packageUrl, 'utf8'))
 check('DSH bundle 指向 Cordis patch', packageJson.dsh?.bundle?.patch === './cordis.patch.yml')
 check(
   '发布文件包含运行代码、智能体资产、patch、双语说明和授权文件',
-  ['lib', 'assets/agency-agents', 'cordis.patch.yml', 'README.md', 'README.zh-CN.md', 'LICENSE', 'NOTICE']
+  ['lib', 'assets/agency-agents', 'assets/agency-agents-zh', 'cordis.patch.yml', 'README.md', 'README.zh-CN.md', 'LICENSE', 'NOTICE']
     .every((entry) => packageJson.files?.includes(entry)),
 )
 check('包许可证为 Apache-2.0', packageJson.license === 'Apache-2.0')
@@ -27,7 +27,7 @@ check(
   packageJson.repository?.type === 'git' && packageJson.repository?.url === 'https://github.com/MichengAI/dsh-agency-agents.git',
 )
 
-for (const file of ['../lib/index.js', '../lib/remote.js', '../lib/client.js', '../cordis.patch.yml', '../LICENSE', '../NOTICE', '../README.zh-CN.md', '../assets/agency-agents/LICENSE']) {
+for (const file of ['../lib/index.js', '../lib/remote.js', '../lib/client.js', '../cordis.patch.yml', '../LICENSE', '../NOTICE', '../README.zh-CN.md', '../assets/agency-agents/LICENSE', '../assets/agency-agents-zh/LICENSE']) {
   try {
     await access(new URL(file, import.meta.url))
     check(`发布文件存在：${file.slice(3)}`, true)
@@ -35,6 +35,9 @@ for (const file of ['../lib/index.js', '../lib/remote.js', '../lib/client.js', '
     check(`发布文件存在：${file.slice(3)}`, false)
   }
 }
+
+const clientBundle = await readFile(new URL('../lib/client.js', import.meta.url), 'utf8')
+check('客户端包不依赖 Node url 模块', !clientBundle.includes('require("url")'))
 
 try {
   const workflow = await readFile(new URL('../.github/workflows/publish.yml', import.meta.url), 'utf8')
@@ -81,9 +84,9 @@ check('编译入口导出 DSH 插件约定', ['name', 'Config', 'apply'].every((
 
 const defaultConfig = z.resolve({}, plugin.Config)[0]
 const bundledExperts = await plugin.loadCatalog(plugin.resolveCatalogRoot(''), defaultConfig.divisions)
-check('内置智能体总数为 273', bundledExperts.size === 273, `实际为 ${bundledExperts.size}`)
+check('内置智能体总数为 321', bundledExperts.size === 321, `实际为 ${bundledExperts.size}`)
 const bundledDivisions = new Set([...bundledExperts.values()].map((expert) => expert.division))
-check('18 个标准分区均包含内置智能体', defaultConfig.divisions.every((division) => bundledDivisions.has(division)))
+check('22 个标准分区均包含内置智能体', defaultConfig.divisions.length === 22 && defaultConfig.divisions.every((division) => bundledDivisions.has(division)))
 const missingZh = [...bundledExperts.keys()].filter((slug) => plugin.ZH_NAME?.[slug] === undefined)
 check('内置智能体均有中文名', missingZh.length === 0, missingZh.slice(0, 8).join(', '))
 

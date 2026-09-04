@@ -1,4 +1,5 @@
 node_modules/
+.pnpm-store/
 *.tgz
 pnpm-debug.log*
 

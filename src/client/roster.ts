@@ -58,6 +58,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert in quantitative research methodology, experimental design, and statistical inference — pressure-tests claims, designs sound studies, and separates real signal from noise, chance, and bias"
   },
   {
+    "slug": "academic-study-planner",
+    "nameEn": "学习规划师",
+    "emoji": "📚",
+    "division": "academic",
+    "description": "面向中国考生和终身学习者的个性化学习规划专家，精通考研、考公、司法考试、CPA 等重大考试的备考策略，擅长运用费曼学习法、艾宾浩斯遗忘曲线、番茄钟等科学方法，帮助学习者制定高效的学习计划并持续优化。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "accounts-payable-agent",
     "nameEn": "Accounts Payable Agent",
     "emoji": "💸",
@@ -80,6 +88,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "specialized",
     "description": "拆解开发任务，编排各环节流程，协调成员推进，把控进度与交付质量。",
     "descriptionEn": "Autonomous pipeline manager that orchestrates the entire development workflow. You are the leader of this process."
+  },
+  {
+    "slug": "authenticity-appraiser",
+    "nameEn": "Authenticity Appraiser",
+    "emoji": "🔍",
+    "division": "specialized",
+    "description": "二手与收藏品鉴定评估专家，覆盖奢侈品箱包腕表、球鞋潮玩、文玩收藏的真伪要点讲解、行情估值框架与交易避坑——教你怎么看、去哪验、按什么逻辑出价，并明确线上鉴定的能力边界。",
+    "descriptionEn": "Authentication and valuation specialist for luxury goods, watches, sneakers, collectibles, market pricing, transaction risk, and the limits of remote appraisal."
   },
   {
     "slug": "automation-governance-architect",
@@ -114,12 +130,60 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert change management specialist using ADKAR, Kotter, and Prosci frameworks to guide organizations through technology implementations, restructuring, culture transformation, and M&A integration — managing resistance, building adoption, and ensuring changes stick long after go-live"
   },
   {
+    "slug": "chief-executive-officer",
+    "nameEn": "Chief Executive Officer (CEO)",
+    "emoji": "👔",
+    "division": "company",
+    "description": "企业最高决策者，掌管战略方向、资源配置、组织节奏与对外叙事——在信息不完备时做出可逆性分级的决策，对结果负最终责任，把愿景翻译成组织能执行的优先级。",
+    "descriptionEn": "The company's ultimate decision-maker, accountable for strategy, resource allocation, operating cadence, executive alignment, and turning vision into executable priorities."
+  },
+  {
     "slug": "chief-financial-officer",
     "nameEn": "Chief Financial Officer",
     "emoji": "💼",
     "division": "specialized",
     "description": "统筹资金调度、财务规划与投融资事项，向董事会汇报财务状况，支撑重大经营决策。",
     "descriptionEn": "Strategic finance executive who governs capital allocation, treasury operations, financial planning, M&A finance, investor relations, and board reporting — translating financial complexity into clear decisions that drive business performance and stakeholder confidence."
+  },
+  {
+    "slug": "chief-marketing-officer",
+    "nameEn": "Chief Marketing Officer (CMO)",
+    "emoji": "📣",
+    "division": "company",
+    "description": "增长与品牌最高负责人，掌管定位、渠道组合、营销预算与品牌资产——用可归因的数字管增长，用不可量化的耐心管品牌，绝不让两者互相冒充。",
+    "descriptionEn": "Executive owner of growth and brand, responsible for positioning, channel mix, marketing investment, attribution, and long-term brand equity."
+  },
+  {
+    "slug": "chief-of-staff",
+    "nameEn": "Executive Chief of Staff",
+    "emoji": "👔",
+    "division": "company",
+    "description": "创始人和高管的首席协调者——过滤噪音、掌控流程、确保一致性、路由决策、将产出定位到最大影响处，让老板能清晰思考。",
+    "descriptionEn": "Executive coordination leader who filters noise, aligns stakeholders, routes decisions, and keeps leadership focused on the highest-impact work."
+  },
+  {
+    "slug": "chief-operating-officer",
+    "nameEn": "Chief Operating Officer (COO)",
+    "emoji": "⚙️",
+    "division": "company",
+    "description": "运营最高负责人，把战略翻译成流程、指标与执行节奏——消灭组织里的摩擦与例外，让正确的事成为默认发生的事，对\"计划与现实的差距\"负责。",
+    "descriptionEn": "Executive owner of operations who translates strategy into processes, metrics, accountability, and a reliable execution cadence."
+  },
+  {
+    "slug": "chief-product-officer",
+    "nameEn": "Chief Product Officer (CPO)",
+    "emoji": "🧭",
+    "division": "company",
+    "description": "产品最高负责人，掌管产品战略、路线图取舍与产品组织——对\"做什么、不做什么、按什么顺序做\"负责，用用户价值与商业价值的交集裁决一切需求之争。",
+    "descriptionEn": "Executive owner of product strategy, roadmap trade-offs, and product organization, balancing user value with business outcomes."
+  },
+  {
+    "slug": "chief-technology-officer",
+    "nameEn": "Chief Technology Officer (CTO)",
+    "emoji": "🛠️",
+    "division": "company",
+    "description": "技术最高负责人，掌管技术路线、架构决策、研发组织与技术债务——在业务速度与工程质量之间做显式权衡，让技术成为业务的杠杆而不是瓶颈。",
+    "descriptionEn": "Executive owner of technology strategy, architecture, engineering organization, and technical debt, balancing delivery speed with engineering quality."
   },
   {
     "slug": "corporate-training-designer",
@@ -224,6 +288,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "design",
     "description": "开展用户访谈与可用性测试，分析行为数据，把发现整理成可执行的设计改进建议。",
     "descriptionEn": "Expert user experience researcher specializing in user behavior analysis, usability testing, and data-driven design insights. Provides actionable research findings that improve product usability and user satisfaction"
+  },
+  {
+    "slug": "design-video-prompt-engineer",
+    "nameEn": "视频提示词工程师",
+    "emoji": "🎬",
+    "division": "design",
+    "description": "精通 AI 文生视频提示词的专家，用 5 段式结构把一句创意写成可直接投喂 Sora / 可灵 / Veo / Seedance / MiniMax 的电影感提示词，含运镜、瑕疵、声音与负面提示词，并对\"这条要花多少钱\"负责。",
+    "descriptionEn": ""
   },
   {
     "slug": "design-visual-storyteller",
@@ -370,6 +442,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert DevOps engineer specializing in infrastructure automation, CI/CD pipeline development, and cloud operations"
   },
   {
+    "slug": "engineering-dingtalk-integration-developer",
+    "nameEn": "钉钉集成开发工程师",
+    "emoji": "🔗",
+    "division": "engineering",
+    "description": "专注钉钉开放平台全栈集成开发的工程专家，精通钉钉机器人、酷应用、审批流自动化、连接器低代码集成、钉钉小程序、宜搭平台对接及与阿里云生态的深度集成，擅长构建企业级协作与业务自动化解决方案。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "engineering-drupal-performance",
     "nameEn": "Drupal Performance Engineer",
     "emoji": "⚡",
@@ -402,6 +482,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Specialist in bare-metal and RTOS firmware - ESP32/ESP-IDF, PlatformIO, Arduino, ARM Cortex-M, STM32 HAL/LL, Nordic nRF5/nRF Connect SDK, FreeRTOS, Zephyr"
   },
   {
+    "slug": "engineering-embedded-linux-driver-engineer",
+    "nameEn": "嵌入式 Linux 驱动工程师",
+    "emoji": "🔌",
+    "division": "engineering",
+    "description": "嵌入式 Linux 内核驱动与 BSP 开发专家——精通 Linux 内核模块、设备树、Platform/I2C/SPI/USB 驱动框架、DMA、中断子系统、Yocto/Buildroot、U-Boot、交叉编译工具链。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "engineering-feishu-integration-developer",
     "nameEn": "Feishu Integration Developer",
     "emoji": "🔗",
@@ -424,6 +512,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "engineering",
     "description": "负责云成本管控，做资源标签与费用拆分，优化实例规格和存储用量，建立成本看板跟踪支出。",
     "descriptionEn": "Expert cloud cost engineer for AWS/GCP/Azure — cost allocation and tagging, rightsizing, commitment planning (reserved instances/savings plans), egress and storage optimization, and unit-economics dashboards that tie spend to business value."
+  },
+  {
+    "slug": "engineering-fpga-digital-design-engineer",
+    "nameEn": "FPGA/ASIC 数字设计工程师",
+    "emoji": "🔬",
+    "division": "engineering",
+    "description": "FPGA 与 ASIC 数字前端设计专家——精通 Verilog/SystemVerilog、VHDL、Vivado/Quartus、AXI/AHB 总线、时序收敛、Zynq/Intel SoC FPGA、高层次综合（HLS）。",
+    "descriptionEn": ""
   },
   {
     "slug": "engineering-frontend-developer",
@@ -482,6 +578,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert IoT and edge fleet engineer — device provisioning and identity, MQTT/telemetry pipelines, staged over-the-air (OTA) firmware updates with rollback, edge compute, and observability across fleets of unreliable, intermittently-connected devices."
   },
   {
+    "slug": "engineering-iot-solution-architect",
+    "nameEn": "IoT 方案架构师",
+    "emoji": "📡",
+    "division": "engineering",
+    "description": "物联网端到端方案设计专家——精通设备接入（MQTT/CoAP/LwM2M）、边缘计算、云平台（AWS IoT/Azure IoT/阿里云 IoT）、OTA、设备管理、数据管道和安全体系。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "engineering-it-service-manager",
     "nameEn": "IT Service Manager",
     "emoji": "🖥️",
@@ -504,6 +608,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "engineering",
     "description": "负责大模型后训练，做 SFT、偏好优化和强化学习微调，把控模型发布门槛，交付可上线的新版本。",
     "descriptionEn": "Evidence-driven owner for SFT, preference optimization, RLHF/RLVR, MoE post-training, and the release gates that turn a checkpoint into a defensible model change."
+  },
+  {
+    "slug": "engineering-mechanical-design-engineer",
+    "nameEn": "机械设计工程师",
+    "emoji": "⚙️",
+    "division": "engineering",
+    "description": "通用机械产品设计专家——精通方案选型、传动/机构/结构件/连接设计、强度刚度疲劳振动校核、DFMA 与标准件选型，遵循 GB/ISO/JIS 国家标准，输出可制造可装配的工程图与 BOM。",
+    "descriptionEn": ""
   },
   {
     "slug": "engineering-minimal-change-engineer",
@@ -546,6 +658,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert network engineer for Cisco IOS/IOS-XE, Cisco ASA/FTD, Juniper Junos, and Palo Alto PAN-OS routing, switching, firewalling, and troubleshooting."
   },
   {
+    "slug": "engineering-network-engineer-china",
+    "nameEn": "国内网络工程师",
+    "emoji": "🌐",
+    "division": "engineering",
+    "description": "面向国产网络设备的企业网工程专家——精通华为 VRP、华三 Comware、锐捷 RGOS，覆盖园区网/数据中心/广域网的 VLAN、STP、OSPF、IS-IS、BGP、MPLS、VXLAN、SDN 设计与排障，熟悉信创国产化替代与等保 2.0 合规组网。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "engineering-orgscript-engineer",
     "nameEn": "OrgScript Engineer",
     "emoji": "📜",
@@ -560,6 +680,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "engineering",
     "description": "负责支付与计费系统开发，对接 Stripe、Adyen 等支付渠道，处理幂等支付、回调、订阅计费和财务对账。",
     "descriptionEn": "Expert payments engineer for PSP integrations (Stripe, Adyen, Braintree, PayPal), idempotent payment flows, webhook processing, subscription billing, SCA/3DS, PCI scope reduction, and financial reconciliation."
+  },
+  {
+    "slug": "engineering-pc-host-engineer",
+    "nameEn": "上位机工程师",
+    "emoji": "🖥️",
+    "division": "engineering",
+    "description": "Qt/QML 桌面上位机开发专家——精通 Qt Widgets/Quick、QSerialPort 串口、Modbus/CAN/TCP 工业协议、QChart/QCustomPlot 实时数据可视化，以及与 STM32/ESP32 等下位机的协议对接和跨平台打包部署。",
+    "descriptionEn": ""
   },
   {
     "slug": "engineering-privacy-engineer",
@@ -626,6 +754,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert U.S. federal Section 508 accessibility engineer (the 508 legal baseline is WCAG 2.0 Level AA; WCAG 2.1/2.2 AA are recommended best practice, and ADA Title II requires WCAG 2.1 AA for state/local government) specializing in accessible web development, ARIA implementation, screen reader testing (JAWS/NVDA/VoiceOver), keyboard navigation, color contrast, accessible forms and PDFs, VPAT/ACR authoring, automated and manual auditing (axe/WAVE/Lighthouse), and remediation for government and enterprise sites"
   },
   {
+    "slug": "engineering-security-engineer",
+    "nameEn": "安全工程师",
+    "emoji": "🔒",
+    "division": "engineering",
+    "description": "专业应用安全工程师，专注于威胁建模、漏洞评估、安全代码审查、安全架构设计和事件响应，服务于现代 Web、API 和云原生应用。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "engineering-senior-developer",
     "nameEn": "Senior Developer",
     "emoji": "💎",
@@ -664,6 +800,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "engineering",
     "description": "负责编写开发文档、API 参考和教程，把复杂技术讲清楚，保证文档准确、开发者愿意读。",
     "descriptionEn": "Expert technical writer specializing in developer documentation, API references, README files, and tutorials. Transforms complex engineering concepts into clear, accurate, and engaging docs that developers actually read and use."
+  },
+  {
+    "slug": "engineering-threat-detection-engineer",
+    "nameEn": "威胁检测工程师（工程侧）",
+    "emoji": "🛡️",
+    "division": "engineering",
+    "description": "专精于 SIEM 规则开发、MITRE ATT&CK 覆盖度映射、威胁狩猎、告警调优和检测即代码流水线的安全运营检测工程专家。",
+    "descriptionEn": ""
   },
   {
     "slug": "engineering-uswds-developer",
@@ -746,6 +890,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert financial analyst specializing in financial modeling, forecasting, scenario analysis, and data-driven decision support. Transforms raw financial data into actionable business intelligence that drives strategic planning, investment decisions, and operational optimization."
   },
   {
+    "slug": "finance-financial-forecaster",
+    "nameEn": "财务预测分析师",
+    "emoji": "🔮",
+    "division": "finance",
+    "description": "专注企业财务预测与场景建模的分析专家，精通收入预测、现金流管理、烧钱率分析和融资对接，帮助创业公司和成长型企业在不确定环境中做出有数据支撑的财务决策。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "finance-fpa-analyst",
     "nameEn": "FP&A Analyst",
     "emoji": "📈",
@@ -754,12 +906,36 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert Financial Planning & Analysis (FP&A) analyst specializing in budgeting, variance analysis, financial planning, rolling forecasts, and strategic decision support. Bridges the gap between the numbers and the business narrative to drive operational performance and strategic resource allocation."
   },
   {
+    "slug": "finance-fraud-detector",
+    "nameEn": "金融风控分析师",
+    "emoji": "🕵️",
+    "division": "finance",
+    "description": "专注交易欺诈检测与金融风险防控的分析专家，精通支付宝/微信支付/银联渠道的风控策略、反洗钱合规、电信诈骗识别、央行征信应用和互联网金融风控体系搭建，帮助企业守住资金安全底线。",
+    "descriptionEn": ""
+  },
+  {
+    "slug": "finance-hk-stock-compliance-reviewer",
+    "nameEn": "香港股市合规审查专家",
+    "emoji": "⚖️",
+    "division": "finance",
+    "description": "资深香港股市合规审查专家，精通HKEX上市规则、SFC监管条例、公司条例及证券及期货条例。提供上市申请合规审查、持续责任监督、关联交易合规、披露义务审核及企业管治顾问服务。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "finance-investment-researcher",
     "nameEn": "Investment Researcher",
     "emoji": "🔍",
     "division": "finance",
     "description": "研究行业和公司，做尽职调查与估值分析，评估投资风险，输出投资建议支持投资决策。",
     "descriptionEn": "Expert investment researcher specializing in market research, due diligence, portfolio analysis, and asset valuation. Conducts rigorous fundamental and quantitative analysis to identify investment opportunities, assess risks, and support data-driven portfolio decisions across public equities, private markets, and alternative assets."
+  },
+  {
+    "slug": "finance-invoice-manager",
+    "nameEn": "发票管理专家",
+    "emoji": "🧾",
+    "division": "finance",
+    "description": "专注中国企业发票全生命周期管理的财税专家，精通增值税专用发票与普通发票管理、金税系统操作、电子发票推广、三单匹配、报销审批和税务合规，帮助企业实现发票管理的规范化和数字化。",
+    "descriptionEn": ""
   },
   {
     "slug": "finance-tax-strategist",
@@ -784,6 +960,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "game-development",
     "description": "编写游戏设计文档，设计核心玩法循环与系统机制，结合玩家心理调整数值和体验，推动玩法落地到项目各阶段。",
     "descriptionEn": "Systems and mechanics architect - Masters GDD authorship, player psychology, economy balancing, and gameplay loop design across all engines and genres"
+  },
+  {
+    "slug": "gaokao-college-advisor",
+    "nameEn": "高考志愿填报顾问",
+    "emoji": "🎓",
+    "division": "specialized",
+    "description": "中国高考志愿填报策略专家，精通平行志愿与院校专业组填报规则、位次法与等位分析、新高考选科组合与专业限选、提前批与专项计划、院校层次定位、冲稳保策略，帮助考生和家长制定科学的志愿填报方案。",
+    "descriptionEn": ""
   },
   {
     "slug": "gis-3d-scene-developer",
@@ -994,6 +1178,22 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Comprehensive HR onboarding specialist for employee orientation, documentation management, compliance tracking, benefits enrollment, culture integration, and new hire support — delivering a seamless first-day-to-first-year experience that drives retention and productivity"
   },
   {
+    "slug": "hr-performance-reviewer",
+    "nameEn": "Performance Management Specialist",
+    "emoji": "📋",
+    "division": "hr",
+    "description": "深耕中国企业绩效管理体系的实战专家，精通 OKR/KPI 双轨制、360 度反馈、绩效校准会、PIP 改进计划等全流程绩效管理，帮助企业建立科学公正的绩效评估与人才发展机制。",
+    "descriptionEn": "China-focused performance management specialist covering OKRs, KPIs, 360-degree feedback, calibration sessions, performance improvement plans, and talent development."
+  },
+  {
+    "slug": "hr-recruiter",
+    "nameEn": "Full-Cycle Recruiter",
+    "emoji": "🎯",
+    "division": "hr",
+    "description": "深耕中国人才市场的全流程招聘专家，精通 Boss 直聘、猎聘、拉勾等主流招聘渠道运营，擅长简历筛选、面试协调、人才管线管理、校招社招全链路操盘，帮助企业高效精准地完成人才获取与入职闭环。",
+    "descriptionEn": "Full-cycle recruiting specialist for the Chinese talent market, covering sourcing channels, resume screening, interview coordination, pipeline management, offers, and onboarding."
+  },
+  {
     "slug": "identity-graph-operator",
     "nameEn": "Identity Graph Operator",
     "emoji": "🕸️",
@@ -1026,6 +1226,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Comprehensive legal client intake specialist for qualifying prospects, collecting case information, scheduling consultations, managing conflict checks, and delivering attorney-ready intake summaries across any practice area and firm size"
   },
   {
+    "slug": "legal-contract-reviewer",
+    "nameEn": "Contract Review Specialist",
+    "emoji": "📑",
+    "division": "legal",
+    "description": "精通中国《民法典》合同编及商业合同实务的法律专家，擅长合同风险识别、条款审查与修改建议，熟悉电子签章、争议解决机制、违约金条款设计，帮助企业在商业交易中有效防控法律风险。",
+    "descriptionEn": "China-focused commercial contract specialist covering risk identification, clause review, redlines, electronic signatures, dispute resolution, and liquidated damages."
+  },
+  {
     "slug": "legal-document-review",
     "nameEn": "Legal Document Review",
     "emoji": "⚖️",
@@ -1034,12 +1242,28 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Comprehensive legal document review specialist for contracts, litigation documents, and real estate agreements — summarizing documents, flagging risk clauses, comparing contract versions, and checking compliance across any law firm size or practice area"
   },
   {
+    "slug": "legal-policy-writer",
+    "nameEn": "Legal Policy Writer",
+    "emoji": "📜",
+    "division": "legal",
+    "description": "精通中国数据合规法律体系的企业制度文件撰写专家，擅长内部管理制度、隐私政策、用户协议等法律文书起草，深谙《个人信息保护法》《数据安全法》《网络安全法》三法合规要求，帮助企业构建完整的合规制度体系。",
+    "descriptionEn": "China-focused legal policy writer for internal policies, privacy notices, terms of service, and compliance under PIPL, the Data Security Law, and the Cybersecurity Law."
+  },
+  {
     "slug": "level-designer",
     "nameEn": "Level Designer",
     "emoji": "🗺️",
     "division": "game-development",
     "description": "设计关卡布局与节奏，安排战斗遭遇和环境叙事，通过白盒搭建和反复测试打磨关卡体验与难度曲线。",
     "descriptionEn": "Spatial storytelling and flow specialist - Masters layout theory, pacing architecture, encounter design, and environmental narrative across all game engines"
+  },
+  {
+    "slug": "livestock-archive-auditor",
+    "nameEn": "Livestock Records Auditor",
+    "emoji": "🐄",
+    "division": "specialized",
+    "description": "核对畜禽养殖档案 Excel 与生产日报，按子表独立审计兽药、饲料、诊疗、免疫、生产记录等错填漏填，FIFO 复核批号，输出可直接整改的中文问题表述。",
+    "descriptionEn": "Audits livestock records and production reports for omissions and inconsistencies across medication, feed, treatment, immunization, production, and FIFO batch tracking."
   },
   {
     "slug": "loan-officer-assistant",
@@ -1122,6 +1346,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert Bilibili marketing specialist focused on UP主 growth, danmaku culture mastery, B站 algorithm optimization, community building, and branded content strategy for China's leading video community platform."
   },
   {
+    "slug": "marketing-bilibili-strategist",
+    "nameEn": "B站内容策略师",
+    "emoji": "📺",
+    "division": "marketing",
+    "description": "专注B站（哔哩哔哩）平台的中长视频内容策略专家，精通UP主运营、弹幕文化、社区生态、品牌合作、推荐算法，以及通过优质内容实现长期粉丝增长与商业变现。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "marketing-book-co-author",
     "nameEn": "Book Co-Author",
     "emoji": "📘",
@@ -1170,12 +1402,28 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Full-funnel cross-border e-commerce strategist covering Amazon, Shopee, Lazada, AliExpress, Temu, and TikTok Shop operations, international logistics and overseas warehousing, compliance and taxation, multilingual listing optimization, brand globalization, and DTC independent site development."
   },
   {
+    "slug": "marketing-daily-news-briefing",
+    "nameEn": "新闻情报官",
+    "emoji": "📰",
+    "division": "marketing",
+    "description": "国内外多源新闻实时采集与结构化简报生成，为内容创作团队提供高质量新闻素材。支持按类型（科技/财经/社会/国际等）筛选，交叉验证信源，输出下游 agent 可直接使用的结构化简报。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "marketing-douyin-strategist",
     "nameEn": "Douyin Strategist",
     "emoji": "🎵",
     "division": "marketing",
     "description": "策划抖音短视频选题与脚本，按推荐算法优化发布，运营直播带货，用内容矩阵带动品牌流量和销量增长。",
     "descriptionEn": "Short-video marketing expert specializing in the Douyin platform, with deep expertise in recommendation algorithm mechanics, viral video planning, livestream commerce workflows, and full-funnel brand growth through content matrix strategies."
+  },
+  {
+    "slug": "marketing-ecommerce-operator",
+    "nameEn": "电商运营师",
+    "emoji": "🛒",
+    "division": "marketing",
+    "description": "专注中国电商平台全链路运营的策略专家，精通淘宝/天猫/拼多多/京东的店铺运营、商品优化、直播带货、大促策划（618/双十一），以及跨平台差异化运营策略。",
+    "descriptionEn": ""
   },
   {
     "slug": "marketing-email-strategist",
@@ -1208,6 +1456,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "marketing",
     "description": "维护 Instagram 账号的视觉风格，策划图文、Reels 等格式内容，管理评论区与粉丝社群，提升互动率。",
     "descriptionEn": "Expert Instagram marketing specialist focused on visual storytelling, community building, and multi-format content optimization. Masters aesthetic development and drives meaningful engagement."
+  },
+  {
+    "slug": "marketing-knowledge-commerce-strategist",
+    "nameEn": "知识付费产品策划师",
+    "emoji": "🎓",
+    "division": "marketing",
+    "description": "专注中国知识付费生态的产品设计与商业化专家，精通得到、知识星球、小报童、小鹅通、千聊等平台运营，擅长知识产品定义、内容定价策略、用户运营、IP打造、分销体系设计和全链路数据分析。",
+    "descriptionEn": ""
   },
   {
     "slug": "marketing-kuaishou-strategist",
@@ -1330,6 +1586,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert WeChat Official Account (OA) strategist specializing in content marketing, subscriber engagement, and conversion optimization. Masters multi-format content and builds loyal communities through consistent value delivery."
   },
   {
+    "slug": "marketing-wechat-operator",
+    "nameEn": "微信公众号运营",
+    "emoji": "💬",
+    "division": "marketing",
+    "description": "专注微信生态的内容运营专家，精通公众号内容策略、社群运营、裂变增长、私域流量搭建和微信小程序运营。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "marketing-weibo-strategist",
     "nameEn": "Weibo Strategist",
     "emoji": "🔥",
@@ -1338,12 +1602,28 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Full-spectrum operations expert for Sina Weibo, with deep expertise in trending topic mechanics, Super Topic community management, public sentiment monitoring, fan economy strategies, and Weibo advertising, helping brands achieve viral reach and sustained growth on China's leading public discourse platform."
   },
   {
+    "slug": "marketing-weixin-channels-strategist",
+    "nameEn": "微信视频号运营策略师",
+    "emoji": "📹",
+    "division": "marketing",
+    "description": "专注微信视频号生态的内容策略与增长运营专家，精通社交推荐机制、公众号/朋友圈/小程序/企微生态联动、视频号直播带货、短视频内容策划、私域引流闭环和创作者数据分析。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "marketing-x-twitter-intelligence-analyst",
     "nameEn": "X/Twitter Intelligence Analyst",
     "emoji": "🛰️",
     "division": "marketing",
     "description": "监测 X/Twitter 上与品牌相关的话题与账号动态，识别趋势和风险信号，输出有数据支撑的舆情报告。",
     "descriptionEn": "Social intelligence specialist for X/Twitter research, trend detection, account monitoring, and evidence-backed audience insights using public signals and structured data workflows."
+  },
+  {
+    "slug": "marketing-xiaohongshu-operator",
+    "nameEn": "小红书增长运营专家",
+    "emoji": "📕",
+    "division": "marketing",
+    "description": "专注小红书平台的内容运营专家，擅长种草笔记创作、达人合作策略、爆款内容公式、以及通过数据驱动实现品牌在小红书的高效获客和口碑建设。",
+    "descriptionEn": ""
   },
   {
     "slug": "marketing-xiaohongshu-specialist",
@@ -1552,6 +1832,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "project-management",
     "description": "把需求规格拆解为可执行任务，参考历史项目经验估算排期。严格管理范围，拒绝无关需求，按规格要求交付。",
     "descriptionEn": "Converts specs to tasks and remembers previous projects. Focused on realistic scope, no background processes, exact spec requirements"
+  },
+  {
+    "slug": "prompt-engineer",
+    "nameEn": "通用提示词工程师",
+    "emoji": "🧠",
+    "division": "specialized",
+    "description": "专注大语言模型提示词设计与优化的专家，精通系统提示词架构、思维链设计、少样本学习策略、以及提示词效果评测和迭代方法论。",
+    "descriptionEn": ""
   },
   {
     "slug": "real-estate-buyer-seller",
@@ -1810,6 +2098,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Cyber threat intelligence specialist who tracks adversary groups, maps attack campaigns to MITRE ATT&CK, produces actionable intelligence reports, and builds detection rules that catch real threats."
   },
   {
+    "slug": "specialized-ai-policy-writer",
+    "nameEn": "AI 治理政策专家",
+    "emoji": "📜",
+    "division": "specialized",
+    "description": "面向中国企业和机构的 AI 治理与合规专家，精通《生成式 AI 管理办法》、算法备案制度、深度合成管理规定、大模型安全评估流程及 AI 伦理审查机制，帮助组织构建符合中国监管要求的 AI 治理框架并落地执行。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "specialized-chief-of-staff",
     "nameEn": "Chief of Staff",
     "emoji": "🧭",
@@ -1898,6 +2194,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert Model Context Protocol developer who designs, builds, and tests MCP servers that extend AI agent capabilities with custom tools, resources, and prompts."
   },
   {
+    "slug": "specialized-meeting-assistant",
+    "nameEn": "会议效率专家",
+    "emoji": "📅",
+    "division": "specialized",
+    "description": "面向中国企业的会议管理与效率提升专家，精通飞书、钉钉、腾讯会议等协作平台，擅长会议纪要撰写、行动项追踪、议程设计、OKR 周会组织及跨时区会议协调，帮助团队将会议从\"时间黑洞\"变为\"决策引擎\"。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "specialized-model-qa",
     "nameEn": "Model QA Specialist",
     "emoji": "🔬",
@@ -1912,6 +2216,22 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "specialized",
     "description": "调研市场与竞品定价，分析成本结构，设计定价模型，监控毛利并持续调优。",
     "descriptionEn": "Specialized pricing analyst who develops optimal pricing models through market research, competitor analysis, cost structure evaluation, and margin optimization — turning pricing from guesswork into a data-driven competitive advantage."
+  },
+  {
+    "slug": "specialized-pricing-optimizer",
+    "nameEn": "动态定价策略师",
+    "emoji": "💲",
+    "division": "specialized",
+    "description": "专注电商动态定价与促销策略的价格优化专家，精通淘宝、京东、拼多多等平台的价格机制、大促定价规则、竞品价格监控和利润最大化策略，帮助商家在激烈的价格战中实现利润与销量的最优平衡。",
+    "descriptionEn": ""
+  },
+  {
+    "slug": "specialized-risk-assessor",
+    "nameEn": "企业风险评估师",
+    "emoji": "⚖️",
+    "division": "specialized",
+    "description": "面向中国企业的全面风险管理专家，精通国企风控体系建设、内控合规（COSO 框架本土化）、审计整改、ESG 风险管理及供应链风险评估，帮助企业构建系统化的风险识别、评估与应对机制，提升组织韧性。",
+    "descriptionEn": ""
   },
   {
     "slug": "specialized-salesforce-architect",
@@ -1946,12 +2266,44 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Full-spectrum study abroad planning expert covering the US, UK, Canada, Australia, Europe, Hong Kong, and Singapore — proficient in undergraduate, master's, and PhD application strategy, school selection, essay coaching, profile enhancement, standardized test planning, visa preparation, and overseas life adaptation, helping Chinese students craft personalized end-to-end study abroad plans."
   },
   {
+    "slug": "supply-chain-garment-factory-planning-engineer",
+    "nameEn": "Garment Factory Planning Engineer",
+    "emoji": "🏭",
+    "division": "supply-chain",
+    "description": "全球多基地服装工厂规划专家——精通牛仔/羽绒服/无痕内衣/针织产线全流程设计，覆盖场地规划、产能测算、设备选型、精益优化与多国合规，支持中文/英文/法语/柬埔寨语",
+    "descriptionEn": "Multi-site garment factory planning specialist covering plant layout, capacity modeling, equipment selection, lean optimization, and multinational compliance across major apparel production lines."
+  },
+  {
+    "slug": "supply-chain-inventory-forecaster",
+    "nameEn": "Inventory Forecasting Specialist",
+    "emoji": "📦",
+    "division": "supply-chain",
+    "description": "专注需求预测与库存管理的供应链专家，擅长基于历史销售数据和市场趋势的精准需求预测、安全库存计算、补货策略优化，帮助企业在中国电商大促节奏下实现\"不断货、不积压\"的库存平衡。",
+    "descriptionEn": "Supply chain specialist for demand forecasting, safety stock, replenishment optimization, and inventory balance under Chinese e-commerce promotion cycles."
+  },
+  {
+    "slug": "supply-chain-route-optimizer",
+    "nameEn": "Logistics Route Optimizer",
+    "emoji": "🗺️",
+    "division": "supply-chain",
+    "description": "专注物流配送路线规划与成本优化的供应链专家，精通中国快递物流体系、同城配送网络、冷链运输和跨境物流方案，帮助企业在保障时效的前提下实现物流成本最优。",
+    "descriptionEn": "Supply chain specialist for route planning and logistics cost optimization across Chinese parcel networks, local delivery, cold chain, and cross-border shipping."
+  },
+  {
     "slug": "supply-chain-strategist",
     "nameEn": "Supply Chain Strategist",
     "emoji": "🔗",
     "division": "specialized",
     "description": "开发与管理供应商，做战略寻源与质量控制，推进供应链数字化，提升交付效率。",
     "descriptionEn": "Expert supply chain management and procurement strategy specialist — skilled in supplier development, strategic sourcing, quality control, and supply chain digitalization. Grounded in China's manufacturing ecosystem, helps companies build efficient, resilient, and sustainable supply chains."
+  },
+  {
+    "slug": "supply-chain-vendor-evaluator",
+    "nameEn": "Vendor Evaluation Specialist",
+    "emoji": "🔍",
+    "division": "supply-chain",
+    "description": "专注供应商全生命周期管理的采购策略专家，擅长供应商筛选与评分、验厂审核、质量管理体系搭建、账期与成本谈判，帮助企业在1688等采购平台上建立稳定可靠的供应商体系。",
+    "descriptionEn": "Procurement specialist for supplier screening, scoring, factory audits, quality systems, payment terms, cost negotiation, and lifecycle management."
   },
   {
     "slug": "support-analytics-reporter",
@@ -1994,6 +2346,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert legal and compliance specialist ensuring business operations, data handling, and content creation comply with relevant laws, regulations, and industry standards across multiple jurisdictions."
   },
   {
+    "slug": "support-recruitment-specialist",
+    "nameEn": "招聘运营专家",
+    "emoji": "🎯",
+    "division": "support",
+    "description": "专业的招聘运营与人才获取专家，精通中国主流招聘渠道运营、人才评估体系搭建和劳动法合规管理。帮助企业高效吸引、筛选和留住优秀人才，打造有竞争力的雇主品牌。",
+    "descriptionEn": ""
+  },
+  {
     "slug": "support-support-responder",
     "nameEn": "Support Responder",
     "emoji": "💬",
@@ -2008,6 +2368,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "game-development",
     "description": "打通美术到引擎的资产管线，编写着色器与特效，制定 LOD 和性能预算，优化跨引擎资产表现与加载效率。",
     "descriptionEn": "Art-to-engine pipeline specialist - Masters shaders, VFX systems, LOD pipelines, performance budgeting, and cross-engine asset optimization"
+  },
+  {
+    "slug": "technical-translator-agent",
+    "nameEn": "技术翻译专家",
+    "emoji": "🌐",
+    "division": "specialized",
+    "description": "专注于技术领域的中英文双向翻译，精通编程、AI、云计算等技术术语，确保技术文档的准确性和专业性",
+    "descriptionEn": ""
   },
   {
     "slug": "terminal-integration-specialist",
@@ -2032,6 +2400,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "testing",
     "description": "编写并执行接口测试用例，验证功能、鉴权、性能和异常处理，覆盖内部系统与第三方集成，输出测试报告。",
     "descriptionEn": "Expert API testing specialist focused on comprehensive API validation, performance testing, and quality assurance across all systems and third-party integrations"
+  },
+  {
+    "slug": "testing-embedded-qa-engineer",
+    "nameEn": "嵌入式测试工程师",
+    "emoji": "🔌",
+    "division": "testing",
+    "description": "嵌入式系统质量保障专家——精通硬件在环测试（HIL）、固件自动化测试、OTA 回归、EMC/ESD 测试规划、量产测试夹具设计、故障注入与可靠性验证。",
+    "descriptionEn": ""
   },
   {
     "slug": "testing-evidence-collector",
@@ -2088,6 +2464,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "testing",
     "description": "梳理测试流程中的堵点和重复劳动，设计优化方案并用工具落地自动化，缩短测试周期、降低返工。",
     "descriptionEn": "Expert process improvement specialist focused on analyzing, optimizing, and automating workflows across all business functions for maximum productivity and efficiency"
+  },
+  {
+    "slug": "travel-planner",
+    "nameEn": "旅行规划师",
+    "emoji": "🧳",
+    "division": "specialized",
+    "description": "面向中国旅行者的行程规划专家，精通国内游与出境游的路线设计、交通住宿组合、签证与证件准备、预算控制和旺季避坑——产出可直接照着走的逐日行程，而非景点清单的堆砌。",
+    "descriptionEn": ""
   },
   {
     "slug": "unity-architect",

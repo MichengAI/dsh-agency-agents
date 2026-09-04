@@ -11,14 +11,20 @@ export interface AgencyAgentsEnabledState {
   readonly revision: number
 }
 
+export interface AgencyAgentsPrompt {
+  readonly prompt: string
+}
+
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteNamespace$agencyAgents {
     getEnabled: () => Promise<RemoteResult<AgencyAgentsEnabledState>>
     setEnabled: (enabled: string[], expectedRevision: number) => Promise<RemoteResult<AgencyAgentsEnabledState>>
+    getPrompt: (slug: string, division: string) => Promise<RemoteResult<AgencyAgentsPrompt>>
   }
   interface TypertRemoteMap {
     'agencyAgents/getEnabled': () => Promise<RemoteResult<AgencyAgentsEnabledState>>
     'agencyAgents/setEnabled': (enabled: string[], expectedRevision: number) => Promise<RemoteResult<AgencyAgentsEnabledState>>
+    'agencyAgents/getPrompt': (slug: string, division: string) => Promise<RemoteResult<AgencyAgentsPrompt>>
   }
   interface TypertRemoteNamespaceMap {
     'agencyAgents': TypertRemoteNamespace$agencyAgents

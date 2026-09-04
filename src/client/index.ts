@@ -1,4 +1,5 @@
 import React from 'react'
+import { Copy, Eye, RefreshCw, Search, X } from 'lucide-react'
 import type { Context as CordisClientContext } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { InputTriggerSource, ReferenceInsert, TokenSpan } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
@@ -11,9 +12,10 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { ZH_NAME, ZH_DIVISION, EN_DIVISION } from '../names.js'
+import { EXPERT_AVATAR_URLS } from './avatars.js'
 import { ROSTER } from './roster.js'
 import { zh, en, type AgencyKey } from './locales.js'
-import { TYPERT_REMOTE, type AgencyAgentsEnabledState } from './remote.js'
+import { TYPERT_REMOTE, type AgencyAgentsEnabledState, type AgencyAgentsPrompt } from './remote.js'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -58,10 +60,22 @@ export const SETTINGS_GITHUB_LINKS = [
 }>
 
 const DIVISION_ORDER = [
-  'academic', 'design', 'engineering', 'finance', 'game-development', 'gis',
-  'healthcare', 'marketing', 'paid-media', 'product', 'project-management',
+  'company', 'design', 'engineering', 'finance', 'game-development', 'gis',
+  'healthcare', 'hr', 'legal', 'marketing', 'paid-media', 'product', 'project-management',
   'research', 'sales', 'security', 'spatial-computing', 'specialized', 'support', 'testing',
+  'supply-chain', 'academic',
 ]
+
+export type ExpertCategory = '' | 'development' | 'design' | 'product' | 'research' | 'writing'
+
+/** 将细分专业归并为目标稿中的五个高层分类，且完整覆盖内置分区。 */
+const EXPERT_CATEGORY_DIVISIONS: Readonly<Record<Exclude<ExpertCategory, ''>, ReadonlySet<string>>> = {
+  development: new Set(['engineering', 'game-development', 'gis', 'security', 'spatial-computing', 'testing']),
+  design: new Set(['design']),
+  product: new Set(['company', 'hr', 'product', 'project-management', 'sales', 'supply-chain', 'support']),
+  research: new Set(['academic', 'finance', 'healthcare', 'legal', 'research']),
+  writing: new Set(['marketing', 'paid-media', 'specialized']),
+}
 
 interface ExpertView {
   readonly slug: string
@@ -132,16 +146,17 @@ export interface ExpertSearchable {
   readonly descriptionEn: string
 }
 
-/** 规范化检索词：去首尾空白并转小写，便于中英文统一匹配。 */
+/** 规范化检索词：兼容全角字符，合并空白并转小写，便于中英文统一匹配。 */
 export function normalizeExpertQuery(query: string): string {
-  return query.trim().toLowerCase()
+  return query.normalize('NFKC').trim().replace(/\s+/gu, ' ').toLowerCase()
 }
 
-/** 按名称、分区或简介做包含匹配；空检索视为全部命中。 */
+/** 按标识、名称、分区或简介做多关键词包含匹配；空检索视为全部命中。 */
 export function matchExpertQuery(expert: ExpertSearchable, query: string): boolean {
   const q = normalizeExpertQuery(query)
   if (q === '') return true
-  return [
+  const fields = [
+    expert.slug,
     expert.name,
     expert.nameEn,
     expert.division,
@@ -149,7 +164,8 @@ export function matchExpertQuery(expert: ExpertSearchable, query: string): boole
     expert.divisionEn,
     expert.description,
     expert.descriptionEn,
-  ].some((field) => field.toLowerCase().includes(q))
+  ].map(normalizeExpertQuery)
+  return q.split(' ').every((term) => fields.some((field) => field.includes(term)))
 }
 
 /** 先按分区收窄，再按检索词过滤。division 为空表示全部分类。 */
@@ -161,9 +177,97 @@ export function filterExperts<T extends ExpertSearchable>(
   return list.filter((expert) => (division === '' || expert.division === division) && matchExpertQuery(expert, options.query ?? ''))
 }
 
+/** 设置页分类筛选值：空值表示全部，其余完整保留所有原始分区。 */
+export function expertDivisionFilterValues(): string[] {
+  return ['', ...DIVISION_ORDER]
+}
+
+/** 将已启用专家稳定地移到前面，两组内部顺序不变且不修改输入数组。 */
+export function sortExpertsByEnabled<T extends { readonly slug: string }>(
+  list: ReadonlyArray<T>,
+  enabled: ReadonlySet<string>,
+): T[] {
+  const active: T[] = []
+  const inactive: T[] = []
+  for (const expert of list) {
+    if (enabled.has(expert.slug)) active.push(expert)
+    else inactive.push(expert)
+  }
+  return [...active, ...inactive]
+}
+
+/** 按目标稿的五个高层分类与检索词筛选；空分类表示全部。 */
+export function filterExpertsByCategory<T extends ExpertSearchable>(
+  list: ReadonlyArray<T>,
+  options: { readonly query?: string; readonly category?: ExpertCategory },
+): T[] {
+  const category = options.category ?? ''
+  const divisions = category === '' ? null : EXPERT_CATEGORY_DIVISIONS[category]
+  return list.filter((expert) => (divisions === null || divisions.has(expert.division)) && matchExpertQuery(expert, options.query ?? ''))
+}
+
 const DIVISION_COUNTS: Readonly<Record<string, number>> = Object.fromEntries(
   DIVISION_ORDER.map((division) => [division, EXPERTS.filter((expert) => expert.division === division).length]),
 )
+
+/** 根据 slug 稳定分配复用头像；空头像池安全回退为第 0 项。 */
+export function expertAvatarIndex(slug: string, avatarCount: number): number {
+  if (avatarCount <= 0) return 0
+  let hash = 2166136261
+  for (let index = 0; index < slug.length; index += 1) {
+    hash = Math.imul(hash ^ slug.charCodeAt(index), 16777619)
+  }
+  return (hash >>> 0) % avatarCount
+}
+
+/** 五大业务分类各自使用独立头像池，降低同屏重复并保持专家形象稳定。 */
+export const EXPERT_AVATAR_POOL_INDEXES = {
+  development: [1, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+  writing: [3, 7, 19, 20, 21, 22, 23, 24],
+  product: [0, 8, 25, 26, 27, 28],
+  research: [2, 4, 29, 30, 31, 32],
+  design: [6, 33, 34, 35],
+} as const satisfies Readonly<Record<Exclude<ExpertCategory, ''>, ReadonlyArray<number>>>
+
+const ALL_EXPERT_AVATAR_INDEXES = Object.values(EXPERT_AVATAR_POOL_INDEXES).flat()
+
+function expertCategoryForDivision(division: string): Exclude<ExpertCategory, ''> | undefined {
+  return (Object.entries(EXPERT_CATEGORY_DIVISIONS) as ReadonlyArray<
+    readonly [Exclude<ExpertCategory, ''>, ReadonlySet<string>]
+  >).find(([, divisions]) => divisions.has(division))?.[0]
+}
+
+function expertAvatarKey(slug: string, division: string): string {
+  return `${division}\u0000${slug}`
+}
+
+/**
+ * 对当前花名册做分类内轮转分配，确保全部头像都被使用，且复用次数差不超过 1。
+ * 排序和映射只在模块加载时计算一次，不增加卡片渲染开销。
+ */
+const EXPERT_AVATAR_INDEX_BY_KEY = new Map<string, number>()
+for (const [category, pool] of Object.entries(EXPERT_AVATAR_POOL_INDEXES) as ReadonlyArray<
+  readonly [Exclude<ExpertCategory, ''>, ReadonlyArray<number>]
+>) {
+  const experts = EXPERTS
+    .filter((expert) => EXPERT_CATEGORY_DIVISIONS[category].has(expert.division))
+    .slice()
+    .sort((left, right) => left.slug.localeCompare(right.slug, 'en'))
+  experts.forEach((expert, index) => {
+    EXPERT_AVATAR_INDEX_BY_KEY.set(expertAvatarKey(expert.slug, expert.division), pool[index % pool.length] ?? 0)
+  })
+}
+
+/** 当前花名册使用均衡映射；未知专家或分区安全回退为稳定哈希。 */
+export function expertAvatarIndexForDivision(slug: string, division: string): number {
+  const mapped = EXPERT_AVATAR_INDEX_BY_KEY.get(expertAvatarKey(slug, division))
+  if (mapped !== undefined) return mapped
+  const category = expertCategoryForDivision(division)
+  const pool: ReadonlyArray<number> = category === undefined
+    ? ALL_EXPERT_AVATAR_INDEXES
+    : EXPERT_AVATAR_POOL_INDEXES[category]
+  return pool[expertAvatarIndex(slug, pool.length)] ?? 0
+}
 
 /** 按当前 locale 取专家显示名：en 用花名册英文名，其余用中文名。 */
 function displayName(e: ExpertView, active: 'zh' | 'en'): string {
@@ -319,13 +423,68 @@ const SETTINGS_CSS = `
 @media (max-width:560px){.aag-toolbar,.aag-title-row{flex-wrap:wrap}.aag-actions{margin-left:0}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}.aag-row{align-items:flex-start;flex-wrap:wrap}.aag-row>.aag-action{margin-left:auto}.aag-filter-meta{margin-left:0}}
 @media (prefers-reduced-motion:reduce){.aag-action{transition:none}}
 `
-const CSS = COMPOSER_CSS + SETTINGS_CSS
+export const CARD_SETTINGS_CSS = `
+.aag-section{container-type:inline-size}
+.aag-toolbar{display:flex;align-items:center;gap:16px;min-height:44px;padding:0}
+.aag-title-row{display:flex;align-items:baseline;gap:16px;min-width:0;flex-wrap:wrap}
+.aag-title{font-size:22px;line-height:30px;font-weight:700;letter-spacing:0}
+.aag-header-stat{display:inline-flex;align-items:baseline;gap:5px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;white-space:nowrap}
+.aag-header-stat strong{color:var(--dsw-alias-label-primary);font-weight:500}
+.aag-actions{margin-left:auto}
+.aag-refresh-button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:transparent;color:var(--dsw-alias-label-primary);cursor:pointer}
+.aag-refresh-button:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
+.aag-refresh-button:disabled{opacity:.5;cursor:default}
+.aag-refresh-button:focus-visible,.aag-card-action:focus-visible,.aag-switch-input:focus-visible+.aag-switch-track,.aag-modal-close:focus-visible,.aag-search:focus-visible{outline:2px solid var(--dsw-alias-state-success-primary);outline-offset:2px}
+.aag-card-filters{align-items:flex-end;gap:12px}
+.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-search{flex:1 1 0}
+.aag-card-filters .aag-select-trigger{min-height:46px}
+.aag-search-wrap{position:relative;display:flex;align-items:center}
+.aag-search-icon{position:absolute;left:14px;z-index:1;color:var(--dsw-alias-label-secondary);pointer-events:none}
+.aag-search{height:46px;padding:0 46px;border-color:var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-2);font-size:14px;line-height:22px}
+.aag-search::placeholder{color:var(--dsw-alias-label-tertiary)}
+.aag-search-clear{right:2px;width:44px;height:44px}
+.aag-expert-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;margin-top:2px}
+.aag-expert-card{display:grid;min-width:0;min-height:190px;overflow:hidden;grid-template-rows:minmax(141px,1fr) 48px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:var(--dsw-alias-bg-layer-2)}
+.aag-expert-card:hover{border-color:var(--dsw-alias-border-l3)}
+.aag-card-body{position:relative;display:grid;min-width:0;grid-template-columns:44px minmax(0,1fr);column-gap:10px;row-gap:9px;padding:12px}
+.aag-expert-avatar{display:block;width:44px;height:44px;border:0;border-radius:50%;background:var(--dsw-alias-bg-layer-3);object-fit:cover;object-position:center 20%}
+.aag-card-identity{display:flex;min-width:0;flex-direction:column;padding-right:48px}
+.aag-card-name{display:-webkit-box;overflow:hidden;font-size:16px;font-weight:650;line-height:22px;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.aag-card-division{margin-top:2px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:18px}
+.aag-card-description{grid-column:1/-1;display:-webkit-box;min-height:60px;margin:0;overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:20px;-webkit-box-orient:vertical;-webkit-line-clamp:3}
+.aag-card-actions{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--dsw-alias-border-l2)}
+.aag-card-action{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:48px;padding:0 10px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:14px;line-height:20px;cursor:pointer}
+.aag-card-action+.aag-card-action{border-left:1px solid var(--dsw-alias-border-l2)}
+.aag-card-action:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+.aag-card-action:disabled{opacity:.5;cursor:default}
+.aag-card-action-primary{color:var(--dsw-alias-label-secondary)}
+.aag-switch{position:absolute;top:12px;right:12px;display:flex;align-items:center;flex-direction:column;gap:3px;cursor:pointer}
+.aag-switch-input{position:absolute;width:1px;height:1px;opacity:0}
+.aag-switch-track{position:relative;display:block;width:42px;height:24px;border:1px solid var(--dsw-alias-border-l3);border-radius:12px;background:var(--dsw-alias-bg-layer-3);transition:background 160ms ease,border-color 160ms ease}
+.aag-switch-track::after{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-label-secondary);content:"";transition:transform 160ms ease,background 160ms ease}
+.aag-switch-input:checked+.aag-switch-track{border-color:var(--dsw-alias-state-success-primary);background:color-mix(in srgb,var(--dsw-alias-state-success-primary) 32%,transparent)}
+.aag-switch-input:checked+.aag-switch-track::after{transform:translateX(18px);background:var(--dsw-alias-label-primary)}
+.aag-switch-input:disabled+.aag-switch-track{opacity:.5;cursor:default}
+.aag-switch-state{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;white-space:nowrap}
+.aag-prompt-backdrop{position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.56)}
+.aag-prompt-modal{display:flex;box-sizing:border-box;width:min(760px,100%);max-height:min(720px,calc(100vh - 40px));flex-direction:column;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-2));box-shadow:var(--dsw-shadow-lv3)}
+.aag-modal-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.aag-modal-title{margin:0;font-size:15px;line-height:22px}
+.aag-modal-close{min-height:32px;padding:0 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;cursor:pointer}
+.aag-prompt-content{margin:0;overflow:auto;padding:16px;white-space:pre-wrap;color:var(--dsw-alias-label-primary);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.65}
+@container (max-width:519px){.aag-expert-grid{grid-template-columns:1fr}.aag-title-row{gap:8px 12px}.aag-title{width:100%}}
+@container (max-width:430px){.aag-card-body{grid-template-columns:40px minmax(0,1fr);column-gap:10px}.aag-expert-avatar{width:40px;height:40px}.aag-card-name{font-size:16px;line-height:22px}}
+@media (prefers-reduced-motion:reduce){.aag-switch-track,.aag-switch-track::after{transition:none}}
+`
+
+const CSS = COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS
   + MENU_NAME_OVERRIDE + `{${EXPERT_MENU_NAME_STYLE}}`
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
 interface AgencyAgentsRemoteApi {
   getEnabled(): Promise<RemoteResult<AgencyAgentsEnabledState>>
   setEnabled(enabled: string[], expectedRevision: number): Promise<RemoteResult<AgencyAgentsEnabledState>>
+  getPrompt(slug: string, division: string): Promise<RemoteResult<AgencyAgentsPrompt>>
 }
 
 interface EnabledState {
@@ -363,6 +522,12 @@ async function writeEnabled(remote: AgencyAgentsRemoteApi, enabled: ReadonlySet<
   const result = await remote.setEnabled([...enabled], expectedRevision)
   if (!result.ok) throw new Error(result.error.message)
   return { enabled: new Set(result.value.enabled), revision: result.value.revision }
+}
+
+async function readPrompt(remote: AgencyAgentsRemoteApi, slug: string, division: string): Promise<string> {
+  const result = await remote.getPrompt(slug, division)
+  if (!result.ok) throw new Error(result.error.message)
+  return result.value.prompt
 }
 
 function expertIcon(): React.ReactElement {
@@ -884,7 +1049,11 @@ function AgentsSettings(props: PropsLocale<'agency'> & {
             autoComplete: 'off',
             spellCheck: false,
             placeholder: props.t('settings.search.placeholder'),
-            onChange: (ev: { currentTarget: { value: string } }) => setQuery(ev.currentTarget.value),
+            onChange: (ev: { currentTarget: { value: string } }) => {
+              const value = ev.currentTarget.value
+              setQuery(value)
+              if (normalizeExpertQuery(value) !== '') setDivision('')
+            },
           }),
           query !== '' ? React.createElement('button', { type: 'button', className: 'aag-search-clear', 'aria-label': props.t('settings.search.clear'), onClick: () => setQuery('') }, '×') : null))))
     if (groups.length === 0) {
@@ -910,6 +1079,217 @@ function AgentsSettings(props: PropsLocale<'agency'> & {
     }
   }
   return React.createElement('section', { className: 'aag-section' }, nodes)
+}
+
+interface OpenPrompt {
+  readonly name: string
+  readonly prompt: string
+}
+
+function PromptDialog(props: {
+  readonly value: OpenPrompt
+  readonly title: string
+  readonly closeLabel: string
+  readonly onClose: () => void
+}): React.ReactElement {
+  const closeRef = React.useRef<HTMLButtonElement | null>(null)
+  React.useEffect(() => {
+    closeRef.current?.focus()
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') props.onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [props])
+  return React.createElement('div', {
+    className: 'aag-prompt-backdrop',
+    onMouseDown: (event: React.MouseEvent<HTMLDivElement>) => { if (event.currentTarget === event.target) props.onClose() },
+  }, React.createElement('section', { className: 'aag-prompt-modal', role: 'dialog', 'aria-modal': true, 'aria-label': props.title },
+    React.createElement('div', { className: 'aag-modal-head' },
+      React.createElement('h3', { className: 'aag-modal-title' }, props.title),
+      React.createElement('button', { ref: closeRef, type: 'button', className: 'aag-modal-close', onClick: props.onClose }, props.closeLabel)),
+    React.createElement('pre', { className: 'aag-prompt-content' }, props.value.prompt)))
+}
+
+function ExpertCardsSettings(props: PropsLocale<'agency'> & {
+  remote: AgencyAgentsRemoteApi
+  getActive: () => 'zh' | 'en'
+  onEnabledChange?: (enabled: ReadonlySet<string>) => void
+}): React.ReactElement {
+  const [state, setState] = React.useState<EnabledState | null>(null)
+  const [error, setError] = React.useState<string | null>(null)
+  const [query, setQuery] = React.useState('')
+  const [division, setDivision] = React.useState('')
+  const [openPrompt, setOpenPrompt] = React.useState<OpenPrompt | null>(null)
+  const [promptBusySlug, setPromptBusySlug] = React.useState<string | null>(null)
+  const [copiedSlug, setCopiedSlug] = React.useState<string | null>(null)
+  const saving = React.useRef(false)
+  const [isSaving, setIsSaving] = React.useState(false)
+
+  const load = React.useCallback((): void => {
+    void readEnabled(props.remote).then((current) => {
+      setState(current)
+      setError(null)
+      props.onEnabledChange?.(current.enabled)
+    }).catch((err: unknown) => { setError(err instanceof Error ? err.message : String(err)) })
+  }, [props.onEnabledChange, props.remote])
+
+  React.useEffect(() => {
+    let alive = true
+    void readEnabled(props.remote).then((current) => {
+      if (!alive) return
+      setState(current)
+      props.onEnabledChange?.(current.enabled)
+    }).catch((err: unknown) => { if (alive) setError(err instanceof Error ? err.message : String(err)) })
+    return () => { alive = false }
+  }, [props.onEnabledChange, props.remote])
+
+  const toggle = (slug: string): void => {
+    if (state === null || saving.current) return
+    const previous = state
+    const next = new Set(state.enabled)
+    if (next.has(slug)) next.delete(slug)
+    else next.add(slug)
+    saving.current = true
+    setIsSaving(true)
+    setState({ enabled: next, revision: state.revision })
+    props.onEnabledChange?.(next)
+    void writeEnabled(props.remote, next, state.revision)
+      .then((current) => {
+        setState(current)
+        setError(null)
+        props.onEnabledChange?.(current.enabled)
+      })
+      .catch(async (err: unknown) => {
+        try {
+          const refreshed = await readEnabled(props.remote)
+          setState(refreshed)
+          props.onEnabledChange?.(refreshed.enabled)
+          setError(writeErrorMessage(err, { refreshed: true, t: props.t }))
+        } catch {
+          setState(previous)
+          props.onEnabledChange?.(previous.enabled)
+          setError(writeErrorMessage(err, { refreshed: false, t: props.t }))
+        }
+      })
+      .finally(() => {
+        saving.current = false
+        setIsSaving(false)
+      })
+  }
+
+  const withPrompt = (expert: ExpertView, action: (prompt: string) => Promise<void> | void): void => {
+    if (promptBusySlug !== null) return
+    setPromptBusySlug(expert.slug)
+    setError(null)
+    void readPrompt(props.remote, expert.slug, expert.division)
+      .then(action)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
+      .finally(() => setPromptBusySlug(null))
+  }
+
+  const viewPrompt = (expert: ExpertView): void => {
+    withPrompt(expert, (prompt) => { setOpenPrompt({ name: displayName(expert, props.getActive()), prompt }) })
+  }
+
+  const copyPrompt = (expert: ExpertView): void => {
+    withPrompt(expert, async (prompt) => {
+      if (navigator.clipboard === undefined) throw new Error(props.t('error.promptCopy'))
+      await navigator.clipboard.writeText(prompt)
+      setCopiedSlug(expert.slug)
+    })
+  }
+
+  const nodes: React.ReactNode[] = []
+  if (error !== null) nodes.push(React.createElement('div', { key: 'error', className: 'aag-error', role: 'alert' }, error))
+  if (state === null) {
+    nodes.push(React.createElement('div', { key: 'loading', className: 'aag-note' }, props.t('settings.loading')))
+  } else {
+    const filtered = sortExpertsByEnabled(filterExperts(EXPERTS, { query, division }), state.enabled)
+    const enabledCount = [...state.enabled].filter((slug) => EXPERTS.some((expert) => expert.slug === slug)).length
+    const total = EXPERTS.length
+    const hasFilter = normalizeExpertQuery(query) !== '' || division !== ''
+    const resetFilters = (): void => { setQuery(''); setDivision('') }
+    nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
+      React.createElement('div', { className: 'aag-title-row' },
+        React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')),
+        settingsGithubLinks(props.t),
+        React.createElement('span', { className: 'aag-header-stat' },
+          React.createElement('strong', null, total),
+          props.t(total === 1 ? 'summary.total.one' : 'summary.total.other', { count: total })),
+        React.createElement('span', { className: 'aag-header-stat' },
+          props.t('summary.enabledPrefix'),
+          React.createElement('strong', null, enabledCount))),
+      React.createElement('div', { className: 'aag-actions' },
+        React.createElement('button', {
+          type: 'button', className: 'aag-refresh-button', disabled: isSaving, onClick: load,
+          title: props.t('btn.refresh'), 'aria-label': props.t('btn.refresh'),
+        }, React.createElement(RefreshCw, { size: 20, strokeWidth: 1.8, 'aria-hidden': true })))))
+    nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters aag-card-filters' },
+      React.createElement('div', { className: 'aag-field aag-field-category' },
+        React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-category' }, props.t('settings.filter.category')),
+        React.createElement(CategorySelect, {
+          id: 'aag-filter-category',
+          value: division,
+          onChange: setDivision,
+          options: expertDivisionFilterValues().map((value) => ({
+            value,
+            label: props.t('settings.filter.option', {
+              name: value === '' ? props.t('settings.filter.all') : props.t(`division.${value}` as AgencyKey),
+              count: value === '' ? total : DIVISION_COUNTS[value] ?? 0,
+            }),
+          })),
+        })),
+      React.createElement('div', { className: 'aag-field aag-field-search' },
+        React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-search' }, props.t('settings.search')),
+        React.createElement('div', { className: 'aag-search-wrap' },
+          React.createElement(Search, { className: 'aag-search-icon', size: 24, strokeWidth: 1.7, 'aria-hidden': true }),
+          React.createElement('input', {
+            id: 'aag-filter-search', className: 'aag-control aag-search', type: 'search', value: query,
+            autoComplete: 'off', spellCheck: false, placeholder: props.t('settings.search.placeholder'),
+            onChange: (event: { currentTarget: { value: string } }) => {
+              const value = event.currentTarget.value
+              setQuery(value)
+              if (normalizeExpertQuery(value) !== '') setDivision('')
+            },
+          }),
+          query !== '' ? React.createElement('button', {
+            type: 'button', className: 'aag-search-clear', 'aria-label': props.t('settings.search.clear'), onClick: () => setQuery(''),
+          }, React.createElement(X, { size: 18, strokeWidth: 1.8, 'aria-hidden': true })) : null))))
+    if (filtered.length === 0) {
+      nodes.push(React.createElement('div', { key: 'empty', className: 'aag-empty' },
+        React.createElement('div', null, props.t('settings.empty', { all: props.t('settings.filter.all') })),
+        hasFilter ? React.createElement('button', { type: 'button', className: 'aag-action aag-action-secondary', onClick: resetFilters }, props.t('settings.empty.reset')) : null))
+    } else {
+      nodes.push(React.createElement('div', { key: 'cards', className: 'aag-expert-grid' }, filtered.map((expert) => {
+        const enabled = state.enabled.has(expert.slug)
+        const busy = promptBusySlug === expert.slug
+        const avatar = EXPERT_AVATAR_URLS[expertAvatarIndexForDivision(expert.slug, expert.division)] ?? EXPERT_AVATAR_URLS[0]
+        return React.createElement('article', { key: expert.slug, className: 'aag-expert-card' },
+          React.createElement('div', { className: 'aag-card-body' },
+            React.createElement('img', { className: 'aag-expert-avatar', src: avatar, width: 44, height: 44, loading: 'lazy', decoding: 'async', alt: '' }),
+            React.createElement('div', { className: 'aag-card-identity' },
+              React.createElement('div', { className: 'aag-card-name', title: displayName(expert, props.getActive()) }, displayName(expert, props.getActive())),
+              React.createElement('div', { className: 'aag-card-division' }, props.t(`division.${expert.division}` as AgencyKey))),
+            React.createElement('div', { className: 'aag-card-description', title: displayDescription(expert, props.getActive()) }, displayDescription(expert, props.getActive())),
+            React.createElement('label', { className: 'aag-switch', title: props.t(enabled ? 'settings.enabled' : 'settings.disabled') },
+              React.createElement('input', { type: 'checkbox', className: 'aag-switch-input', checked: enabled, disabled: isSaving, onChange: () => toggle(expert.slug), 'aria-label': `${displayName(expert, props.getActive())}：${props.t(enabled ? 'settings.enabled' : 'settings.disabled')}` }),
+              React.createElement('span', { className: 'aag-switch-track', 'aria-hidden': true }),
+              React.createElement('span', { className: 'aag-switch-state' }, props.t(enabled ? 'settings.enabled' : 'settings.disabled')))),
+          React.createElement('div', { className: 'aag-card-actions' },
+            React.createElement('button', { type: 'button', className: 'aag-card-action', disabled: promptBusySlug !== null, 'aria-haspopup': 'dialog', onClick: () => viewPrompt(expert) },
+              React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }),
+              busy ? props.t('settings.promptLoading') : props.t('settings.viewPrompt')),
+            React.createElement('button', { type: 'button', className: 'aag-card-action aag-card-action-primary', disabled: promptBusySlug !== null, onClick: () => copyPrompt(expert) },
+              React.createElement(Copy, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }),
+              copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPrompt'))))
+      })))
+    }
+  }
+  return React.createElement('section', { className: 'aag-section' }, nodes,
+    openPrompt === null ? null : React.createElement(PromptDialog, {
+      value: openPrompt, title: props.t('settings.promptTitle', { name: openPrompt.name }), closeLabel: props.t('settings.promptClose'), onClose: () => setOpenPrompt(null),
+    }))
 }
 
 export const inject = ['slots', 'inputTriggers', 'locale', 'remote', 'sessions', 'conversation']
@@ -966,7 +1346,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       name: 'settings.section', id: 'agency-agents', order: 16, label: () => t('settings.nav'), locale: NS,
       ...({ icon: 'expert' } as Record<string, unknown>),
     },
-    (props) => React.createElement(AgentsSettings, { ...props, remote, getActive, onEnabledChange: updateEnabledForMentions }),
+    (props) => React.createElement(ExpertCardsSettings, { ...props, remote, getActive, onEnabledChange: updateEnabledForMentions }),
   ))
 
   ctx.slots.inject('conversation.input.left', () => ctx.slots.register(

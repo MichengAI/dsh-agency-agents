@@ -6,12 +6,12 @@
 
   # DSH Agency Agents
 
-  **273 summonable specialist agents for DeepSeek Harness**
+  **321 summonable specialist agents for DeepSeek Harness**
 
   [简体中文](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [Apache-2.0](LICENSE)
 
   [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-  [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-273-0f766e.svg)](#features)
+  [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-321-0f766e.svg)](#features)
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm downloads](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20downloads)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
@@ -25,7 +25,7 @@
 - Filter by category or search, then enable or disable bundled experts in **Settings → Experts**.
 - Summon enabled experts by their localized name from the composer's **Experts** picker.
 - Use `list_experts` to discover experts and `summon_expert` to start a one-shot specialist subagent.
-- Use 273 bundled personas immediately, or connect a separately synchronized expert directory.
+- Use 321 bundled personas immediately, or connect a separately synchronized expert directory.
 - Paste one sentence into DSH, Codex, or WorkBuddy and let that agent install the plugin locally.
 
 The parent session keeps task context, judgment, and the final answer. Expert children provide a specialist perspective only and cannot summon further experts.
@@ -34,7 +34,7 @@ The parent session keeps task context, judgment, and the final answer. Expert ch
 
 Filter by category or search in **Settings → Experts**, then enable the experts you need:
 
-![DSH Experts panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster-en.png)
+![DSH Experts panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
 
 Use `@` or the composer's **Experts** picker to choose an enabled expert:
 
@@ -148,7 +148,7 @@ The parent session can also call `list_experts(division?)`, then delegate with `
 | --- | --- | --- |
 | `root` | Bundled expert assets | External expert root; an explicit value takes priority. |
 | `provider` | `spawn` | DSH subagent provider; `fork` also works when it supports persona and tool filtering. |
-| `divisions` | 18 standard divisions | Top-level divisions to scan. |
+| `divisions` | 22 standard divisions | Top-level divisions to scan. |
 | `maxDepth` | Unset | Positive absolute subagent-depth limit. |
 
 Set `AGENCY_AGENTS_ROOT` to use an external expert directory. Persona bodies from that directory are injected as the child system prompt, so load them only from a trusted source. The provider must support persona and tool filtering. `summon_experts` accepts at most 8 experts with a concurrency of 4 and still returns successful answers when some experts fail.
