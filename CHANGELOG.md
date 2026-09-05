@@ -6,6 +6,13 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+## 0.1.32 — 2026-09-05
+
+- Completed bilingual coverage for all 321 experts: English names, descriptions, and personas now render in English, while every expert has a Chinese display name and Chinese persona.
+- Added 48 missing or corrected Chinese personas and localized 32 China-focused experts for English sessions; cleaned residual Chinese fragments from otherwise English personas.
+- Flattened 15 game-development personas to the catalog's supported directory layout and added their Chinese counterparts so view, copy, and summon resolve the same prompt.
+- Added catalog-wide regression tests for bilingual name uniqueness, persona availability, and locale integrity.
+
 ## 0.1.31 — 2026-09-05
 
 - Expanded the bundled roster to 321 experts across 22 divisions, merged localized specialists, and redesigned Expert Settings with compact two-column cards, avatars, category search, and enable switches.
