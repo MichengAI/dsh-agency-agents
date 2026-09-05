@@ -151,30 +151,48 @@ dsh --profile web --dump-config
 
 ### 分类导航
 
-| 分类 | 专家数 |
-| --- | ---: |
-| [工程](#experts-engineering) | 68 |
-| [设计](#experts-design) | 11 |
-| [市场营销](#experts-marketing) | 43 |
-| [付费媒体](#experts-paid-media) | 7 |
-| [销售](#experts-sales) | 9 |
-| [公司经营](#experts-company) | 6 |
-| [金融](#experts-finance) | 9 |
-| [人力资源](#experts-hr) | 2 |
-| [法务](#experts-legal) | 2 |
-| [供应链](#experts-supply-chain) | 4 |
-| [产品](#experts-product) | 5 |
-| [项目管理](#experts-project-management) | 7 |
-| [测试](#experts-testing) | 10 |
-| [支持](#experts-support) | 7 |
-| [安全](#experts-security) | 12 |
-| [专业](#experts-specialized) | 68 |
-| [空间计算](#experts-spatial-computing) | 6 |
-| [游戏开发](#experts-game-development) | 21 |
-| [学术](#experts-academic) | 7 |
-| [地理信息](#experts-gis) | 13 |
-| [医疗健康](#experts-healthcare) | 3 |
-| [研究](#experts-research) | 1 |
+<table width="100%">
+  <tr>
+    <td width="33%">💻 <a href="#experts-engineering">工程</a> <sub>68</sub></td>
+    <td width="33%">🎨 <a href="#experts-design">设计</a> <sub>11</sub></td>
+    <td width="33%">📢 <a href="#experts-marketing">市场营销</a> <sub>43</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">💰 <a href="#experts-paid-media">付费媒体</a> <sub>7</sub></td>
+    <td width="33%">💼 <a href="#experts-sales">销售</a> <sub>9</sub></td>
+    <td width="33%">🏢 <a href="#experts-company">公司经营</a> <sub>6</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">🏦 <a href="#experts-finance">金融</a> <sub>9</sub></td>
+    <td width="33%">👔 <a href="#experts-hr">人力资源</a> <sub>2</sub></td>
+    <td width="33%">⚖️ <a href="#experts-legal">法务</a> <sub>2</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">🚚 <a href="#experts-supply-chain">供应链</a> <sub>4</sub></td>
+    <td width="33%">📦 <a href="#experts-product">产品</a> <sub>5</sub></td>
+    <td width="33%">📋 <a href="#experts-project-management">项目管理</a> <sub>7</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">🧪 <a href="#experts-testing">测试</a> <sub>10</sub></td>
+    <td width="33%">🤝 <a href="#experts-support">支持</a> <sub>7</sub></td>
+    <td width="33%">🛡️ <a href="#experts-security">安全</a> <sub>12</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">🔬 <a href="#experts-specialized">专业</a> <sub>68</sub></td>
+    <td width="33%">🥽 <a href="#experts-spatial-computing">空间计算</a> <sub>6</sub></td>
+    <td width="33%">🎮 <a href="#experts-game-development">游戏开发</a> <sub>21</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">📚 <a href="#experts-academic">学术</a> <sub>7</sub></td>
+    <td width="33%">🗺️ <a href="#experts-gis">地理信息</a> <sub>13</sub></td>
+    <td width="33%">🏥 <a href="#experts-healthcare">医疗健康</a> <sub>3</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">🔍 <a href="#experts-research">研究</a> <sub>1</sub></td>
+    <td width="33%"></td>
+    <td width="33%"></td>
+  </tr>
+</table>
 
 <a id="experts-engineering"></a>
 

@@ -151,30 +151,48 @@ Browse **321 bundled experts across 22 divisions**. Select an expert name to rea
 
 ### Division index
 
-| Division | Experts |
-| --- | ---: |
-| [Engineering](#experts-engineering) | 68 |
-| [Design](#experts-design) | 11 |
-| [Marketing](#experts-marketing) | 43 |
-| [Paid Media](#experts-paid-media) | 7 |
-| [Sales](#experts-sales) | 9 |
-| [Company Leadership](#experts-company) | 6 |
-| [Finance](#experts-finance) | 9 |
-| [Human Resources](#experts-hr) | 2 |
-| [Legal](#experts-legal) | 2 |
-| [Supply Chain](#experts-supply-chain) | 4 |
-| [Product](#experts-product) | 5 |
-| [Project Management](#experts-project-management) | 7 |
-| [Testing](#experts-testing) | 10 |
-| [Support](#experts-support) | 7 |
-| [Security](#experts-security) | 12 |
-| [Specialized](#experts-specialized) | 68 |
-| [Spatial Computing](#experts-spatial-computing) | 6 |
-| [Game Development](#experts-game-development) | 21 |
-| [Academic](#experts-academic) | 7 |
-| [GIS](#experts-gis) | 13 |
-| [Healthcare](#experts-healthcare) | 3 |
-| [Research](#experts-research) | 1 |
+<table width="100%">
+  <tr>
+    <td width="33%">💻 <a href="#experts-engineering">Engineering</a> <sub>68</sub></td>
+    <td width="33%">🎨 <a href="#experts-design">Design</a> <sub>11</sub></td>
+    <td width="33%">📢 <a href="#experts-marketing">Marketing</a> <sub>43</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">💰 <a href="#experts-paid-media">Paid Media</a> <sub>7</sub></td>
+    <td width="33%">💼 <a href="#experts-sales">Sales</a> <sub>9</sub></td>
+    <td width="33%">🏢 <a href="#experts-company">Company Leadership</a> <sub>6</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">🏦 <a href="#experts-finance">Finance</a> <sub>9</sub></td>
+    <td width="33%">👔 <a href="#experts-hr">Human Resources</a> <sub>2</sub></td>
+    <td width="33%">⚖️ <a href="#experts-legal">Legal</a> <sub>2</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">🚚 <a href="#experts-supply-chain">Supply Chain</a> <sub>4</sub></td>
+    <td width="33%">📦 <a href="#experts-product">Product</a> <sub>5</sub></td>
+    <td width="33%">📋 <a href="#experts-project-management">Project Management</a> <sub>7</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">🧪 <a href="#experts-testing">Testing</a> <sub>10</sub></td>
+    <td width="33%">🤝 <a href="#experts-support">Support</a> <sub>7</sub></td>
+    <td width="33%">🛡️ <a href="#experts-security">Security</a> <sub>12</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">🔬 <a href="#experts-specialized">Specialized</a> <sub>68</sub></td>
+    <td width="33%">🥽 <a href="#experts-spatial-computing">Spatial Computing</a> <sub>6</sub></td>
+    <td width="33%">🎮 <a href="#experts-game-development">Game Development</a> <sub>21</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">📚 <a href="#experts-academic">Academic</a> <sub>7</sub></td>
+    <td width="33%">🗺️ <a href="#experts-gis">GIS</a> <sub>13</sub></td>
+    <td width="33%">🏥 <a href="#experts-healthcare">Healthcare</a> <sub>3</sub></td>
+  </tr>
+  <tr>
+    <td width="33%">🔍 <a href="#experts-research">Research</a> <sub>1</sub></td>
+    <td width="33%"></td>
+    <td width="33%"></td>
+  </tr>
+</table>
 
 <a id="experts-engineering"></a>
 
