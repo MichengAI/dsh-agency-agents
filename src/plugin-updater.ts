@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 export const PLUGIN_UPDATE_HEADER = 'x-michengai-plugin-update'
 export const PLUGIN_UPDATE_IPC = 'apply-plugin-updates'
 
-type HostRequest = { method?: string; url?: string; headers?: Record<string, string | string[] | undefined> }
+type HostRequest = { method?: string; url?: string; headers?: Record<string, string | string[] | undefined>; socket?: { remoteAddress?: string } }
 type HostResponse = { writeHead(status: number, headers?: Record<string, string>): void; end(body?: string): void }
 type WebServer = { register(route: { kind: 'exact'; path: string; handler(request: HostRequest, response: HostResponse): Promise<void> }): () => void }
 type DesktopPnpmHandle = { done: Promise<{ exitCode: number | null; signal: NodeJS.Signals | null }>; cancel(): void }
@@ -23,6 +23,7 @@ type VersionPayload = {
   packageName: string
   currentVersion: string
   latestVersion?: string
+  latestCheckFailed: boolean
   updateAvailable: boolean
   profileName: string
   canAutoUpdate: boolean
@@ -33,15 +34,24 @@ function header(request: HostRequest, name: string): string | undefined {
   return Array.isArray(value) ? value[0] : value
 }
 
+function isLoopbackAddress(value: string | undefined): boolean {
+  const address = value?.toLowerCase().replace(/^\[|\]$/g, '')
+  return address === 'localhost' || address === 'localhost.' || address === '::1'
+    || address?.startsWith('127.') === true || address?.startsWith('::ffff:127.') === true
+}
+
 export function isTrustedUpdateRequest(request: HostRequest): boolean {
   if (header(request, PLUGIN_UPDATE_HEADER) !== '1') return false
+  if (!isLoopbackAddress(request.socket?.remoteAddress)) return false
   const site = header(request, 'sec-fetch-site')
-  if (site !== undefined && site !== 'same-origin' && site !== 'none') return false
+  if (site !== undefined && site !== 'same-origin') return false
   const origin = header(request, 'origin')
-  if (origin === undefined) return true
   const host = header(request, 'host')
-  if (host === undefined) return false
-  try { return new URL(origin).host === host } catch { return false }
+  if (origin === undefined || host === undefined) return false
+  try {
+    const url = new URL(origin)
+    return (url.protocol === 'http:' || url.protocol === 'https:') && isLoopbackAddress(url.hostname) && url.host === host
+  } catch { return false }
 }
 
 function validProfileName(value: unknown): value is string {
@@ -95,10 +105,29 @@ export function isNewerVersion(currentValue: string, candidateValue: string): bo
   for (let index = 0; index < 3; index += 1) {
     if (candidate.core[index] !== current.core[index]) return candidate.core[index]! > current.core[index]!
   }
-  if (candidate.prerelease.length === 0 || current.prerelease.length === 0) {
-    return candidate.prerelease.length === 0 && current.prerelease.length > 0
+  return comparePrerelease(candidate.prerelease, current.prerelease) > 0
+}
+
+function comparePrerelease(left: readonly string[], right: readonly string[]): number {
+  if (left.length === 0 || right.length === 0) return left.length === right.length ? 0 : left.length === 0 ? 1 : -1
+  const length = Math.max(left.length, right.length)
+  for (let index = 0; index < length; index += 1) {
+    const a = left[index]
+    const b = right[index]
+    if (a === undefined || b === undefined) return a === b ? 0 : a === undefined ? -1 : 1
+    if (a === b) continue
+    const aNumeric = /^\d+$/.test(a)
+    const bNumeric = /^\d+$/.test(b)
+    if (aNumeric && bNumeric) {
+      const aNumber = BigInt(a)
+      const bNumber = BigInt(b)
+      if (aNumber !== bNumber) return aNumber > bNumber ? 1 : -1
+      continue
+    }
+    if (aNumeric !== bNumeric) return aNumeric ? -1 : 1
+    return a > b ? 1 : -1
   }
-  return candidate.prerelease.join('.') > current.prerelease.join('.')
+  return 0
 }
 
 let latestCache: { packageName: string; version: string; expiresAt: number } | undefined
@@ -127,6 +156,7 @@ async function status(options: PluginUpdaterOptions, target: Runtime): Promise<V
     packageName: options.packageName,
     currentVersion: current,
     ...(latest === undefined ? {} : { latestVersion: latest }),
+    latestCheckFailed: latest === undefined,
     updateAvailable: latest !== undefined && isNewerVersion(current, latest),
     profileName: target.profileName,
     canAutoUpdate: target.desktopPnpm !== undefined || target.cliEntry !== undefined,
@@ -184,15 +214,17 @@ export function registerPluginUpdater(ctx: Context, options: PluginUpdaterOption
           return
         }
         if (request.method !== 'POST') { response.writeHead(405, { allow: 'GET, HEAD, POST' }); response.end(); return }
-        if (!isTrustedUpdateRequest(request)) { json(response, 403, { error: '已拒绝非同源更新请求。' }); return }
+        if (!isTrustedUpdateRequest(request)) { json(response, 403, { error: '已拒绝非本机同源更新请求。' }); return }
         if (installing) { json(response, 409, { error: '当前插件正在更新，请稍候。' }); return }
         const before = await status(options, target)
         if (before.latestVersion === undefined) { json(response, 503, { error: '暂时无法获取最新版本。' }); return }
         if (!before.updateAvailable) { json(response, 200, before); return }
         installing = true
         try { await install(target, `${options.packageName}@${before.latestVersion}`) } finally { installing = false }
-        json(response, 200, { ...before, updatedVersion: before.latestVersion, restartRequired: true, autoReload: typeof process.send === 'function' })
-        if (typeof process.send === 'function') setTimeout(() => { process.send?.(PLUGIN_UPDATE_IPC) }, 150).unref?.()
+        const notifyParent = target.desktopPnpm === undefined && typeof process.send === 'function'
+        const autoReload = target.desktopPnpm !== undefined || notifyParent
+        json(response, 200, { ...before, updatedVersion: before.latestVersion, restartRequired: true, autoReload })
+        if (notifyParent) setTimeout(() => { process.send?.(PLUGIN_UPDATE_IPC) }, 150).unref?.()
       } catch (error) {
         ctx.logger.warn(`plugin updater failed: ${String(error)}`)
         json(response, 503, { error: publicError(error) })

@@ -8,12 +8,16 @@ describe('独立插件更新', () => {
     expect(isNewerVersion('0.1.32', '0.1.33')).toBe(true)
     expect(isNewerVersion('0.1.32', '0.1.32')).toBe(false)
     expect(isNewerVersion('0.2.0', '0.1.99')).toBe(false)
+    expect(isNewerVersion('0.1.0-rc.2', '0.1.0-rc.10')).toBe(true)
+    expect(isNewerVersion('0.1.0-rc.10', '0.1.0-rc.2')).toBe(false)
   })
 
   it('自动更新必须同时满足专用请求头与同源约束', () => {
-    expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', origin: 'http://127.0.0.1:3000', host: '127.0.0.1:3000' } })).toBe(true)
+    expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', origin: 'http://127.0.0.1:3000', host: '127.0.0.1:3000' }, socket: { remoteAddress: '127.0.0.1' } })).toBe(true)
     expect(isTrustedUpdateRequest({ headers: { origin: 'http://127.0.0.1:3000', host: '127.0.0.1:3000' } })).toBe(false)
     expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', 'sec-fetch-site': 'cross-site' } })).toBe(false)
+    expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', host: '127.0.0.1:3000' }, socket: { remoteAddress: '127.0.0.1' } })).toBe(false)
+    expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', origin: 'http://127.0.0.1:3000', host: '127.0.0.1:3000' }, socket: { remoteAddress: '192.168.1.8' } })).toBe(false)
   })
 
   it('手工命令锁定当前 profile、包名、版本和官方源', () => {
@@ -54,6 +58,9 @@ describe('独立插件更新', () => {
     expect(updateUi).toContain('background:var(--dsw-alias-bg-layer-2')
     expect(updateUi).toContain('box-shadow:var(--dsw-shadow-lv3')
     expect(updateUi).toContain('border-radius:14px')
+    expect(updateUi).toContain('if (version.textContent !== versionLabel)')
+    expect(updateUi).toContain('else if (payload.latestCheckFailed)')
     expect(host).toContain("endpoint: '/api/michengai/dsh-agency-agents/update'")
+    expect(await readFile(new URL('./plugin-updater.ts', import.meta.url), 'utf8')).toContain("const notifyParent = target.desktopPnpm === undefined && typeof process.send === 'function'")
   })
 })

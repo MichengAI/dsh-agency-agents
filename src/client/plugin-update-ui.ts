@@ -14,6 +14,7 @@ type UpdatePayload = {
   packageName: string
   currentVersion: string
   latestVersion?: string
+  latestCheckFailed: boolean
   updateAvailable: boolean
   profileName: string
   canAutoUpdate: boolean
@@ -60,7 +61,8 @@ function validPayload(value: unknown): value is UpdatePayload {
   const item = value as Partial<UpdatePayload>
   return typeof item.packageName === 'string' && typeof item.currentVersion === 'string'
     && typeof item.updateAvailable === 'boolean' && typeof item.profileName === 'string'
-    && typeof item.canAutoUpdate === 'boolean' && (item.latestVersion === undefined || typeof item.latestVersion === 'string')
+    && typeof item.canAutoUpdate === 'boolean' && typeof item.latestCheckFailed === 'boolean'
+    && (item.latestVersion === undefined || typeof item.latestVersion === 'string')
 }
 
 async function requestStatus(endpoint: string, method: 'GET' | 'POST', signal?: AbortSignal): Promise<UpdatePayload> {
@@ -129,7 +131,8 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
         version.dataset.package = options.packageName
         heading.append(version)
       }
-      version.textContent = `v${payload.currentVersion}`
+      const versionLabel = `v${payload.currentVersion}`
+      if (version.textContent !== versionLabel) version.textContent = versionLabel
     }
     const links = row.querySelector<HTMLElement>(options.linksSelector)
     if (links === null || links.querySelector(`[data-mpi-check="${options.packageName}"]`) !== null) return
@@ -199,6 +202,7 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
       command.textContent = manualPluginUpdateCommand(payload?.profileName ?? '', options.packageName, payload?.latestVersion ?? 'latest')
       update.disabled = busy || payload?.canAutoUpdate !== true || payload.updateAvailable !== true
       if (payload === undefined) setMessage(text.checking)
+      else if (payload.latestCheckFailed) setMessage(text.failed, 'error')
       else if (payload.updateAvailable) setMessage(`${text.found}: v${payload.latestVersion ?? text.unknown}`)
       else setMessage(text.latest, 'success')
       if (payload !== undefined && !payload.canAutoUpdate && payload.updateAvailable) setMessage(text.unavailable)
