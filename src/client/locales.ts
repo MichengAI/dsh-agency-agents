@@ -8,7 +8,7 @@ import { EN_DIVISION, ZH_DIVISION } from '../names.js'
 /** 简体中文词条（key 集真相源）。 */
 export const zh = {
   'settings.nav': '专家',
-  'settings.title': '专家库',
+  'settings.title': '专家',
   'settings.loading': '正在加载专家…',
   'settings.viewProject': 'GitHub',
   'settings.feedback': '问题反馈',
@@ -69,7 +69,7 @@ export type AgencyKey = keyof typeof zh
 /** 英文词条，key 完整性由 satisfies 在编译期保证。 */
 export const en = {
   'settings.nav': 'Experts',
-  'settings.title': 'Expert Library',
+  'settings.title': 'Experts',
   'settings.loading': 'Loading experts…',
   'settings.viewProject': 'GitHub',
   'settings.feedback': 'Issues',

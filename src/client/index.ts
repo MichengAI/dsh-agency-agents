@@ -1,4 +1,11 @@
 import React from 'react'
+import { createRoot } from 'react-dom/client'
+import {
+  IconCloseOutline16,
+  IconCopyOutline16,
+  IconDownloadOutline16,
+  IconRefreshOutline16,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 import type { Context as CordisClientContext } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { InputTriggerSource, ReferenceInsert, TokenSpan } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
@@ -15,6 +22,7 @@ import { EXPERT_AVATAR_URLS } from './avatars.js'
 import { ROSTER } from './roster.js'
 import { zh, en, type AgencyKey } from './locales.js'
 import { TYPERT_REMOTE, type AgencyAgentsEnabledState, type AgencyAgentsPrompt } from './remote.js'
+import { observePluginUpdate, type PluginUpdateIconName } from './plugin-update-ui.js'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -27,6 +35,19 @@ const PLUGIN_ID = '@michengai/dsh-agency-agents'
 /** 本插件客户端词条字典命名空间。 */
 const NS = 'agency'
 export const COPY_PROMPT_FEEDBACK_MS = 1_600
+
+const UPDATE_ICON_COMPONENTS: Record<PluginUpdateIconName, React.ComponentType<{ readonly size?: number }>> = {
+  refresh: IconRefreshOutline16,
+  download: IconDownloadOutline16,
+  copy: IconCopyOutline16,
+  close: IconCloseOutline16,
+}
+
+function createPluginUpdateIcon(name: PluginUpdateIconName): HTMLElement {
+  const element = document.createElement('span')
+  createRoot(element).render(React.createElement(UPDATE_ICON_COMPONENTS[name], { size: 16 }))
+  return element
+}
 
 interface LineIconProps {
   readonly className?: string
@@ -1196,6 +1217,15 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   // 注册双语词条；t 为稳定引用（调用时读取当前 locale），locale 切换由
   // framework 以 (namespace, revision) 重新派生注入的 t 并触发重渲染。
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'agency-agents: dictionaries')
+  ctx.effect(() => observePluginUpdate({
+    endpoint: '/api/michengai/dsh-agency-agents/update',
+    packageName: '@michengai/dsh-agency-agents',
+    titleRowSelector: '.aag-title-row',
+    linksSelector: '.aag-settings-links',
+    zhName: '专家',
+    enName: 'Experts',
+    createIcon: createPluginUpdateIcon,
+  }), 'agency-agents: plugin update ui')
   const t = ctx.locale.bind(NS)
   const getActive = (): 'zh' | 'en' => ctx.locale.getSnapshot().active === 'en' ? 'en' : 'zh'
 

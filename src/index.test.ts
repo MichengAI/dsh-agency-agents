@@ -17,6 +17,8 @@ import { TYPERT_REMOTE } from './client/remote.js'
 import { installSettingsSectionCompat, settingsNamespaceCompat } from './settings-compat.js'
 
 const PACKAGE_MANIFEST = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
+  packageManager?: string
+  engines?: { node?: string }
   peerDependencies?: Record<string, string>
   peerDependenciesMeta?: Record<string, { optional?: boolean }>
   devDependencies?: Record<string, string>
@@ -59,7 +61,7 @@ describe('Config', () => {
   })
 
   it('宿主插件声明 settings 依赖，避免工具读取 locale 时被 Cordis 拒绝', () => {
-    expect(inject).toEqual(['tools', 'subagents', 'systemPrompt', 'settings'])
+    expect(inject).toEqual(['tools', 'subagents', 'systemPrompt', 'settings', 'webServer'])
   })
 
   it('客户端声明会话与会话输入服务，允许工具栏在 session slot 内插入引用', () => {
@@ -919,6 +921,11 @@ describe('expertAvatarIndex', () => {
 })
 
 describe('专家库目标稿样式契约', () => {
+  it('设置页大标题使用简洁的专家名称', () => {
+    expect(zh['settings.title']).toBe('专家')
+    expect(en['settings.title']).toBe('Experts')
+  })
+
   it('复制成功反馈使用短暂状态，避免卡片永久显示已复制', () => {
     expect(COPY_PROMPT_FEEDBACK_MS).toBe(1_600)
   })
@@ -974,8 +981,14 @@ describe('@ 菜单分组标题本地化', () => {
       }
     }
     expect(PACKAGE_MANIFEST.peerDependenciesMeta?.['@deepseek-ai/dsh-client-runtime']?.optional).toBe(true)
+    expect(PACKAGE_MANIFEST.dsh?.client?.inject).toContain('@deepseek-ai/dsh-client-ui-primitives')
     expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain('@deepseek-ai/dsh-client-ui-renderer')
     expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain('@deepseek-ai/dsh-client-ui-session')
+  })
+
+  it('使用套件统一的 Node 与 pnpm 版本', () => {
+    expect(PACKAGE_MANIFEST.engines?.node).toBe('^22.19.0 || >=24.0.0')
+    expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
   it('DSH 开发依赖固定为 RC.1', () => {

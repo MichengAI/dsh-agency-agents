@@ -36,9 +36,10 @@ import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
 import { installSettingsSectionCompat, settingsNamespaceCompat } from './settings-compat.js'
+import { registerPluginUpdater } from './plugin-updater.js'
 
 export const name = 'agency-agents'
-export const inject = ['tools', 'subagents', 'systemPrompt', 'settings']
+export const inject = ['tools', 'subagents', 'systemPrompt', 'settings', 'webServer']
 
 export const DEFAULT_DIVISIONS = [
   'academic',
@@ -462,6 +463,15 @@ export function resolveExpert<T extends { readonly slug: string; readonly name: 
 }
 
 export function apply(ctx: Context, config: Config): void {
+  if (typeof (ctx as Context & { webServer?: { register?: unknown } }).webServer?.register === 'function') {
+    const mountUpdater = () => registerPluginUpdater(ctx, {
+      endpoint: '/api/michengai/dsh-agency-agents/update',
+      packageName: '@michengai/dsh-agency-agents',
+      manifestUrl: new URL('../package.json', import.meta.url),
+    })
+    if (typeof ctx.effect === 'function') ctx.effect(mountUpdater, 'agency-agents: plugin updater')
+    else mountUpdater()
+  }
   const maxDepth = normalizeMaxDepth(config.maxDepth)
   let enabledSource: () => readonly string[] = () => []
   installSettingsSectionCompat(ctx, settingsNamespaceCompat('agency-agents'), z.object({ enabled: z.array(z.string()) }), { enabled: [] }, {
