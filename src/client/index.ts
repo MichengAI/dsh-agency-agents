@@ -280,6 +280,19 @@ export function sortExpertsByEnabled<T extends { readonly slug: string }>(
   return [...active, ...inactive]
 }
 
+/** 按首次进入设置页时保存的顺序排列；不在单项启停后重新排序。 */
+export function sortExpertsByOrder<T extends { readonly slug: string }>(
+  list: ReadonlyArray<T>,
+  order: ReadonlyArray<string>,
+): T[] {
+  const positions = new Map(order.map((slug, index) => [slug, index]))
+  return list.slice().sort((left, right) => {
+    const leftPosition = positions.get(left.slug) ?? Number.MAX_SAFE_INTEGER
+    const rightPosition = positions.get(right.slug) ?? Number.MAX_SAFE_INTEGER
+    return leftPosition - rightPosition
+  })
+}
+
 const DIVISION_COUNTS: Readonly<Record<string, number>> = Object.fromEntries(
   DIVISION_ORDER.map((division) => [division, EXPERTS.filter((expert) => expert.division === division).length]),
 )
@@ -441,7 +454,7 @@ const MENU_NAME_OVERRIDE = EXPERT_MENU_ITEM_SELECTORS
   .join(',')
 /** Windows 优先使用彩色 emoji 字体，名称中的普通文字由后续字体安全回退。 */
 const EXPERT_MENU_NAME_STYLE = 'flex:1 1 auto;max-width:none;min-width:0;font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif!important;font-variant-emoji:emoji!important'
-const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;margin-right:-8px}.aag-btn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 4px 0 8px;border:none;border-radius:24px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100vh - 24px);overflow-y:auto;border:1px solid var(--dsw-alias-border-inverted);border-radius:12px;background:var(--dsw-specific-menu);box-shadow:var(--dsw-shadow-lv3);z-index:10000}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:10px;background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-emoji{flex:0 0 auto;font-size:16px}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}[data-composer-card] :has(> button[aria-haspopup="listbox"]) > :nth-child(2){order:2}'
+const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;margin-right:-8px}.aag-btn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 4px 0 8px;border:none;border-radius:24px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100dvh - 24px);overflow-y:auto;border:1px solid var(--dsw-alias-border-inverted);border-radius:12px;background:var(--dsw-specific-menu);box-shadow:var(--dsw-shadow-lv3);z-index:10000}.aag-menu[data-placement="below"]{top:calc(100% + 4px);bottom:auto}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:10px;background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-emoji{flex:0 0 auto;font-size:16px}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}[data-composer-card] :has(> button[aria-haspopup="listbox"]) > :nth-child(2){order:2}'
 // 设置页版式对齐 dsh-skills-manager：工具栏 + 汇总条 + 分组卡片 + 行内启停按钮。
 const SETTINGS_CSS = `
 .aag-section{box-sizing:border-box;display:flex;min-width:0;max-width:760px;width:100%;margin:0 auto;flex-direction:column;gap:16px;padding:0 0 32px;color:var(--dsw-alias-label-primary)}
@@ -650,6 +663,30 @@ export function resolveExpertToolbarClick(enabledCount: number): ExpertToolbarAc
   return enabledCount === 0 ? 'settings' : 'menu'
 }
 
+export type ExpertMenuPlacement = 'above' | 'below'
+
+export interface ExpertMenuPosition {
+  readonly placement: ExpertMenuPlacement
+  readonly maxHeight: number
+}
+
+/**
+ * 让浮层始终留在可视区域内。输入框通常贴近底部，因此默认向上展开；
+ * 当上方空间更小时，改为向下展开并将列表限制在实际可滚动的高度内。
+ */
+export function resolveExpertMenuPosition(
+  trigger: Pick<DOMRect, 'top' | 'bottom'>,
+  viewportHeight: number,
+): ExpertMenuPosition {
+  const gap = 4
+  const viewportInset = 12
+  const above = Math.max(0, Math.floor(trigger.top - gap - viewportInset))
+  const below = Math.max(0, Math.floor(viewportHeight - trigger.bottom - gap - viewportInset))
+  return above >= below
+    ? { placement: 'above', maxHeight: above }
+    : { placement: 'below', maxHeight: below }
+}
+
 const SETTINGS_TRIGGER_LABELS = new Set(['设置', 'Settings'])
 const COMPOSER_TRIGGER_SCOPE = '[data-composer-card], .aag-btn-wrap'
 
@@ -824,6 +861,35 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
   const [open, setOpen] = React.useState(false)
   const [enabled, setEnabled] = React.useState<ReadonlySet<string>>(new Set())
   const [insertError, setInsertError] = React.useState<string | null>(null)
+  const [menuPosition, setMenuPosition] = React.useState<ExpertMenuPosition | undefined>()
+  const rootRef = React.useRef<HTMLDivElement | null>(null)
+
+  React.useLayoutEffect(() => {
+    if (!open) return
+    const updatePosition = (): void => {
+      const root = rootRef.current
+      if (root === null) return
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+      const next = resolveExpertMenuPosition(root.getBoundingClientRect(), viewportHeight)
+      setMenuPosition((current) => current?.placement === next.placement && current.maxHeight === next.maxHeight ? current : next)
+    }
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    const visualViewport = window.visualViewport
+    visualViewport?.addEventListener('resize', updatePosition)
+    visualViewport?.addEventListener('scroll', updatePosition)
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(updatePosition)
+    if (rootRef.current !== null) observer?.observe(rootRef.current)
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+      visualViewport?.removeEventListener('resize', updatePosition)
+      visualViewport?.removeEventListener('scroll', updatePosition)
+      observer?.disconnect()
+    }
+  }, [open])
+
   React.useEffect(() => {
     if (!open) return
     const onPointerDown = (ev: PointerEvent): void => {
@@ -861,15 +927,19 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
 
   const groups = groupByDivision(EXPERTS.filter((e) => enabled.has(e.slug)), props.getActive())
   const menu = open
-    ? React.createElement('div', { className: 'aag-menu' },
+    ? React.createElement('div', {
+      className: 'aag-menu',
+      'data-placement': menuPosition?.placement,
+      style: menuPosition === undefined ? undefined : { maxHeight: `${menuPosition.maxHeight}px` },
+    },
       insertError === null ? null : React.createElement('div', { className: 'aag-error', role: 'alert' }, insertError),
       groups.length === 0
         ? React.createElement('div', { className: 'aag-menu-empty' }, props.t('menu.empty'))
         : groups.map((g) => menuGroup(g, pick, props.t, props.getActive)))
     : null
 
-  return React.createElement('div', { className: 'aag-btn-wrap' },
-    React.createElement('button', { type: 'button', className: 'aag-btn', title: props.t('button.title'), onMouseDown: keepComposerFocus, onClick }, expertIcon(), React.createElement('span', null, props.t('settings.nav'))),
+  return React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef },
+    React.createElement('button', { type: 'button', className: 'aag-btn', title: props.t('button.title'), 'aria-expanded': open, onMouseDown: keepComposerFocus, onClick }, expertIcon(), React.createElement('span', null, props.t('settings.nav'))),
     menu)
 }
 
@@ -1028,6 +1098,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   onEnabledChange?: (enabled: ReadonlySet<string>) => void
 }): React.ReactElement {
   const [state, setState] = React.useState<EnabledState | null>(null)
+  const [initialOrder, setInitialOrder] = React.useState<ReadonlyArray<string> | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [query, setQuery] = React.useState('')
   const [division, setDivision] = React.useState('')
@@ -1041,6 +1112,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   const load = React.useCallback((): void => {
     void readEnabled(props.remote).then((current) => {
       setState(current)
+      setInitialOrder((order) => order ?? sortExpertsByEnabled(EXPERTS, current.enabled).map((expert) => expert.slug))
       setError(null)
       props.onEnabledChange?.(current.enabled)
     }).catch((err: unknown) => { setError(err instanceof Error ? err.message : String(err)) })
@@ -1051,6 +1123,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     void readEnabled(props.remote).then((current) => {
       if (!alive) return
       setState(current)
+      setInitialOrder((order) => order ?? sortExpertsByEnabled(EXPERTS, current.enabled).map((expert) => expert.slug))
       props.onEnabledChange?.(current.enabled)
     }).catch((err: unknown) => { if (alive) setError(err instanceof Error ? err.message : String(err)) })
     return () => { alive = false }
@@ -1126,7 +1199,10 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   if (state === null) {
     nodes.push(React.createElement('div', { key: 'loading', className: 'aag-note' }, props.t('settings.loading')))
   } else {
-    const filtered = sortExpertsByEnabled(filterExperts(EXPERTS, { query, division }), state.enabled)
+    const ordered = initialOrder === null
+      ? sortExpertsByEnabled(EXPERTS, state.enabled)
+      : sortExpertsByOrder(EXPERTS, initialOrder)
+    const filtered = filterExperts(ordered, { query, division })
     const enabledCount = [...state.enabled].filter((slug) => EXPERTS.some((expert) => expert.slug === slug)).length
     const total = EXPERTS.length
     const hasFilter = normalizeExpertQuery(query) !== '' || division !== ''

@@ -9,7 +9,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote, { readExpertPrompt, readLocalizedExpertPrompt } from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, COPY_PROMPT_FEEDBACK_MS, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, pickHostSettingsTrigger, resolveExpertToolbarClick, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, writeErrorKey, writeErrorMessage } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, COPY_PROMPT_FEEDBACK_MS, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, pickHostSettingsTrigger, resolveExpertMenuPosition, resolveExpertToolbarClick, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, sortExpertsByOrder, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
@@ -872,6 +872,21 @@ describe('filterExperts', () => {
     expect(sorted.map((expert) => expert.slug)).toEqual(['second', 'fourth', 'first', 'third'])
     expect(list.map((expert) => expert.slug)).toEqual(['first', 'second', 'third', 'fourth'])
   })
+
+  it('首次排序后，单项启停不会改变当前设置页的卡片顺序', () => {
+    const list = [
+      { slug: 'first' },
+      { slug: 'second' },
+      { slug: 'third' },
+      { slug: 'fourth' },
+    ]
+    const initialOrder = sortExpertsByEnabled(list, new Set(['second', 'fourth'])).map((expert) => expert.slug)
+
+    expect(sortExpertsByOrder(list, initialOrder).map((expert) => expert.slug))
+      .toEqual(['second', 'fourth', 'first', 'third'])
+    expect(sortExpertsByOrder([list[0]!, list[3]!], initialOrder).map((expert) => expert.slug))
+      .toEqual(['fourth', 'first'])
+  })
 })
 
 describe('expertAvatarIndex', () => {
@@ -1205,6 +1220,15 @@ describe('@ 菜单分组标题本地化', () => {
     expect(resolveExpertToolbarClick(3)).toBe('menu')
     expect(zh['menu.empty']).toContain('设置')
     expect(en['menu.empty']).toContain('Settings')
+  })
+
+  it('专家菜单按触发按钮实际可用空间展开并保持在视口内', () => {
+    expect(resolveExpertMenuPosition({ top: 640, bottom: 668 } as DOMRect, 694))
+      .toEqual({ placement: 'above', maxHeight: 624 })
+    expect(resolveExpertMenuPosition({ top: 56, bottom: 84 } as DOMRect, 694))
+      .toEqual({ placement: 'below', maxHeight: 594 })
+    expect(resolveExpertMenuPosition({ top: 12, bottom: 40 } as DOMRect, 52))
+      .toEqual({ placement: 'above', maxHeight: 0 })
   })
 
   it('设置入口只认明确的设置按钮，忽略输入区「+」和其他弹窗', () => {

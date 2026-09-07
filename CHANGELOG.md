@@ -6,6 +6,11 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+## 0.1.34 - 2026-09-08
+
+- Fixed the composer Expert picker so its scrollable menu opens within the available viewport space instead of being clipped when many experts are enabled.
+- Kept the initial enabled-first ordering in Expert Settings stable while toggling individual experts, preventing cards from jumping during bulk setup.
+
 ## 0.1.33 - 2026-09-07
 
 - Added independent in-product update checks with automatic updates when a verified DSH update service is available and a profile-specific manual fallback otherwise.
