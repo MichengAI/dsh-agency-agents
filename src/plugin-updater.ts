@@ -1,9 +1,9 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { basename, isAbsolute, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const PLUGIN_UPDATE_HEADER = 'x-michengai-plugin-update'
@@ -67,11 +67,36 @@ function profileNameFromArgv(argv: readonly string[]): string | undefined {
   return argv[2] === 'web' ? 'web' : undefined
 }
 
+export function isDshCliEntry(entry: string, manifest: unknown, packageRoot: string): boolean {
+  if (typeof manifest !== 'object' || manifest === null) return false
+  const value = manifest as { name?: unknown; bin?: unknown }
+  if (value.name !== '@deepseek-ai/dsh') return false
+  const bin = typeof value.bin === 'string'
+    ? value.bin
+    : typeof value.bin === 'object' && value.bin !== null
+      ? (value.bin as { dsh?: unknown }).dsh
+      : undefined
+  return typeof bin === 'string' && bin !== '' && !isAbsolute(bin) && resolve(packageRoot, bin) === resolve(entry)
+}
+
 function cliEntry(): string | undefined {
   const value = process.argv[1]
   if (value === undefined || value === '') return undefined
   const entry = value.startsWith('file:') ? fileURLToPath(value) : resolve(process.cwd(), value)
-  return existsSync(entry) ? entry : undefined
+  if (!existsSync(entry)) return undefined
+  for (let directory = dirname(entry); ;) {
+    const manifestPath = resolve(directory, 'package.json')
+    if (existsSync(manifestPath)) {
+      try {
+        if (isDshCliEntry(entry, JSON.parse(readFileSync(manifestPath, 'utf8')), directory)) return entry
+      } catch {
+        // Keep searching parent directories when a package manifest is unreadable.
+      }
+    }
+    const parent = dirname(directory)
+    if (parent === directory) return undefined
+    directory = parent
+  }
 }
 
 function runtime(ctx: UpdateContext): Runtime {

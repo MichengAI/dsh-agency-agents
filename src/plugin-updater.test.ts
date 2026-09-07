@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 import { handlePluginUpdateEscape, manualPluginUpdateCommand } from './client/plugin-update-ui.js'
-import { isNewerVersion, isTrustedUpdateRequest, PLUGIN_UPDATE_HEADER } from './plugin-updater.js'
+import { isDshCliEntry, isNewerVersion, isTrustedUpdateRequest, PLUGIN_UPDATE_HEADER } from './plugin-updater.js'
 
 describe('独立插件更新', () => {
   it('只把更高 semver 识别为更新', () => {
@@ -18,6 +18,15 @@ describe('独立插件更新', () => {
     expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', 'sec-fetch-site': 'cross-site' } })).toBe(false)
     expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', host: '127.0.0.1:3000' }, socket: { remoteAddress: '127.0.0.1' } })).toBe(false)
     expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', origin: 'http://127.0.0.1:3000', host: '127.0.0.1:3000' }, socket: { remoteAddress: '192.168.1.8' } })).toBe(false)
+  })
+
+  it('只把 DSH 自身声明的 CLI 入口视为自动更新能力', () => {
+    const packageRoot = 'C:/tools/dsh'
+    const entry = 'C:/tools/dsh/lib/bin.js'
+    expect(isDshCliEntry(entry, { name: '@deepseek-ai/dsh', bin: { dsh: 'lib/bin.js' } }, packageRoot)).toBe(true)
+    expect(isDshCliEntry(entry, { name: '@deepseek-ai/dsh', bin: 'lib/bin.js' }, packageRoot)).toBe(true)
+    expect(isDshCliEntry(entry, { name: '@deepseek-ai/dsh', bin: { dsh: 'lib/other.js' } }, packageRoot)).toBe(false)
+    expect(isDshCliEntry(entry, { name: 'other-cli', bin: { dsh: 'lib/bin.js' } }, packageRoot)).toBe(false)
   })
 
   it('手工命令锁定当前 profile、包名、版本和官方源', () => {
@@ -47,10 +56,9 @@ describe('独立插件更新', () => {
     expect(client).toContain("zhName: '专家'")
     expect(client).toContain("enName: 'Experts'")
     expect(client).toContain('createIcon: createPluginUpdateIcon')
-    expect(client).toContain('IconRefreshOutline16')
-    expect(client).toContain('IconDownloadOutline16')
-    expect(client).toContain('IconCopyOutline16')
-    expect(client).toContain('IconCloseOutline16')
+    expect(client).toContain('UPDATE_ICON_PATHS')
+    expect(client).toContain("document.createElementNS('http://www.w3.org/2000/svg', 'svg')")
+    expect(client).not.toContain('react-dom/client')
     expect(updateUi).toContain('data-mpi-label')
     expect(updateUi).toContain("overlay.addEventListener('keydown'")
     expect(updateUi).toContain('<header class="mpi-head"><h2></h2><button type="button" class="mpi-dialog-close" data-action="close"></button></header>')
@@ -62,5 +70,6 @@ describe('独立插件更新', () => {
     expect(updateUi).toContain('else if (payload.latestCheckFailed)')
     expect(host).toContain("endpoint: '/api/michengai/dsh-agency-agents/update'")
     expect(await readFile(new URL('./plugin-updater.ts', import.meta.url), 'utf8')).toContain("const notifyParent = target.desktopPnpm === undefined && typeof process.send === 'function'")
+    expect(await readFile(new URL('./plugin-updater.ts', import.meta.url), 'utf8')).toContain('isDshCliEntry')
   })
 })

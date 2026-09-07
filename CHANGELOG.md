@@ -6,6 +6,9 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+- Added independent in-product update checks with automatic updates when a verified DSH update service is available and a profile-specific manual fallback otherwise.
+- Removed the update-button dependency on `react-dom/client` so the client can load on Hosts that do not register that module id.
+
 ## 0.1.32 — 2026-09-05
 
 - Completed bilingual coverage for all 321 experts: English names, descriptions, and personas now render in English, while every expert has a Chinese display name and Chinese persona.
