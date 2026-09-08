@@ -58,8 +58,6 @@ For a ready-to-use workbench, download [DSH Codex Desktop](https://github.com/Mi
 | [BTW](https://github.com/MichengAI/dsh-btw) | Ask side questions without interrupting the main task |
 | [Simplify](https://github.com/MichengAI/dsh-simplify) | Use /simplify to improve code within your Git changes |
 
-The desktop introduction and download site is maintained in the [website repository](https://github.com/MichengAI/dsh-codex-desktop-website).
-
 ## Prerequisites
 
 - A working DeepSeek Harness Web installation with `dsh` available in PowerShell.
@@ -747,7 +745,3 @@ pnpm verify
 ## License and attribution
 
 This project’s TypeScript source, build scripts, and documentation use [Apache License 2.0](LICENSE). Bundled personas originate from [The Agency](https://github.com/msitarzewski/agency-agents) and remain MIT-licensed; see [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE).
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for the five most recent releases.
