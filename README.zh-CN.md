@@ -22,13 +22,12 @@
 
 ## 功能概览
 
-- 在「设置 → 专家」中按分类筛选或搜索，再启用或停用内置专家。
-- 在输入框的「专家」中按当前语言的名称召唤已启用的专家处理完整任务。
-- 提供 `list_experts` 与 `summon_expert` 工具，分别用于发现专家和启动一次性子代理。
-- 内置 321 份 persona，无需额外下载；也可接入自行同步的专家目录。
-- 可把一句话复制到 DSH、Codex 或 WorkBuddy，让对方代装到本机 DSH。
+遇到代码审查、设计、运营或研究任务时，在 DSH 中选一位合适的专家，让它从专业角度协助你完成工作。内置 321 名专家，安装后即可选择使用。
 
-主会话保留任务上下文、判断和最终交付；专家子代理只提供专业视角，不能继续召唤专家，避免递归委派。
+- **找到合适的专家**：在「设置 → 专家」按分类筛选或搜索。
+- **只启用需要的角色**：随时启用或停用专家，让选择列表更简洁。
+- **直接交代任务**：在输入框用 `@` 或「专家」选择角色，再写下完整需求。
+- **由主会话统一交付**：专家提供专业分析，主会话汇总结果；专家不会继续召唤其他专家。
 
 ## 界面预览
 
@@ -46,13 +45,20 @@
 
 ## DSH 产品生态
 
-本产品既可以独立安装，也可以随桌面端或 Web 套件一起使用。它们共享同一个 DSH 核心，但面向不同的使用方式：
+想直接使用完整工作台，可下载 [DSH Codex Desktop](https://github.com/MichengAI/dsh-codex-desktop/releases)；已有 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 环境，可按需独立安装以下 8 个自研插件。桌面端已随附这些插件。
 
-| 产品 | 与本产品的关系 |
+| 插件 | 你可以用它做什么 |
 | --- | --- |
-| [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) | 本产品的运行宿主，提供模型、会话、工具和插件系统 |
-| [DSH Codex Desktop](https://github.com/MichengAI/dsh-codex-desktop) | 下载安装即用的桌面产品，已内置本产品和其他 5 个功能产品 |
-| 6 个功能产品 | [Codex UI](https://github.com/MichengAI/dsh-codex-ui) · [IM Connect](https://github.com/MichengAI/dsh-im-connect) · [Automation](https://github.com/MichengAI/dsh-automation) · [Skills Manager](https://github.com/MichengAI/dsh-skills-manager) · [Archive Manager](https://github.com/MichengAI/dsh-archive-manager) · [Agency Agents](https://github.com/MichengAI/dsh-agency-agents) |
+| [Codex UI](https://github.com/MichengAI/dsh-codex-ui) | 整理项目与会话、搜索任务、跳转对话轮次 |
+| [IM Connect](https://github.com/MichengAI/dsh-im-connect) | 从微信、飞书、钉钉等消息平台下任务、收回复 |
+| [Automation](https://github.com/MichengAI/dsh-automation) | 按计划执行任务，查看每次运行的结果 |
+| [Skills Manager](https://github.com/MichengAI/dsh-skills-manager) | 统一查找、启停、创建和导入本机技能 |
+| [Archive Manager](https://github.com/MichengAI/dsh-archive-manager) | 搜索、恢复或清理已归档会话 |
+| [Agency Agents](https://github.com/MichengAI/dsh-agency-agents) | 按任务选择并召唤专业角色 |
+| [BTW](https://github.com/MichengAI/dsh-btw) | 在当前上下文中临时旁问，不打断主任务 |
+| [Simplify](https://github.com/MichengAI/dsh-simplify) | 用 /simplify 整理 Git 改动范围内的代码 |
+
+桌面端介绍与下载站的源码见[官网仓库](https://github.com/MichengAI/dsh-codex-desktop-website)。
 
 ## 前置条件
 
@@ -62,39 +68,15 @@
 
 ## 安装
 
-`dsh plugin add` 会转发到 profile 目录里的 `pnpm add`。不写版本、不指定官方源时，本机镜像和最短发布间隔可能让你停在旧版。
+以下安装命令使用官方 npm 源。
 
-### 交给其他 Agent 一句话安装
+### 让 Agent 帮你安装（推荐）
 
-本插件运行在 DeepSeek Harness Web 里。把下面其中一句复制到 DSH、Codex 或 WorkBuddy，让它代你安装到本机 `web` profile。
-
-从 npm 安装：
+把下面这段话发给任意能够执行本机终端命令的 Agent。将 `web` 替换为实际使用的 profile；安装完成后，在 DSH 中使用本插件。
 
 ```text
-请把 DSH 插件 @michengai/dsh-agency-agents 最新版装进本机 web profile，使用官方 npm 源执行：dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/。装完执行 dsh --profile web --dump-config，确认已挂载 agency-agents，并提醒我重启 DSH Web 后硬刷新浏览器。
+请将 DSH 插件 @michengai/dsh-agency-agents 安装到本机 web profile，执行：dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/。安装后执行 dsh --profile web --dump-config，确认配置包含 agency-agents, agency-agents-remote，并告诉我如何重新加载 DSH 和开始使用。
 ```
-
-从源码安装：
-
-```text
-请从源码安装 DSH 插件 https://github.com/MichengAI/dsh-agency-agents：克隆到本机后执行 pnpm install --frozen-lockfile 和 pnpm build，再用 dsh plugin --profile web add . 把当前目录装进 web profile。不要只复制 lib。装完执行 dsh --profile web --dump-config，确认已挂载 agency-agents，并提醒我重启 DSH Web 后硬刷新浏览器。
-```
-
-| 产品 | 怎么用 |
-| --- | --- |
-| DSH | 把上面其中一句发给当前会话。 |
-| Codex | 把上面其中一句发给 Codex，让它在本机执行安装。 |
-| WorkBuddy | 把上面其中一句发给 WorkBuddy；源码安装也可同时粘贴仓库地址 `https://github.com/MichengAI/dsh-agency-agents`。 |
-
-Codex 和 WorkBuddy 只负责代装；装好后仍要打开 DSH Web 使用「设置 → 专家」。
-
-也可以自己执行同一条 npm 命令：
-
-```powershell
-dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/
-```
-
-未把 `dsh` 装进 PATH 时，把开头的 `dsh` 换成 `npx --yes @deepseek-ai/dsh`。
 
 ### 从官方 npm 安装最新版
 
@@ -110,24 +92,6 @@ dsh --profile web --dump-config
 需要钉死某一版时，把 `@latest` 换成具体版本，例如 `@0.1.17`。
 
 配置输出中应包含 `agency-agents` 与 `agency-agents-remote`。安装后重启 DSH Web 并在浏览器硬刷新；请勿手工复制客户端文件，否则设置页所需的 Remote 服务不会被挂载。
-
-### 从源码安装
-
-适用于调试或使用未发布改动。克隆后的本地路径就是插件安装路径：
-
-```powershell
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
-Set-Location D:\Repository\deepseek-harness-plugin
-git clone https://github.com/MichengAI/dsh-agency-agents.git
-Set-Location .\dsh-agency-agents
-pnpm install --frozen-lockfile
-pnpm build
-dsh plugin --profile web add .
-dsh --profile web --dump-config
-```
-
-完成后重启 DSH Web 并硬刷新浏览器。`dsh plugin ... add .` 会读取当前目录的包信息和 `cordis.patch.yml`；不要改为直接复制 `lib` 目录。
 
 ## 在线更新
 
@@ -729,6 +693,24 @@ dsh --profile web --dump-config
 也可设置 `AGENCY_AGENTS_ROOT` 环境变量指定外部专家目录。外部目录里的 persona 正文会注入为子代理系统提示，只应从可信来源加载。子代理 provider 必须支持 persona 和工具过滤能力。`summon_experts` 一次最多 8 名专家，并发 4，部分失败仍返回成功结果。
 
 ## 二次开发
+
+### 从源码安装
+
+适用于调试或使用未发布改动。克隆后的本地路径就是插件安装路径：
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+Set-Location D:\Repository\deepseek-harness-plugin
+git clone https://github.com/MichengAI/dsh-agency-agents.git
+Set-Location .\dsh-agency-agents
+pnpm install --frozen-lockfile
+pnpm build
+dsh plugin --profile web add .
+dsh --profile web --dump-config
+```
+
+完成后重启 DSH Web 并硬刷新浏览器。`dsh plugin ... add .` 会读取当前目录的包信息和 `cordis.patch.yml`；不要改为直接复制 `lib` 目录。
 
 - Host 端入口：[src\index.ts](src/index.ts)，负责加载专家目录、注册工具和设置项。
 - Remote 契约与实现：[src\remote-contract.ts](src/remote-contract.ts)、[src\remote.ts](src/remote.ts)。

@@ -22,13 +22,12 @@
 
 ## Features
 
-- Filter by category or search, then enable or disable bundled experts in **Settings → Experts**.
-- Summon enabled experts by their localized name from the composer's **Experts** picker.
-- Use `list_experts` to discover experts and `summon_expert` to start a one-shot specialist subagent.
-- Use 321 bundled personas immediately, or connect a separately synchronized expert directory.
-- Paste one sentence into DSH, Codex, or WorkBuddy and let that agent install the plugin locally.
+Choose a specialist in DSH for code review, design, operations, or research. All 321 experts are bundled and ready to use after installation.
 
-The parent session keeps task context, judgment, and the final answer. Expert children provide a specialist perspective only and cannot summon further experts.
+- **Find the right expert**: filter by category or search in **Settings → Experts**.
+- **Enable the roles you need**: keep the picker focused by enabling or disabling experts.
+- **Describe the task directly**: use `@` or the **Experts** picker, then write your complete request.
+- **Get one final delivery**: experts provide specialist analysis and the parent conversation brings the results together. Experts cannot summon further experts.
 
 ## Screenshots
 
@@ -46,13 +45,20 @@ The localized expert name is inserted as a short tag; write the complete task ne
 
 ## DSH product ecosystem
 
-This product can be installed independently or used through the desktop app or Web suite. They share the same DSH core but serve different ways of working:
+For a ready-to-use workbench, download [DSH Codex Desktop](https://github.com/MichengAI/dsh-codex-desktop/releases). If you already use [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), install any of these eight plugins individually. The desktop app includes all eight.
 
-| Product | Relationship to this product |
+| Plugin | What you can do |
 | --- | --- |
-| [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) | The host runtime that provides models, sessions, tools, and the plugin system |
-| [DSH Codex Desktop](https://github.com/MichengAI/dsh-codex-desktop) | A ready-to-install desktop product with this product and the other five feature products built in |
-| Six feature products | [Codex UI](https://github.com/MichengAI/dsh-codex-ui) · [IM Connect](https://github.com/MichengAI/dsh-im-connect) · [Automation](https://github.com/MichengAI/dsh-automation) · [Skills Manager](https://github.com/MichengAI/dsh-skills-manager) · [Archive Manager](https://github.com/MichengAI/dsh-archive-manager) · [Agency Agents](https://github.com/MichengAI/dsh-agency-agents) |
+| [Codex UI](https://github.com/MichengAI/dsh-codex-ui) | Organize projects and conversations, search tasks, and navigate chat turns |
+| [IM Connect](https://github.com/MichengAI/dsh-im-connect) | Send tasks and receive replies through your usual messenger |
+| [Automation](https://github.com/MichengAI/dsh-automation) | Schedule tasks and review each run |
+| [Skills Manager](https://github.com/MichengAI/dsh-skills-manager) | Find, enable, create, and import local skills |
+| [Archive Manager](https://github.com/MichengAI/dsh-archive-manager) | Search, restore, or clean up archived conversations |
+| [Agency Agents](https://github.com/MichengAI/dsh-agency-agents) | Choose and summon specialists for your task |
+| [BTW](https://github.com/MichengAI/dsh-btw) | Ask side questions without interrupting the main task |
+| [Simplify](https://github.com/MichengAI/dsh-simplify) | Use /simplify to improve code within your Git changes |
+
+The desktop introduction and download site is maintained in the [website repository](https://github.com/MichengAI/dsh-codex-desktop-website).
 
 ## Prerequisites
 
@@ -62,39 +68,15 @@ This product can be installed independently or used through the desktop app or W
 
 ## Installation
 
-`dsh plugin add` forwards to `pnpm add` in the profile directory. Without a version and official registry, a local mirror or minimum-release-age policy can leave you on an older build.
+The installation commands below use the official npm registry.
 
-### Ask another agent to install it
+### Ask an agent to install it (recommended)
 
-This plugin runs inside DeepSeek Harness Web. Copy one of the sentences below into DSH, Codex, or WorkBuddy and let that agent install it into your local `web` profile.
-
-From npm:
+Send the prompt below to any agent that can run terminal commands on your computer. Replace `web` with your actual profile. Once installed, use the plugin in DSH.
 
 ```text
-Install the latest DSH plugin @michengai/dsh-agency-agents into my local web profile using the official npm registry: dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/. Then run dsh --profile web --dump-config, confirm agency-agents is mounted, and remind me to restart DSH Web and hard-refresh the browser.
+Install the DSH plugin @michengai/dsh-agency-agents into my local web profile by running: dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/. Then run dsh --profile web --dump-config, confirm the configuration includes agency-agents, agency-agents-remote, and explain how to reload DSH and start using the plugin.
 ```
-
-From source:
-
-```text
-Install the DSH plugin from source at https://github.com/MichengAI/dsh-agency-agents: clone it, run pnpm install --frozen-lockfile and pnpm build, then run dsh plugin --profile web add . from that directory. Do not copy lib by itself. Then run dsh --profile web --dump-config, confirm agency-agents is mounted, and remind me to restart DSH Web and hard-refresh the browser.
-```
-
-| Product | How to use it |
-| --- | --- |
-| DSH | Send one of the sentences above to the current session. |
-| Codex | Send one of the sentences above to Codex and let it install locally. |
-| WorkBuddy | Send one of the sentences above to WorkBuddy; for a source install you can also paste `https://github.com/MichengAI/dsh-agency-agents`. |
-
-Codex and WorkBuddy only install the plugin. After that, open DSH Web and use **Settings → Experts**.
-
-You can also run the same npm command yourself:
-
-```powershell
-dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/
-```
-
-If `dsh` is not on PATH, replace the leading `dsh` with `npx --yes @deepseek-ai/dsh`.
 
 ### Install the latest package from the official npm registry
 
@@ -110,24 +92,6 @@ dsh --profile web --dump-config
 To pin a release, replace `@latest` with a version such as `@0.1.17`.
 
 The configuration output should contain `agency-agents` and `agency-agents-remote`. Restart DSH Web and hard-refresh the browser. Do not copy client files manually: the Settings page needs the mounted Remote service.
-
-### Install from source
-
-Use this for debugging or unpublished changes. The cloned directory becomes the plugin source path:
-
-```powershell
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
-Set-Location D:\Repository\deepseek-harness-plugin
-git clone https://github.com/MichengAI/dsh-agency-agents.git
-Set-Location .\dsh-agency-agents
-pnpm install --frozen-lockfile
-pnpm build
-dsh plugin --profile web add .
-dsh --profile web --dump-config
-```
-
-Restart DSH Web and hard-refresh the browser. `dsh plugin ... add .` reads the package metadata and `cordis.patch.yml`; do not install by copying `lib` directly.
 
 ## Updates
 
@@ -729,6 +693,24 @@ Evaluating sources and synthesizing evidence into traceable findings.
 Set `AGENCY_AGENTS_ROOT` to use an external expert directory. Persona bodies from that directory are injected as the child system prompt, so load them only from a trusted source. The provider must support persona and tool filtering. `summon_experts` accepts at most 8 experts with a concurrency of 4 and still returns successful answers when some experts fail.
 
 ## Secondary development
+
+### Install from source
+
+Use this for debugging or unpublished changes. The cloned directory becomes the plugin source path:
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+Set-Location D:\Repository\deepseek-harness-plugin
+git clone https://github.com/MichengAI/dsh-agency-agents.git
+Set-Location .\dsh-agency-agents
+pnpm install --frozen-lockfile
+pnpm build
+dsh plugin --profile web add .
+dsh --profile web --dump-config
+```
+
+Restart DSH Web and hard-refresh the browser. `dsh plugin ... add .` reads the package metadata and `cordis.patch.yml`; do not install by copying `lib` directly.
 
 - [src\index.ts](src/index.ts): host entry point for catalog loading, tools, and settings.
 - [src\remote-contract.ts](src/remote-contract.ts) and [src\remote.ts](src/remote.ts): Remote contract and implementation.
