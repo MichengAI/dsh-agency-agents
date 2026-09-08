@@ -726,8 +726,6 @@ pnpm verify
 dsh plugin --profile web add .
 ```
 
-Handoff and iteration notes stay in the local `docs` directory and are not tracked in Git; a fresh clone will not include that handover entry.
-
 The published package includes `lib`, `assets`, the patch, and the root README/license files. Do not publish `node_modules` or local development files.
 
 ## Validation
