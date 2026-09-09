@@ -136,6 +136,8 @@ export function createExpertLibrary(
       return { enabled: next, revision: store.revision() }
     },
     async cleanupDeleted() {
+      // 修订号与同步读取绑定；排队期间发生其他写入时由宿主拒绝旧快照。
+      const expectedRevision = store.revision()
       const state = read()
       if (!state.customExperts.some(item => item.deleted !== undefined || item.wasEnabled !== undefined)) return
       const records = activeRecords(state.customExperts)
@@ -143,7 +145,7 @@ export function createExpertLibrary(
       await store.mutate([
         { op: 'set', path: ['customExperts'], value: records },
         { op: 'set', path: ['enabled'], value: state.enabled.filter(slug => !deleted.has(slug)) },
-      ], store.revision())
+      ], expectedRevision)
     },
   }
   return library

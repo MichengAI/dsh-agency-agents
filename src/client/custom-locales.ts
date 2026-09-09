@@ -20,7 +20,7 @@ export const customZh = {
   'custom.deleteHint': '专家内容将永久删除，无法撤销；历史消息保留。',
   'custom.deleted': '专家已永久删除。',
   'custom.emptyTitle': '创建你的第一位专家', 'custom.emptyHint': '把专业经验和工作方法，变成随时可召唤的伙伴。',
-  'custom.unavailable': '草稿中的专家已停用或删除。请移除标签重新选择，或在设置中启用。',
+  'custom.unavailable': '草稿中的专家已停用、删除或存在名称冲突。请移除标签重新选择，或前往设置检查状态；名称冲突需先改名。',
   'custom.conflict': '配置已被其他窗口修改。你的输入已保留，请重新打开专家核对后再保存。',
   'custom.templateText': '你是一位专业顾问。\n\n职责\n明确专业领域与要解决的问题。\n\n工作方法\n先了解背景和目标，再分析；信息不足时主动澄清。\n\n输出要求\n给出结论、依据和可执行的下一步，不编造事实。',
 } as const
@@ -45,7 +45,7 @@ export const customEn = {
   'custom.deleteHint': 'The expert content will be permanently deleted and cannot be restored. Previous messages are kept.',
   'custom.deleted': 'Expert permanently deleted.',
   'custom.emptyTitle': 'Create your first expert', 'custom.emptyHint': 'Turn your experience and methods into an expert you can summon.',
-  'custom.unavailable': 'An expert in this draft is disabled or deleted. Remove the reference and choose again, or enable it in settings.',
+  'custom.unavailable': 'An expert in this draft is disabled, deleted, or has a name conflict. Remove the reference and choose again, or check its status in Settings; rename the expert to resolve a name conflict.',
   'custom.conflict': 'Another window changed these settings. Your input is preserved; reopen the expert and compare before saving.',
   'custom.templateText': 'You are a specialist advisor.\n\nResponsibilities\nDefine your domain and the problems you solve.\n\nApproach\nUnderstand the context and goals first. Ask when information is missing.\n\nOutput\nProvide conclusions, evidence and actionable next steps. Do not invent facts.',
 } satisfies Record<keyof typeof customZh, string>

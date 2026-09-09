@@ -277,6 +277,8 @@ describe("真实 Host 与 Remote 集成", () => {
     apply(ctx, { root: "", provider: "spawn", divisions: ["engineering"] });
     const remote = new AgencyAgentsRemote(ctx);
     const initial = await remote.getCatalog();
+    await expect(remote.setEnabled(['missing-expert'], initial.revision)).rejects.toThrow();
+    expect(await remote.getCatalog()).toEqual(initial);
     const saved = await remote.saveCustomExpert(input, true, initial.revision);
     const slug = saved.experts.find((expert) => expert.custom)!.slug;
     expect(await remote.getPrompt(slug, input.division)).toEqual({
@@ -302,7 +304,9 @@ describe("真实 Host 与 Remote 集成", () => {
         .get("summon_expert")!
         .execute({ expert: input.name, task: "分析" }, { agent: {} }),
     ).rejects.toThrow();
-    await remote.deleteCustomExpert(slug, disabled.revision);
+    const deleted = await remote.deleteCustomExpert(slug, disabled.revision);
+    await expect(remote.setEnabled([slug], deleted.revision)).rejects.toThrow();
+    expect(await remote.getCatalog()).toEqual(deleted);
     await expect(
       tools
         .get("summon_expert")!
@@ -418,5 +422,25 @@ describe("兼容与恢复入口", () => {
     expect(calls).toBe(2);
     resolvers[1]!({ ok: true, value: { experts: [builtin], enabled: [builtin.slug], revision: 2 } });
     expect((await current).enabled.has(builtin.slug)).toBe(true);
+  });
+});
+
+describe("启动清理的修订号保护", () => {
+  it("前序排队写入成功后，旧快照清理失败且保留新专家", async () => {
+    const legacy = { ...input, slug: 'custom-00000000-0000-4000-8000-000000000093', deleted: true, wasEnabled: true };
+    const added = { ...input, name: '新专家', slug: 'custom-00000000-0000-4000-8000-000000000094' };
+    const { settings, library } = setup({ 'agency-agents': { enabled: [], customExperts: [legacy] } });
+    const writing = settings.mutate(settingsNamespaceCompat('agency-agents'), [
+      { op: 'set', path: ['customExperts'], value: [legacy, added] },
+      { op: 'set', path: ['enabled'], value: [added.slug] },
+    ], 0);
+    const cleaning = library.cleanupDeleted();
+    const rejected = expect(cleaning).rejects.toThrow();
+    await writing;
+    await rejected;
+    expect((await library.catalog()).enabled).toContain(added.slug);
+    expect((settings.disk['agency-agents'] as AgencySettings).customExperts?.some(item => item.slug === added.slug)).toBe(true);
+    await library.cleanupDeleted();
+    expect((settings.disk['agency-agents'] as AgencySettings).customExperts).toEqual([added]);
   });
 });

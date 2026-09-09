@@ -71,7 +71,7 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
     return this.library().deleteCustom(slug, expectedRevision)
   }
 
-  /** 读取当前启用的专家 slug 列表。 */
+  /** 返回配置中记录的启用项以兼容旧调用方；实际可召唤项请读取 getCatalog().enabled。 */
   @Remote('getEnabled')
   getEnabled(): { enabled: string[]; revision: number } {
     const value = this.ctx.settings.get(AGENCY_SETTINGS_NAMESPACE) as { enabled?: unknown } | undefined

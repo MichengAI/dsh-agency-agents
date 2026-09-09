@@ -44,7 +44,7 @@ declare class AgencyAgentsRemote extends TypertRemoteService {
   /** 新建或更新自定义专家，同时提交启用状态；过期修订号拒绝写入。 */
   saveCustomExpert(expert: CustomExpertInput, enabled: boolean, expectedRevision: number): Promise<CatalogSnapshot>;
   deleteCustomExpert(slug: string, expectedRevision: number): Promise<CatalogSnapshot>;
-  /** 读取当前启用的专家 slug 列表。 */
+  /** 返回配置中记录的启用项以兼容旧调用方；实际可召唤项请读取 getCatalog().enabled。 */
   getEnabled(): {
     enabled: string[];
     revision: number;
