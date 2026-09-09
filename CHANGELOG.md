@@ -6,6 +6,8 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+- Removed stale client-side duplicate-name blocking. After another window deletes or renames an expert, drafts can be reviewed against current settings and saved with the released name.
+
 - Fixed concurrent update locking, nested expert persona resolution, and catalog rollback caused by delayed write receipts.
 - Added in-editor conflict review that preserves drafts and compares the latest content before saving; prompt previews now use a native dialog to isolate Escape.
 - Made release validation compatible with Windows CRLF line endings.

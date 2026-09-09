@@ -1,5 +1,7 @@
 import { loadEditorReview, continueEditorReview } from "./client/editor-review.js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import React from "react";
+import { CustomExpertEditor } from "./client/custom-editor.js";
 import { buildExpertReference, writeEnabled, matchExpertQuery } from "./client/index.js";
 import { Context } from "@deepseek-ai/cordis";
 import {
@@ -497,4 +499,74 @@ describe("编辑冲突核对", () => {
     expect(continued.expert.prompt).toBe(latest.prompt);
     expect(() => continueEditorReview(review, latest, true)).toThrow();
   });
+});
+
+
+it.each(["删除", "改名"] as const)("他窗%s释放名称后，编辑器保留草稿核对并成功新建", async (action) => {
+  const { library } = setup();
+  const previous = await library.saveCustom(input, true, 0);
+  const oldSlug = previous.experts.find(item => item.custom)!.slug;
+  if (action === "删除") await library.deleteCustom(oldSlug, previous.revision);
+  else await library.saveCustom({ ...input, slug: oldSlug, name: "已改名的专家" }, true, previous.revision);
+  const saveCustomExpert = vi.fn(async (...args: Parameters<AgencyCatalogRemote["saveCustomExpert"]>) => {
+    try { return { ok: true as const, value: await library.saveCustom(...args) }; }
+    catch (error) { return { ok: false as const, error: { message: (error as Error).message } }; }
+  });
+  const remote = {
+    getCatalog: async () => ({ ok: true as const, value: await library.catalog() }),
+    saveCustomExpert,
+  } as unknown as AgencyCatalogRemote;
+  const onSaved = vi.fn();
+  const props = {
+    expert: { ...input, prompt: "需要保留的草稿内容" }, enabled: false,
+    revision: previous.revision, experts: previous.experts, divisions: ["specialized"],
+    remote, locale: "zh" as const, t: ((key: string) => key) as React.ComponentProps<typeof CustomExpertEditor>["t"],
+    onSaved, onClose: vi.fn(),
+  };
+  // Node 环境只模拟 Hook 存储和表单有效性；直接调用真实组件事件与真实 library。
+  const slots: unknown[] = [];
+  let cursor = 0;
+  const stateHook = vi.spyOn(React, "useState").mockImplementation(((initial: unknown) => {
+    const index = cursor++;
+    if (!(index in slots)) slots[index] = typeof initial === "function" ? initial() : initial;
+    return [slots[index], (value: unknown) => { slots[index] = typeof value === "function" ? value(slots[index]) : value; }];
+  }) as typeof React.useState);
+  const refHook = vi.spyOn(React, "useRef").mockImplementation(((initial: unknown) => {
+    const index = cursor++;
+    if (!(index in slots)) slots[index] = { current: initial };
+    return slots[index];
+  }) as typeof React.useRef);
+  const effectHook = vi.spyOn(React, "useEffect").mockImplementation(() => {});
+  type ElementProps = { children?: React.ReactNode; onClick?: () => void };
+  const elements = (node: React.ReactNode): React.ReactElement<ElementProps>[] => {
+    if (!React.isValidElement<ElementProps>(node)) return [];
+    return [node, ...React.Children.toArray(node.props.children).flatMap(elements)];
+  };
+  const render = () => {
+    cursor = 0;
+    const nodes = elements(CustomExpertEditor(props));
+    (nodes.find(node => node.type === "form")! as unknown as { ref: { current: unknown } }).ref.current = { reportValidity: () => true };
+    return nodes;
+  };
+  const click = (label: string) => {
+    const button = render().find(node => node.type === "button" && node.props.children === label);
+    expect(button, label).toBeDefined();
+    button!.props.onClick!();
+  };
+  try {
+    click("custom.saveEnable");
+    await vi.waitFor(() => expect(saveCustomExpert).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(render().some(node => node.props.children === "custom.reviewLatest")).toBe(true));
+    expect(onSaved).not.toHaveBeenCalled();
+    click("custom.reviewLatest");
+    await vi.waitFor(() => expect(render().some(node => node.props.children === "custom.keepDraft")).toBe(true));
+    click("custom.keepDraft");
+    click("custom.saveEnable");
+    await vi.waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    const current = await library.catalog();
+    const created = current.experts.find(item => item.custom && item.name === input.name)!;
+    expect(created.slug).not.toBe(oldSlug);
+    expect((await library.getCustom(created.slug)).prompt).toBe("需要保留的草稿内容");
+    expect(current.enabled).toContain(created.slug);
+  } finally { stateHook.mockRestore(); refHook.mockRestore(); effectHook.mockRestore(); }
 });

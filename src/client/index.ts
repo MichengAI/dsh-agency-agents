@@ -1230,7 +1230,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   }
   return React.createElement('section', { className: 'aag-section' }, nodes,
     editor === null || state === null ? null : React.createElement(CustomExpertEditor, {
-      ...editor, remote: props.remote, t: props.t, locale: props.getActive(), experts: state.experts.map(expert => ({ ...expert, custom: expert.custom ?? false })),
+      ...editor, remote: props.remote, t: props.t, locale: props.getActive(),
       divisions: [...new Set([...Object.keys(ZH_DIVISION), ...state.experts.map(expert => expert.division)])],
       onClose: () => setEditor(null), onSaved: (catalog: CatalogSnapshot) => {
         accept(catalog); setEditor(null); setSource('custom'); setQuery(''); setDivision(''); setStatus(''); setNotice(props.t('custom.saved'))

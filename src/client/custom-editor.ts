@@ -1,7 +1,7 @@
 import React from 'react'
 import { CategorySelect } from './category-select.js'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
-import { customExpertInputSchema, DEFAULT_EXPERT_EMOJI, type CatalogSnapshot, type CustomExpertInput, type ExpertSummary } from '../expert-contract.js'
+import { customExpertInputSchema, DEFAULT_EXPERT_EMOJI, type CatalogSnapshot, type CustomExpertInput } from '../expert-contract.js'
 import type { AgencyCatalogRemote } from './remote.js'
 import { EXPERT_AVATAR_URLS } from './avatars.js'
 import { EN_DIVISION, ZH_DIVISION } from '../names.js'
@@ -14,7 +14,6 @@ export interface CustomEditorProps {
   readonly expert?: CustomExpertInput
   readonly enabled: boolean
   readonly revision: number
-  readonly experts: readonly ExpertSummary[]
   readonly divisions: readonly string[]
   readonly remote: AgencyCatalogRemote
   readonly t: TranslateNS<'agency'>
@@ -34,7 +33,6 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
   const [draft, setDraft] = React.useState(initial)
   const [revision, setRevision] = React.useState(props.revision);
   const [enabled, setEnabled] = React.useState(props.enabled);
-  const [experts, setExperts] = React.useState(props.experts);
   const [needsReview, setNeedsReview] = React.useState(false);
   const [review, setReview] = React.useState<EditorReview | null>(null);
   const [busy, setBusy] = React.useState(false)
@@ -75,7 +73,6 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
     if (review.expert !== undefined) setInitial(customExpertInputSchema.parse(review.expert));
     setRevision(next.revision);
     setEnabled(next.enabled);
-    setExperts(review.catalog.experts);
     setReview(null);
     setNeedsReview(false);
     setError(null);
@@ -84,10 +81,7 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
     if (saving.current || needsReview || form.current?.reportValidity() !== true) return
     const parsed = customExpertInputSchema.safeParse(draft)
     if (!parsed.success) { setError(props.t('custom.invalid')); return }
-    const name = parsed.data.name.trim().toLowerCase()
-    if (experts.some(expert => expert.slug !== parsed.data.slug && [expert.name, expert.nameEn].some(value => value.trim().toLowerCase() === name))) {
-      setError(props.t('custom.duplicate')); return
-    }
+    // 名称以 Host 当前名册为准；旧本地名册不能拦截已被其他窗口释放的名称。
     saving.current = true
     setBusy(true)
     setError(null)
