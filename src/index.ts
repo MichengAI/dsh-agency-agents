@@ -37,6 +37,7 @@ export { ZH_NAME }
 import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
 import { installSettingsSectionCompat, settingsNamespaceCompat } from './settings-compat.js'
 import { registerPluginUpdater } from './plugin-updater.js'
+import { AGENCY_LIBRARY_SERVICE, agencySettingsSchema, createExpertLibrary, validateAgencySettings, type AgencySettings } from './expert-library.js'
 
 export const name = 'agency-agents'
 export const inject = ['tools', 'subagents', 'systemPrompt', 'settings', 'webServer']
@@ -473,16 +474,17 @@ export function apply(ctx: Context, config: Config): void {
     else mountUpdater()
   }
   const maxDepth = normalizeMaxDepth(config.maxDepth)
-  let enabledSource: () => readonly string[] = () => []
-  installSettingsSectionCompat(ctx, settingsNamespaceCompat('agency-agents'), z.object({ enabled: z.array(z.string()) }), { enabled: [] }, {
-    setSource: (current) => { enabledSource = () => current().enabled },
+  const settingsNamespace = settingsNamespaceCompat('agency-agents')
+  let settingsSource: () => AgencySettings = () => ({ enabled: [], customExperts: [] })
+  installSettingsSectionCompat<AgencySettings>(ctx, settingsNamespace, agencySettingsSchema, { enabled: [], customExperts: [] }, {
+    setSource: (current) => { settingsSource = current },
     onChange: () => {},
+    validate: validateAgencySettings,
   })
-  const enabledSet = (): ReadonlySet<string> => new Set(enabledSource())
+  const enabledSet = (): ReadonlySet<string> => new Set(settingsSource().enabled)
   const activeLocale = (): LocaleId => readHostLocale(ctx)
   const catalogRoot = resolveCatalogRoot(config.root)
-  const personaSource = createAgencyPersonaSource(catalogRoot, config.divisions)
-  ctx.reflect.provide(AGENCY_PERSONA_SERVICE, personaSource)
+  const basePersonaSource = createAgencyPersonaSource(catalogRoot, config.divisions)
   let experts = new Map<string, Expert>()
   let loadError: string | null = null
   const ready = loadCatalog(catalogRoot, config.divisions, activeLocale())
@@ -494,10 +496,36 @@ export function apply(ctx: Context, config: Config): void {
     if (loadError !== null) throw new Error(formatHost(activeLocale(), 'error.catalogLoad', { detail: loadError }))
   }
 
-  function groupByDivision(withExperts: boolean, locale: LocaleId): Array<{ division: string; count: number; experts?: Array<{ name: string; emoji: string; description: string }> }> {
+  const library = createExpertLibrary(async () => {
+    await ensureReady()
+    return [...experts.values()].map(expert => ({ ...expert, custom: false }))
+  }, {
+    read: () => settingsSource(),
+    revision: () => {
+      const descriptor = ctx.settings.describe().find(item => item.ns === settingsNamespace)
+      if (descriptor === undefined) throw new Error(formatHost(activeLocale(), 'error.settingsMissing'))
+      return descriptor.revision
+    },
+    mutate: (ops, revision) => ctx.settings.mutate(settingsNamespace, ops, revision),
+  }, [...new Set([...DEFAULT_DIVISIONS, ...config.divisions])], activeLocale)
+  // 闭包读取当前 source，避免 settings 服务替换时继续持有旧快照。
+  const personaSource: AgencyPersonaSource = {
+    async getPrompt(slug, division, locale) {
+      if (slug.startsWith('custom-') && settingsSource().customExperts?.some(item => item.slug === slug)) {
+        const expert = await library.getCustom(slug)
+        if (expert.division !== division) throw new Error(formatHost(locale, 'error.expertMissing', { query: slug }))
+        return { prompt: expert.prompt }
+      }
+      return basePersonaSource.getPrompt(slug, division, locale)
+    },
+  }
+  ctx.reflect.provide(AGENCY_LIBRARY_SERVICE, library)
+  ctx.reflect.provide(AGENCY_PERSONA_SERVICE, personaSource)
+
+  function groupByDivision(catalog: readonly Expert[], withExperts: boolean, locale: LocaleId): Array<{ division: string; count: number; experts?: Array<{ name: string; emoji: string; description: string }> }> {
     const groups = new Map<string, Expert[]>()
     const enabled = enabledSet()
-    for (const expert of experts.values()) {
+    for (const expert of catalog) {
       if (!enabled.has(expert.slug)) continue
       const list = groups.get(expert.division) ?? []
       list.push(expert)
@@ -535,12 +563,13 @@ export function apply(ctx: Context, config: Config): void {
       const query = args.division === undefined ? '' : String(args.division).trim()
       const hasFilter = query !== ''
       const locale = activeLocale()
-      const groups = groupByDivision(hasFilter, locale)
+      const catalog = await library.catalog()
+      const groups = groupByDivision(catalog.experts, hasFilter, locale)
       if (hasFilter) {
         const filtered = groups.filter((g) => matchDivision(query, g.division))
         return { divisions: filtered, total: filtered.reduce((n, g) => n + g.count, 0) }
       }
-      return { divisions: groups, total: experts.size }
+      return { divisions: groups, total: catalog.enabled.length }
     },
   }))
 
@@ -554,7 +583,7 @@ export function apply(ctx: Context, config: Config): void {
     if (!provider.capabilities.persona) throw new Error(formatHost(locale, 'error.providerNoPersona', { provider: config.provider }))
     if (!provider.capabilities.toolFilter) throw new Error(formatHost(locale, 'error.providerNoToolFilter', { provider: config.provider }))
     if (maxDepth !== undefined && !provider.capabilities.depthLimit) throw new Error(formatHost(locale, 'error.providerNoMaxDepth', { provider: config.provider }))
-    const expert = resolveExpert([...experts.values()], query, locale)
+    const expert = resolveExpert((await library.catalog()).experts, query, locale)
     if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
     const { prompt: persona } = await personaSource.getPrompt(expert.slug, expert.division, locale)
     const run: SubagentRun = await ctx.subagents.start(config.provider, {

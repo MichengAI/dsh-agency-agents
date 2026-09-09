@@ -4,9 +4,11 @@
  * {word} 形式（locale 服务 translate 以 /\{(\w+)\}/g 替换）。
  */
 import { EN_DIVISION, ZH_DIVISION } from '../names.js'
+import { customEn, customZh } from './custom-locales.js'
 
 /** 简体中文词条（key 集真相源）。 */
 export const zh = {
+  ...customZh,
   'settings.nav': '专家',
   'settings.title': '专家',
   'settings.loading': '正在加载专家…',
@@ -15,6 +17,8 @@ export const zh = {
   'settings.enabled': '已启用',
   'settings.disabled': '已停用',
   'settings.filter.category': '分类',
+  'settings.filter.status': '状态',
+  'settings.filter.allStatuses': '全部状态',
   'settings.filter.all': '全部',
   'settings.filter.option': '{name}（{count}）',
   'settings.search': '搜索',
@@ -68,6 +72,7 @@ export type AgencyKey = keyof typeof zh
 
 /** 英文词条，key 完整性由 satisfies 在编译期保证。 */
 export const en = {
+  ...customEn,
   'settings.nav': 'Experts',
   'settings.title': 'Experts',
   'settings.loading': 'Loading experts…',
@@ -76,6 +81,8 @@ export const en = {
   'settings.enabled': 'Enabled',
   'settings.disabled': 'Disabled',
   'settings.filter.category': 'Category',
+  'settings.filter.status': 'Status',
+  'settings.filter.allStatuses': 'All statuses',
   'settings.filter.all': 'All',
   'settings.filter.option': '{name} ({count})',
   'settings.search': 'Search',

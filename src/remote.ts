@@ -6,6 +6,8 @@ import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
 import { AGENCY_PERSONA_SERVICE, type AgencyPersonaSource } from './index.js'
 import { formatHost, readHostLocale } from './i18n.js'
 import { settingsNamespaceCompat } from './settings-compat.js'
+import { AGENCY_LIBRARY_SERVICE, type AgencyExpertLibrary } from './expert-library.js'
+import type { CatalogSnapshot, CustomExpertInput } from './expert-contract.js'
 
 export { readExpertPrompt, readLocalizedExpertPrompt } from './index.js'
 
@@ -40,6 +42,38 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
   constructor(ctx: Context) {
     super(ctx, 'agencyAgents')
     this.ctx.typert.register(TYPERT)
+  }
+
+  private library(): AgencyExpertLibrary {
+    const library = this.ctx.get(AGENCY_LIBRARY_SERVICE) as AgencyExpertLibrary | undefined
+    if (library === undefined) throw new Error(formatHost(readHostLocale(this.ctx), 'error.personaSourceUnavailable'))
+    return library
+  }
+
+  /** 返回动态名册，不预加载任何专家提示词正文。 */
+  @Remote('getCatalog')
+  async getCatalog(): Promise<CatalogSnapshot> { return this.library().catalog() }
+
+  @Remote('getCustomExpert')
+  async getCustomExpert(slug: string): Promise<CustomExpertInput> {
+    const { deleted: _deleted, wasEnabled: _wasEnabled, ...expert } = await this.library().getCustom(slug)
+    return expert
+  }
+
+  /** 新建或更新自定义专家，同时提交启用状态；过期修订号拒绝写入。 */
+  @Remote('saveCustomExpert')
+  async saveCustomExpert(expert: CustomExpertInput, enabled: boolean, expectedRevision: number): Promise<CatalogSnapshot> {
+    return this.library().saveCustom(expert, enabled, expectedRevision)
+  }
+
+  @Remote('deleteCustomExpert')
+  async deleteCustomExpert(slug: string, expectedRevision: number): Promise<CatalogSnapshot> {
+    return this.library().deleteCustom(slug, expectedRevision)
+  }
+
+  @Remote('restoreCustomExpert')
+  async restoreCustomExpert(slug: string, expectedRevision: number): Promise<CatalogSnapshot> {
+    return this.library().restoreCustom(slug, expectedRevision)
   }
 
   /** 读取当前启用的专家 slug 列表。 */

@@ -1,4 +1,4 @@
-import z from "@deepseek-ai/schemastery";
+import schema from "@deepseek-ai/schemastery";
 import "@deepseek-ai/dsh-settings";
 import { Context } from "@deepseek-ai/cordis";
 //#region src/names.d.ts
@@ -63,7 +63,7 @@ interface Config {
   maxDepth?: number;
 }
 declare const AGENCY_PERSONA_SERVICE = "agencyAgentsPersona";
-declare const Config: z<Config>;
+declare const Config: schema<Config>;
 /** 解析智能体根目录：显式配置优先，其次读取环境变量，最后使用包内资产。 */
 declare function resolveCatalogRoot(root: string): string;
 interface Frontmatter {

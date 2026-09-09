@@ -27,6 +27,7 @@ const PACKAGE_MANIFEST = JSON.parse(await readFile(new URL('../package.json', im
 
 function alphaSettings(enabled: readonly string[], locale?: 'zh' | 'en') {
   return {
+    describe: () => [{ ns: 'agency-agents', revision: 0 }],
     get: (namespace: string): unknown => {
       if (namespace === 'agency-agents') return { enabled: [...enabled] }
       if (namespace === 'locale' && locale !== undefined) return { preference: locale }
