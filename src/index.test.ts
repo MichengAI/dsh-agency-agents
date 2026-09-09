@@ -613,10 +613,11 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
     expect(writeErrorMessage('plain')).toBe('plain')
   })
 
-  it('getEnabled/setEnabled 通过 settings 服务读写启用列表', async () => {
+  it('getEnabled 读取原始配置，setEnabled 委托 library 并传递修订号与错误', async () => {
     let stored: { enabled: string[] } = { enabled: [] }
     let revision = 0
     const registered: unknown[] = []
+    // 此处只验证 Remote 委托；真实 library 的启用校验见 custom-experts.test.ts。
     const ctx = {
       get: () => ({ setEnabled: async (enabled: string[], expectedRevision: number) => {
         await ctx.settings.mutate(settingsNamespaceCompat('agency-agents'), [{ op: 'set', path: ['enabled'], value: enabled }], expectedRevision)
