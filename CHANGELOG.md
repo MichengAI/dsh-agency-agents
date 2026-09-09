@@ -6,6 +6,8 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+- Unified settings headings, descriptions, and action layouts; maintenance controls no longer squeeze titles or versions. The layout adapts to native DSH settings without Codex UI.
+
 ## 0.1.34 - 2026-09-08
 
 - Fixed the composer Expert picker so its scrollable menu opens within the available viewport space instead of being clipped when many experts are enabled.
