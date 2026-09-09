@@ -23,6 +23,7 @@ declare const catalogSnapshotSchema: z.ZodObject<{
     emoji: z.ZodString;
     division: z.ZodString;
     divisionZh: z.ZodString;
+    conflict: z.ZodOptional<z.ZodBoolean>;
     custom: z.ZodDefault<z.ZodBoolean>;
     avatar: z.ZodOptional<z.ZodNumber>;
   }, z.core.$strip>>;
@@ -43,7 +44,6 @@ declare class AgencyAgentsRemote extends TypertRemoteService {
   /** 新建或更新自定义专家，同时提交启用状态；过期修订号拒绝写入。 */
   saveCustomExpert(expert: CustomExpertInput, enabled: boolean, expectedRevision: number): Promise<CatalogSnapshot>;
   deleteCustomExpert(slug: string, expectedRevision: number): Promise<CatalogSnapshot>;
-  restoreCustomExpert(slug: string, expectedRevision: number): Promise<CatalogSnapshot>;
   /** 读取当前启用的专家 slug 列表。 */
   getEnabled(): {
     enabled: string[];

@@ -740,12 +740,12 @@ pnpm verify
 
 `prepublishOnly` runs these build, test, and package-integrity checks before publishing.
 
+## Custom experts
+
+Open Settings → Experts → New expert. Set a name, description, category and prompt, then choose an avatar and a separate summon emoji (default 🧩). Save and enable makes the expert immediately available through @ and the Experts button. Reference labels use the standard expert icon and plain name, matching built-in experts; the emoji appears in candidate menus. Copy a base expert to customize it, or edit, enable, disable and delete custom experts. Deletion permanently removes the expert content and enabled state; it cannot be undone.
+
+Data lives in the DSH settings agency-agents namespace outside the plugin directory and survives upgrades. External root still replaces the base roster; custom experts are appended. The limit is 200 existing custom experts. Deletion frees a slot; legacy soft-deleted records are cleaned up on startup and subsequent writes. Name conflicts introduced by a base catalog update remain visible in Settings for renaming or deletion, but conflicting experts cannot be summoned. Concurrent changes reject stale saves and preserve form input. Draft references to disabled or deleted experts must be removed or re-enabled. Writes carry a revision; see the [Remote contract](src/remote-contract.ts). Back up current settings before downgrading: restoring custom data is separate from rolling back plugin code.
+
 ## License and attribution
 
 This project’s TypeScript source, build scripts, and documentation use [Apache License 2.0](LICENSE). Bundled personas originate from [The Agency](https://github.com/msitarzewski/agency-agents) and remain MIT-licensed; see [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE).
-
-## Custom experts
-
-Open Settings → Experts → New expert. Set a name, description, category and prompt, then choose an avatar and a separate summon emoji (default 🧩). Save and enable makes the expert immediately available through @ and the Experts button. Reference labels use the standard expert icon and plain name, matching built-in experts; the emoji appears in candidate menus. Copy a base expert to customize it, or edit, enable, disable and delete custom experts. The current settings view can undo the most recent deletion.
-
-Data lives in the DSH settings agency-agents namespace outside the plugin directory and survives upgrades. External root still replaces the base roster; custom experts are appended. The limit is 200 custom records, including soft-deleted records. Concurrent changes reject stale saves and preserve form input. Draft references to disabled or deleted experts must be removed or re-enabled. Writes carry a revision; see the [Remote contract](src/remote-contract.ts). Back up current settings before downgrading: restoring custom data is separate from rolling back plugin code.

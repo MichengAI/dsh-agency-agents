@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import schema from '@deepseek-ai/schemastery'
 import type { SettingsPathOp } from '@deepseek-ai/dsh-settings'
 import { z } from 'zod'
-import { CUSTOM_EXPERT_LIMIT, customError, customExpertInputSchema, customExpertSchema, type CatalogSnapshot, type CustomExpert, type CustomExpertInput, type ExpertSummary } from './expert-contract.js'
+import { CUSTOM_EXPERT_LIMIT, CUSTOM_EXPERT_SLUG, customError, customExpertInputSchema, customExpertSchema, type CatalogSnapshot, type CustomExpert, type CustomExpertInput, type ExpertSummary } from './expert-contract.js'
 import { ZH_DIVISION } from './names.js'
 
 export const AGENCY_LIBRARY_SERVICE = 'agencyAgentsLibrary'
@@ -14,12 +14,13 @@ export const agencySettingsSchema = schema.object({
   customExperts: schema.array(schema.any()).default([]),
 })
 
-export function validateAgencySettings(value: AgencySettings): void {
-  z.array(customExpertSchema).max(CUSTOM_EXPERT_LIMIT).parse(value.customExperts ?? [])
+export function validateAgencySettings(value: AgencySettings, locale: 'zh' | 'en' = 'zh'): void {
+  const records = z.array(customExpertSchema).parse(value.customExperts ?? [])
+  if (records.filter(item => !item.deleted).length > CUSTOM_EXPERT_LIMIT) throw customError('limit', locale)
   const ids = new Set<string>()
   const names = new Set<string>()
   for (const expert of value.customExperts ?? []) {
-    if (ids.has(expert.slug) || (!expert.deleted && names.has(normalizeName(expert.name)))) throw customError('duplicate', 'zh')
+    if (ids.has(expert.slug) || (!expert.deleted && names.has(normalizeName(expert.name)))) throw customError('duplicate', locale)
     ids.add(expert.slug)
     if (!expert.deleted) names.add(normalizeName(expert.name))
   }
@@ -35,7 +36,8 @@ export interface AgencyExpertLibrary {
   getCustom(slug: string): Promise<CustomExpert>
   saveCustom(input: CustomExpertInput, enabled: boolean, expectedRevision: number): Promise<CatalogSnapshot>
   deleteCustom(slug: string, expectedRevision: number): Promise<CatalogSnapshot>
-  restoreCustom(slug: string, expectedRevision: number): Promise<CatalogSnapshot>
+  setEnabled(enabled: string[], expectedRevision: number): Promise<{ enabled: string[]; revision: number }>
+  cleanupDeleted(): Promise<void>
 }
 export const normalizeName = (value: string): string => value.trim().toLowerCase()
 
@@ -59,26 +61,25 @@ export function createExpertLibrary(
     division: expert.division, divisionZh: ZH_DIVISION[expert.division] ?? expert.division,
     avatar: expert.avatar, custom: true,
   })
-  const assertUnique = (items: readonly ExpertSummary[]): void => {
-    const owners = new Map<string, string>()
-    const slugs = new Set<string>()
-    for (const expert of items) {
-      if (slugs.has(expert.slug)) throw customError('duplicate', locale())
-      slugs.add(expert.slug)
-      for (const name of [expert.name, expert.nameEn]) {
-        const key = normalizeName(name)
-        const owner = owners.get(key)
-        if (owner !== undefined && owner !== expert.slug) throw customError('duplicate', locale())
-        owners.set(key, expert.slug)
-      }
-    }
+  const overlaps = (a: ExpertSummary, b: ExpertSummary): boolean => a.slug === b.slug || [a.name, a.nameEn].some(name => [b.name, b.nameEn].some(other => normalizeName(name) === normalizeName(other)))
+  // 只校验当前编辑对象，其他已有冲突不能阻断逐个修复。
+  const assertUnique = (expert: ExpertSummary, others: readonly ExpertSummary[]): void => {
+    if (others.some(other => overlaps(expert, other))) throw customError('duplicate', locale())
+  }
+  const project = (builtins: readonly ExpertSummary[], state: ReturnType<typeof read>): CatalogSnapshot => {
+    const custom = state.customExperts.filter(item => !item.deleted).map(summary)
+    const experts = [...builtins.map(expert => ({ ...expert, conflict: builtins.some(other => other !== expert && overlaps(expert, other)) })),
+      ...custom.map(expert => ({ ...expert, conflict: [...builtins, ...custom.filter(other => other !== expert)].some(other => overlaps(expert, other)) }))]
+    const available = new Set(experts.filter(expert => !expert.conflict).map(expert => expert.slug))
+    return { experts, enabled: [...new Set(state.enabled.filter(slug => available.has(slug)))], revision: store.revision() }
   }
   const assertWritable = (slug: string): void => {
-    if (!/^custom-[0-9a-f-]{36}$/u.test(slug)) throw customError('readonly', locale())
+    if (!CUSTOM_EXPERT_SLUG.test(slug)) throw customError('readonly', locale())
   }
+  const activeRecords = (records: CustomExpert[]): CustomExpert[] => records.filter(item => !item.deleted).map(({ deleted: _deleted, wasEnabled: _wasEnabled, ...item }) => item)
   const persist = async (state: ReturnType<typeof read>, revision: number): Promise<CatalogSnapshot> => {
     await store.mutate([
-      { op: 'set', path: ['customExperts'], value: state.customExperts },
+      { op: 'set', path: ['customExperts'], value: activeRecords(state.customExperts) },
       { op: 'set', path: ['enabled'], value: [...new Set(state.enabled)] },
     ], revision)
     return library.catalog()
@@ -87,10 +88,7 @@ export function createExpertLibrary(
     async catalog() {
       const builtins = await base()
       const state = read()
-      const experts = [...builtins, ...state.customExperts.filter(item => !item.deleted).map(summary)]
-      assertUnique(experts)
-      const available = new Set(experts.map(expert => expert.slug))
-      return { experts, enabled: state.enabled.filter(slug => available.has(slug)), revision: store.revision() }
+      return project(builtins, state)
     },
     async getCustom(slug) {
       assertWritable(slug)
@@ -107,11 +105,11 @@ export function createExpertLibrary(
       if (!divisions.includes(value.division) && !builtins.some(item => item.division === value.division)) throw customError('division', locale())
       const state = read()
       if (value.slug !== undefined && !state.customExperts.some(item => item.slug === value.slug && !item.deleted)) throw customError('missing', locale())
-      if (value.slug === undefined && state.customExperts.length >= CUSTOM_EXPERT_LIMIT) throw customError('limit', locale())
-      const expert: CustomExpert = { ...value, slug: value.slug ?? `custom-${randomUUID()}`, deleted: false, wasEnabled: false }
+      if (value.slug === undefined && state.customExperts.filter(item => !item.deleted).length >= CUSTOM_EXPERT_LIMIT) throw customError('limit', locale())
+      const expert: CustomExpert = { ...value, slug: value.slug ?? `custom-${randomUUID()}` }
       const next = state.customExperts.filter(item => item.slug !== expert.slug)
       next.push(expert)
-      assertUnique([...builtins, ...next.filter(item => !item.deleted).map(summary)])
+      assertUnique(summary(expert), [...builtins, ...next.filter(item => !item.deleted && item.slug !== expert.slug).map(summary)])
       return persist({ customExperts: next, enabled: [...state.enabled.filter(slug => slug !== expert.slug), ...(enabled ? [expert.slug] : [])] }, expectedRevision)
     },
     async deleteCustom(slug, expectedRevision) {
@@ -120,20 +118,32 @@ export function createExpertLibrary(
       const state = read()
       if (!state.customExperts.some(item => item.slug === slug && !item.deleted)) throw customError('missing', locale())
       return persist({
-        customExperts: state.customExperts.map(item => item.slug === slug ? { ...item, deleted: true, wasEnabled: state.enabled.includes(slug) } : item),
+        customExperts: state.customExperts.filter(item => item.slug !== slug),
         enabled: state.enabled.filter(item => item !== slug),
       }, expectedRevision)
     },
-    async restoreCustom(slug, expectedRevision) {
+    async setEnabled(enabled, expectedRevision) {
       const builtins = await base()
-      assertWritable(slug)
       checkRevision(expectedRevision)
       const state = read()
-      const expert = state.customExperts.find(item => item.slug === slug && item.deleted)
-      if (expert === undefined) throw customError('missing', locale())
-      const next = state.customExperts.map(item => item.slug === slug ? { ...item, deleted: false } : item)
-      assertUnique([...builtins, ...next.filter(item => !item.deleted).map(summary)])
-      return persist({ customExperts: next, enabled: [...state.enabled, ...(expert.wasEnabled ? [slug] : [])] }, expectedRevision)
+      const available = new Set(project(builtins, state).experts.filter(expert => !expert.conflict).map(expert => expert.slug))
+      if (enabled.some(slug => !available.has(slug))) throw customError('unavailable', locale())
+      const next = [...new Set(enabled)]
+      await store.mutate([
+        { op: 'set', path: ['customExperts'], value: activeRecords(state.customExperts) },
+        { op: 'set', path: ['enabled'], value: next },
+      ], expectedRevision)
+      return { enabled: next, revision: store.revision() }
+    },
+    async cleanupDeleted() {
+      const state = read()
+      if (!state.customExperts.some(item => item.deleted !== undefined || item.wasEnabled !== undefined)) return
+      const records = activeRecords(state.customExperts)
+      const deleted = new Set(state.customExperts.filter(item => item.deleted).map(item => item.slug))
+      await store.mutate([
+        { op: 'set', path: ['customExperts'], value: records },
+        { op: 'set', path: ['enabled'], value: state.enabled.filter(slug => !deleted.has(slug)) },
+      ], store.revision())
     },
   }
   return library

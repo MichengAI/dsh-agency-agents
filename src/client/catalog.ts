@@ -43,16 +43,25 @@ export function acceptCatalog(remote: AgencyCatalogRemote, value: CatalogSnapsho
   for (const listener of entry.listeners) listener()
   return entry.value
 }
+/** 启停写入回执先进入缓存，并隔离写入之前的在途查询。 */
+export function acceptEnabled(remote: AgencyCatalogRemote, value: { enabled: string[]; revision: number }): CatalogState {
+  const entry = cache(remote)
+  entry.generation += 1
+  entry.pending = undefined
+  if (value.revision < entry.value.revision) return entry.value
+  return acceptCatalog(remote, { experts: [...entry.value.experts], enabled: value.enabled, revision: value.revision })
+}
 /** 一次 @ 查询会并发读取多个分区，复用同一个请求而不重复传输名册。 */
 export function refreshCatalog(remote: AgencyCatalogRemote): Promise<CatalogState> {
   const entry = cache(remote)
   if (entry.pending !== undefined) return entry.pending
   const generation = entry.generation
-  entry.pending = remote.getCatalog().then(result => {
-    if (!result.ok) throw new Error(result.error.message)
+  const pending = remote.getCatalog().then(result => {
     // 写入完成后的提交优先于此前发出的查询；新查询允许宿主重启后的 revision 回落。
     if (generation !== entry.generation) return entry.value
+    if (!result.ok) throw new Error(result.error.message)
     return acceptCatalog(remote, result.value)
-  }).finally(() => { entry.pending = undefined })
-  return entry.pending
+  }).finally(() => { if (entry.pending === pending) entry.pending = undefined })
+  entry.pending = pending
+  return pending
 }

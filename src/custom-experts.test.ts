@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildExpertReference } from "./client/index.js";
+import { buildExpertReference, writeEnabled, matchExpertQuery } from "./client/index.js";
 import { Context } from "@deepseek-ai/cordis";
 import {
   SettingsProvider,
@@ -65,6 +65,7 @@ function setup(
   document: Record<string, unknown> = {
     "agency-agents": { enabled: ["builtin-reviewer"] },
   },
+  base: () => Promise<ExpertSummary[]> = async () => [builtin],
 ) {
   const settings = new TestSettings(new Context());
   settings.restore(document);
@@ -73,7 +74,7 @@ function setup(
     validate: validateAgencySettings,
   });
   const library = createExpertLibrary(
-    async () => [builtin],
+    base,
     {
       read: () => settings.get(ns) as AgencySettings,
       revision: () =>
@@ -144,7 +145,7 @@ describe("自定义专家 Host 存储", () => {
     ).rejects.toThrow("分类");
     await expect(
       library.saveCustom(
-        { ...input, slug: "custom-00000000-0000-0000-0000-000000000000" },
+        { ...input, slug: "custom-00000000-0000-4000-8000-000000000000" },
         true,
         revision,
       ),
@@ -154,8 +155,8 @@ describe("自定义专家 Host 存储", () => {
     );
   });
 
-  it("改名保留 ID；删除阻止读取和启用，撤销恢复原 Emoji 与启用状态", async () => {
-    const { library } = setup();
+  it("改名保留 ID；删除永久移除数据且释放名称", async () => {
+    const { library, settings } = setup();
     const created = await library.saveCustom(
       input,
       true,
@@ -171,12 +172,9 @@ describe("自定义专家 Host 存储", () => {
     const deleted = await library.deleteCustom(slug, renamed.revision);
     expect(deleted.enabled).not.toContain(slug);
     await expect(library.getCustom(slug)).rejects.toThrow("已删除");
-    const restored = await library.restoreCustom(slug, deleted.revision);
-    expect(restored.enabled).toContain(slug);
-    expect(restored.experts.find((item) => item.slug === slug)).toMatchObject({
-      name: "租后服务顾问",
-      emoji: "👩🏽‍💻",
-    });
+    expect((settings.disk['agency-agents'] as AgencySettings).customExperts).toEqual([]);
+    const recreated = await library.saveCustom({ ...input, name: "租后服务顾问" }, true, deleted.revision);
+    expect(recreated.experts.find(item => item.custom)?.slug).not.toBe(slug);
   });
 });
 
@@ -336,5 +334,89 @@ describe("动态名册异步一致性", () => {
     resolve({ ok: true, value: { experts: [], enabled: [], revision: 0 } });
     expect((await restarted).experts).toEqual([]);
     expect((await restarted).revision).toBe(0);
+  });
+});
+
+
+describe("审查回归", () => {
+  it("内置事后撞名仍可读取管理、改名和删除，其他冲突不妨碍修复", async () => {
+    let base = [builtin];
+    const { library } = setup(undefined, async () => base);
+    let snapshot = await library.saveCustom(input, true, 0);
+    const slug = snapshot.experts.find(e => e.custom)!.slug;
+    snapshot = await library.saveCustom({ ...input, name: "第二专家" }, true, snapshot.revision);
+    base = [...base, { ...builtin, slug: "new-a", name: input.name, nameEn: "NEW A" }, { ...builtin, slug: "new-b", name: "第二专家", nameEn: "NEW B" }];
+    snapshot = await library.catalog();
+    expect(snapshot.experts.find(e => e.slug === slug)?.conflict).toBe(true);
+    expect(snapshot.enabled).not.toContain(slug);
+    snapshot = await library.saveCustom({ ...input, slug, name: "新的名称" }, true, snapshot.revision);
+    expect(snapshot.enabled).toContain(slug);
+    const other = snapshot.experts.find(e => e.custom && e.slug !== slug)!;
+    snapshot = await library.deleteCustom(other.slug, snapshot.revision);
+    expect(snapshot.experts.some(e => e.conflict)).toBe(false);
+  });
+  it("满额删除释放配额；失败不丢数据，旧删除记录可清理", async () => {
+    const records = Array.from({ length: 200 }, (_, i) => ({ ...input, name: `专家${i}`, slug: `custom-00000000-0000-4000-8000-${String(i).padStart(12, '0')}` }));
+    const { library, settings } = setup({ 'agency-agents': { enabled: [records[0]!.slug], customExperts: records } });
+    await expect(library.saveCustom(input, true, 0)).rejects.toThrow();
+    settings.fail = true;
+    await expect(library.deleteCustom(records[0]!.slug, 0)).rejects.toThrow('disk full');
+    expect((await library.catalog()).experts.filter(e => e.custom)).toHaveLength(200);
+    settings.fail = false;
+    const cleared = await library.deleteCustom(records[0]!.slug, 0);
+    await expect(library.deleteCustom(records[1]!.slug, 0)).rejects.toThrow();
+    expect((await library.saveCustom(input, true, cleared.revision)).experts.filter(e => e.custom)).toHaveLength(200);
+    const legacy = setup({ 'agency-agents': { enabled: [records[0]!.slug], customExperts: records.map(record => ({ ...record, deleted: true, wasEnabled: true })) } });
+    await legacy.library.cleanupDeleted();
+    expect((legacy.settings.disk['agency-agents'] as AgencySettings).customExperts).toEqual([]);
+    expect((await legacy.library.catalog()).enabled).toEqual([]);
+  });
+  it("启停拒绝不存在和已删除的专家", async () => {
+    const { library } = setup();
+    await expect(library.setEnabled(['missing'], 0)).rejects.toThrow();
+    const saved = await library.saveCustom(input, true, 0);
+    const slug = saved.experts.find(e => e.custom)!.slug;
+    const deleted = await library.deleteCustom(slug, saved.revision);
+    await expect(library.setEnabled([slug], deleted.revision)).rejects.toThrow();
+  });
+  it("启停回执覆盖写入前的在途查询", async () => {
+    let resolve!: (value: RemoteResult<CatalogSnapshot>) => void;
+    const remote = { getCatalog: () => new Promise<RemoteResult<CatalogSnapshot>>(done => { resolve = done; }), setEnabled: async () => ({ ok: true as const, value: { enabled: [builtin.slug], revision: 2 } }) } as unknown as Parameters<typeof writeEnabled>[0];
+    acceptCatalog(remote, { experts: [builtin], enabled: [], revision: 1 });
+    const pending = refreshCatalog(remote);
+    const write = writeEnabled(remote, new Set([builtin.slug]), 1);
+    await Promise.resolve();
+    resolve({ ok: true, value: { experts: [builtin], enabled: [], revision: 1 } });
+    expect((await write).enabled.has(builtin.slug)).toBe(true);
+    expect((await pending).revision).toBe(2);
+  });
+});
+
+
+describe("兼容与恢复入口", () => {
+  it("中文和英文校验保持对应语言，严格拒绝伪 UUID", () => {
+    const record = { ...input, slug: 'custom-00000000-0000-4000-8000-000000000001' };
+    expect(() => validateAgencySettings({ enabled: [], customExperts: [record, { ...record, slug: 'custom-00000000-0000-4000-8000-000000000002' }] }, 'en')).toThrow('already in use');
+    expect(customExpertInputSchema.safeParse({ ...input, slug: 'custom-' + 'f'.repeat(36) }).success).toBe(false);
+  });
+  it("自定义搜索不匹配内部 custom slug，名称仍可搜索", () => {
+    const expert = { ...builtin, slug: 'custom-00000000-0000-4000-8000-000000000001', divisionEn: 'Engineering' };
+    expect(matchExpertQuery(expert, 'custom')).toBe(false);
+    expect(matchExpertQuery(expert, 'Reviewer')).toBe(true);
+  });
+  it("旧查询完成不会清掉写入后新查询的 pending", async () => {
+    const resolvers: Array<(value: RemoteResult<CatalogSnapshot>) => void> = [];
+    let calls = 0;
+    const remote = { getCatalog: () => { calls++; return new Promise<RemoteResult<CatalogSnapshot>>(done => resolvers.push(done)); }, setEnabled: async () => ({ ok: true as const, value: { enabled: [builtin.slug], revision: 2 } }) } as unknown as Parameters<typeof writeEnabled>[0];
+    acceptCatalog(remote, { experts: [builtin], enabled: [], revision: 1 });
+    const old = refreshCatalog(remote);
+    await writeEnabled(remote, new Set([builtin.slug]), 1);
+    const current = refreshCatalog(remote);
+    resolvers[0]!({ ok: true, value: { experts: [builtin], enabled: [], revision: 1 } });
+    await old;
+    expect(refreshCatalog(remote)).toBe(current);
+    expect(calls).toBe(2);
+    resolvers[1]!({ ok: true, value: { experts: [builtin], enabled: [builtin.slug], revision: 2 } });
+    expect((await current).enabled.has(builtin.slug)).toBe(true);
   });
 });

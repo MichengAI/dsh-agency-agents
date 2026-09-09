@@ -479,7 +479,7 @@ export function apply(ctx: Context, config: Config): void {
   installSettingsSectionCompat<AgencySettings>(ctx, settingsNamespace, agencySettingsSchema, { enabled: [], customExperts: [] }, {
     setSource: (current) => { settingsSource = current },
     onChange: () => {},
-    validate: validateAgencySettings,
+    validate: value => validateAgencySettings(value, readHostLocale(ctx)),
   })
   const enabledSet = (): ReadonlySet<string> => new Set(settingsSource().enabled)
   const activeLocale = (): LocaleId => readHostLocale(ctx)
@@ -508,6 +508,7 @@ export function apply(ctx: Context, config: Config): void {
     },
     mutate: (ops, revision) => ctx.settings.mutate(settingsNamespace, ops, revision),
   }, [...new Set([...DEFAULT_DIVISIONS, ...config.divisions])], activeLocale)
+  void library.cleanupDeleted().catch((error: unknown) => console.warn('[agency-agents] 旧删除记录清理失败，下次写入时重试：', error))
   // 闭包读取当前 source，避免 settings 服务替换时继续持有旧快照。
   const personaSource: AgencyPersonaSource = {
     async getPrompt(slug, division, locale) {
@@ -564,7 +565,7 @@ export function apply(ctx: Context, config: Config): void {
       const hasFilter = query !== ''
       const locale = activeLocale()
       const catalog = await library.catalog()
-      const groups = groupByDivision(catalog.experts, hasFilter, locale)
+      const groups = groupByDivision(catalog.experts.filter(expert => !expert.conflict), hasFilter, locale)
       if (hasFilter) {
         const filtered = groups.filter((g) => matchDivision(query, g.division))
         return { divisions: filtered, total: filtered.reduce((n, g) => n + g.count, 0) }
@@ -583,7 +584,7 @@ export function apply(ctx: Context, config: Config): void {
     if (!provider.capabilities.persona) throw new Error(formatHost(locale, 'error.providerNoPersona', { provider: config.provider }))
     if (!provider.capabilities.toolFilter) throw new Error(formatHost(locale, 'error.providerNoToolFilter', { provider: config.provider }))
     if (maxDepth !== undefined && !provider.capabilities.depthLimit) throw new Error(formatHost(locale, 'error.providerNoMaxDepth', { provider: config.provider }))
-    const expert = resolveExpert((await library.catalog()).experts, query, locale)
+    const expert = resolveExpert((await library.catalog()).experts.filter(expert => !expert.conflict), query, locale)
     if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
     const { prompt: persona } = await personaSource.getPrompt(expert.slug, expert.division, locale)
     const run: SubagentRun = await ctx.subagents.start(config.provider, {

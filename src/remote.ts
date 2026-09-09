@@ -71,11 +71,6 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
     return this.library().deleteCustom(slug, expectedRevision)
   }
 
-  @Remote('restoreCustomExpert')
-  async restoreCustomExpert(slug: string, expectedRevision: number): Promise<CatalogSnapshot> {
-    return this.library().restoreCustom(slug, expectedRevision)
-  }
-
   /** 读取当前启用的专家 slug 列表。 */
   @Remote('getEnabled')
   getEnabled(): { enabled: string[]; revision: number } {
@@ -92,8 +87,7 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
   /** 整体替换启用的专家 slug 列表。 */
   @Remote('setEnabled')
   async setEnabled(enabled: string[], expectedRevision: number): Promise<{ enabled: string[]; revision: number }> {
-    await this.ctx.settings.mutate(AGENCY_SETTINGS_NAMESPACE, [{ op: 'set', path: ['enabled'], value: enabled }], expectedRevision)
-    return this.getEnabled()
+    return this.library().setEnabled(enabled, expectedRevision)
   }
 
   /** 按需读取一位专家的 persona 正文，避免将完整提示词随客户端名册预加载。 */

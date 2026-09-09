@@ -618,6 +618,10 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
     let revision = 0
     const registered: unknown[] = []
     const ctx = {
+      get: () => ({ setEnabled: async (enabled: string[], expectedRevision: number) => {
+        await ctx.settings.mutate(settingsNamespaceCompat('agency-agents'), [{ op: 'set', path: ['enabled'], value: enabled }], expectedRevision)
+        return { enabled, revision }
+      } }),
       reflect: { provide: () => undefined },
       typert: { register: (contribution: unknown) => { registered.push(contribution) } },
       settings: {

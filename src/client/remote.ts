@@ -12,7 +12,6 @@ export interface AgencyCatalogRemote {
   getCustomExpert(slug: string): Promise<RemoteResult<CustomExpertInput>>
   saveCustomExpert(expert: CustomExpertInput, enabled: boolean, expectedRevision: number): Promise<RemoteResult<CatalogSnapshot>>
   deleteCustomExpert(slug: string, expectedRevision: number): Promise<RemoteResult<CatalogSnapshot>>
-  restoreCustomExpert(slug: string, expectedRevision: number): Promise<RemoteResult<CatalogSnapshot>>
 }
 
 export interface AgencyAgentsEnabledState {
@@ -35,7 +34,6 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     'agencyAgents/getCustomExpert': AgencyCatalogRemote['getCustomExpert']
     'agencyAgents/saveCustomExpert': AgencyCatalogRemote['saveCustomExpert']
     'agencyAgents/deleteCustomExpert': AgencyCatalogRemote['deleteCustomExpert']
-    'agencyAgents/restoreCustomExpert': AgencyCatalogRemote['restoreCustomExpert']
     'agencyAgents/getEnabled': () => Promise<RemoteResult<AgencyAgentsEnabledState>>
     'agencyAgents/setEnabled': (enabled: string[], expectedRevision: number) => Promise<RemoteResult<AgencyAgentsEnabledState>>
     'agencyAgents/getPrompt': (slug: string, division: string) => Promise<RemoteResult<AgencyAgentsPrompt>>

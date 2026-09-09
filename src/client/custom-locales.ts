@@ -1,5 +1,6 @@
 /** 自定义专家界面词条，合并到现有 agency 命名空间。 */
 export const customZh = {
+  'custom.nameConflict': '名称冲突', 'custom.nameConflictHint': '部分专家名称冲突，已暂停召唤。请编辑冲突的自定义专家名称或删除它；内置 / 外部名称冲突请调整外部目录。',
   'custom.more': '更多操作',
   'custom.new': '新建专家', 'custom.edit': '编辑专家', 'custom.copy': '复制为自定义',
   'custom.all': '全部', 'custom.base': '内置 / 外部', 'custom.source': '自定义',
@@ -16,14 +17,15 @@ export const customZh = {
   'custom.duplicate': '专家名称已被使用，请换一个名称。',
   'custom.discardTitle': '放弃未保存的修改？', 'custom.discard': '放弃修改', 'custom.keep': '继续编辑',
   'custom.delete': '删除专家', 'custom.deleteTitle': '删除自定义专家',
-  'custom.deleteHint': '删除后将退出专家库和召唤列表，历史消息保留。',
-  'custom.deleted': '专家已删除。', 'custom.undo': '撤销删除', 'custom.restored': '专家已恢复。',
+  'custom.deleteHint': '专家内容将永久删除，无法撤销；历史消息保留。',
+  'custom.deleted': '专家已永久删除。',
   'custom.emptyTitle': '创建你的第一位专家', 'custom.emptyHint': '把专业经验和工作方法，变成随时可召唤的伙伴。',
   'custom.unavailable': '草稿中的专家已停用或删除。请移除标签重新选择，或在设置中启用。',
   'custom.conflict': '配置已被其他窗口修改。你的输入已保留，请重新打开专家核对后再保存。',
   'custom.templateText': '你是一位专业顾问。\n\n职责\n明确专业领域与要解决的问题。\n\n工作方法\n先了解背景和目标，再分析；信息不足时主动澄清。\n\n输出要求\n给出结论、依据和可执行的下一步，不编造事实。',
 } as const
 export const customEn = {
+  'custom.nameConflict': 'Name conflict', 'custom.nameConflictHint': 'Conflicting experts cannot be summoned. Rename or delete the custom expert; for base catalog conflicts, update the external directory.',
   'custom.more': 'More actions',
   'custom.new': 'New expert', 'custom.edit': 'Edit expert', 'custom.copy': 'Create custom copy',
   'custom.all': 'All', 'custom.base': 'Built-in / external', 'custom.source': 'Custom',
@@ -40,8 +42,8 @@ export const customEn = {
   'custom.duplicate': 'This expert name is already in use. Choose another name.',
   'custom.discardTitle': 'Discard unsaved changes?', 'custom.discard': 'Discard changes', 'custom.keep': 'Keep editing',
   'custom.delete': 'Delete expert', 'custom.deleteTitle': 'Delete custom expert',
-  'custom.deleteHint': 'The expert will leave the catalog and picker. Previous messages are kept.',
-  'custom.deleted': 'Expert deleted.', 'custom.undo': 'Undo deletion', 'custom.restored': 'Expert restored.',
+  'custom.deleteHint': 'The expert content will be permanently deleted and cannot be restored. Previous messages are kept.',
+  'custom.deleted': 'Expert permanently deleted.',
   'custom.emptyTitle': 'Create your first expert', 'custom.emptyHint': 'Turn your experience and methods into an expert you can summon.',
   'custom.unavailable': 'An expert in this draft is disabled or deleted. Remove the reference and choose again, or enable it in settings.',
   'custom.conflict': 'Another window changed these settings. Your input is preserved; reopen the expert and compare before saving.',

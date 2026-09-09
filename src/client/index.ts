@@ -19,7 +19,7 @@ import { TYPERT_REMOTE, type AgencyAgentsEnabledState, type AgencyAgentsPrompt }
 import { observePluginUpdate, type PluginUpdateIconName } from './plugin-update-ui.js'
 import { DEFAULT_EXPERT_EMOJI, type CustomExpertInput, type CatalogSnapshot } from '../expert-contract.js'
 import { CustomExpertEditor, CustomDeleteDialog, CUSTOM_EDITOR_CSS } from './custom-editor.js'
-import { acceptCatalog, catalogState, refreshCatalog, subscribeCatalog } from './catalog.js'
+import { acceptEnabled, acceptCatalog, catalogState, refreshCatalog, subscribeCatalog } from './catalog.js'
 import type { AgencyCatalogRemote } from './remote.js'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
@@ -176,6 +176,7 @@ interface ExpertView {
   readonly divisionEn: string
   readonly description: string
   readonly descriptionEn: string
+  readonly conflict?: boolean
   readonly custom?: boolean
   readonly avatar?: number
 }
@@ -247,7 +248,7 @@ export function matchExpertQuery(expert: ExpertSearchable, query: string): boole
   const q = normalizeExpertQuery(query)
   if (q === '') return true
   const fields = [
-    expert.slug,
+    ...(!expert.slug.startsWith('custom-') ? [expert.slug] : []),
     expert.name,
     expert.nameEn,
     expert.division,
@@ -595,10 +596,10 @@ async function readEnabled(remote: AgencyAgentsRemoteApi): Promise<EnabledState>
   return refreshCatalog(remote)
 }
 
-async function writeEnabled(remote: AgencyAgentsRemoteApi, enabled: ReadonlySet<string>, expectedRevision: number): Promise<EnabledState> {
+export async function writeEnabled(remote: AgencyAgentsRemoteApi, enabled: ReadonlySet<string>, expectedRevision: number): Promise<EnabledState> {
   const result = await remote.setEnabled([...enabled], expectedRevision)
   if (!result.ok) throw new Error(result.error.message)
-  return refreshCatalog(remote)
+  return acceptEnabled(remote, result.value)
 }
 
 async function readPrompt(remote: AgencyAgentsRemoteApi, slug: string, division: string): Promise<string> {
@@ -654,10 +655,9 @@ function menuItem(e: ExpertView, pick: (slug: string) => void, getActive: () => 
     React.createElement('span', null, displayName(e, getActive())))
 }
 
-function menuGroup(g: ExpertGroup, pick: (slug: string) => void, t: TranslateNS<'agency'>, getActive: () => 'zh' | 'en'): React.ReactElement {
+function menuGroup(g: ExpertGroup, pick: (slug: string) => void, getActive: () => 'zh' | 'en'): React.ReactElement {
   return React.createElement('div', { key: g.division },
-    // 开放 key 查找：division key 全部注册在 agency 词条里（MenuView 同款
-    // cast 模式），未注册的 key 会原样显示为 key 本身。
+    // 外部分类未配置译名时使用原始分类名称。
     React.createElement('div', { className: 'aag-menu-title' }, inputTriggerSourceName(g.division, getActive())),
     g.experts.map((e) => menuItem(e, pick, getActive)))
 }
@@ -944,7 +944,7 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
       insertError === null ? null : React.createElement('div', { className: 'aag-error', role: 'alert' }, insertError),
       groups.length === 0
         ? React.createElement('div', { className: 'aag-menu-empty' }, props.t('menu.empty'))
-        : groups.map((g) => menuGroup(g, pick, props.t, props.getActive)))
+        : groups.map((g) => menuGroup(g, pick, props.getActive)))
     : null
 
   return React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef },
@@ -1003,7 +1003,6 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   const [editor, setEditor] = React.useState<{ expert?: CustomExpertInput; enabled: boolean; revision: number } | null>(null)
   const [deleting, setDeleting] = React.useState<ExpertView | null>(null)
   const [deleteError, setDeleteError] = React.useState<string | null>(null)
-  const [undoSlug, setUndoSlug] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
 
   const accept = (catalog: CatalogSnapshot): void => {
@@ -1034,22 +1033,20 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       })
     }
   }
-  const removeOrRestore = (slug: string, restore: boolean): void => {
+  const removeExpert = (slug: string): void => {
     if (state === null || saving.current) return
     saving.current = true
     setIsSaving(true)
     setDeleteError(null)
-    void (restore ? props.remote.restoreCustomExpert(slug, state.revision) : props.remote.deleteCustomExpert(slug, state.revision))
+    void props.remote.deleteCustomExpert(slug, state.revision)
       .then(result => {
         if (!result.ok) throw new Error(result.error.message)
         accept(result.value)
         setDeleting(null)
-        setUndoSlug(restore ? null : slug)
-        setNotice(props.t(restore ? 'custom.restored' : 'custom.deleted'))
+        setNotice(props.t('custom.deleted'))
       }).catch((cause: unknown) => {
         const message = cause instanceof Error ? cause.message : String(cause)
-        if (restore) setError(message)
-        else setDeleteError(message)
+        setDeleteError(message)
       }).finally(() => { saving.current = false; setIsSaving(false) })
   }
 
@@ -1150,6 +1147,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       .filter(expert => status === '' || state.enabled.has(expert.slug) === (status === 'enabled'))
     const enabledCount = state.enabled.size
     const total = state.experts.length
+    if (state.experts.some(expert => expert.conflict)) nodes.push(React.createElement('div', { key: 'conflicts', className: 'aag-error', role: 'alert' }, props.t('custom.nameConflictHint')))
     const hasFilter = normalizeExpertQuery(query) !== '' || division !== '' || status !== ''
     const resetFilters = (): void => { setQuery(''); setDivision(''); setStatus('') }
     nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
@@ -1170,8 +1168,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
         }, React.createElement(RefreshCw, { size: 20, strokeWidth: 1.8, 'aria-hidden': true })))))
     nodes.push(React.createElement('div', { key: 'sources', className: 'aag-custom-tabs', role: 'group', 'aria-label': props.t('custom.source') },
       (['all', 'base', 'custom'] as const).map(value => React.createElement('button', { key: value, type: 'button', className: 'aag-action', 'aria-pressed': source === value, onClick: () => setSource(value) }, props.t(value === 'custom' ? 'custom.source' : `custom.${value}`)))))
-    if (notice !== null) nodes.push(React.createElement('div', { key: 'notice', className: 'aag-custom-notice', role: 'status' }, notice,
-      undoSlug === null ? null : React.createElement('button', { type: 'button', className: 'aag-action', disabled: isSaving, onClick: () => removeOrRestore(undoSlug, true) }, props.t('custom.undo'))))
+    if (notice !== null) nodes.push(React.createElement('div', { key: 'notice', className: 'aag-custom-notice', role: 'status' }, notice))
     nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters aag-card-filters' },
       React.createElement('div', { className: 'aag-field aag-field-category' },
         React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-category' }, props.t('settings.filter.category')),
@@ -1227,10 +1224,10 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
             React.createElement('img', { className: 'aag-expert-avatar', src: avatar, width: 44, height: 44, loading: 'lazy', decoding: 'async', alt: '' }),
             React.createElement('div', { className: 'aag-card-identity' },
               React.createElement('div', { className: 'aag-card-name', title: displayName(expert, props.getActive()) }, expert.custom ? `${expert.emoji} ` : '', displayName(expert, props.getActive())),
-              React.createElement('div', { className: 'aag-card-division' }, inputTriggerSourceName(expert.division, props.getActive()), expert.custom ? React.createElement('span', { className: 'aag-custom-badge' }, props.t('custom.source')) : null)),
+              React.createElement('div', { className: 'aag-card-division' }, inputTriggerSourceName(expert.division, props.getActive()), expert.conflict ? React.createElement('span', { className: 'aag-custom-badge', title: props.t('custom.nameConflictHint') }, props.t('custom.nameConflict')) : null, expert.custom ? React.createElement('span', { className: 'aag-custom-badge' }, props.t('custom.source')) : null)),
             React.createElement('div', { className: 'aag-card-description', title: displayDescription(expert, props.getActive()) }, displayDescription(expert, props.getActive())),
             React.createElement('label', { className: 'aag-switch', title: props.t(enabled ? 'settings.enabled' : 'settings.disabled') },
-              React.createElement('input', { type: 'checkbox', className: 'aag-switch-input', checked: enabled, disabled: isSaving, onChange: () => toggle(expert.slug), 'aria-label': `${displayName(expert, props.getActive())}：${props.t(enabled ? 'settings.enabled' : 'settings.disabled')}` }),
+              React.createElement('input', { type: 'checkbox', className: 'aag-switch-input', checked: enabled, disabled: isSaving || expert.conflict === true, onChange: () => toggle(expert.slug), 'aria-label': `${displayName(expert, props.getActive())}：${props.t(enabled ? 'settings.enabled' : 'settings.disabled')}` }),
               React.createElement('span', { className: 'aag-switch-track', 'aria-hidden': true }),
               React.createElement('span', { className: 'aag-switch-state' }, props.t(enabled ? 'settings.enabled' : 'settings.disabled')))),
           React.createElement('div', { className: 'aag-card-actions aag-card-actions-with-more' },
@@ -1263,7 +1260,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       },
     }),
     deleting === null ? null : React.createElement(CustomDeleteDialog, {
-      name: deleting.name, busy: isSaving, error: deleteError, t: props.t, close: () => setDeleting(null), confirm: () => removeOrRestore(deleting.slug, false),
+      name: deleting.name, busy: isSaving, error: deleteError, t: props.t, close: () => setDeleting(null), confirm: () => removeExpert(deleting.slug),
     }),
     openPrompt === null ? null : React.createElement(PromptDialog, {
       value: openPrompt, title: props.t('settings.promptTitle', { name: openPrompt.name }), closeLabel: props.t('settings.promptClose'), onClose: () => setOpenPrompt(null),
