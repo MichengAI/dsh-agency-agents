@@ -1,3 +1,4 @@
+import { loadEditorReview, continueEditorReview } from "./client/editor-review.js";
 import { describe, expect, it } from "vitest";
 import { buildExpertReference, writeEnabled, matchExpertQuery } from "./client/index.js";
 import { Context } from "@deepseek-ai/cordis";
@@ -442,5 +443,58 @@ describe("启动清理的修订号保护", () => {
     expect((settings.disk['agency-agents'] as AgencySettings).customExperts?.some(item => item.slug === added.slug)).toBe(true);
     await library.cleanupDeleted();
     expect((settings.disk['agency-agents'] as AgencySettings).customExperts).toEqual([added]);
+  });
+});
+
+
+describe("名册写入回执顺序", () => {
+  it("延迟保存回执不能覆盖已读取的新名册或阻断后续查询", async () => {
+    const latest = { experts: [builtin], enabled: [], revision: 3 };
+    const remote = { getCatalog: async () => ({ ok: true as const, value: latest }) } as unknown as AgencyCatalogRemote;
+    acceptCatalog(remote, { experts: [builtin], enabled: [], revision: 2 });
+    const pending = refreshCatalog(remote);
+    const accepted = acceptCatalog(remote, { experts: [builtin], enabled: [builtin.slug], revision: 1 });
+    expect(accepted.revision).toBe(2);
+    expect(accepted.enabled.size).toBe(0);
+    expect((await pending).revision).toBe(3);
+  });
+  it("新读取仍允许宿主重启后的修订号回落", async () => {
+    const remote = { getCatalog: async () => ({ ok: true as const, value: { experts: [builtin], enabled: [], revision: 0 } }) } as unknown as AgencyCatalogRemote;
+    acceptCatalog(remote, { experts: [builtin], enabled: [builtin.slug], revision: 9 });
+    expect((await refreshCatalog(remote)).revision).toBe(0);
+  });
+});
+
+
+describe("编辑冲突核对", () => {
+  const slug = "custom-00000000-0000-4000-8000-000000000095";
+  const latest = { ...input, slug, prompt: "其他窗口的修改" };
+  const snapshot: CatalogSnapshot = { experts: [{ ...builtin, slug, custom: true }], enabled: [], revision: 2 };
+  it("读取最新内容后，保留草稿并采用最新启停状态，直到用户另行保存", async () => {
+    const remote = {
+      getCatalog: async () => ({ ok: true as const, value: snapshot }),
+      getCustomExpert: async () => ({ ok: true as const, value: latest }),
+    } as unknown as AgencyCatalogRemote;
+    const review = await loadEditorReview(remote, slug, "zh");
+    const draft = { ...latest, prompt: "我的未保存输入" };
+    expect(continueEditorReview(review, draft, false)).toEqual({ expert: draft, enabled: false, revision: 2 });
+    expect(continueEditorReview(review, draft, true).expert.prompt).toBe("其他窗口的修改");
+    expect(draft.prompt).toBe("我的未保存输入");
+  });
+  it("正文读取期间再次写入时，拒绝使用混合版本", async () => {
+    let reads = 0;
+    const remote = {
+      getCatalog: async () => ({ ok: true as const, value: { ...snapshot, revision: ++reads } }),
+      getCustomExpert: async () => ({ ok: true as const, value: latest }),
+    } as unknown as AgencyCatalogRemote;
+    await expect(loadEditorReview(remote, slug, "zh")).rejects.toThrow("其他窗口");
+  });
+  it("专家已删除时保留内容但不恢复旧标识，只能显式作为新专家继续", async () => {
+    const remote = { getCatalog: async () => ({ ok: true as const, value: { ...snapshot, experts: [] } }) } as unknown as AgencyCatalogRemote;
+    const review = await loadEditorReview(remote, slug, "en");
+    const continued = continueEditorReview(review, latest, false);
+    expect(continued.expert).not.toHaveProperty("slug");
+    expect(continued.expert.prompt).toBe(latest.prompt);
+    expect(() => continueEditorReview(review, latest, true)).toThrow();
   });
 });

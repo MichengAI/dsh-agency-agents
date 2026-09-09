@@ -40,7 +40,7 @@ const clientBundle = await readFile(new URL('../lib/client.js', import.meta.url)
 check('客户端包不依赖 Node url 模块', !clientBundle.includes('require("url")'))
 
 try {
-  const workflow = await readFile(new URL('../.github/workflows/publish.yml', import.meta.url), 'utf8')
+  const workflow = (await readFile(new URL('../.github/workflows/publish.yml', import.meta.url), 'utf8')).replace(/\r\n/g, '\n')
   check('npm 受信发布工作流存在', true)
   check('npm 受信发布仅由 v 标签触发', workflow.includes("tags:\n      - 'v*'"))
   check('npm 受信发布申请 OIDC 权限', workflow.includes('id-token: write'))
@@ -57,7 +57,7 @@ const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'u
 check('Cordis patch 挂载当前包名', patch.includes(`name: '${packageJson.name}'`))
 check('Cordis patch 挂载顶层 Remote 服务', patch.includes(`name: '${packageJson.name}/remote'`))
 
-const license = await readFile(new URL('../LICENSE', import.meta.url), 'utf8')
+const license = (await readFile(new URL('../LICENSE', import.meta.url), 'utf8')).replace(/\r\n/g, '\n')
 check('根许可证为 Apache License 2.0 正文', license.startsWith('Apache License\n                           Version 2.0'))
 
 

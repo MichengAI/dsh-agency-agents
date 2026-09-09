@@ -96,8 +96,8 @@ interface AgencyPersonaSource {
     prompt: string;
   }>;
 }
-/** 创建展示与召唤共用的 persona 来源；外部目录不会混入内置中文翻译。 */
-declare function createAgencyPersonaSource(root: string, divisions: readonly string[]): AgencyPersonaSource;
+/** 创建展示与召唤共用的来源；可复用 Host 已加载的名册，外部目录不混入内置翻译。 */
+declare function createAgencyPersonaSource(root: string, divisions: readonly string[], catalog?: () => Promise<ReadonlyMap<string, Expert>>): AgencyPersonaSource;
 /** 加载已配置分区中的专家元数据，按 slug 建立索引；persona 正文在召唤时按需读取。 */
 declare function loadCatalog(root: string, divisions: readonly string[], locale?: LocaleId): Promise<Map<string, Expert>>;
 /** 仅按本地化名称解析智能体；名称重名时拒绝调用，防止召唤到错误角色。 */

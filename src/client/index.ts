@@ -1,3 +1,4 @@
+import { PromptDialog } from "./prompt-dialog.js";
 import React from 'react'
 import { CategorySelect } from './category-select.js'
 import type { Context as CordisClientContext } from '@deepseek-ai/cordis'
@@ -545,8 +546,9 @@ export const CARD_SETTINGS_CSS = `
 .aag-switch-input:checked+.aag-switch-track::after{transform:translateX(18px);background:var(--dsw-alias-label-primary)}
 .aag-switch-input:disabled+.aag-switch-track{opacity:.5;cursor:default}
 .aag-switch-state{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;white-space:nowrap}
-.aag-prompt-backdrop{position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.56)}
-.aag-prompt-modal{display:flex;box-sizing:border-box;width:min(760px,100%);max-height:min(720px,calc(100vh - 40px));flex-direction:column;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-2));box-shadow:var(--dsw-shadow-lv3)}
+.aag-prompt-modal::backdrop{background:rgba(0,0,0,.56)}
+.aag-prompt-modal[open]{display:flex}
+.aag-prompt-modal{box-sizing:border-box;margin:auto;padding:0;color:var(--dsw-alias-label-primary,#eee);width:min(760px,calc(100vw - 40px));max-height:min(720px,calc(100vh - 40px));flex-direction:column;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-2));box-shadow:var(--dsw-shadow-lv3)}
 .aag-modal-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-bottom:1px solid var(--dsw-alias-border-l1)}
 .aag-modal-title{margin:0;font-size:15px;line-height:22px}
 .aag-modal-close{min-height:32px;padding:0 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;cursor:pointer}
@@ -955,31 +957,6 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
 interface OpenPrompt {
   readonly name: string
   readonly prompt: string
-}
-
-function PromptDialog(props: {
-  readonly value: OpenPrompt
-  readonly title: string
-  readonly closeLabel: string
-  readonly onClose: () => void
-}): React.ReactElement {
-  const closeRef = React.useRef<HTMLButtonElement | null>(null)
-  React.useEffect(() => {
-    closeRef.current?.focus()
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') props.onClose()
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [props])
-  return React.createElement('div', {
-    className: 'aag-prompt-backdrop',
-    onMouseDown: (event: React.MouseEvent<HTMLDivElement>) => { if (event.currentTarget === event.target) props.onClose() },
-  }, React.createElement('section', { className: 'aag-prompt-modal', role: 'dialog', 'aria-modal': true, 'aria-label': props.title },
-    React.createElement('div', { className: 'aag-modal-head' },
-      React.createElement('h3', { className: 'aag-modal-title' }, props.title),
-      React.createElement('button', { ref: closeRef, type: 'button', className: 'aag-modal-close', onClick: props.onClose }, props.closeLabel)),
-    React.createElement('pre', { className: 'aag-prompt-content' }, props.value.prompt)))
 }
 
 function ExpertCardsSettings(props: PropsLocale<'agency'> & {

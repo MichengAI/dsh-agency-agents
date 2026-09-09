@@ -29,7 +29,7 @@ import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { SubagentRun } from '@deepseek-ai/dsh-subagent'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { open, readdir, readFile, stat } from 'node:fs/promises'
-import { join, resolve } from 'node:path'
+import { join, resolve, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
@@ -307,9 +307,13 @@ export async function readExpertPrompt(
   if (!divisions.includes(division) || !EXPERT_PATH_SEGMENT_PATTERN.test(slug)) {
     throw new Error('无效的专家提示词请求。')
   }
+  return readPersonaFile(join(root, division, `${slug}.md`));
+}
+
+async function readPersonaFile(filePath: string): Promise<{ prompt: string }> {
   let raw: string
   try {
-    raw = stripBom(await readFile(join(root, division, `${slug}.md`), 'utf8'))
+    raw = stripBom(await readFile(filePath, 'utf8'))
   } catch {
     throw new Error('未找到专家提示词。')
   }
@@ -342,12 +346,37 @@ export interface AgencyPersonaSource {
   getPrompt(slug: string, division: string, locale: LocaleId): Promise<{ prompt: string }>
 }
 
-/** 创建展示与召唤共用的 persona 来源；外部目录不会混入内置中文翻译。 */
-export function createAgencyPersonaSource(root: string, divisions: readonly string[]): AgencyPersonaSource {
-  const chineseRoot = resolve(root) === resolve(BUNDLED_ROOT) ? BUNDLED_CHINESE_ROOT : undefined
+// 路径仅留在 Host，不随名册摘要发送给客户端。
+const personaPaths = new WeakMap<Expert, string>();
+
+/** 创建展示与召唤共用的来源；可复用 Host 已加载的名册，外部目录不混入内置翻译。 */
+export function createAgencyPersonaSource(
+  root: string,
+  divisions: readonly string[],
+  catalog?: () => Promise<ReadonlyMap<string, Expert>>,
+): AgencyPersonaSource {
+  const chineseRoot =
+    resolve(root) === resolve(BUNDLED_ROOT) ? BUNDLED_CHINESE_ROOT : undefined;
+  let loaded: Promise<ReadonlyMap<string, Expert>> | undefined;
   return {
-    getPrompt: (slug, division, locale) => readLocalizedExpertPrompt(root, chineseRoot, slug, division, locale, divisions),
-  }
+    async getPrompt(slug, division, locale) {
+      if (!divisions.includes(division) || !EXPERT_PATH_SEGMENT_PATTERN.test(slug))
+        throw new Error("无效的专家提示词请求。");
+      const experts = await (catalog ? catalog() : (loaded ??= loadCatalog(root, divisions, locale)));
+      const expert = experts.get(slug);
+      const path = expert === undefined ? undefined : personaPaths.get(expert);
+      if (expert?.division !== division || path === undefined)
+        throw new Error("未找到专家提示词。");
+      if (locale === "zh" && chineseRoot !== undefined) {
+        try {
+          return await readPersonaFile(join(chineseRoot, relative(root, path)));
+        } catch (error) {
+          if (!(error instanceof Error) || error.message !== "未找到专家提示词。") throw error;
+        }
+      }
+      return readPersonaFile(path);
+    },
+  };
 }
 
 /** Concatenate the text blocks of a subagent output. */
@@ -408,7 +437,7 @@ export async function loadCatalog(root: string, divisions: readonly string[], lo
       if (map.has(slug)) {
         console.warn(`[agency-agents] 智能体 slug 冲突，后加载者覆盖：${slug}`)
       }
-      map.set(slug, {
+      const expert: Expert = {
         slug,
         name: ZH_NAME[slug] ?? parsed.name,
         nameEn: parsed.name,
@@ -417,7 +446,9 @@ export async function loadCatalog(root: string, divisions: readonly string[], lo
         emoji: parsed.emoji ?? '',
         division: source.division,
         divisionZh: ZH_DIVISION[source.division] ?? source.division,
-      })
+      };
+      personaPaths.set(expert, filePath);
+      map.set(slug, expert);
     })
   }
   if (map.size === 0) {
@@ -484,7 +515,7 @@ export function apply(ctx: Context, config: Config): void {
   const enabledSet = (): ReadonlySet<string> => new Set(settingsSource().enabled)
   const activeLocale = (): LocaleId => readHostLocale(ctx)
   const catalogRoot = resolveCatalogRoot(config.root)
-  const basePersonaSource = createAgencyPersonaSource(catalogRoot, config.divisions)
+  const basePersonaSource = createAgencyPersonaSource(catalogRoot, config.divisions, async () => { await ensureReady(); return experts; })
   let experts = new Map<string, Expert>()
   let loadError: string | null = null
   const ready = loadCatalog(catalogRoot, config.divisions, activeLocale())

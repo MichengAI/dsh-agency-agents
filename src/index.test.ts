@@ -6,7 +6,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import z from '@deepseek-ai/schemastery'
-import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
+import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, createAgencyPersonaSource, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote, { readExpertPrompt, readLocalizedExpertPrompt } from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
 import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, COPY_PROMPT_FEEDBACK_MS, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, pickHostSettingsTrigger, resolveExpertMenuPosition, resolveExpertToolbarClick, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, sortExpertsByOrder, writeErrorKey, writeErrorMessage } from './client/index.js'
@@ -193,6 +193,9 @@ describe('loadCatalog', () => {
     expect(map.get('economy-designer')).not.toHaveProperty('persona')
     expect(map.has('unity-architect')).toBe(true)
     expect(map.get('unity-architect')?.division).toBe('game-development')
+    const source = createAgencyPersonaSource(dir, ["game-development"]);
+    await expect(source.getPrompt("unity-architect", "game-development", "zh"))
+      .resolves.toEqual({ prompt: "body" });
   })
 
   it('frontmatter 跨 1KB 分块且多字节 UTF-8 字符落在边界时仍能解析', async () => {
@@ -237,10 +240,13 @@ describe('loadCatalog', () => {
   it('同 slug 冲突时按文件名排序确定覆盖顺序', async () => {
     await mkdir(join(dir, 'engineering', 'z-sub'), { recursive: true })
     await writeFile(join(dir, 'engineering', 'reviewer.md'), '---\nname: Root\ndescription: d\n---\nbody', 'utf8')
-    await writeFile(join(dir, 'engineering', 'z-sub', 'reviewer.md'), '---\nname: Sub\ndescription: d\n---\nbody', 'utf8')
+    await writeFile(join(dir, 'engineering', 'z-sub', 'reviewer.md'), '---\nname: Sub\ndescription: d\n---\nSub persona', 'utf8')
     // 'reviewer.md' 按文件名排在 'z-sub' 之前，子目录中的同名文件后加载并覆盖
     const map = await loadCatalog(dir, ['engineering'])
     expect(map.get('reviewer')?.name).toBe('Sub')
+    const source = createAgencyPersonaSource(dir, ["engineering"]);
+    await expect(source.getPrompt("reviewer", "engineering", "en"))
+      .resolves.toEqual({ prompt: "Sub persona" });
   })
 
   it('名称仅大小写或首尾空白不同时仍拒绝加载，并按界面语言报错', async () => {

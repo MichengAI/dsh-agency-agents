@@ -241,15 +241,18 @@ export function registerPluginUpdater(ctx: Context, options: PluginUpdaterOption
         if (request.method !== 'POST') { response.writeHead(405, { allow: 'GET, HEAD, POST' }); response.end(); return }
         if (!isTrustedUpdateRequest(request)) { json(response, 403, { error: '已拒绝非本机同源更新请求。' }); return }
         if (installing) { json(response, 409, { error: '当前插件正在更新，请稍候。' }); return }
-        const before = await status(options, target)
-        if (before.latestVersion === undefined) { json(response, 503, { error: '暂时无法获取最新版本。' }); return }
-        if (!before.updateAvailable) { json(response, 200, before); return }
+        // 查询版本也属于更新事务；先占锁，避免多窗口同时进入安装。
         installing = true
-        try { await install(target, `${options.packageName}@${before.latestVersion}`) } finally { installing = false }
-        const notifyParent = target.desktopPnpm === undefined && typeof process.send === 'function'
-        const autoReload = target.desktopPnpm !== undefined || notifyParent
-        json(response, 200, { ...before, updatedVersion: before.latestVersion, restartRequired: true, autoReload })
-        if (notifyParent) setTimeout(() => { process.send?.(PLUGIN_UPDATE_IPC) }, 150).unref?.()
+        try {
+          const before = await status(options, target)
+          if (before.latestVersion === undefined) { json(response, 503, { error: '暂时无法获取最新版本。' }); return }
+          if (!before.updateAvailable) { json(response, 200, before); return }
+          await install(target, `${options.packageName}@${before.latestVersion}`)
+          const notifyParent = target.desktopPnpm === undefined && typeof process.send === 'function'
+          const autoReload = target.desktopPnpm !== undefined || notifyParent
+          json(response, 200, { ...before, updatedVersion: before.latestVersion, restartRequired: true, autoReload })
+          if (notifyParent) setTimeout(() => { process.send?.(PLUGIN_UPDATE_IPC) }, 150).unref?.()
+        } finally { installing = false }
       } catch (error) {
         ctx.logger.warn(`plugin updater failed: ${String(error)}`)
         json(response, 503, { error: publicError(error) })

@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import type { Context } from '@deepseek-ai/cordis'
 import { handlePluginUpdateEscape, manualPluginUpdateCommand } from './client/plugin-update-ui.js'
-import { isDshCliEntry, isNewerVersion, isTrustedUpdateRequest, PLUGIN_UPDATE_HEADER } from './plugin-updater.js'
+import { registerPluginUpdater, isDshCliEntry, isNewerVersion, isTrustedUpdateRequest, PLUGIN_UPDATE_HEADER } from './plugin-updater.js'
 
 describe('独立插件更新', () => {
   it('只把更高 semver 识别为更新', () => {
@@ -72,4 +73,44 @@ describe('独立插件更新', () => {
     expect(await readFile(new URL('./plugin-updater.ts', import.meta.url), 'utf8')).toContain("const notifyParent = target.desktopPnpm === undefined && typeof process.send === 'function'")
     expect(await readFile(new URL('./plugin-updater.ts', import.meta.url), 'utf8')).toContain('isDshCliEntry')
   })
+})
+
+
+it('查询版本期间拒绝第二次更新，失败后允许重试', async () => {
+  let handler!: (request: unknown, response: unknown) => Promise<void>
+  let release!: (response: Response) => void
+  const version = new Promise<Response>(resolve => { release = resolve })
+  const fetchMock = vi.fn(() => version)
+  vi.stubGlobal('fetch', fetchMock)
+  const runPlugin = vi.fn(() => ({ done: Promise.resolve({ exitCode: 0, signal: null }), cancel() {} }))
+  const ctx = {
+    get: (name: string) => name === 'desktopProfiles'
+      ? { current: { name: 'web', dir: process.cwd() } } : { runPlugin },
+    webServer: { register: (route: { handler: typeof handler }) => { handler = route.handler; return () => {} } },
+    logger: { warn: vi.fn() },
+  } as unknown as Context
+  registerPluginUpdater(ctx, { endpoint: '/test', packageName: 'review-update-lock', manifestUrl: new URL('../package.json', import.meta.url) })
+  const request = { method: 'POST', headers: { [PLUGIN_UPDATE_HEADER]: '1', origin: 'http://127.0.0.1:3000', host: '127.0.0.1:3000' }, socket: { remoteAddress: '127.0.0.1' } }
+  const response = () => ({ writeHead: vi.fn(), end: vi.fn() })
+  const firstResponse = response(), secondResponse = response()
+  const first = handler(request, firstResponse)
+  let second: Promise<void> | undefined
+  try {
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    second = handler(request, secondResponse)
+    await vi.waitFor(() => expect(secondResponse.writeHead).toHaveBeenCalledWith(409, expect.any(Object)))
+    expect(runPlugin).not.toHaveBeenCalled()
+  } finally {
+    release(new Response('{}', { status: 503 }))
+    await Promise.all([first, second])
+    vi.unstubAllGlobals()
+  }
+  expect(firstResponse.writeHead).toHaveBeenCalledWith(503, expect.any(Object))
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ version: '99.0.0' }))))
+  try {
+    const retried = response()
+    await handler(request, retried)
+    expect(retried.writeHead).toHaveBeenCalledWith(200, expect.any(Object))
+    expect(runPlugin).toHaveBeenCalledTimes(1)
+  } finally { vi.unstubAllGlobals() }
 })

@@ -6,6 +6,10 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+- Fixed concurrent update locking, nested expert persona resolution, and catalog rollback caused by delayed write receipts.
+- Added in-editor conflict review that preserves drafts and compares the latest content before saving; prompt previews now use a native dialog to isolate Escape.
+- Made release validation compatible with Windows CRLF line endings.
+
 ## 0.1.35 - 2026-09-09
 
 - Unified settings headings, descriptions, and action layouts; maintenance controls no longer squeeze titles or versions. The layout adapts to native DSH settings without Codex UI.
