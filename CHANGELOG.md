@@ -6,6 +6,8 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
+## 0.1.35 - 2026-09-09
+
 - Unified settings headings, descriptions, and action layouts; maintenance controls no longer squeeze titles or versions. The layout adapts to native DSH settings without Codex UI.
 
 ## 0.1.34 - 2026-09-08
