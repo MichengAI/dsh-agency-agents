@@ -1,7 +1,7 @@
 {
   "name": "@michengai/dsh-agency-agents",
   "description": "Agency Experts — a summonable domain-expert roster for DSH (expert mode)",
-  "version": "0.1.35",
+  "version": "0.1.36",
   "type": "module",
   "packageManager": "pnpm@11.22.0",
   "engines": {

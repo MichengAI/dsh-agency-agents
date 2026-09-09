@@ -6,11 +6,15 @@ The five most recent published versions are listed below.
 
 ## Unreleased
 
-- Removed stale client-side duplicate-name blocking. After another window deletes or renames an expert, drafts can be reviewed against current settings and saved with the released name.
+## 0.1.36 - 2026-09-09
 
-- Fixed concurrent update locking, nested expert persona resolution, and catalog rollback caused by delayed write receipts.
-- Added in-editor conflict review that preserves drafts and compares the latest content before saving; prompt previews now use a native dialog to isolate Escape.
-- Made release validation compatible with Windows CRLF line endings.
+- Added custom expert management with creation, editing, copying built-ins, avatar and Emoji selection, and source and enabled-state filters. Custom experts are available through @ suggestions, the chat picker, and summon tools.
+- Made deletion permanent with immediate capacity recovery and automatic cleanup of legacy soft-deleted records. Name conflicts retain rename and delete access in Settings instead of making the entire catalog unavailable.
+- Strengthened settings revision and catalog consistency checks, rejected invalid enablement entries, and prevented in-flight reads and delayed write receipts from overwriting newer results.
+- Preserved drafts during editing conflicts and added review of the latest content before saving. Stale local catalogs no longer block valid saves after another window deletes or renames an expert to release its name.
+- Made viewing, copying, and summoning nested experts read the actual file selected by the catalog, avoiding missing prompts or the wrong persona from a same-named file.
+- Refined chat entry spacing, dropdown styling, blue focus feedback, and layered Escape handling. Prompt previews use a native dialog, and custom reference chips retain the same icon-and-name presentation as built-ins.
+- Fixed a concurrency gap in automatic update locking and made release validation compatible with Windows CRLF line endings.
 
 ## 0.1.35 - 2026-09-09
 
