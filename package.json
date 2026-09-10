@@ -1,7 +1,7 @@
 {
   "name": "@michengai/dsh-agency-agents",
   "description": "Agency Experts — a summonable domain-expert roster for DSH (expert mode)",
-  "version": "0.1.36",
+  "version": "0.1.37",
   "type": "module",
   "packageManager": "pnpm@11.22.0",
   "engines": {
@@ -44,11 +44,11 @@
   ],
   "scripts": {
     "build": "pnpm typecheck && tsdown",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.browser.json",
     "test": "vitest run",
     "test:browser": "playwright test",
     "verify": "node scripts/verify.mjs",
-    "prepublishOnly": "pnpm build && pnpm test && pnpm verify"
+    "prepublishOnly": "pnpm build && pnpm test && pnpm test:browser && pnpm verify"
   },
   "dsh": {
     "bundle": {
@@ -140,6 +140,7 @@
     "@playwright/test": "1.63.0",
     "@types/node": "^22.20.0",
     "@types/react": "~18.3.1",
+    "@types/react-dom": "18.3.7",
     "react": "^18.2.0",
     "react-dom": "18.3.1",
     "tsdown": "^0.22.2",

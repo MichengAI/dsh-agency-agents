@@ -64,6 +64,10 @@ For a ready-to-use workbench, download [DSH Codex Desktop](https://github.com/Mi
 - Examples use the `web` profile; replace it with the target profile.
 - Source installation and development require Node.js 22+ and pnpm. npm installation does not require running `pnpm install` separately.
 
+## Host dependencies and compatibility
+
+DSH `dsh.client.inject` controls browser module loading order. Missing graph entries are skipped, and frozen modules need not exist as npm packages in a profile. Runtime / primitives entries remain for validated older RCs. Required peers such as `dsh-client-ui-slots` retain the runtime contract. Profiles with `auto-install-peers` disabled may report unmet peers; strict peer checks may also block installation. Check the host version and browser module availability rather than inferring runtime failure solely from the npm tree.
+
 ## Installation
 
 Supported DeepSeek Harness RC versions: `0.1.0-rc.8`, `0.1.1-rc.2`, `0.1.2-rc.1`, and `0.1.5-rc.1`. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future RC versions require separate compatibility validation.
@@ -740,8 +744,7 @@ pnpm test
 pnpm verify
 ```
 
-`prepublishOnly` runs these build, test, and package-integrity checks before publishing.
-
+`prepublishOnly` runs the build, unit tests, browser regressions, and package-integrity checks before publishing. Release CI installs Chromium and its system dependencies; before the first local release, run the browser installation command below.
 
 Run browser interaction regressions separately (real React DOM and Chromium; no DSH credentials or user profile required):
 
@@ -752,9 +755,7 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-Coverage includes asynchronous loading, focus restoration after Escape, close-button and backdrop dismissal, StrictMode, and successive triggers. These component tests do not replace real-host or model-delegation acceptance.
-
-DSH `dsh.client.inject` controls browser module loading order. Missing graph entries are skipped, and frozen modules need not exist as npm packages in a profile. Runtime / primitives entries remain for validated older RCs. Required peers such as `dsh-client-ui-slots` retain the runtime contract. Profiles with `auto-install-peers` disabled may report unmet peers; strict peer checks may also block installation. Check the host version and browser module availability rather than inferring runtime failure solely from the npm tree.
+Coverage includes asynchronous loading, focus restoration after Escape, close-button and backdrop dismissal, StrictMode, and successive triggers. These component tests do not replace real-host or model-delegation acceptance. Browser tests bundle source rather than loading the published `lib/client.js`; artifacts still require build, package checks, and real-host acceptance. Override the default port 18769 with the `AGENCY_BROWSER_TEST_PORT` environment variable if needed.
 
 ## Custom experts
 

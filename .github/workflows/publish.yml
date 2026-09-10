@@ -28,6 +28,9 @@ jobs:
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
+      - name: 安装浏览器及系统依赖
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: 执行发布门禁
         run: pnpm prepublishOnly
 

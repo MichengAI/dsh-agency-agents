@@ -64,6 +64,10 @@
 - 以下示例使用 `web` profile；请替换为实际目标 profile。
 - 从源码安装或二次开发需要 Node.js 22+ 与 pnpm；仅从 npm 安装无需单独执行 `pnpm install`。
 
+## 宿主依赖与兼容性
+
+DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块图中不存在的项会跳过，冻结模块也不一定对应 Profile 内的 npm 包。为兼容已验证的旧 RC，保留 runtime / primitives 条目。`dsh-client-ui-slots` 等 required peer 仍表达运行时契约；关闭 `auto-install-peers` 的 Profile 可能出现 unmet peer 提示，严格 peer 检查还可能阻止安装，需核对宿主版本及浏览器模块是否提供，不能据 npm 包树缺失直接判定运行失败。
+
 ## 安装
 
 支持的 DeepSeek Harness RC 版本：`0.1.0-rc.8`、`0.1.1-rc.2`、`0.1.2-rc.1`、`0.1.5-rc.1`。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装；后续 RC 需另行验证兼容性。
@@ -740,8 +744,7 @@ pnpm test
 pnpm verify
 ```
 
-`prepublishOnly` 会在发布前依次执行上述构建、测试和包完整性检查。
-
+`prepublishOnly` 在发布前执行构建、单元测试、浏览器回归和包完整性检查；发布 CI 自动安装 Chromium 及系统依赖。首次本地发布前需执行下方浏览器安装命令。
 
 浏览器交互回归独立运行（真实 React DOM 与 Chromium，不需要 DSH 认证或用户 Profile）：
 
@@ -752,9 +755,7 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-覆盖异步加载后通过 Escape、关闭按钮和遮罩退出时的焦点恢复，以及 StrictMode 和连续打开不同专家。该测试验证组件交互，不替代真实宿主和模型委派验收。
-
-DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块图中不存在的项会跳过，冻结模块也不一定对应 Profile 内的 npm 包。为兼容已验证的旧 RC，保留 runtime / primitives 条目。`dsh-client-ui-slots` 等 required peer 仍表达运行时契约；关闭 `auto-install-peers` 的 Profile 可能出现 unmet peer 提示，严格 peer 检查还可能阻止安装，需核对宿主版本及浏览器模块是否提供，不能据 npm 包树缺失直接判定运行失败。
+覆盖异步加载后通过 Escape、关闭按钮和遮罩退出时的焦点恢复，以及 StrictMode 和连续打开不同专家。该测试验证组件交互，不替代真实宿主和模型委派验收。 浏览器测试从源码构建，不加载发布的 `lib/client.js`；产物仍需构建、包校验及真实宿主验收。端口默认 18769，占用时可通过 `AGENCY_BROWSER_TEST_PORT` 环境变量覆盖。
 
 ## 自定义专家
 
