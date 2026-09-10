@@ -542,17 +542,13 @@ export function apply(ctx: Context, config: Config): void {
     {
       setSource: (current) => {
         settingsSource = current;
-        // 旧宿主延迟注册设置区；回退到默认源时没有待清理记录。
-        if (current().customExperts?.some(
-          (item) => item.deleted !== undefined || item.wasEnabled !== undefined,
-        )) {
-          void library.cleanupDeleted().catch((error: unknown) =>
-            console.warn(
-              "[agency-agents] 旧删除记录清理失败，下次写入时重试：",
-              error,
-            ),
-          );
-        }
+        // 库内部判断是否有旧记录，默认源与卸载回退均为空操作。
+        void library.cleanupDeleted().catch((error: unknown) =>
+          console.warn(
+            "[agency-agents] 旧删除记录清理失败，下次写入时重试：",
+            error,
+          ),
+        );
       },
       onChange: () => {},
       validate: (value) => validateAgencySettings(value, readHostLocale(ctx)),

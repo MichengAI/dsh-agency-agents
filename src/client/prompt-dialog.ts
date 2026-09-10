@@ -35,7 +35,11 @@ export function PromptDialog(props: {
     onMouseDown: (event: React.MouseEvent<HTMLDialogElement>) => {
       if (event.target !== event.currentTarget) return;
       const rect = event.currentTarget.getBoundingClientRect();
-      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) props.onClose();
+      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) {
+        // 防止 mousedown 的默认聚焦覆盖卸载时恢复的按钮焦点。
+        event.preventDefault();
+        props.onClose();
+      }
     },
   },
     React.createElement("div", { className: "aag-modal-head" },

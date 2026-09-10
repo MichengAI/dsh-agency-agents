@@ -742,6 +742,20 @@ pnpm verify
 
 `prepublishOnly` runs these build, test, and package-integrity checks before publishing.
 
+
+Run browser interaction regressions separately (real React DOM and Chromium; no DSH credentials or user profile required):
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+pnpm exec playwright install chromium
+pnpm test:browser
+```
+
+Coverage includes asynchronous loading, focus restoration after Escape, close-button and backdrop dismissal, StrictMode, and successive triggers. These component tests do not replace real-host or model-delegation acceptance.
+
+DSH `dsh.client.inject` controls browser module loading order. Missing graph entries are skipped, and frozen modules need not exist as npm packages in a profile. Runtime / primitives entries remain for validated older RCs. Required peers such as `dsh-client-ui-slots` retain the runtime contract. Profiles with `auto-install-peers` disabled may report unmet peers; strict peer checks may also block installation. Check the host version and browser module availability rather than inferring runtime failure solely from the npm tree.
+
 ## Custom experts
 
 Open Settings → Experts → New expert. Set a name, description, category and prompt, then choose an avatar and a separate summon emoji (default 🧩). Save and enable makes the expert immediately available through @ and the Experts button. Reference labels use the standard expert icon and plain name, matching built-in experts; the emoji appears in candidate menus. Copy a base expert to customize it, or edit, enable, disable and delete custom experts. Deletion permanently removes the expert content and enabled state; it cannot be undone.

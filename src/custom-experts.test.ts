@@ -91,6 +91,17 @@ function setup(
 }
 
 describe("自定义专家 Host 存储", () => {
+  it("无旧记录时清理不访问尚未注册或已卸载的设置区", async () => {
+    const revision = vi.fn(() => { throw new Error("namespace unavailable"); });
+    const mutate = vi.fn();
+    const library = createExpertLibrary(async () => [builtin], {
+      read: () => ({ enabled: [], customExperts: [] }), revision, mutate,
+    }, ["engineering"], () => "zh");
+    await expect(library.cleanupDeleted()).resolves.toBeUndefined();
+    expect(revision).not.toHaveBeenCalled();
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
   it("设置区延迟注册后仍自动清理旧删除记录", async () => {
     const ctx = new Context();
     const settings = new TestSettings(ctx);

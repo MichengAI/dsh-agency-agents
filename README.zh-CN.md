@@ -742,6 +742,20 @@ pnpm verify
 
 `prepublishOnly` 会在发布前依次执行上述构建、测试和包完整性检查。
 
+
+浏览器交互回归独立运行（真实 React DOM 与 Chromium，不需要 DSH 认证或用户 Profile）：
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+pnpm exec playwright install chromium
+pnpm test:browser
+```
+
+覆盖异步加载后通过 Escape、关闭按钮和遮罩退出时的焦点恢复，以及 StrictMode 和连续打开不同专家。该测试验证组件交互，不替代真实宿主和模型委派验收。
+
+DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块图中不存在的项会跳过，冻结模块也不一定对应 Profile 内的 npm 包。为兼容已验证的旧 RC，保留 runtime / primitives 条目。`dsh-client-ui-slots` 等 required peer 仍表达运行时契约；关闭 `auto-install-peers` 的 Profile 可能出现 unmet peer 提示，严格 peer 检查还可能阻止安装，需核对宿主版本及浏览器模块是否提供，不能据 npm 包树缺失直接判定运行失败。
+
 ## 自定义专家
 
 在「设置 → 专家」点击「新建专家」，填写名称、简介、分类和专家提示词，可分别选择头像与召唤 Emoji（默认 🧩）。「保存并启用」后立即通过 @ 或专家按钮选择；标签与内置专家一致，显示统一专家图标和纯名称；Emoji 用于候选菜单。基础专家可复制为自定义，自定义专家可编辑、启停、删除，删除会永久移除专家内容及启用状态，无法撤销。

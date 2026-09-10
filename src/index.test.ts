@@ -1013,9 +1013,8 @@ describe('@ 菜单分组标题本地化', () => {
       PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh-client-runtime"]
         ?.optional,
     ).toBe(true);
-    expect(PACKAGE_MANIFEST.dsh?.client?.inject).toContain(
-      "@deepseek-ai/dsh-client-ui-primitives",
-    );
+    // inject 是浏览器模块加载顺序，不应转化为额外的 npm 强制依赖。
+    expect(peers).not.toHaveProperty("@deepseek-ai/dsh-client-ui-primitives");
     expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain(
       "@deepseek-ai/dsh-client-ui-renderer",
     );

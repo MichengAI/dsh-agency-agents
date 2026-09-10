@@ -136,10 +136,10 @@ export function createExpertLibrary(
       return { enabled: next, revision: store.revision() }
     },
     async cleanupDeleted() {
-      // 修订号与同步读取绑定；排队期间发生其他写入时由宿主拒绝旧快照。
-      const expectedRevision = store.revision()
       const state = read()
       if (!state.customExperts.some(item => item.deleted !== undefined || item.wasEnabled !== undefined)) return
+      // 默认源及卸载回退无需访问设置区；快照与修订号之间没有异步间隙。
+      const expectedRevision = store.revision()
       const records = activeRecords(state.customExperts)
       const deleted = new Set(state.customExperts.filter(item => item.deleted).map(item => item.slug))
       await store.mutate([
