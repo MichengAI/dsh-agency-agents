@@ -12,34 +12,22 @@ The five most recent published versions are listed below.
 
 ## 0.1.37 - 2026-09-10
 
-This tag has a GitHub Release, but dependency release-age checks blocked CI and no npm package was published. Use 0.1.38.
-
-- Type-check browser tests, configuration, and server scripts; require Chromium regressions in the release gate and CI.
-- Clean temporary test files even when building fails, allow a custom port, and clarify the boundary between source tests and published-artifact acceptance.
-
-- Fix backdrop dismissal moving focus away after prompt preview closes; add real Chromium regressions for three dismissal paths and StrictMode.
-- Centralize legacy cleanup checks in the expert library and avoid accessing unregistered or disposed settings when there is no cleanup work.
-- Restore focus to the original View Prompt button when closing the preview with Escape or the Close button, including after asynchronous prompt loading.
-- Enumerate the four validated DSH RC versions (`0.1.0-rc.8`, `0.1.1-rc.2`, `0.1.2-rc.1`, `0.1.5-rc.1`) in host and package peers; allow the matching older Cordis and Schemastery baselines. Keep the legacy client runtime optional.
-- Wait for settings registration before cleaning legacy deleted experts, fixing the startup warning and skipped cleanup on older hosts.
-- Build against DSH `0.1.5-rc.1` with pinned development dependencies.
+This version was not published to npm. Please use `0.1.38` instead.
 
 ## 0.1.36 - 2026-09-09
 
-- Create your own experts in Expert Settings: write custom instructions, copy and adapt a built-in expert, and choose an avatar and Emoji.
-- Once enabled, custom experts are available by typing @ or clicking the Experts button in chat. Their reference tags use the same clean name display as built-in experts.
-- Filter experts by source and enabled status for easier management. Deleting a custom expert is permanent and frees up a slot, so please check before deleting.
-- Keep your draft when edits from multiple windows conflict, then review the latest content before saving. Experts with duplicate names can still be renamed or deleted in Settings without affecting other experts.
-- Improved the chat entry, dropdown menus, and keyboard interactions; fixed issues with viewing, copying, and using some expert prompts; and improved update reliability.
+- Create custom experts with your own instructions or adapt built-in experts, then select them using @ or the Experts button.
+- Filter, edit, enable, disable, and permanently delete experts. Drafts are preserved when edits from multiple windows conflict.
+- Improve expert menus and keyboard navigation, and fix prompt viewing, copying, and expert invocation issues.
 
 ## 0.1.35 - 2026-09-09
 
-- Unified settings headings, descriptions, and action layouts; maintenance controls no longer squeeze titles or versions. The layout adapts to native DSH settings without Codex UI.
+- Improve Expert Settings layout so buttons no longer crowd the title and version, with support for the native DSH interface.
 
 ## 0.1.34 - 2026-09-08
 
-- Fixed the composer Expert picker so its scrollable menu opens within the available viewport space instead of being clipped when many experts are enabled.
-- Kept the initial enabled-first ordering in Expert Settings stable while toggling individual experts, preventing cards from jumping during bulk setup.
+- Fix clipped expert menus when many experts are enabled, with scrolling within the available space.
+- Keep expert cards in place when toggling them for smoother consecutive actions.
 
 ## 0.1.33 - 2026-09-07
 
