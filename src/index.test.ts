@@ -998,30 +998,41 @@ describe('专家库目标稿样式契约', () => {
 })
 
 describe('@ 菜单分组标题本地化', () => {
-  it('DSH peer 兼容 rc.5 至 0.2.0 前版本', () => {
-    const range = '>=0.1.0-rc.5 <0.2.0'
-    const peers = PACKAGE_MANIFEST.peerDependencies
+  it("DSH peer 枚举已验证的四个 RC，保留旧 runtime 可选声明", () => {
+    const range = "0.1.0-rc.8 || 0.1.1-rc.2 || 0.1.2-rc.1 || 0.1.5-rc.1";
+    const peers = PACKAGE_MANIFEST.peerDependencies;
+    expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
+    expect(PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh"]?.optional).toBe(true);
 
     for (const [name, version] of Object.entries(peers ?? {})) {
-      if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe(range)
+      if (name.startsWith("@deepseek-ai/dsh-")) {
+        expect(version).toBe(name === "@deepseek-ai/dsh-client-runtime" ? "0.1.0-rc.8 || 0.1.1-rc.2" : range);
       }
     }
-    expect(PACKAGE_MANIFEST.peerDependenciesMeta?.['@deepseek-ai/dsh-client-runtime']?.optional).toBe(true)
-    expect(PACKAGE_MANIFEST.dsh?.client?.inject).toContain('@deepseek-ai/dsh-client-ui-primitives')
-    expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain('@deepseek-ai/dsh-client-ui-renderer')
-    expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain('@deepseek-ai/dsh-client-ui-session')
-  })
+    expect(
+      PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh-client-runtime"]
+        ?.optional,
+    ).toBe(true);
+    expect(PACKAGE_MANIFEST.dsh?.client?.inject).toContain(
+      "@deepseek-ai/dsh-client-ui-primitives",
+    );
+    expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain(
+      "@deepseek-ai/dsh-client-ui-renderer",
+    );
+    expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain(
+      "@deepseek-ai/dsh-client-ui-session",
+    );
+  });
 
   it('使用套件统一的 Node 与 pnpm 版本', () => {
     expect(PACKAGE_MANIFEST.engines?.node).toBe('^22.19.0 || >=24.0.0')
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 RC.1', () => {
+  it('DSH 开发依赖固定为 0.1.5-rc.1', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.1.2-rc.1')
+        expect(version).toBe('0.1.5-rc.1')
       }
     }
   })

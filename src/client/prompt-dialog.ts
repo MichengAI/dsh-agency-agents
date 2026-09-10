@@ -5,15 +5,20 @@ export function PromptDialog(props: {
   readonly value: { name: string; prompt: string };
   readonly title: string;
   readonly closeLabel: string;
+  readonly returnFocus: HTMLElement;
   readonly onClose: () => void;
 }): React.ReactElement {
   const dialog = React.useRef<HTMLDialogElement | null>(null);
   React.useEffect(() => {
     const node = dialog.current;
-    const previous = document.activeElement as HTMLElement | null;
+    // 异步读取和 autoFocus 会改变 activeElement，恢复目标由打开按钮提供。
+    const previous = props.returnFocus;
     node?.showModal();
-    return () => { node?.close(); previous?.focus(); };
-  }, []);
+    return () => {
+      node?.close();
+      if (previous.isConnected) previous.focus({ preventScroll: true });
+    };
+  }, [props.returnFocus]);
   return React.createElement("dialog", {
     ref: dialog,
     className: "aag-prompt-modal",

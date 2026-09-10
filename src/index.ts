@@ -507,11 +507,6 @@ export function apply(ctx: Context, config: Config): void {
   const maxDepth = normalizeMaxDepth(config.maxDepth)
   const settingsNamespace = settingsNamespaceCompat('agency-agents')
   let settingsSource: () => AgencySettings = () => ({ enabled: [], customExperts: [] })
-  installSettingsSectionCompat<AgencySettings>(ctx, settingsNamespace, agencySettingsSchema, { enabled: [], customExperts: [] }, {
-    setSource: (current) => { settingsSource = current },
-    onChange: () => {},
-    validate: value => validateAgencySettings(value, readHostLocale(ctx)),
-  })
   const enabledSet = (): ReadonlySet<string> => new Set(settingsSource().enabled)
   const activeLocale = (): LocaleId => readHostLocale(ctx)
   const catalogRoot = resolveCatalogRoot(config.root)
@@ -539,7 +534,30 @@ export function apply(ctx: Context, config: Config): void {
     },
     mutate: (ops, revision) => ctx.settings.mutate(settingsNamespace, ops, revision),
   }, [...new Set([...DEFAULT_DIVISIONS, ...config.divisions])], activeLocale)
-  void library.cleanupDeleted().catch((error: unknown) => console.warn('[agency-agents] 旧删除记录清理失败，下次写入时重试：', error))
+  installSettingsSectionCompat<AgencySettings>(
+    ctx,
+    settingsNamespace,
+    agencySettingsSchema,
+    { enabled: [], customExperts: [] },
+    {
+      setSource: (current) => {
+        settingsSource = current;
+        // 旧宿主延迟注册设置区；回退到默认源时没有待清理记录。
+        if (current().customExperts?.some(
+          (item) => item.deleted !== undefined || item.wasEnabled !== undefined,
+        )) {
+          void library.cleanupDeleted().catch((error: unknown) =>
+            console.warn(
+              "[agency-agents] 旧删除记录清理失败，下次写入时重试：",
+              error,
+            ),
+          );
+        }
+      },
+      onChange: () => {},
+      validate: (value) => validateAgencySettings(value, readHostLocale(ctx)),
+    },
+  );
   // 闭包读取当前 source，避免 settings 服务替换时继续持有旧快照。
   const personaSource: AgencyPersonaSource = {
     async getPrompt(slug, division, locale) {

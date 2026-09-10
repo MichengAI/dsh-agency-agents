@@ -957,6 +957,7 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
 interface OpenPrompt {
   readonly name: string
   readonly prompt: string
+  readonly returnFocus: HTMLButtonElement
 }
 
 function ExpertCardsSettings(props: PropsLocale<'agency'> & {
@@ -1095,8 +1096,8 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       .finally(() => setPromptBusySlug(null))
   }
 
-  const viewPrompt = (expert: ExpertView): void => {
-    withPrompt(expert, (prompt) => { setOpenPrompt({ name: displayName(expert, props.getActive()), prompt }) })
+  const viewPrompt = (expert: ExpertView, returnFocus: HTMLButtonElement): void => {
+    withPrompt(expert, (prompt) => { setOpenPrompt({ name: displayName(expert, props.getActive()), prompt, returnFocus }) })
   }
 
   const copyPrompt = (expert: ExpertView): void => {
@@ -1219,7 +1220,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
                 expert.custom ? React.createElement('button', { type: 'button', className: 'aag-custom-danger', disabled: isSaving, onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
                   event.currentTarget.closest('details')?.removeAttribute('open'); setDeleting(expert); setDeleteError(null)
                 } }, props.t('custom.delete')) : null)),
-            React.createElement('button', { type: 'button', className: 'aag-card-action', disabled: promptBusySlug !== null, 'aria-haspopup': 'dialog', onClick: () => viewPrompt(expert) },
+            React.createElement('button', { type: 'button', className: 'aag-card-action', disabled: promptBusySlug !== null, 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
               React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }),
               busy ? props.t('settings.promptLoading') : props.t('settings.viewPrompt')),
             React.createElement('button', { type: 'button', className: 'aag-card-action aag-card-action-primary', disabled: promptBusySlug !== null, onClick: () => copyPrompt(expert) },
@@ -1240,7 +1241,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       name: deleting.name, busy: isSaving, error: deleteError, t: props.t, close: () => setDeleting(null), confirm: () => removeExpert(deleting.slug),
     }),
     openPrompt === null ? null : React.createElement(PromptDialog, {
-      value: openPrompt, title: props.t('settings.promptTitle', { name: openPrompt.name }), closeLabel: props.t('settings.promptClose'), onClose: () => setOpenPrompt(null),
+      value: openPrompt, title: props.t('settings.promptTitle', { name: openPrompt.name }), closeLabel: props.t('settings.promptClose'), returnFocus: openPrompt.returnFocus, onClose: () => setOpenPrompt(null),
     }))
 }
 

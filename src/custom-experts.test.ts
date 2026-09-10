@@ -91,6 +91,47 @@ function setup(
 }
 
 describe("自定义专家 Host 存储", () => {
+  it("设置区延迟注册后仍自动清理旧删除记录", async () => {
+    const ctx = new Context();
+    const settings = new TestSettings(ctx);
+    const slug = "custom-00000000-0000-4000-8000-000000000000";
+    settings.restore({ "agency-agents": {
+      enabled: [slug], customExperts: [{ ...input, slug, deleted: true }],
+    } });
+    let register: (() => void) | undefined;
+    const settingsApi = settings as unknown as {
+      installSection?: (...args: unknown[]) => void;
+    };
+    if (settingsApi.installSection) {
+      const install = settingsApi.installSection.bind(settings);
+      vi.spyOn(settingsApi, "installSection").mockImplementation((...args) => {
+        register = () => install(...args);
+      });
+    } else {
+      vi.spyOn(ctx, "inject").mockImplementation((_deps, callback) => {
+        register = () => { callback(ctx); };
+        return ctx.fiber as ReturnType<Context["inject"]>;
+      });
+    }
+    ctx.provide("tools", { register: () => {} });
+    ctx.provide("systemPrompt", { section: () => {} });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      apply(ctx, { root: "", provider: "spawn", divisions: ["engineering"] });
+      await Promise.resolve();
+      expect(warning).not.toHaveBeenCalled();
+      expect(register).toBeDefined();
+      register!();
+      await vi.waitFor(() => expect(settings.disk["agency-agents"]).toMatchObject({
+        enabled: [], customExperts: [],
+      }));
+      expect(warning).not.toHaveBeenCalled();
+    } finally {
+      warning.mockRestore();
+      await ctx.fiber.dispose();
+    }
+  });
+
   it("兼容旧 enabled 配置；新建、启用及重启恢复来自同一持久化文档", async () => {
     const { library, settings } = setup();
     const before = await library.catalog();
