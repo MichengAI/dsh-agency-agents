@@ -6,16 +6,9 @@ The five most recent published versions are listed below.
 
 ## 0.1.38 - 2026-09-10
 
-- Add the exact release-age exception for official `dsh-chunked-list@0.1.5-rc.1`, fixing clean CI installation.
-- Type-check browser tests, configuration, and server scripts; require Chromium regressions in the release gate and CI.
-- Clean temporary test files even when building fails, allow a custom port, and clarify the boundary between source tests and published-artifact acceptance.
-
-- Fix backdrop dismissal moving focus away after prompt preview closes; add real Chromium regressions for three dismissal paths and StrictMode.
-- Centralize legacy cleanup checks in the expert library and avoid accessing unregistered or disposed settings when there is no cleanup work.
-- Restore focus to the original View Prompt button when closing the preview with Escape or the Close button, including after asynchronous prompt loading.
-- Enumerate the four validated DSH RC versions (`0.1.0-rc.8`, `0.1.1-rc.2`, `0.1.2-rc.1`, `0.1.5-rc.1`) in host and package peers; allow the matching older Cordis and Schemastery baselines. Keep the legacy client runtime optional.
-- Wait for settings registration before cleaning legacy deleted experts, fixing the startup warning and skipped cleanup on older hosts.
-- Build against DSH `0.1.5-rc.1` with pinned development dependencies.
+- Support DSH `0.1.5-rc.1` while retaining compatibility with validated older versions.
+- Restore focus after closing prompt previews for smoother keyboard navigation.
+- Fix startup warnings and cleanup of previously deleted experts on older DSH versions.
 
 ## 0.1.37 - 2026-09-10
 
