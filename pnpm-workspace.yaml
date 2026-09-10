@@ -1,6 +1,7 @@
 autoInstallPeers: false
 
 minimumReleaseAgeExclude:
+  - '@deepseek-ai/dsh-chunked-list@0.1.5-rc.1'
   - '@deepseek-ai/dsh-agent@0.1.5-rc.1'
   - '@deepseek-ai/dsh-api-remotes@0.1.5-rc.1'
   - '@deepseek-ai/dsh-attachment@0.1.5-rc.1'
