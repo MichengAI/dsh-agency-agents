@@ -4,6 +4,10 @@
 
 The five most recent published versions are listed below.
 
+## 0.1.39 - 2026-09-11
+
+- Add compatibility with DSH `0.1.5-rc.2` while retaining support for previously supported RC versions.
+
 ## 0.1.38 - 2026-09-10
 
 - Support DSH `0.1.5-rc.1` while retaining compatibility with validated older versions.

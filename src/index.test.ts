@@ -998,8 +998,8 @@ describe('专家库目标稿样式契约', () => {
 })
 
 describe('@ 菜单分组标题本地化', () => {
-  it("DSH peer 枚举已验证的四个 RC，保留旧 runtime 可选声明", () => {
-    const range = "0.1.0-rc.8 || 0.1.1-rc.2 || 0.1.2-rc.1 || 0.1.5-rc.1";
+  it("DSH peer 枚举已验证的五个 RC，保留旧 runtime 可选声明", () => {
+    const range = "0.1.0-rc.8 || 0.1.1-rc.2 || 0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2";
     const peers = PACKAGE_MANIFEST.peerDependencies;
     expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
     expect(PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh"]?.optional).toBe(true);
@@ -1028,10 +1028,10 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 0.1.5-rc.1', () => {
+  it('DSH 开发依赖固定为 0.1.5-rc.2', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.1.5-rc.1')
+        expect(version).toBe('0.1.5-rc.2')
       }
     }
   })
