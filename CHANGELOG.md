@@ -4,6 +4,10 @@
 
 The five most recent published versions are listed below.
 
+## 0.1.41 - 2026-09-12
+
+- Fix navigation from the chat Experts button to Settings → Experts when all experts are disabled, supporting both native DSH dialogs and Codex UI settings pages.
+
 ## 0.1.40 - 2026-09-11
 
 - Fix the Experts plugin moving the attachment button to the end of the toolbar, preserving the original host button order.

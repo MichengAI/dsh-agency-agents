@@ -744,7 +744,7 @@ export function findHostSettingsTrigger(root: ParentNode): HTMLElement | undefin
 }
 
 export function findExpertSettingsNavButton(root: ParentNode, navLabel: string): HTMLElement | undefined {
-  for (const dialog of root.querySelectorAll('[role="dialog"]')) {
+  for (const dialog of root.querySelectorAll('[data-dcu-settings-page], [role="dialog"]')) {
     for (const button of dialog.querySelectorAll('nav button')) {
       if (button instanceof HTMLElement && (button.textContent ?? '').trim() === navLabel) return button
     }
@@ -773,8 +773,35 @@ export function openAgentSettings(
   }
   const trigger = findHostSettingsTrigger(root)
   if (trigger === undefined) return false
+  // Codex UI 的全页设置壳支持直接选择分区，不必先打开通用设置。
+  if (trigger.hasAttribute('data-dcu-settings-trigger')) {
+    const request = new CustomEvent('dcu-settings-open-section', { detail: { labels: [navLabel] }, cancelable: true })
+    if (!trigger.dispatchEvent(request)) return true
+  }
+  // 旧壳可能延迟挂载导航，不能只依赖固定两帧。
+  let finished = false
+  const observer = new MutationObserver(() => { select() })
+  const timeout = setTimeout(() => {
+    if (select()) return
+    cleanup()
+    console.warn(`[agency-agents] 未找到设置分区：${navLabel}`)
+  }, 4000)
+  const cleanup = (): void => {
+    finished = true
+    observer.disconnect()
+    clearTimeout(timeout)
+  }
+  const select = (): boolean => {
+    if (finished) return false
+    const target = findExpertSettingsNavButton(root, navLabel)
+    if (target === undefined) return false
+    cleanup()
+    target.click()
+    return true
+  }
+  observer.observe(root, { childList: true, subtree: true })
   trigger.click()
-  schedule(() => { findExpertSettingsNavButton(root, navLabel)?.click() })
+  schedule(() => { select() })
   return true
 }
 

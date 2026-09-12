@@ -1,6 +1,9 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { PromptDialog } from '../../src/client/prompt-dialog'
+import { openAgentSettings } from '../../src/client/index'
+
+Object.assign(window, { openAgentSettings })
 
 // 模拟真实入口的异步读取和禁用按钮，焦点不能从弹窗挂载时反推。
 function Fixture() {
