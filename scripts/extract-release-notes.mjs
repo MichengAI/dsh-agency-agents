@@ -8,6 +8,10 @@ if (!tag) {
 }
 
 const version = tag.replace(/^v/, '')
+const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
+if (tag !== `v${pkg.version}`) {
+  throw new Error('版本标签必须与 package.json 一致')
+}
 
 function getHeaderVersion(line) {
   const bracketed = line.match(/^##\s+\[([^\]]+)\]/)
@@ -36,8 +40,8 @@ function extractSection(path) {
 const chinese = extractSection('CHANGELOG.zh-CN.md')
 const english = extractSection('CHANGELOG.md')
 
-if (!chinese && !english) {
-  throw new Error(`No changelog section found for ${tag}`)
+if (!chinese || !english) {
+  throw new Error(`Missing Chinese or English changelog section for ${tag}`)
 }
 
 const sections = []

@@ -1,9 +1,20 @@
 name: 同步 GitHub Release 说明
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 需要恢复发行说明的版本标签（例如 v0.1.42）
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+concurrency:
+  group: release-notes-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -13,8 +24,17 @@ jobs:
     name: 同步版本说明
     runs-on: ubuntu-latest
     steps:
+      - name: 校验目标标签
+        shell: pwsh
+        run: |
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          $OutputEncoding = [System.Text.Encoding]::UTF8
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$') { throw '请输入有效版本标签' }
+
       - name: 检出代码
         uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ env.RELEASE_TAG }}
 
       - name: 配置 Node.js
         uses: actions/setup-node@v6
@@ -22,14 +42,20 @@ jobs:
           node-version: 24
 
       - name: 生成双语版本说明
-        run: node scripts/extract-release-notes.mjs "$GITHUB_REF_NAME" release-notes.md
+        run: node scripts/extract-release-notes.mjs "$RELEASE_TAG" release-notes.md
 
-      - name: 创建或更新 GitHub Release
+      - name: 创建或更新 GitHub Release（仅说明）
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: pwsh
         run: |
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md
-          else
-            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md
-          fi
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          $OutputEncoding = [System.Text.Encoding]::UTF8
+          $tags = gh api --paginate "repos/$env:GITHUB_REPOSITORY/releases" --jq '.[].tag_name'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($env:RELEASE_TAG -in $tags) {
+            gh release edit $env:RELEASE_TAG --title $env:RELEASE_TAG --notes-file release-notes.md
+          } else {
+            gh release create $env:RELEASE_TAG --verify-tag --title $env:RELEASE_TAG --notes-file release-notes.md
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
