@@ -103,8 +103,8 @@ The settings title shows the installed version and a **Check for updates** butto
 
 ## Usage
 
-1. Open the composer **Experts** picker. It shows enabled experts in a compact list grouped by category, with emoji and names.
-2. Search the full roster by name, field or keyword, including disabled experts. Click a row to select it; disabled rows are marked **Enable and select**. Enabled experts also appear in the `@` shortcut list.
+1. Open the composer **Experts** picker. It shows enabled experts in a compact list grouped by category, with emoji and names. Categories retain their original order, with experts sorted by their localized names within each category.
+2. Search the full roster by name, field or keyword, including disabled experts. One- or two-character English terms match whole words; terms of three or more characters also match word prefixes. Click a row to select it; disabled rows are marked **Enable and select**. Enabled experts also appear in the `@` shortcut list.
 3. The localized expert name is inserted as a short tag. Continue with the complete task. Selecting does not send the message or replace existing text or attachments.
 
 ```text

@@ -30,6 +30,8 @@ describe('选择专家时自动填入任务示例', () => {
   it('UI 不匹配 build、guide 等单词内部的字母', () => {
     const expert = { slug: 'builder', name: '开发专家', nameEn: 'Builder', division: '', divisionEn: '', divisionZh: '', description: '', descriptionEn: 'Build a guide for acquisition' }
     expect(matchExpertQuery(expert, 'UI')).toBe(false)
+    expect(matchExpertQuery({ ...expert, nameEn: 'Engineering reviewer' }, 'eng')).toBe(true)
+    expect(matchExpertQuery({ ...expert, nameEn: 'Engineering reviewer' }, 'rev')).toBe(true)
     expect(matchExpertQuery({ ...expert, descriptionEn: 'Build UI components' }, 'UI')).toBe(true)
   })
   it('已有多枚剪贴板引用时按 detect 坐标追加专家和示例', () => {

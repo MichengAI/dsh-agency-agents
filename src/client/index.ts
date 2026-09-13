@@ -184,10 +184,10 @@ interface ExpertView {
   readonly avatar?: number
 }
 
-interface ExpertGroup {
+interface ExpertGroup<T extends ExpertView> {
   readonly division: string
   readonly divisionZh: string
-  readonly experts: ExpertView[]
+  readonly experts: T[]
 }
 
 const EXPERTS: ReadonlyArray<ExpertView> = ROSTER
@@ -215,8 +215,8 @@ export function compareExpertName(
   return left.localeCompare(right, active === 'en' ? 'en' : 'zh')
 }
 
-function groupByDivision(list: ReadonlyArray<ExpertView>, active: 'zh' | 'en'): ExpertGroup[] {
-  const groups = new Map<string, ExpertView[]>()
+function groupByDivision<T extends ExpertView>(list: ReadonlyArray<T>, active: 'zh' | 'en'): ExpertGroup<T>[] {
+  const groups = new Map<string, T[]>()
   for (const e of list) {
     const arr = groups.get(e.division) ?? []
     arr.push(e)
@@ -261,7 +261,7 @@ export function matchExpertQuery(expert: ExpertSearchable, query: string): boole
     expert.descriptionEn,
   ].map(normalizeExpertQuery)
   return q.split(' ').every((term) => fields.some((field) => /^[a-z0-9]+$/u.test(term)
-    ? (field.match(/[a-z0-9]+/gu) ?? []).some(word => term.length <= 3 ? word === term : word.startsWith(term))
+    ? (field.match(/[a-z0-9]+/gu) ?? []).some(word => term.length <= 2 ? word === term : word.startsWith(term))
     : field.includes(term)))
 }
 
@@ -677,116 +677,6 @@ export function resolveExpertMenuPosition(
     : { placement: 'below', maxHeight: below }
 }
 
-const SETTINGS_TRIGGER_LABELS = new Set(['设置', 'Settings'])
-const COMPOSER_TRIGGER_SCOPE = '[data-composer-card], .aag-btn-wrap'
-
-export function isSettingsTriggerLabel(label: string): boolean {
-  return SETTINGS_TRIGGER_LABELS.has(label.trim())
-}
-
-export interface SettingsTriggerCandidate {
-  readonly label: string
-  readonly inComposer: boolean
-  readonly hasDialogPopup: boolean
-}
-
-/** 只认明确的设置按钮；输入区里的「+」和其他弹窗一律排除。 */
-export function pickHostSettingsTrigger<T extends SettingsTriggerCandidate>(
-  candidates: ReadonlyArray<T>,
-): T | undefined {
-  const labeled = candidates.filter((item) => !item.inComposer && isSettingsTriggerLabel(item.label))
-  if (labeled.length === 1) return labeled[0]
-  if (labeled.length > 1) return undefined
-  const dialogs = candidates.filter((item) => !item.inComposer && item.hasDialogPopup)
-  return dialogs.length === 1 ? dialogs[0] : undefined
-}
-
-function buttonAccessibleLabel(button: Element): string {
-  return (button.getAttribute('aria-label') ?? button.textContent ?? '').trim()
-}
-
-function collectSettingsTriggerCandidates(
-  root: ParentNode,
-): Array<SettingsTriggerCandidate & { readonly button: HTMLElement }> {
-  const result: Array<SettingsTriggerCandidate & { readonly button: HTMLElement }> = []
-  for (const node of root.querySelectorAll('button')) {
-    if (!(node instanceof HTMLElement)) continue
-    result.push({
-      button: node,
-      label: buttonAccessibleLabel(node),
-      inComposer: node.closest(COMPOSER_TRIGGER_SCOPE) !== null,
-      hasDialogPopup: node.getAttribute('aria-haspopup') === 'dialog',
-    })
-  }
-  return result
-}
-
-export function findHostSettingsTrigger(root: ParentNode): HTMLElement | undefined {
-  return pickHostSettingsTrigger(collectSettingsTriggerCandidates(root))?.button
-}
-
-export function findExpertSettingsNavButton(root: ParentNode, navLabel: string): HTMLElement | undefined {
-  for (const dialog of root.querySelectorAll('[data-dcu-settings-page], [role="dialog"]')) {
-    for (const button of dialog.querySelectorAll('nav button')) {
-      if (button instanceof HTMLElement && (button.textContent ?? '').trim() === navLabel) return button
-    }
-  }
-  return undefined
-}
-
-function queueSettingsNav(work: () => void): void {
-  if (typeof requestAnimationFrame === 'function') {
-    requestAnimationFrame(() => { requestAnimationFrame(work) })
-    return
-  }
-  work()
-}
-
-/** 打开宿主设置并选中专家分区；找不到唯一设置入口时返回 false，由调用方回退到本地菜单。 */
-export function openAgentSettings(
-  navLabel: string,
-  root: ParentNode = document,
-  schedule: (work: () => void) => void = queueSettingsNav,
-): boolean {
-  const existing = findExpertSettingsNavButton(root, navLabel)
-  if (existing !== undefined) {
-    existing.click()
-    return true
-  }
-  const trigger = findHostSettingsTrigger(root)
-  if (trigger === undefined) return false
-  // Codex UI 的全页设置壳支持直接选择分区，不必先打开通用设置。
-  if (trigger.hasAttribute('data-dcu-settings-trigger')) {
-    const request = new CustomEvent('dcu-settings-open-section', { detail: { labels: [navLabel] }, cancelable: true })
-    if (!trigger.dispatchEvent(request)) return true
-  }
-  // 旧壳可能延迟挂载导航，不能只依赖固定两帧。
-  let finished = false
-  const observer = new MutationObserver(() => { select() })
-  const timeout = setTimeout(() => {
-    if (select()) return
-    cleanup()
-    console.warn(`[agency-agents] 未找到设置分区：${navLabel}`)
-  }, 4000)
-  const cleanup = (): void => {
-    finished = true
-    observer.disconnect()
-    clearTimeout(timeout)
-  }
-  const select = (): boolean => {
-    if (finished) return false
-    const target = findExpertSettingsNavButton(root, navLabel)
-    if (target === undefined) return false
-    cleanup()
-    target.click()
-    return true
-  }
-  observer.observe(root, { childList: true, subtree: true })
-  trigger.click()
-  schedule(() => { select() })
-  return true
-}
-
 /** 输入机暴露给工具栏的最小原子引用写入面，避免依赖 slot 的非标准 owner 参数。 */
 export interface ReferenceInsertionTarget {
   readonly state: {
@@ -1043,7 +933,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     const nameMatch = (expert: ExpertView): number => matchExpertQuery({ ...expert, slug: '', division: '', divisionZh: '', divisionEn: '', description: '', descriptionEn: '' }, query) ? 1 : 0
     return nameMatch(b) - nameMatch(a)
   })
-  const results = searching ? matches.slice(0, 8) : matches
+  const results = searching ? matches.slice(0, 8) : groupByDivision(matches, props.getActive()).flatMap(group => group.experts)
   const menu = open
     ? React.createElement('div', {
       className: 'aag-menu aag-discovery', id: menuId, role: 'dialog', 'aria-label': props.t('settings.nav'),

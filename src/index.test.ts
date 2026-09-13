@@ -9,7 +9,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, createAgencyPersonaSource, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote, { readExpertPrompt, readLocalizedExpertPrompt } from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, COPY_PROMPT_FEEDBACK_MS, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, pickHostSettingsTrigger, resolveExpertMenuPosition, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, sortExpertsByOrder, writeErrorKey, writeErrorMessage } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, COPY_PROMPT_FEEDBACK_MS, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveExpertMenuPosition, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, sortExpertsByOrder, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
@@ -1246,25 +1246,7 @@ describe('@ 菜单分组标题本地化', () => {
       .toEqual({ placement: 'above', maxHeight: 0 })
   })
 
-  it('设置入口只认明确的设置按钮，忽略输入区「+」和其他弹窗', () => {
-    expect(pickHostSettingsTrigger([
-      { label: '', inComposer: true, hasDialogPopup: true },
-      { label: '设置', inComposer: false, hasDialogPopup: true },
-    ])).toEqual({ label: '设置', inComposer: false, hasDialogPopup: true })
-    expect(pickHostSettingsTrigger([
-      { label: 'Settings', inComposer: false, hasDialogPopup: true },
-      { label: '', inComposer: true, hasDialogPopup: true },
-    ])?.label).toBe('Settings')
-    expect(pickHostSettingsTrigger([
-      { label: '', inComposer: true, hasDialogPopup: true },
-      { label: '', inComposer: false, hasDialogPopup: true },
-      { label: '', inComposer: false, hasDialogPopup: true },
-    ])).toBeUndefined()
-    expect(pickHostSettingsTrigger([
-      { label: '', inComposer: true, hasDialogPopup: true },
-      { label: '', inComposer: false, hasDialogPopup: true },
-    ])).toEqual({ label: '', inComposer: false, hasDialogPopup: true })
-  })
+
 })
 
 describe('list_experts 语言切换', () => {

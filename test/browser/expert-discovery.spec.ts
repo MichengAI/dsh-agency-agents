@@ -1,5 +1,16 @@
 import { expect, test } from '@playwright/test'
 
+test('默认列表保留分区顺序与当前语言名称排序', async ({ page }) => {
+  await page.goto('/?discovery&all')
+  await page.getByRole('button', { name: '专家', exact: true }).click()
+  const groups = page.locator('.aag-discovery-results > div')
+  expect((await page.locator('.aag-menu-title').allTextContents()).slice(0, 3)).toEqual(['公司经营', '设计', '工程'])
+  for (const group of await groups.all()) {
+    const names = await group.locator('.aag-discovery-name').allTextContents()
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, 'zh')))
+  }
+})
+
 test('UI 搜索按英文词匹配，名称优先且结果不超过八位', async ({ page }) => {
   await page.goto('/?discovery&blank')
   await page.getByRole('button', { name: '专家', exact: true }).click()
