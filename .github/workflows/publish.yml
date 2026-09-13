@@ -39,7 +39,10 @@ jobs:
         run: |
           [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
           $OutputEncoding = [System.Text.Encoding]::UTF8
-          Remove-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'lib') -Recurse -Force
+          $buildPath = Join-Path $env:GITHUB_WORKSPACE 'lib'
+          if (Test-Path -LiteralPath $buildPath) {
+            Remove-Item -LiteralPath $buildPath -Recurse -Force
+          }
 
       - name: 下载门禁验证的构建
         uses: actions/download-artifact@v4

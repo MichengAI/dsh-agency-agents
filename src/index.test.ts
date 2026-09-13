@@ -1245,8 +1245,6 @@ describe('@ 菜单分组标题本地化', () => {
     expect(resolveExpertMenuPosition({ top: 12, bottom: 40 } as DOMRect, 52))
       .toEqual({ placement: 'above', maxHeight: 0 })
   })
-
-
 })
 
 describe('list_experts 语言切换', () => {
