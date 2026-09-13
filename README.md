@@ -103,15 +103,19 @@ The settings title shows the installed version and a **Check for updates** butto
 
 ## Usage
 
-1. Open **Settings → Experts** and enable the needed experts.
-2. Use `@` or the composer **Experts** picker to choose an enabled expert.
-3. The localized expert name is inserted as a short tag. Continue with the complete task.
+1. Open the composer **Experts** picker. It shows enabled experts in a compact list grouped by category, with emoji and names.
+2. Search the full roster by name, field or keyword, including disabled experts. Click a row to select it; disabled rows are marked **Enable and select**. Enabled experts also appear in the `@` shortcut list.
+3. The localized expert name is inserted as a short tag. Continue with the complete task. Selecting does not send the message or replace existing text or attachments.
 
 ```text
 Code Reviewer
 
 Review the changes in the current workspace and list reproducible issues by severity.
 ```
+
+When you select an expert with a task example through the toolbar or `@`, the example is automatically inserted after its reference if the task body is empty. Existing task text is preserved, templates are not appended to it, and nothing is sent automatically. The first eight cover code review, UX research, UI design, UX architecture, product management, technical writing, research synthesis and Xiaohongshu operations. All other experts remain searchable and selectable. Examples explain how to describe a task; they do not grant access to external platforms or tools.
+
+Experts with name conflicts are marked as unavailable. If another window changes the enabled roster, the picker refreshes and asks you to retry. If enabling succeeds but reference insertion fails, select the expert again without enabling it a second time. **Settings → Experts** remains the management surface; `@` still searches enabled experts only.
 
 The parent session can also call `list_experts(division?)`, then delegate with `summon_expert(expert, task)` using the expert name. The bundled roster validates localized and upstream names for uniqueness.
 

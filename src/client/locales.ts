@@ -9,6 +9,15 @@ import { customEn, customZh } from './custom-locales.js'
 /** 简体中文词条（key 集真相源）。 */
 export const zh = {
   ...customZh,
+  'discovery.search': '搜索名称、领域或关键词',
+  'discovery.refine': '仅显示最相关的 8 位专家，请补充关键词缩小范围。',
+  'discovery.working': '正在处理…',
+  'discovery.exampleFailed': '专家已选择，但示例未能填入，请直接输入任务。',
+  'discovery.conflict': '名称冲突',
+  'discovery.enableSelect': '启用并选择',
+  'discovery.noResults': '没有匹配的专家，请尝试其他关键词。',
+  'discovery.empty': '暂无已启用专家，输入关键词查找。',
+  'discovery.enabledInsertFailed': '专家已启用，但未能插入标签，请重试选择。',
   'settings.nav': '专家',
   'settings.title': '专家',
   'settings.loading': '正在加载专家…',
@@ -73,6 +82,15 @@ export type AgencyKey = keyof typeof zh
 /** 英文词条，key 完整性由 satisfies 在编译期保证。 */
 export const en = {
   ...customEn,
+  'discovery.search': 'Search names, fields or keywords',
+  'discovery.refine': 'Showing the 8 most relevant experts. Add keywords to narrow the results.',
+  'discovery.working': 'Working…',
+  'discovery.exampleFailed': 'The expert is selected, but the example could not be inserted. Please enter your task.',
+  'discovery.conflict': 'Name conflict',
+  'discovery.enableSelect': 'Enable and select',
+  'discovery.noResults': 'No matching experts. Try a different keyword.',
+  'discovery.empty': 'No enabled experts yet. Type a keyword to find one.',
+  'discovery.enabledInsertFailed': 'The expert is enabled, but its reference could not be inserted. Try selecting it again.',
   'settings.nav': 'Experts',
   'settings.title': 'Experts',
   'settings.loading': 'Loading experts…',

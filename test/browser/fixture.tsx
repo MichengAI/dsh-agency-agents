@@ -2,6 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { PromptDialog } from '../../src/client/prompt-dialog'
 import { openAgentSettings } from '../../src/client/index'
+import { DiscoveryFixture } from './discovery-fixture'
 
 Object.assign(window, { openAgentSettings })
 
@@ -23,4 +24,5 @@ function Fixture() {
   </>
 }
 const strict = new URLSearchParams(location.search).has('strict')
-createRoot(document.getElementById('root')!).render(strict ? <React.StrictMode><Fixture /></React.StrictMode> : <Fixture />)
+const content = new URLSearchParams(location.search).has('discovery') ? <DiscoveryFixture /> : <Fixture />
+createRoot(document.getElementById('root')!).render(strict ? <React.StrictMode>{content}</React.StrictMode> : content)

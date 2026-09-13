@@ -4,6 +4,11 @@
 
 The five most recent published versions are listed below.
 
+## Unreleased
+
+- Choose experts from a compact category and emoji list, and search to find and enable disabled experts. The `@` shortcut continues to show enabled experts.
+- Automatically insert bilingual task examples for eight representative experts when the task body is empty. Existing requests are preserved, with no copying required.
+
 ## 0.1.41 - 2026-09-12
 
 - Fix navigation from the chat Experts button to Settings → Experts when all experts are disabled, supporting both native DSH dialogs and Codex UI settings pages.

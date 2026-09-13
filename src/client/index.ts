@@ -1,6 +1,8 @@
 import { PromptDialog } from "./prompt-dialog.js";
 import React from 'react'
 import { CategorySelect } from './category-select.js'
+import { ExpertDiscovery, DISCOVERY_CSS } from './expert-discovery.js'
+import { expertTaskExample } from './task-examples.js'
 import type { Context as CordisClientContext } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { InputTriggerSource, ReferenceInsert, TokenSpan } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
@@ -258,7 +260,9 @@ export function matchExpertQuery(expert: ExpertSearchable, query: string): boole
     expert.description,
     expert.descriptionEn,
   ].map(normalizeExpertQuery)
-  return q.split(' ').every((term) => fields.some((field) => field.includes(term)))
+  return q.split(' ').every((term) => fields.some((field) => /^[a-z0-9]+$/u.test(term)
+    ? (field.match(/[a-z0-9]+/gu) ?? []).some(word => term.length <= 3 ? word === term : word.startsWith(term))
+    : field.includes(term)))
 }
 
 /** 先按分区收窄，再按检索词过滤。division 为空表示全部分类。 */
@@ -558,7 +562,7 @@ export const CARD_SETTINGS_CSS = `
 @media (prefers-reduced-motion:reduce){.aag-switch-track,.aag-switch-track::after{transition:none}}
 `
 
-const CSS = COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS
+export const CSS = COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS + DISCOVERY_CSS
   + MENU_NAME_OVERRIDE + `{${EXPERT_MENU_NAME_STYLE}}`
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
@@ -647,28 +651,6 @@ function settingsGithubLinks(t: TranslateNS<'agency'>): React.ReactElement {
 /** 工具栏菜单不能接管焦点，否则 Lexical 无法按检测坐标插入原子引用。 */
 export function keepComposerFocus(event: { preventDefault(): void }): void {
   event.preventDefault()
-}
-
-function menuItem(e: ExpertView, pick: (slug: string) => void, getActive: () => 'zh' | 'en'): React.ReactElement {
-  return React.createElement('button', { key: e.slug, type: 'button', className: 'aag-menu-item', onMouseDown: keepComposerFocus,
-    // 通过 click 统一处理鼠标与键盘激活，按下时仅保留编辑器焦点。
-    onClick: (ev: React.MouseEvent) => { ev.stopPropagation(); pick(e.slug) } },
-    React.createElement('span', { className: 'aag-emoji' }, e.emoji),
-    React.createElement('span', null, displayName(e, getActive())))
-}
-
-function menuGroup(g: ExpertGroup, pick: (slug: string) => void, getActive: () => 'zh' | 'en'): React.ReactElement {
-  return React.createElement('div', { key: g.division },
-    // 外部分类未配置译名时使用原始分类名称。
-    React.createElement('div', { className: 'aag-menu-title' }, inputTriggerSourceName(g.division, getActive())),
-    g.experts.map((e) => menuItem(e, pick, getActive)))
-}
-
-export type ExpertToolbarAction = 'menu' | 'settings'
-
-/** 没有可召唤专家时打开设置页，否则打开本地菜单。 */
-export function resolveExpertToolbarClick(enabledCount: number): ExpertToolbarAction {
-  return enabledCount === 0 ? 'settings' : 'menu'
 }
 
 export type ExpertMenuPlacement = 'above' | 'below'
@@ -811,10 +793,13 @@ export interface ReferenceInsertionTarget {
     getSnapshot(): {
       readonly draft: string
       readonly draftRev: number
-      readonly occurrences?: ReadonlyArray<{ readonly source: string; readonly offset: number }>
+      readonly occurrences?: ReadonlyArray<{ readonly source: string; readonly offset: number; readonly length?: number }>
     }
   }
   insertReference(reference: ReferenceInsert, span: TokenSpan): boolean
+  /** 正文通过宿主的带修订号插入事件写入，不重置引用和附件。 */
+  insertText?(text: string, span: TokenSpan): boolean
+  notify?(level: 'info' | 'error', text: string): void
 }
 
 /** 从当前或指定会话取得输入机；兼容未向工具栏 slot 注入 sessionId 的宿主版本。 */
@@ -841,18 +826,24 @@ export function resolveReferenceInsertionTarget(
   return actx === undefined ? undefined : getConversation?.(actx)?.input.for(actx)
 }
 
-/** 返回草稿开头原生引用前缀的末端，避免来源字段差异使连续 chip 漏算。 */
-function expertReferencePrefixEnd(snapshot: ReturnType<ReferenceInsertionTarget['state']['getSnapshot']>): number {
-  const expertOffsets = new Set((snapshot.occurrences ?? []).map((occurrence) => occurrence.offset))
-  let end = 0
-  while (expertOffsets.has(end)) {
-    end += 1
-    if (snapshot.draft[end] === ' ') end += 1
+/** 将宿主剪贴板草稿转换为插入接口使用的单字符引用坐标。 */
+export function expertDetectText(snapshot: ReturnType<ReferenceInsertionTarget['state']['getSnapshot']>): string {
+  let draft = snapshot.draft
+  // 宿主公开 draft 为剪贴板文本；插入事件的坐标把每个原生引用压缩成一个字符。
+  for (const occurrence of [...(snapshot.occurrences ?? [])].sort((a, b) => b.offset - a.offset)) {
+    const length = occurrence.length ?? 1
+    if (occurrence.offset < 0 || length < 1 || occurrence.offset + length > draft.length) continue
+    draft = draft.slice(0, occurrence.offset) + '\uFFFC' + draft.slice(occurrence.offset + length)
   }
-  // 兼容未公开 occurrence 的旧版宿主。
-  while (snapshot.draft[end] === '\uFFFC') {
+  return draft
+}
+
+function expertReferencePrefixEnd(snapshot: ReturnType<ReferenceInsertionTarget['state']['getSnapshot']>): number {
+  const draft = expertDetectText(snapshot)
+  let end = 0
+  while (draft[end] === '\uFFFC') {
     end += 1
-    if (snapshot.draft[end] === ' ') end += 1
+    if (/\s/u.test(draft[end] ?? '') && draft[end] !== '\n') end += 1
   }
   return end
 }
@@ -861,15 +852,43 @@ function expertReferencePrefixEnd(snapshot: ReturnType<ReferenceInsertionTarget[
 export function insertExpertReference(
   target: ReferenceInsertionTarget | undefined,
   reference: ReferenceInsert,
+  example?: string,
+  triggerSpan?: TokenSpan,
+  exampleFailureMessage?: string,
 ): boolean {
   if (target === undefined) return false
   const snapshot = target.state.getSnapshot()
   const offset = expertReferencePrefixEnd(snapshot)
-  const inserted = target.insertReference(reference, {
+  const span = triggerSpan ?? {
     start: offset,
     end: offset,
     draftRev: snapshot.draftRev,
-  })
+  }
+  const detectText = expertDetectText(snapshot)
+  const remaining = detectText.slice(0, span.start) + detectText.slice(span.end)
+  const inserted = target.insertReference(reference, span)
+  // 已有任务正文时不追加模板；再次选专家也不会重复填入。
+  if (inserted && example !== undefined && remaining.replace(/\uFFFC/gu, '').trim() === '') {
+    const fillExample = (): void => {
+      const next = target.state.getSnapshot()
+      const nextText = expertDetectText(next)
+      // 键盘选择处于宿主编辑事务内，等引用提交后重新读取；用户新增正文优先。
+      if (next.draftRev !== snapshot.draftRev && nextText.replace(/\uFFFC/gu, '').trim() !== '') return
+      let applied = false
+      try {
+        applied = next.draftRev !== snapshot.draftRev && target.insertText?.(`\n\n${example}`, {
+          start: nextText.length, end: nextText.length, draftRev: next.draftRev,
+        }) === true
+      } catch {
+        // 引用已经插入成功，正文事件异常也只提示示例失败，避免重试造成重复标签。
+        applied = false
+      }
+      if (!applied && exampleFailureMessage !== undefined) target.notify?.('error', exampleFailureMessage)
+    }
+    // Lexical 在外层键盘事务结束后才排入提交微任务，必须让出整个事件循环。
+    if (target.state.getSnapshot().draftRev === snapshot.draftRev) setTimeout(fillExample, 0)
+    else fillExample()
+  }
   return inserted
 }
 
@@ -889,19 +908,34 @@ type ButtonProps = PropsLocale<'agency'> & {
   readonly onEnabledChange?: (enabled: ReadonlySet<string>) => void
   /** 由 session slot 的 inject 回调注入，永远绑定当前编辑器所属会话。 */
   readonly insertReference?: (reference: ReferenceInsert) => boolean
+  /** 异步启用前锁定目标编辑器，避免切换会话后把标签插入其他草稿。 */
+  readonly prepareInsertion?: () => (reference: ReferenceInsert) => boolean
   /** 当前 locale 读取器（locale 切换后框架以新 t 重渲染，名称随之刷新）。 */
   readonly getActive: () => 'zh' | 'en'
 }
 
-function AgentsButton(props: ButtonProps): React.ReactElement {
+export function AgentsButton(props: ButtonProps): React.ReactElement {
   const [open, setOpen] = React.useState(false)
   const [insertError, setInsertError] = React.useState<string | null>(null)
+  const [query, setQuery] = React.useState('')
+  const [busy, setBusy] = React.useState(false)
+  const working = React.useRef(false)
+  const epoch = React.useRef(0)
+  const triggerRef = React.useRef<HTMLButtonElement | null>(null)
+  const menuId = React.useId()
   const [menuPosition, setMenuPosition] = React.useState<ExpertMenuPosition | undefined>()
+  const [menuLeft, setMenuLeft] = React.useState(0)
   const rootRef = React.useRef<HTMLDivElement | null>(null)
   const catalog = React.useSyncExternalStore(
     listener => subscribeCatalog(props.remote, listener),
     () => catalogState(props.remote),
   )
+  const close = (restoreFocus = false): void => {
+    epoch.current++
+    setOpen(false)
+    if (restoreFocus) triggerRef.current?.focus()
+  }
+  React.useEffect(() => () => { epoch.current++ }, [])
 
   React.useLayoutEffect(() => {
     if (!open) return
@@ -910,6 +944,10 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
       if (root === null) return
       const viewportHeight = window.visualViewport?.height ?? window.innerHeight
       const next = resolveExpertMenuPosition(root.getBoundingClientRect(), viewportHeight)
+      const rect = root.getBoundingClientRect()
+      const viewportWidth = window.visualViewport?.width ?? window.innerWidth
+      const width = Math.min(340, viewportWidth - 24)
+      setMenuLeft(Math.max(12 - rect.left, Math.min(0, viewportWidth - 12 - width - rect.left)))
       setMenuPosition((current) => current?.placement === next.placement && current.maxHeight === next.maxHeight ? current : next)
     }
     updatePosition()
@@ -933,51 +971,98 @@ function AgentsButton(props: ButtonProps): React.ReactElement {
     if (!open) return
     const onPointerDown = (ev: PointerEvent): void => {
       const target = ev.target
-      if (target instanceof Element && (target.closest('.aag-menu') !== null || target.closest('.aag-btn-wrap') !== null)) return
-      setOpen(false)
+      if (target instanceof Node && rootRef.current?.contains(target)) return
+      close()
     }
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [open])
 
-  const onClick = (): void => {
-    void readEnabled(props.remote).then((current) => {
-      props.onEnabledChange?.(current.enabled)
-      if (resolveExpertToolbarClick(current.enabled.size) === 'settings') {
-        if (openAgentSettings(props.t('settings.nav'))) {
-          setOpen(false)
-          return
-        }
-      }
-      setInsertError(null)
-      setOpen((prev) => !prev)
-    }).catch((error: unknown) => { setInsertError(writeErrorMessage(error)); setOpen(true) })
-  }
-
-  const pick = (slug: string): void => {
-    if (!catalog.enabled.has(slug) || !insertSelectedExpert(slug, props.getActive(), props.insertReference, catalog.experts)) {
-      setInsertError(props.t('error.insertFailed'))
-      return
-    }
+  const load = (): void => {
+    if (working.current) return
+    const request = epoch.current
     setInsertError(null)
-    setOpen(false)
+    setBusy(true)
+    working.current = true
+    void readEnabled(props.remote).then((current) => {
+      if (request !== epoch.current) return
+      props.onEnabledChange?.(current.enabled)
+    }).catch((error: unknown) => {
+      if (request === epoch.current) setInsertError(writeErrorMessage(error, { t: props.t }))
+    }).finally(() => { working.current = false; setBusy(false) })
   }
 
-  const groups = groupByDivision(catalog.experts.filter((e) => catalog.enabled.has(e.slug)), props.getActive())
+  const onClick = (): void => {
+    if (open) { close(); return }
+    if (working.current) return
+    epoch.current++
+    setQuery('')
+    setOpen(true)
+    load()
+  }
+
+  const pick = async (slug: string): Promise<void> => {
+    if (working.current) return
+    working.current = true
+    setBusy(true)
+    setInsertError(null)
+    const request = epoch.current
+    let newlyEnabled = false
+    try {
+      const insert = props.prepareInsertion?.() ?? props.insertReference
+      // 使用当前快照的修订号写入；冲突后刷新并交还用户重试，不静默覆盖。
+      let current: EnabledState = catalogState(props.remote)
+      const expert = current.experts.find(item => item.slug === slug)
+      if (expert === undefined || expert.conflict) throw new Error(props.t('custom.unavailable'))
+      if (!current.enabled.has(slug)) {
+        current = await writeEnabled(props.remote, new Set([...current.enabled, slug]), current.revision)
+        newlyEnabled = current.enabled.has(slug)
+        props.onEnabledChange?.(current.enabled)
+      }
+      if (request !== epoch.current) return
+      if (!current.enabled.has(slug) || !insertSelectedExpert(slug, props.getActive(), insert, current.experts)) {
+        setInsertError(props.t(newlyEnabled ? 'discovery.enabledInsertFailed' : 'error.insertFailed'))
+        return
+      }
+      // 宿主插入操作负责把光标交还编辑器；不要再抢回工具栏按钮焦点。
+      close()
+    } catch (error) {
+      let refreshed = false
+      try { await readEnabled(props.remote); refreshed = true } catch { /* 保留原错误并明确刷新是否成功。 */ }
+      if (request === epoch.current) setInsertError(writeErrorMessage(error, { refreshed, t: props.t }))
+    } finally {
+      working.current = false
+      setBusy(false)
+    }
+  }
+
+  const matches = sortExpertsByEnabled(filterExperts(catalog.experts, { query })
+    .filter(expert => normalizeExpertQuery(query) !== '' || catalog.enabled.has(expert.slug)), catalog.enabled)
+  const searching = normalizeExpertQuery(query) !== ''
+  if (searching) matches.sort((a, b) => {
+    const nameMatch = (expert: ExpertView): number => matchExpertQuery({ ...expert, slug: '', division: '', divisionZh: '', divisionEn: '', description: '', descriptionEn: '' }, query) ? 1 : 0
+    return nameMatch(b) - nameMatch(a)
+  })
+  const results = searching ? matches.slice(0, 8) : matches
   const menu = open
     ? React.createElement('div', {
-      className: 'aag-menu',
+      className: 'aag-menu aag-discovery', id: menuId, role: 'dialog', 'aria-label': props.t('settings.nav'),
       'data-placement': menuPosition?.placement,
-      style: menuPosition === undefined ? undefined : { maxHeight: `${menuPosition.maxHeight}px` },
+      style: { maxHeight: `${Math.min(360, menuPosition?.maxHeight ?? 360)}px`, left: `${menuLeft}px` },
+      onKeyDown: (event: React.KeyboardEvent) => {
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(true) }
+      },
     },
-      insertError === null ? null : React.createElement('div', { className: 'aag-error', role: 'alert' }, insertError),
-      groups.length === 0
-        ? React.createElement('div', { className: 'aag-menu-empty' }, props.t('menu.empty'))
-        : groups.map((g) => menuGroup(g, pick, props.getActive)))
+      insertError === null ? null : React.createElement('div', { className: 'aag-error', role: 'alert' }, insertError,
+        React.createElement('button', { type: 'button', disabled: busy, onClick: () => load() }, props.t('btn.refresh'))),
+      React.createElement(ExpertDiscovery, { experts: results, enabled: catalog.enabled, locale: props.getActive(), t: props.t,
+        query, onQuery: setQuery, busy, hasMore: searching && matches.length > results.length, onPick: slug => { void pick(slug) } }))
     : null
 
-  return React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef },
-    React.createElement('button', { type: 'button', className: 'aag-btn', title: props.t('button.title'), 'aria-expanded': open, onMouseDown: keepComposerFocus, onClick }, expertIcon(), React.createElement('span', null, props.t('settings.nav'))),
+  return React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef, onBlur: (event: React.FocusEvent) => {
+    if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) close()
+  } },
+    React.createElement('button', { type: 'button', ref: triggerRef, className: 'aag-btn', title: props.t('button.title'), 'aria-expanded': open, 'aria-haspopup': 'dialog', 'aria-controls': open ? menuId : undefined, onMouseDown: keepComposerFocus, onClick }, expertIcon(), React.createElement('span', null, props.t('settings.nav'))),
     menu)
 }
 
@@ -1323,15 +1408,36 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     for (const listener of lexiconListeners) listener()
   }), 'agency-agents: catalog changes')
   await readEnabled(remote).catch((error: unknown) => console.warn('[agency-agents] 初始名册读取失败，设置页可重试：', error))
+  const resolveTarget = (sessionId?: SessionId): ReferenceInsertionTarget | undefined => resolveReferenceInsertionTarget(
+    ctx.sessions as unknown as ReferenceSessionAccess, sessionId,
+    (actx) => actx.get('conversation') as ReferenceConversationAccess | undefined,
+  )
+  const insertTask = (current: ReferenceInsertionTarget | undefined, reference: ReferenceInsert, sessionId?: SessionId, span?: TokenSpan): boolean => {
+    if (current === undefined) return false
+    const sessions = ctx.sessions as unknown as ReferenceSessionAccess
+    const id = sessionId ?? sessions.list?.getSnapshot().current
+    const actx = id === undefined ? undefined : sessions.scope?.(id) ?? sessions.binding?.(id)?.ctx
+    const expert = catalogState(remote).experts.find(item => item.slug === reference.ref)
+    const example = expert === undefined ? undefined : expertTaskExample(expert, getActive())
+    return insertExpertReference({
+      state: current.state,
+      insertReference: (ref, tokenSpan) => current.insertReference(ref, tokenSpan),
+      insertText: (text, tokenSpan) => actx?.bail(actx, 'slash/input-insert-text', { text, span: tokenSpan }) === true,
+      notify: (level, text) => current.notify?.(level, text),
+    }, reference, example, span, t('discovery.exampleFailed'))
+  }
   const bindExpertInsertion = (sessionId?: SessionId): {
     readonly insertReference: (reference: ReferenceInsert) => boolean
+    readonly prepareInsertion: () => (reference: ReferenceInsert) => boolean
   } => {
-    const target = (): ReferenceInsertionTarget | undefined => resolveReferenceInsertionTarget(
-      ctx.sessions as unknown as ReferenceSessionAccess,
-      sessionId,
-      (actx) => actx.get('conversation') as ReferenceConversationAccess | undefined,
-    )
-    return { insertReference: (reference) => insertExpertReference(target(), reference) }
+    const target = (): ReferenceInsertionTarget | undefined => resolveTarget(sessionId)
+    return {
+      insertReference: (reference) => insertTask(target(), reference, sessionId),
+      prepareInsertion: () => {
+        const current = target()
+        return reference => current !== undefined && target() === current && insertTask(current, reference, sessionId)
+      },
+    }
   }
 
   ctx.slots.inject('settings.section', () => ctx.slots.register(
@@ -1378,7 +1484,11 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
           onPick: (pick) => {
             const slug = pick.candidate.hint ?? ''
             const expert = catalogState(remote).experts.find((item) => item.slug === slug && catalogState(remote).enabled.has(slug))
-            return expert === undefined ? undefined : { insert: buildExpertReference(expert, getActive()) }
+            if (expert === undefined) return undefined
+            const reference = buildExpertReference(expert, getActive())
+            const target = resolveTarget(pick.session.sessionId)
+            if (target === undefined) return { insert: reference }
+            return insertTask(target, reference, pick.session.sessionId, pick.span) ? 'handled' : undefined
           },
           ...(i === 0 ? { warm: () => refreshEnabledForMentions() } : {}),
           lexicon: () => enabledForMentions === undefined
