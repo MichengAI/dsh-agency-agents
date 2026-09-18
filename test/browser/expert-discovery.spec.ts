@@ -57,6 +57,17 @@ test('搜索未启用专家并启用选择，保留草稿及附件', async ({ pa
   await expect(page.locator('.aag-discovery-row')).toHaveCount(2)
 })
 
+test('已有名册时再次打开不闪加载提示', async ({ page }) => {
+  await page.goto('/?discovery&all&slow-catalog')
+  await page.getByRole('button', { name: '专家', exact: true }).click()
+  await expect(page.locator('.aag-discovery-row').first()).toBeVisible({ timeout: 8000 })
+  await page.getByRole('button', { name: '专家', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.getByRole('button', { name: '专家', exact: true }).click()
+  await expect(page.getByText('正在处理…')).toHaveCount(0)
+  await expect(page.locator('.aag-menu-title').first()).toBeVisible()
+})
+
 test('名册读取失败可原地刷新恢复', async ({ page }) => {
   await page.goto('/?discovery&load-fail')
   await page.getByRole('button', { name: '专家', exact: true }).click()

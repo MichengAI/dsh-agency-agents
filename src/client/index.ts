@@ -692,13 +692,37 @@ export interface ReferenceInsertionTarget {
   notify?(level: 'info' | 'error', text: string): void
 }
 
+/** 会话列表快照里能用来回退「当前主视图」的字段。 */
+export interface ReferenceSessionListSnapshot {
+  /** alpha.1 及更早：全局当前会话。alpha.2 已删除。 */
+  readonly current?: SessionId
+  /** alpha.2：主视图由 `retainedBy.mainView` 标记，不再有 `current`。 */
+  readonly byId?: Readonly<Record<string, {
+    readonly id?: SessionId
+    readonly retainedBy?: { readonly mainView?: number }
+  }>>
+}
+
 /** 从当前或指定会话取得输入机；兼容未向工具栏 slot 注入 sessionId 的宿主版本。 */
 export interface ReferenceSessionAccess {
   readonly list?: {
-    getSnapshot(): { readonly current?: SessionId }
+    getSnapshot(): ReferenceSessionListSnapshot
   }
   scope?(id: SessionId): CordisClientContext | undefined
   binding?(id: SessionId): { readonly ctx: CordisClientContext } | undefined
+}
+
+/** slot 未给 sessionId 时：先认旧宿主的 `current`，再按官方主视图 retain 反查。 */
+export function resolveTargetSessionId(
+  sessions: ReferenceSessionAccess,
+  sessionId?: SessionId,
+): SessionId | undefined {
+  if (sessionId !== undefined) return sessionId
+  const snapshot = sessions.list?.getSnapshot()
+  if (snapshot?.current !== undefined) return snapshot.current
+  if (snapshot?.byId === undefined) return undefined
+  const match = Object.entries(snapshot.byId).find(([, session]) => (session.retainedBy?.mainView ?? 0) > 0)
+  return match === undefined ? undefined : match[1].id ?? match[0] as SessionId
 }
 
 export interface ReferenceConversationAccess {
@@ -710,7 +734,7 @@ export function resolveReferenceInsertionTarget(
   sessionId?: SessionId,
   getConversation?: (actx: CordisClientContext) => ReferenceConversationAccess | undefined,
 ): ReferenceInsertionTarget | undefined {
-  const targetSessionId = sessionId ?? sessions.list?.getSnapshot().current
+  const targetSessionId = resolveTargetSessionId(sessions, sessionId)
   if (targetSessionId === undefined) return undefined
   const actx = sessions.scope?.(targetSessionId) ?? sessions.binding?.(targetSessionId)?.ctx
   return actx === undefined ? undefined : getConversation?.(actx)?.input.for(actx)
@@ -872,7 +896,8 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     if (working.current) return
     const request = epoch.current
     setInsertError(null)
-    setBusy(true)
+    // 名册已在缓存里时后台刷新，避免搜索框下闪「正在处理…」。
+    if (catalog.experts.length === 0) setBusy(true)
     working.current = true
     void readEnabled(props.remote).then((current) => {
       if (request !== epoch.current) return
@@ -1305,7 +1330,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   const insertTask = (current: ReferenceInsertionTarget | undefined, reference: ReferenceInsert, sessionId?: SessionId, span?: TokenSpan): boolean => {
     if (current === undefined) return false
     const sessions = ctx.sessions as unknown as ReferenceSessionAccess
-    const id = sessionId ?? sessions.list?.getSnapshot().current
+    const id = resolveTargetSessionId(sessions, sessionId)
     const actx = id === undefined ? undefined : sessions.scope?.(id) ?? sessions.binding?.(id)?.ctx
     const expert = catalogState(remote).experts.find(item => item.slug === reference.ref)
     const example = expert === undefined ? undefined : expertTaskExample(expert, getActive())

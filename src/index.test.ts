@@ -9,7 +9,7 @@ import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, createAgencyPersonaSource, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote, { readExpertPrompt, readLocalizedExpertPrompt } from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, COPY_PROMPT_FEEDBACK_MS, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveExpertMenuPosition, resolveReferenceInsertionTarget, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, sortExpertsByOrder, writeErrorKey, writeErrorMessage } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, COPY_PROMPT_FEEDBACK_MS, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveExpertMenuPosition, resolveReferenceInsertionTarget, resolveTargetSessionId, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, sortExpertsByOrder, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
@@ -727,6 +727,21 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
     expect(setEnabled?.parameters.map((p) => p.wire)).toEqual(['enabled', 'expectedRevision'])
     expect(getPrompt?.parameters.map((p) => p.wire)).toEqual(['slug', 'division'])
   })
+
+  it('严格 codec 同时提供 create 与 schema，兼容 alpha.1 与 alpha.2 宿主', () => {
+    const codecs = AGENCY_AGENTS_DESCRIPTORS.flatMap((descriptor) => [
+      descriptor.result,
+      ...descriptor.parameters.map((parameter) => parameter.codec),
+    ])
+    expect(codecs.length).toBeGreaterThan(0)
+    for (const codec of codecs) {
+      expect(codec.mode).toBe('strict')
+      if (codec.mode !== 'strict') continue
+      expect(typeof codec.create).toBe('function')
+      expect(typeof codec.create().parse).toBe('function')
+      expect(typeof (codec as { schema?: { parse?: unknown } }).schema?.parse).toBe('function')
+    }
+  })
 })
 
 describe('宿主 i18n', () => {
@@ -999,7 +1014,7 @@ describe('专家库目标稿样式契约', () => {
 
 describe('@ 菜单分组标题本地化', () => {
   it("DSH peer 枚举已验证宿主版本，保留旧 runtime 可选声明", () => {
-    const range = "0.1.0-rc.8 || 0.1.1-rc.2 || 0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.6-alpha.1";
+    const range = "0.1.0-rc.8 || 0.1.1-rc.2 || 0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.6-alpha.1 || 0.1.6-alpha.2";
     const peers = PACKAGE_MANIFEST.peerDependencies;
     expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
     expect(PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh"]?.optional).toBe(true);
@@ -1028,10 +1043,10 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 0.1.6-alpha.1', () => {
+  it('DSH 开发依赖固定为 0.1.6-alpha.2', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.1.6-alpha.1')
+        expect(version).toBe('0.1.6-alpha.2')
       }
     }
   })
@@ -1227,6 +1242,37 @@ describe('@ 菜单分组标题本地化', () => {
 
     expect(resolved).toBe(target)
     expect(calls).toEqual(['current-session'])
+  })
+
+  it('alpha.2 无 current 时按 retainedBy.mainView 反查主视图会话', () => {
+    expect(resolveTargetSessionId({
+      list: {
+        getSnapshot: () => ({
+          byId: {
+            other: { id: 'other' as SessionId, retainedBy: {} },
+            main: { id: 'main-view' as SessionId, retainedBy: { mainView: 1 } },
+          },
+        }),
+      },
+    })).toBe('main-view')
+    expect(resolveTargetSessionId({
+      list: { getSnapshot: () => ({ byId: { parked: { retainedBy: {} } } }) },
+    })).toBeUndefined()
+    expect(resolveTargetSessionId({
+      list: {
+        getSnapshot: () => ({
+          current: 'legacy' as SessionId,
+          byId: { main: { id: 'main-view' as SessionId, retainedBy: { mainView: 1 } } },
+        }),
+      },
+    })).toBe('legacy')
+    expect(resolveTargetSessionId({
+      list: {
+        getSnapshot: () => ({
+          byId: { main: { id: 'main-view' as SessionId, retainedBy: { mainView: 1 } } },
+        }),
+      },
+    }, 'explicit' as SessionId)).toBe('explicit')
   })
 
   it('打开专家菜单时保持编辑器焦点，保证候选项可定位 chip 插入位置', () => {

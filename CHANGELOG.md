@@ -4,6 +4,12 @@
 
 The five most recent published versions are listed below.
 
+## 0.1.44 - 2026-09-18
+
+- Add compatibility with DSH `0.1.6-alpha.2` while retaining support for previously supported versions.
+- Keep Remote mounting on both alpha.1 and alpha.2 hosts, and resolve the current chat session after `sessions.list.current` was removed.
+- Stop flashing the loading state under the expert search box when the roster is already cached.
+
 ## 0.1.43 - 2026-09-16
 
 - Add compatibility with DSH `0.1.6-alpha.1` while retaining support for previously supported RC versions.

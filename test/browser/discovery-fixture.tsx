@@ -20,6 +20,7 @@ const unsupported = async (): Promise<never> => { throw new Error('测试中不�
 const remote: React.ComponentProps<typeof AgentsButton>['remote'] = {
   getCatalog: async () => {
     if (loadFailure) { loadFailure = false; throw new Error('名册连接暂时不可用') }
+    if (params.has('slow-catalog')) await new Promise(resolve => setTimeout(resolve, 400))
     return { ok: true, value: structuredClone(snapshot) }
   },
   getEnabled: async () => ({ ok: true, value: { enabled: [...snapshot.enabled], revision: snapshot.revision } }),
