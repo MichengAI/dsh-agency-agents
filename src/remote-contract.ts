@@ -1,3 +1,4 @@
+import { teamInputSchema, teamSnapshotSchema } from './team-contract.js'
 import type { InvocationDescriptor, InvocationParameterDescriptor, TypertCodec } from '@deepseek-ai/dsh-typert-protocol'
 import { z } from 'zod'
 import { CUSTOM_EXPERT_SLUG, catalogSnapshotSchema, customExpertInputSchema, expertEditSchema } from './expert-contract.js'
@@ -39,6 +40,15 @@ const customSlugParameter = jsonParameter('slug', 'string', z.string().regex(CUS
 
 /** Host 与 Client 共用的专家启用状态 Remote 严格契约。 */
 export const AGENCY_AGENTS_DESCRIPTORS = [
+  ...[
+    { method: 'getTeams', parameters: [] },
+    { method: 'saveTeam', parameters: [jsonParameter('team', 'ExpertTeamInput', teamInputSchema), jsonParameter('enabled', 'boolean', z.boolean()), revisionParameter] },
+    { method: 'setTeamEnabled', parameters: [jsonParameter('id', 'string', z.string().min(1).max(128)), jsonParameter('enabled', 'boolean', z.boolean()), revisionParameter] },
+    { method: 'deleteTeam', parameters: [jsonParameter('id', 'string', z.string().min(1).max(128)), revisionParameter] },
+  ].map(({ method, parameters }): InvocationDescriptor => ({
+    id: `@michengai/dsh-agency-agents#agencyAgents/${method}`, service: 'agencyAgents', namespace: 'agencyAgents', method,
+    invocation: { kind: 'direct' }, parameters, result: strictCodec('AgencyTeamsSnapshot', teamSnapshotSchema),
+  })),
   catalogMethod('getCatalog', []),
   catalogMethod('saveCustomExpert', [
     jsonParameter('expert', 'CustomExpertInput', customExpertInputSchema),

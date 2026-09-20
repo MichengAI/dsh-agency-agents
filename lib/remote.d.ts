@@ -1,7 +1,93 @@
-import { _ as readExpertPrompt, v as readLocalizedExpertPrompt } from "./index-D4dhi1A4.js";
+import { _ as readExpertPrompt, v as readLocalizedExpertPrompt } from "./index-BPsOHdvN.js";
 import { z } from "zod";
 import { TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
 import { Context } from "@deepseek-ai/cordis";
+//#region src/team-contract.d.ts
+declare const teamInputSchema: z.ZodObject<{
+  id: z.ZodOptional<z.ZodString>;
+  builtin: z.ZodOptional<z.ZodBoolean>;
+  name: z.ZodString;
+  description: z.ZodString;
+  tags: z.ZodArray<z.ZodString>;
+  goal: z.ZodString;
+  constraints: z.ZodString;
+  deliveryRequirements: z.ZodString;
+  members: z.ZodArray<z.ZodObject<{
+    expertSlug: z.ZodString;
+    duty: z.ZodString;
+    instructions: z.ZodString;
+  }, z.core.$strict>>;
+  examples: z.ZodArray<z.ZodString>;
+  coordinatorMode: z.ZodEnum<{
+    custom: "custom";
+    template: "template";
+  }>;
+  coordinatorTemplateId: z.ZodEnum<{
+    product: "product";
+    research: "research";
+    general: "general";
+    technical: "technical";
+    content: "content";
+    data: "data";
+  }>;
+  coordinatorTemplateVersion: z.ZodLiteral<1>;
+  coordinatorPrompt: z.ZodString;
+}, z.core.$strict>;
+type TeamInput = z.infer<typeof teamInputSchema>;
+declare const teamSnapshotSchema: z.ZodObject<{
+  teams: z.ZodArray<z.ZodIntersection<z.ZodObject<{
+    id: z.ZodOptional<z.ZodString>;
+    builtin: z.ZodOptional<z.ZodBoolean>;
+    name: z.ZodString;
+    description: z.ZodString;
+    tags: z.ZodArray<z.ZodString>;
+    goal: z.ZodString;
+    constraints: z.ZodString;
+    deliveryRequirements: z.ZodString;
+    members: z.ZodArray<z.ZodObject<{
+      expertSlug: z.ZodString;
+      duty: z.ZodString;
+      instructions: z.ZodString;
+    }, z.core.$strict>>;
+    examples: z.ZodArray<z.ZodString>;
+    coordinatorMode: z.ZodEnum<{
+      custom: "custom";
+      template: "template";
+    }>;
+    coordinatorTemplateId: z.ZodEnum<{
+      product: "product";
+      research: "research";
+      general: "general";
+      technical: "technical";
+      content: "content";
+      data: "data";
+    }>;
+    coordinatorTemplateVersion: z.ZodLiteral<1>;
+    coordinatorPrompt: z.ZodString;
+  }, z.core.$strict>, z.ZodObject<{
+    id: z.ZodString;
+    builtin: z.ZodBoolean;
+  }, z.core.$strip>>>;
+  enabledTeams: z.ZodArray<z.ZodString>;
+  enabledExperts: z.ZodArray<z.ZodString>;
+  revision: z.ZodNumber;
+  engine: z.ZodOptional<z.ZodObject<{
+    state: z.ZodEnum<{
+      enabled: "enabled";
+      unsupported: "unsupported";
+      disabled: "disabled";
+    }>;
+    mode: z.ZodEnum<{
+      subagent: "subagent";
+      native: "native";
+    }>;
+    reason: z.ZodString;
+    recommendation: z.ZodString;
+  }, z.core.$strip>>;
+  nativeMembers: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+}, z.core.$strip>;
+type TeamSnapshot = z.infer<typeof teamSnapshotSchema>;
+//#endregion
 //#region src/expert-contract.d.ts
 declare const customExpertInputSchema: z.ZodObject<{
   slug: z.ZodOptional<z.ZodString>;
@@ -37,6 +123,11 @@ type CatalogSnapshot = z.infer<typeof catalogSnapshotSchema>;
 declare class AgencyAgentsRemote extends TypertRemoteService {
   static inject: string[];
   constructor(ctx: Context);
+  private teams;
+  getTeams(): Promise<TeamSnapshot>;
+  saveTeam(team: TeamInput, enabled: boolean, expectedRevision: number): Promise<TeamSnapshot>;
+  setTeamEnabled(id: string, enabled: boolean, expectedRevision: number): Promise<TeamSnapshot>;
+  deleteTeam(id: string, expectedRevision: number): Promise<TeamSnapshot>;
   private library;
   /** 返回动态名册，不预加载任何专家提示词正文。 */
   getCatalog(): Promise<CatalogSnapshot>;

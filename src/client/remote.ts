@@ -1,3 +1,4 @@
+import type { TeamInput, TeamSnapshot } from '../team-contract.js'
 /**
  * 手写的 Typert Remote 贡献（等价 generator 的 typert.remote-client 产物）。
  * 本插件的名册、管理及启停方法采用手写贡献，避免依赖 monorepo
@@ -7,6 +8,12 @@ import type { RemoteResult, TypertRemoteContribution } from '@deepseek-ai/dsh-ty
 import { AGENCY_AGENTS_DESCRIPTORS } from '../remote-contract.js'
 import type { CatalogSnapshot, CustomExpertInput } from '../expert-contract.js'
 
+export interface AgencyTeamsRemote {
+  getTeams(): Promise<RemoteResult<TeamSnapshot>>
+  saveTeam(team: TeamInput, enabled: boolean, expectedRevision: number): Promise<RemoteResult<TeamSnapshot>>
+  setTeamEnabled(id: string, enabled: boolean, expectedRevision: number): Promise<RemoteResult<TeamSnapshot>>
+  deleteTeam(id: string, expectedRevision: number): Promise<RemoteResult<TeamSnapshot>>
+}
 export interface AgencyCatalogRemote {
   getCatalog(): Promise<RemoteResult<CatalogSnapshot>>
   getCustomExpert(slug: string): Promise<RemoteResult<CustomExpertInput>>
@@ -24,12 +31,16 @@ export interface AgencyAgentsPrompt {
 }
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
-  interface TypertRemoteNamespace$agencyAgents extends AgencyCatalogRemote {
+  interface TypertRemoteNamespace$agencyAgents extends AgencyCatalogRemote, AgencyTeamsRemote {
     getEnabled: () => Promise<RemoteResult<AgencyAgentsEnabledState>>
     setEnabled: (enabled: string[], expectedRevision: number) => Promise<RemoteResult<AgencyAgentsEnabledState>>
     getPrompt: (slug: string, division: string) => Promise<RemoteResult<AgencyAgentsPrompt>>
   }
   interface TypertRemoteMap {
+    'agencyAgents/getTeams': AgencyTeamsRemote['getTeams']
+    'agencyAgents/saveTeam': AgencyTeamsRemote['saveTeam']
+    'agencyAgents/setTeamEnabled': AgencyTeamsRemote['setTeamEnabled']
+    'agencyAgents/deleteTeam': AgencyTeamsRemote['deleteTeam']
     'agencyAgents/getCatalog': AgencyCatalogRemote['getCatalog']
     'agencyAgents/getCustomExpert': AgencyCatalogRemote['getCustomExpert']
     'agencyAgents/saveCustomExpert': AgencyCatalogRemote['saveCustomExpert']

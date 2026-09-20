@@ -1,3 +1,4 @@
+import { useLibraryDialog } from './library-ui.js'
 import React from "react";
 
 /** 原生预览弹窗约束焦点，并让 Escape 只关闭当前层。 */
@@ -9,16 +10,7 @@ export function PromptDialog(props: {
   readonly onClose: () => void;
 }): React.ReactElement {
   const dialog = React.useRef<HTMLDialogElement | null>(null);
-  React.useEffect(() => {
-    const node = dialog.current;
-    // 异步读取和 autoFocus 会改变 activeElement，恢复目标由打开按钮提供。
-    const previous = props.returnFocus;
-    node?.showModal();
-    return () => {
-      node?.close();
-      if (previous.isConnected) previous.focus({ preventScroll: true });
-    };
-  }, [props.returnFocus]);
+  useLibraryDialog(dialog, props.returnFocus);
   return React.createElement("dialog", {
     ref: dialog,
     className: "aag-prompt-modal",

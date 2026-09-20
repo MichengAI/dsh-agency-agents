@@ -1,3 +1,4 @@
+import { LibraryEditorFooter } from './client/library-ui.js'
 import { loadEditorReview, continueEditorReview } from "./client/editor-review.js";
 import { describe, expect, it, vi } from "vitest";
 import React from "react";
@@ -351,7 +352,7 @@ describe("真实 Host 与 Remote 集成", () => {
     expect(starts[0]).toMatchObject({
       persona: input.prompt,
       label: `expert:${slug}`,
-      toolFilter: { deny: ["summon_expert", "summon_experts", "list_experts"] },
+      toolFilter: { deny: ["summon_expert", "summon_experts", "list_experts", "list_expert_teams", "get_expert_team", "summon_expert_team"] },
     });
     const disabled = await remote.setEnabled([], saved.revision);
     await expect(
@@ -589,9 +590,11 @@ it.each(["删除", "改名"] as const)("他窗%s释放名称后，编辑器保�
     return slots[index];
   }) as typeof React.useRef);
   const effectHook = vi.spyOn(React, "useEffect").mockImplementation(() => {});
+  const layoutHook = vi.spyOn(React, "useLayoutEffect").mockImplementation(() => {});
   type ElementProps = { children?: React.ReactNode; onClick?: () => void };
   const elements = (node: React.ReactNode): React.ReactElement<ElementProps>[] => {
     if (!React.isValidElement<ElementProps>(node)) return [];
+    if (node.type === LibraryEditorFooter) return elements(LibraryEditorFooter(node.props as React.ComponentProps<typeof LibraryEditorFooter>));
     return [node, ...React.Children.toArray(node.props.children).flatMap(elements)];
   };
   const render = () => {
@@ -620,5 +623,5 @@ it.each(["删除", "改名"] as const)("他窗%s释放名称后，编辑器保�
     expect(created.slug).not.toBe(oldSlug);
     expect((await library.getCustom(created.slug)).prompt).toBe("需要保留的草稿内容");
     expect(current.enabled).toContain(created.slug);
-  } finally { stateHook.mockRestore(); refHook.mockRestore(); effectHook.mockRestore(); }
+  } finally { stateHook.mockRestore(); refHook.mockRestore(); effectHook.mockRestore(); layoutHook.mockRestore(); }
 });

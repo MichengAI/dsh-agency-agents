@@ -4,6 +4,10 @@
 
 The five most recent published versions are listed below.
 
+## 未发布
+
+- 专家团中文首版已在工作区实现，详细变更见 [中文更新日志](CHANGELOG.zh-CN.md)。
+
 ## 0.1.44 - 2026-09-18
 
 - Add compatibility with DSH `0.1.6-alpha.2` while retaining support for previously supported versions.

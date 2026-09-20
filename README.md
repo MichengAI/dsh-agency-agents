@@ -773,3 +773,5 @@ Data lives in the DSH settings agency-agents namespace outside the plugin direct
 ## License and attribution
 
 This project’s TypeScript source, build scripts, and documentation use [Apache License 2.0](LICENSE). Bundled personas originate from [The Agency](https://github.com/msitarzewski/agency-agents) and remain MIT-licensed; see [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE).
+
+本轮未发布的专家团功能说明见 [中文说明](README.zh-CN.md)。[本地交接入口](docs/00-交接入口/00-阅读导航.md) 仅在开发工作区提供，不随包发布。

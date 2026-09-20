@@ -107,6 +107,7 @@
     }
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.47.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

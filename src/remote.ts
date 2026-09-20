@@ -1,3 +1,6 @@
+import { AGENCY_TEAM_SERVICE, type AgencyTeamLibrary } from './team-library.js'
+import { nativeTeamMemberName } from './team-engine.js'
+import type { TeamInput, TeamSnapshot, TeamEngineStatus } from './team-contract.js'
 import type { Context } from '@deepseek-ai/cordis'
 import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import type { TypertContribution } from '@deepseek-ai/dsh-typert-registry'
@@ -43,6 +46,25 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
     super(ctx, 'agencyAgents')
     this.ctx.typert.register(TYPERT)
   }
+
+  private teams(): AgencyTeamLibrary {
+    const library = this.ctx.get(AGENCY_TEAM_SERVICE) as AgencyTeamLibrary | undefined
+    if (!library) throw new Error('专家团服务不可用，请重新加载插件。')
+    return library
+  }
+  @Remote('getTeams')
+  async getTeams(): Promise<TeamSnapshot> {
+    const snapshot = await this.teams().snapshot()
+    const engine = this.ctx.get('agencyAgentsTeamEngine') as (() => TeamEngineStatus) | undefined
+    const nativeMembers = Object.fromEntries(snapshot.teams.flatMap(team => team.members.map(member => [nativeTeamMemberName(team.id, member.expertSlug), member.expertSlug])))
+    return { ...snapshot, nativeMembers, ...(engine ? { engine: engine() } : {}) }
+  }
+  @Remote('saveTeam')
+  async saveTeam(team: TeamInput, enabled: boolean, expectedRevision: number): Promise<TeamSnapshot> { return this.teams().save(team, enabled, expectedRevision) }
+  @Remote('setTeamEnabled')
+  async setTeamEnabled(id: string, enabled: boolean, expectedRevision: number): Promise<TeamSnapshot> { return this.teams().setEnabled(id, enabled, expectedRevision) }
+  @Remote('deleteTeam')
+  async deleteTeam(id: string, expectedRevision: number): Promise<TeamSnapshot> { return this.teams().remove(id, expectedRevision) }
 
   private library(): AgencyExpertLibrary {
     const library = this.ctx.get(AGENCY_LIBRARY_SERVICE) as AgencyExpertLibrary | undefined

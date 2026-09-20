@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { insertExpertReference, matchExpertQuery, type ReferenceInsertionTarget } from './client/index.js'
 import { composerProjection } from './test-utils/composer-projection.js'
+import { insertTeamReference, teamReference } from './client/team-reference.js'
+import { BUILTIN_TEAMS } from './team-contract.js'
 
 const reference = { source: 'agency', ref: 'expert', label: '专家', clipboardText: '@专家' }
 function input(initial: string, failText = false) {
@@ -27,6 +29,32 @@ function input(initial: string, failText = false) {
 }
 
 describe('选择专家时自动填入任务示例', () => {
+  it('异步确认期间草稿变化时停止插入，不覆盖用户的新内容', async () => {
+    const value = input('原始需求')
+    const result = await insertTeamReference(value.target, BUILTIN_TEAMS[0], '示例', undefined, 'en', async () => {
+      value.target.insertReference(reference, { start: 0, end: 0, draftRev: 4 })
+      return true
+    })
+    expect(result).toBe(false)
+    expect(value.snapshot().draft).not.toContain('示例')
+  })
+  it('团队使用独立的原生引用，空白草稿填入示例且不发送', async () => {
+    const value = input('')
+    expect(teamReference(BUILTIN_TEAMS[0])).toMatchObject({ source: 'agency-agents:teams', ref: 'team-product', label: '产品方案评审团' })
+    expect(await insertTeamReference(value.target, BUILTIN_TEAMS[0])).toBe(true)
+    expect(value.snapshot().draft).toContain(BUILTIN_TEAMS[0].examples[0])
+  })
+  it('已有正文选择团队不会覆盖草稿，也不添加默认示例', async () => {
+    const value = input('请保留我的需求')
+    expect(await insertTeamReference(value.target, BUILTIN_TEAMS[0])).toBe(true)
+    expect(value.snapshot().draft).toBe('@专家 请保留我的需求')
+  })
+  it('仅有团队触发词时，选中后仍填入默认示例', async () => {
+    const value = input('@产品')
+    expect(await insertTeamReference(value.target, BUILTIN_TEAMS[0], undefined, { start: 0, end: 3, draftRev: 4 })).toBe(true)
+    await new Promise<void>(resolve => setTimeout(resolve, 0))
+    expect(value.snapshot().draft).toContain(BUILTIN_TEAMS[0].examples[0])
+  })
   it('UI 不匹配 build、guide 等单词内部的字母', () => {
     const expert = { slug: 'builder', name: '开发专家', nameEn: 'Builder', division: '', divisionEn: '', divisionZh: '', description: '', descriptionEn: 'Build a guide for acquisition' }
     expect(matchExpertQuery(expert, 'UI')).toBe(false)

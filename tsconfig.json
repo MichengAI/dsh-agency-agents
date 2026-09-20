@@ -6,6 +6,7 @@
     "declaration": true,
     "rootDir": "src",
     "strict": true,
+    "jsx": "react-jsx",
     "skipLibCheck": true,
     "types": ["node"]
   },

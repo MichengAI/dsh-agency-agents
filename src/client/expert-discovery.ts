@@ -51,8 +51,8 @@ export function ExpertDiscovery(props: DiscoveryProps): React.ReactElement {
 export const DISCOVERY_CSS = `
 .aag-menu.aag-discovery{width:340px;max-width:calc(100vw - 24px);max-height:360px;overflow:hidden;padding:4px;color:var(--dsw-alias-label-primary);font-family:inherit;font-size:13px;line-height:1.5}
 .aag-discovery-tools{padding:4px;flex:none}
-.aag-discovery input{box-sizing:border-box;width:100%;min-height:36px;padding:7px 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-2);color:inherit;font:inherit}
-.aag-discovery input:focus-visible,.aag-discovery button:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary,#4f8cff);outline-offset:-2px}
+.aag-discovery input{box-sizing:border-box;width:100%;min-height:36px;padding:7px 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-1);color:inherit;font:inherit}
+.aag-discovery input:focus-visible,.aag-discovery button:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:-2px}
 .aag-discovery button:disabled{opacity:.55;cursor:default}.aag-discovery-results{overflow-y:auto;min-height:0;overscroll-behavior:contain}
 .aag-discovery-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.aag-discovery-action{flex:none;color:var(--dsw-alias-label-secondary);font-size:11px}
 .aag-discovery>.aag-error{padding:8px;flex:none}
