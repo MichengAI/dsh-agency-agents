@@ -99,8 +99,12 @@ test('设计稿同尺寸视觉验收截图', async ({ page }, testInfo) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.setViewportSize({ width: 1536, height: 1024 })
-  await page.goto('/?teams&visual')
+  // 视觉验收走真实设置面板，避免独立团队夹具缺少宿主主题而误报通过。
+  await page.goto('/?teams&settings&visual')
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await expect(page.getByTestId('team-card')).toHaveCount(5)
+  await expect(page.getByTestId('team-card').first()).toHaveCSS('background-color', 'rgb(43, 43, 45)')
+  await expect(page.getByTestId('team-card').first().locator('.aag-switch-track')).toHaveCSS('background-color', 'rgb(37, 207, 105)')
   await expect(
     page.getByRole('button', { name: '新建专家团' }),
   ).toBeInViewport()
@@ -121,6 +125,7 @@ test('设计稿同尺寸视觉验收截图', async ({ page }, testInfo) => {
     .getByRole('button', { name: '查看详情' })
     .click()
   await page.getByRole('button', { name: '编辑专家团', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCSS('background-color', 'rgb(43, 43, 45)')
   await page.setViewportSize({ width: 1536, height: 1024 })
   await expect(page.getByRole('heading', { name: '主理人提示词', exact: true })).toBeVisible()
   await page.getByRole('region', { name: '主理人提示词' }).getByRole('button', { name: '自定义', exact: true }).click()
