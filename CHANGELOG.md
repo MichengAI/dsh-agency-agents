@@ -2,11 +2,72 @@
 
 [简体中文](CHANGELOG.zh-CN.md)
 
-The five most recent published versions are listed below.
+This file records features and upgrade boundaries. For version 1.0.0, npm and GitHub Releases remain the publication source of truth.
 
-## 未发布
+## 1.0.0 - 2026-09-21
 
-- 专家团中文首版已在工作区实现，详细变更见 [中文更新日志](CHANGELOG.zh-CN.md)。
+The first 1.0 release expands individual specialists into configurable expert-team collaboration. It retains the package name, 321 bundled specialists, 22 divisions, and existing individual-expert workflows. The following covers the changes since 0.1.44.
+
+### Retained individual-expert capabilities and tools
+
+- Retain 321 bundled experts across 22 divisions, prompt viewing/copying, category/status/localized keyword filters, enablement, and selection through the composer or @.
+- Retain up to 200 custom experts with creation, copying, avatars and summon emoji, editing, save-and-enable, disabling, and permanent deletion; preserve name-conflict and concurrent-revision checks.
+- Keep list_experts, summon_expert, and summon_experts; add list_expert_teams, get_expert_team, and summon_expert_team for reading team rules before delegation and final synthesis.
+- Preserve the settings version display, update checking/feedback, and trusted external root, provider, divisions, and maxDepth configuration. Do not add an External source tab.
+### Five built-in teams and custom teams
+
+- Add Product Review Team, Technical Review Team, Content Planning Team, Data Analysis Team, and Research Team. Each includes three independent expert roles, a shared goal, delivery requirements, task examples, and a dedicated coordinator template.
+- Create custom teams, copy built-in teams, inspect details, edit, enable, disable, and delete. Each team contains 2–8 distinct experts; up to 100 custom teams are supported.
+- Configure a name, description, up to three tags, member duties and instructions, shared goal, constraints, delivery requirements, and 1–3 examples. Custom coordinator prompts allow up to 12,000 characters.
+- Use the team coordinator template, customize it, or restore it. Rules cover preparation, delegation, evidence checks, disagreements, failures, and final delivery. The existing main conversation coordinates; no extra leader subagent is created.
+- Confirm and enable required experts when enabling a team. Disabling or deleting a team does not disable its members or delete historical conversations.
+
+### Unified expert and team management
+
+- Add an underlined Expert teams tab inside Settings → Experts, sharing the title, version, and links. Preserve individual experts' All/Built-in/Custom source filters, categories, status, and search.
+- Preserve expert filters across tab switches. Place counts at the right of the tabs, with source filters and create/refresh actions on one row. Teams gain equivalent source/status filters, search, empty states, refresh, and more menus.
+- Share cards, editor drawers, save footers, prompt previews, and confirmation dialogs. Confirm deletion and discarding unsaved changes. Retain drafts on revision conflicts, review current settings before saving, and allow deleted experts to continue as new experts.
+- Remove redundant source badges and expand all five team descriptions. Team descriptions grow with their content to avoid truncating English, while card actions remain compact.
+- Align buttons, inputs, dropdowns, and focus states with Archive Manager using compact sizing and official theme backgrounds/borders. Enabled switches are green, disabled switches gray, with text labels; support dark/light themes and narrow layouts.
+
+### Chat selection, examples, and draft protection
+
+- Switch to teams in the Experts composer picker, search, inspect details, enable, and select. The @ picker supports native team references with short localized names.
+- Selecting a team or example updates the draft without sending it. Protect existing text, attachments, and references; confirm team replacement or example insertion in a themed dialog.
+- Recheck the draft revision after asynchronous confirmation. If the draft changed meanwhile, stop insertion and ask the user to select again rather than overwriting new input.
+- Preserve full-roster individual-expert search, enable-and-select, bilingual examples for eight representative specialists, conflict feedback, and retry behavior.
+
+### Ordinary subagents and native Agent Team
+
+- Check host capability separately from service enablement and tool availability in the current Agent scope, without modifying host settings.
+- Use ordinary subagents when unsupported. Recommend enabling Team when supported but disabled, while allowing ordinary execution. Use native Agent Team when services and tools are ready. Explicit maxDepth continues through ordinary mode to enforce depth limits.
+- Ordinary mode performs one parallel analysis with up to four concurrent experts. Freeze team, member, and task settings before execution so later edits cannot change the running assignment.
+- Native mode integrates members, shared tasks, task claiming, result messages, and asynchronous waiting. Reuse idle or offline members for the same team/expert; do not redispatch busy or failed members.
+- Accepted native dispatch means started, not completed. The main conversation waits for actual results for the current tasks before verifying and summarizing. Mid-dispatch failures do not automatically switch to ordinary mode and duplicate work.
+- Localize new child-session expert names in both modes. Adapt native roster display names while retaining stable identities, message routing, and reuse. Do not rewrite old ordinary-session titles or host model labels.
+
+### Collaboration quality and failure handling
+
+- Provide team-specific briefs, role boundaries, structured member reports, coordinator checklists, and handoff rules. Consolidate duplicate findings while preserving evidence, disagreements, and open questions.
+- Ordinary mode reports responsibility coverage and member success/failure, preserving completed results when others fail. Isolate persona-read failures, reject empty results, and do not automatically add model rounds or retries.
+- Cancellation prevents queued work from starting, settles in-flight launches, and interrupts native members started by this invocation. Report cleanup failures explicitly.
+- Preserve child-tool isolation and recursion guards; experts cannot summon more experts or start another team round.
+
+### Complete localization, documentation, and release assets
+
+- Complete Chinese/English UI, details, editors, confirmations, errors, tool descriptions, and runtime feedback, plus all five teams' names, descriptions, tags, duties, examples, and coordinator rules.
+- Language changes preserve custom content and unsaved drafts. Only system presets are localized; both built-in Chinese and English names participate in collision checks, and stable IDs remain unchanged.
+- Regenerate separate Chinese and English 3:1 WebP banners without version numbers. Replace the Node README badge with supported DSH versions, and refresh bilingual feature and upgrade documentation.
+- Set the version baseline to 1.0.0. Generate bilingual release notes from the matching changelog entries to keep feature lists aligned.
+
+- Stop tracking compiled `lib` in Git. The release gate builds and transfers verified artifacts to npm publishing; npm packages retain the runtime `lib` files.
+
+### Upgrade, compatibility, and validation limits
+
+- Retain support for DSH 0.1.0-rc.8, 0.1.1-rc.2, 0.1.2-rc.1, 0.1.5-rc.1, 0.1.5-rc.2, 0.1.6-alpha.1, and 0.1.6-alpha.2. This does not claim coverage of every intervening or future version. Native Team also depends on installation and enablement.
+- Existing expert enablement and custom experts remain in the host agency-agents settings namespace; team settings use that namespace too. No expert-file migration is required. Back up settings before downgrading: old versions lack teams and may not preserve team fields on writes.
+- The engineering regression baseline passes 199 unit/host-integration tests and 40 browser tests, including opt-in visual validation. Fix the old visual fixture that passed despite missing theme variables. Type checks, builds, and package validation pass.
+- Browser tests use real components with mocked Remote services, and model providers are test doubles. These results do not validate real-model summary quality or every supported host end to end. Native model labels remain host-owned and may show creation-time models.
 
 ## 0.1.44 - 2026-09-18
 

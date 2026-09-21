@@ -1,21 +1,21 @@
 <div align="center">
-  <img src="assets/branding/banner.png" alt="DSH Agency Agents" width="100%">
+  <img src="assets/branding/dsh-banner-en.webp" alt="DSH Agency Agents" width="100%">
 </div>
 
 <div align="center">
 
   # DSH Agency Agents
 
-  **321 summonable specialist agents for DeepSeek Harness**
+  **321 specialists · 5 built-in teams · Custom collaboration**
 
-  [简体中文](README.zh-CN.md) · [Expert roster](#expert-roster) · [Installation](#installation) · [Changelog](CHANGELOG.md) · [Apache-2.0](LICENSE)
+  [简体中文](README.zh-CN.md) · [Expert roster](#expert-roster) · [Installation](#installation) · [Changelog](CHANGELOG.md) · [Release notes](RELEASE_NOTES.md) · [Apache-2.0](LICENSE)
 
   [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
   [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-321-0f766e.svg)](#expert-roster)
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm downloads](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20downloads)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![Node.js 22 or later](https://img.shields.io/badge/Node.js-22%20or%20later-339933.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
+  [![DSH supported through 0.1.6-alpha.2](https://img.shields.io/badge/DSH-up%20to%200.1.6--alpha.2-2563eb.svg)](#prerequisites)
 </div>
 
 > DSH Agency Agents is a community-maintained DeepSeek Harness (DSH) plugin, not an official DeepSeek AI product.
@@ -29,7 +29,50 @@ Choose a specialist in DSH for code review, design, operations, or research. All
 - **Describe the task directly**: use `@` or the **Experts** picker, then write your complete request.
 - **Get one final delivery**: experts provide specialist analysis and the parent conversation brings the results together. Experts cannot summon further experts.
 
+## Expert teams
+
+Manage teams in **Settings → Experts → Expert teams**, sharing the header, source/status filters, search, and card interactions with individual experts.
+
+| Built-in team | Focus | Delivery |
+| --- | --- | --- |
+| Product Review Team | User value, experience, technical feasibility | Priorities and actions |
+| Technical Review Team | Architecture, security, acceptance boundaries | Risks and acceptance checks |
+| Content Planning Team | Angles, distribution strategy, fact checking | Topic options and content structure |
+| Data Analysis Team | Metrics, data quality, business interpretation | Findings and validation steps |
+| Research Team | Research scope, evidence, synthesis | Source-backed conclusions |
+
+### Configure and use
+
+1. Use a built-in team, copy it to customize, or create a team of 2–8 distinct experts. Up to 100 custom teams can be saved.
+2. Set the name, description, tags, member duties, shared goal, constraints, delivery requirements, and 1–3 examples. Use, customize, or restore the coordinator template.
+3. Confirm enabling required experts when enabling a team. Switch to Expert teams in the composer picker or select through `@`, then write the task. Selecting or adding an example never sends the message.
+4. The current main conversation delegates, verifies evidence, handles disagreements, and delivers one result; no additional leader subagent is created. Ordinary mode runs up to four experts concurrently and preserves completed results if others fail.
+
+### Automatic collaboration mode
+
+| Host state | Behavior |
+| --- | --- |
+| Agent Team unsupported | Use ordinary subagents without recommending an unavailable feature. |
+| Supported but disabled, or current-session tools unavailable | Recommend enabling Team while continuing to allow ordinary execution. |
+| Services and current-session tools available | Use native Agent Team, shared tasks, and teammate messages; wait for actual results before summarizing. |
+
+Explicit `maxDepth` uses ordinary mode to preserve depth limits. Native dispatch acceptance is not expert completion; partial startup failures do not automatically switch modes and duplicate work. Members inherit the main conversation's model selection; there is no per-expert model setting. Native model labels are provided by DSH and may display creation-time values.
+
+### Tool interfaces
+
+Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_teams`, `get_expert_team`, and `summon_expert_team`. The main conversation reads the enabled team's rules and duties before delegating the complete task, then verifies and summarizes actual member results.
+
+### Drafts, language, and data
+
+- System presets, member names, coordinator templates, UI, and runtime feedback support Chinese and English. Custom content remains unchanged, and language switches preserve unsaved drafts.
+- Confirm team replacement or example insertion. If the draft changes during confirmation, stop insertion and retain the new text, attachments, and references.
+- Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
+- Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
+
+> This README describes the 1.0.0 release; npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full changes and [release notes](RELEASE_NOTES.md) for the bilingual release description. Upgrades retain expert settings. Back up settings before downgrading because older versions do not support teams.
 ## Screenshots
+
+The individual-expert screenshots below illustrate earlier workflows. Version 1.0.0 unifies the controls and adds expert teams within the same settings page.
 
 Filter by category or search in **Settings → Experts**, then enable the experts you need:
 
@@ -65,7 +108,7 @@ For a desktop workbench, download [DSH Codex Desktop](https://github.com/Micheng
 
 - A working DeepSeek Harness Web installation with `dsh` available in PowerShell.
 - Examples use the `web` profile; replace it with the target profile.
-- Source installation and development require Node.js 22+ and pnpm. npm installation does not require running `pnpm install` separately.
+- Source installation and development require Node.js ^22.19.0 or ≥24.0.0 and pnpm. npm installation does not require running `pnpm install` separately.
 
 ## Host dependencies and compatibility
 
@@ -96,7 +139,7 @@ dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=http
 dsh --profile web --dump-config
 ```
 
-To pin a release, replace `@latest` with a version such as `@0.1.17`.
+To pin a release, replace `@latest` with a version such as `@1.0.0`.
 
 The configuration output should contain `agency-agents` and `agency-agents-remote`. Restart DSH Web and hard-refresh the browser. Do not copy client files manually: the Settings page needs the mounted Remote service.
 
@@ -705,6 +748,9 @@ Set `AGENCY_AGENTS_ROOT` to use an external expert directory. Persona bodies fro
 
 ## Secondary development
 
+`lib` is not tracked in Git. Run `pnpm build` before using a source checkout. The release gate builds and verifies `lib`; npm packages still include the compiled runtime.
+
+
 ### Install from source
 
 Use this for debugging or unpublished changes. The cloned directory becomes the plugin source path:
@@ -762,7 +808,7 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-Coverage includes asynchronous loading, focus restoration after Escape, close-button and backdrop dismissal, StrictMode, and successive triggers. These component tests do not replace real-host or model-delegation acceptance. Browser tests bundle source rather than loading the published `lib/client.js`; artifacts still require build, package checks, and real-host acceptance. Override the default port 18769 with the `AGENCY_BROWSER_TEST_PORT` environment variable if needed.
+Coverage includes expert/team filtering, creation, copying, editing, enablement, deletion, draft protection, revision conflicts, localization, dark/light themes, narrow layouts, and focus restoration under normal rendering and StrictMode. These component tests do not replace real-host or model-delegation acceptance. Browser tests bundle source rather than loading the published `lib/client.js`; artifacts still require build, package checks, and real-host acceptance. Override the default port 18769 with the `AGENCY_BROWSER_TEST_PORT` environment variable if needed.
 
 ## Custom experts
 
@@ -773,5 +819,3 @@ Data lives in the DSH settings agency-agents namespace outside the plugin direct
 ## License and attribution
 
 This project’s TypeScript source, build scripts, and documentation use [Apache License 2.0](LICENSE). Bundled personas originate from [The Agency](https://github.com/msitarzewski/agency-agents) and remain MIT-licensed; see [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE).
-
-本轮未发布的专家团功能说明见 [中文说明](README.zh-CN.md)。[本地交接入口](docs/00-交接入口/00-阅读导航.md) 仅在开发工作区提供，不随包发布。

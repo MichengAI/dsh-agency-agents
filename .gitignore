@@ -10,3 +10,6 @@ docs/
 .codegraph/
 test-results/
 playwright-report/
+
+# 编译产物由本地或发布门禁生成，仅随 npm 包分发
+/lib/

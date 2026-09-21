@@ -1,21 +1,21 @@
 <div align="center">
-  <img src="assets/branding/banner.png" alt="DSH Agency Agents" width="100%">
+  <img src="assets/branding/dsh-banner.webp" alt="DSH Agency Agents" width="100%">
 </div>
 
 <div align="center">
 
   # DSH Agency Agents
 
-  **为 DeepSeek Harness 提供 321 名可召唤的专业智能体**
+  **321 位专业智能体 · 5 个内置专家团 · 自定义协作**
 
-  [English](README.md) · [专家列表](#专家列表) · [安装](#安装) · [更新日志](CHANGELOG.zh-CN.md) · [Apache-2.0](LICENSE)
+  [English](README.md) · [专家列表](#专家列表) · [安装](#安装) · [更新日志](CHANGELOG.zh-CN.md) · [发行说明](RELEASE_NOTES.md) · [Apache-2.0](LICENSE)
 
   [![许可证：Apache-2.0](https://img.shields.io/badge/许可证-Apache--2.0-blue.svg)](LICENSE)
   [![内置智能体](https://img.shields.io/badge/内置智能体-321-0f766e.svg)](#专家列表)
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm 下载量](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![Node.js 22 or later](https://img.shields.io/badge/Node.js-22%20or%20later-339933.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
+  [![DSH 支持至 0.1.6-alpha.2](https://img.shields.io/badge/DSH-up%20to%200.1.6--alpha.2-2563eb.svg)](#前置条件)
 </div>
 
 > DSH Agency Agents 是社区维护的 DeepSeek Harness（DSH）插件，并非 DeepSeek AI 官方产品。
@@ -29,16 +29,50 @@
 - **直接交代任务**：在输入框用 `@` 或「专家」选择角色，再写下完整需求。
 - **由主会话统一交付**：专家提供专业分析，主会话汇总结果；专家不会继续召唤其他专家。
 
-## 专家团（下一版本，尚未发布）
+## 专家团
 
-在「设置 → 专家 → 专家团」使用五个内置团队：产品方案评审、技术方案评审、内容选题策划、数据分析诊断和专题研究。可以复制内置团，也可以新建 2～8 人的自定义团。
+在「设置 → 专家 → 专家团」管理团队，与专家页共用头部、来源筛选、状态筛选、搜索和卡片交互。五个内置团覆盖以下场景：
 
-配置成员分工、共同目标、约束、交付要求和任务示例；主理人规则支持团队模板、自定义及恢复模板。聊天输入框可切换到专家团或通过 `@` 选择，示例只写入草稿，由你确认发送。
+| 专家团 | 分析重点 | 交付内容 |
+| --- | --- | --- |
+| 产品方案评审团 | 需求价值、用户体验、技术可行性 | 优先级与行动清单 |
+| 技术方案评审团 | 架构、安全、验收边界 | 风险与验收清单 |
+| 内容选题策划团 | 选题角度、传播策略、事实核验 | 选题方案与内容结构 |
+| 数据分析诊断团 | 指标、数据质量、业务解释 | 分析结论与验证步骤 |
+| 专题研究专家团 | 研究范围、证据、综合判断 | 有来源的研究结论 |
 
-主会话负责协调和汇总，最多四位专家同时分析，不额外调用团长。启用团队时确认同步启用所需专家；停用或删除团队不会影响专家及历史会话。部分成员失败会保留其余结果，不自动重试。
+### 配置与使用
 
-当前专家团功能为中文首版，工程测试通过；未进行本轮真实模型汇总质量及全部旧版宿主验收。开发者可阅读[本地交接入口](docs/00-交接入口/00-阅读导航.md)（docs 按项目约定仅保存在开发工作区）。
+1. 直接使用内置团，或复制后修改；也可新建 2～8 位成员的自定义团，最多保存 100 个。
+2. 设置名称、简介、标签、成员职责、共同目标、约束、交付要求和 1～3 条任务示例。主理人提示词可使用团队模板、自定义或恢复模板。
+3. 启用团队时确认同步启用所需专家。聊天工具栏切到「专家团」，或通过 `@` 选择团队，再填写任务；选择与示例均不会自动发送。
+4. 当前主会话分工、核验证据、处理分歧并统一交付，不额外创建团长。普通模式最多四位专家并发；部分失败会保留已完成结果。
+
+### 自动选择协作模式
+
+| 宿主状态 | 行为 |
+| --- | --- |
+| 不支持 Agent Team | 使用普通子代理，不提示开启不存在的能力。 |
+| 支持但未启用，或当前会话工具未就绪 | 建议开启，仍可继续普通调用。 |
+| 服务和当前会话工具均可用 | 使用原生 Agent Team、共享任务板和队友消息，等待实际结果后汇总。 |
+
+显式配置 `maxDepth` 时使用普通模式以保留深度约束。原生模式任务启动确认不等于专家已经完成；创建中途失败不会自动切换模式重复执行。队友默认沿用主会话的模型选择，不提供独立专家模型配置。原生面板的模型标签由 DSH 提供，可能显示创建时的值。
+
+### 工具接口
+
+保留个人专家工具 `list_experts`、`summon_expert`、`summon_experts`；新增 `list_expert_teams`、`get_expert_team`、`summon_expert_team`。主会话应先读取已启用团队的规则与分工，再提交完整任务，最后核验并汇总成员结果。
+
+### 草稿、语言与数据
+
+- 系统预设、成员名称、主理人模板、界面和运行反馈支持中英文；自定义内容保持原文，切换语言不覆盖未保存草稿。
+- 替换团队或追加示例需确认；确认期间草稿变化会停止插入，保留用户新输入、附件和引用。
+- 团队配置保存在宿主 `agency-agents` 命名空间。编辑冲突保留草稿并提示核对最新配置；停用或删除团队不会停用专家，也不会删除历史会话。
+- 专家不得继续召唤专家或自动追加分析轮次。取消会停止未启动任务；已有结果和失败原因分别报告。
+
+> 本 README 描述 1.0.0，正式发行以 npm 和 GitHub Releases 为准。完整改动见[更新日志](CHANGELOG.zh-CN.md)，双语版本说明见[发行说明](RELEASE_NOTES.md)。升级保留已有专家配置；回退旧版前先备份设置，旧版不具备团队功能。
 ## 界面预览
+
+以下个人专家截图保留操作示例，来自旧版；1.0.0 的控件已统一，并新增同页专家团入口。
 
 在「设置 → 专家」中按分类筛选或搜索，再启用需要的专家：
 
@@ -74,7 +108,7 @@
 
 - 已可正常运行 DeepSeek Harness Web，且可在 PowerShell 中使用 `dsh`。
 - 以下示例使用 `web` profile；请替换为实际目标 profile。
-- 从源码安装或二次开发需要 Node.js 22+ 与 pnpm；仅从 npm 安装无需单独执行 `pnpm install`。
+- 从源码安装或二次开发需要 Node.js ^22.19.0 或 ≥24.0.0 与 pnpm；仅从 npm 安装无需单独执行 `pnpm install`。
 
 ## 宿主依赖与兼容性
 
@@ -105,7 +139,7 @@ dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=http
 dsh --profile web --dump-config
 ```
 
-需要钉死某一版时，把 `@latest` 换成具体版本，例如 `@0.1.17`。
+需要钉死某一版时，把 `@latest` 换成具体版本，例如 `@1.0.0`。
 
 配置输出中应包含 `agency-agents` 与 `agency-agents-remote`。安装后重启 DSH Web 并在浏览器硬刷新；请勿手工复制客户端文件，否则设置页所需的 Remote 服务不会被挂载。
 
@@ -714,6 +748,9 @@ dsh --profile web --dump-config
 
 ## 二次开发
 
+`lib` 不提交到 GitHub；从源码使用前运行 `pnpm build`。发布门禁生成并验证 `lib`，npm 包仍包含可直接运行的编译产物。
+
+
 ### 从源码安装
 
 适用于调试或使用未发布改动。克隆后的本地路径就是插件安装路径：
@@ -771,7 +808,7 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-覆盖异步加载后通过 Escape、关闭按钮和遮罩退出时的焦点恢复，以及 StrictMode 和连续打开不同专家。该测试验证组件交互，不替代真实宿主和模型委派验收。 浏览器测试从源码构建，不加载发布的 `lib/client.js`；产物仍需构建、包校验及真实宿主验收。端口默认 18769，占用时可通过 `AGENCY_BROWSER_TEST_PORT` 环境变量覆盖。
+覆盖专家与团队的筛选、创建、复制、编辑、启停、删除、草稿保护、配置冲突、双语切换、深浅主题、窄屏以及 Escape、关闭按钮和遮罩的焦点恢复。该测试验证组件交互，不替代真实宿主和模型委派验收。 浏览器测试从源码构建，不加载发布的 `lib/client.js`；产物仍需构建、包校验及真实宿主验收。端口默认 18769，占用时可通过 `AGENCY_BROWSER_TEST_PORT` 环境变量覆盖。
 
 ## 自定义专家
 
