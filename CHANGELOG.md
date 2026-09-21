@@ -6,19 +6,18 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## 1.0.1 - 2026-09-21
 
-This patch is prepared for release; publication is confirmed only by npm and GitHub Releases.
+### Improvements
 
-- Replace translated-message comparisons with stable persona error codes. Fall back to the English persona only when the translated file is absent, not when reading it fails.
-- Localize updater errors and request rejections, remove duplicate package file entries, and validate README version consistency before release.
-- Verify language switching through the real DSH tool registry and model-facing prompt assembly, including the locally installed 0.1.6-alpha.2 runtime. This does not claim live model quality or historical-host matrix acceptance.
+- Significantly reduced plugin size to improve loading of expert and team pages.
+- Improved Chinese and English messages and consistency when switching languages.
+- Updated feature screenshots and usage guidance.
 
-- Bundle only the referenced Tabler icons through the ESM entry and move the icon package to development dependencies. Add release checks for client size, accidental full-library bundling, and external icon imports.
-- Preserve raw expert enablement records when saving or enabling a team, including temporarily conflicting or unavailable experts. Keep revision checks and atomic writes.
-- Preserve separators while typing tags; validate tags and custom coordinator prompts with actionable field errors and focus. Keep unsaved tag input through language changes and conflict review.
-- Localize team service, delegation guard, and expert prompt errors. Refresh registered team tool descriptions and parameter descriptions with the host language.
-- Remove deleted task IDs from failed dispatch reports while retaining IDs when cleanup fails. Guard team mention registration on older remote services and restore expert conflict tooltips.
-- Remove unused editor section parameters, unused styles, and duplicate team style injection. Strengthen asynchronous, member-limit, locale, and browser regression tests; exercise the real update dialog and derive fixture counts from the roster.
-- Refresh both README screenshot galleries with the expert list, team list, team details, and native Agent Team panel.
+### Fixes
+
+- Fixed separators disappearing when entering multiple tags.
+- Fixed some experts unexpectedly losing their enabled state when enabling a team.
+- Made validation messages clearer so fields needing attention are easier to find.
+- Fixed issues with collaboration status display and compatibility with older DSH versions.
 
 ## 1.0.0 - 2026-09-21
 
