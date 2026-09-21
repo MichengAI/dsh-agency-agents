@@ -4,6 +4,16 @@
 
 This file records features and upgrade boundaries. For version 1.0.0, npm and GitHub Releases remain the publication source of truth.
 
+## Unreleased
+
+- Bundle only the referenced Tabler icons through the ESM entry and move the icon package to development dependencies. Add release checks for client size, accidental full-library bundling, and external icon imports.
+- Preserve raw expert enablement records when saving or enabling a team, including temporarily conflicting or unavailable experts. Keep revision checks and atomic writes.
+- Preserve separators while typing tags; validate tags and custom coordinator prompts with actionable field errors and focus. Keep unsaved tag input through language changes and conflict review.
+- Localize team service, delegation guard, and expert prompt errors. Refresh registered team tool descriptions and parameter descriptions with the host language.
+- Remove deleted task IDs from failed dispatch reports while retaining IDs when cleanup fails. Guard team mention registration on older remote services and restore expert conflict tooltips.
+- Remove unused editor section parameters, unused styles, and duplicate team style injection. Strengthen asynchronous, member-limit, locale, and browser regression tests; exercise the real update dialog and derive fixture counts from the roster.
+- Refresh both README screenshot galleries with the expert list, team list, team details, and native Agent Team panel.
+
 ## 1.0.0 - 2026-09-21
 
 The first 1.0 release expands individual specialists into configurable expert-team collaboration. It retains the package name, 321 bundled specialists, 22 divisions, and existing individual-expert workflows. The following covers the changes since 0.1.44.

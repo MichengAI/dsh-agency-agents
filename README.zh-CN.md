@@ -72,19 +72,23 @@
 > 本 README 描述 1.0.0，正式发行以 npm 和 GitHub Releases 为准。完整改动见[更新日志](CHANGELOG.zh-CN.md)，双语版本说明见[发行说明](RELEASE_NOTES.md)。升级保留已有专家配置；回退旧版前先备份设置，旧版不具备团队功能。
 ## 界面预览
 
-以下个人专家截图保留操作示例，来自旧版；1.0.0 的控件已统一，并新增同页专家团入口。
+以下为 1.0.0 中文界面截图，专家与专家团共用同一个设置页面。
 
 在「设置 → 专家」中按分类筛选或搜索，再启用需要的专家：
 
 ![DSH 专家面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
 
-在输入框用 `@` 或「专家」选择已启用的专家：
+切换到「专家团」，浏览五个内置专家团、按状态筛选，或新建自定义专家团：
 
-![专家选择器](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-picker.png)
+![专家团面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-teams.png)
 
-回填当前语言的专家名称标签后，写出完整任务：
+打开团队详情，查看适用场景、任务示例和成员分工，再召唤团队或复制并自定义：
 
-![召唤专家的输入方式](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
+![专家团详情](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-team-details.png)
+
+宿主支持且已启用 Agent Team 时，可在原生面板查看团队成员和共享任务：
+
+![原生 Agent Team 面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-team-panel.png)
 
 ## DSH 产品生态
 

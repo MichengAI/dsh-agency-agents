@@ -1,15 +1,14 @@
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
 import { CategorySelect } from './category-select.js';
-import { IconX } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-react/dist/esm/tabler-icons-react.mjs';
 import React from 'react';
 import { effectiveCoordinator, type ExpertTeam, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
 import type { AgencyCatalogRemote, AgencyTeamsRemote } from './remote.js';
 import { TeamEditor } from './team-editor.js';
 import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconRefresh, } from './team-shared.js';
-import { TEAM_CSS } from './team-style.js';
-export { TEAM_CSS };
+export { TEAM_CSS } from './team-style.js';
 export type TeamRemote = AgencyCatalogRemote & AgencyTeamsRemote;
 export async function unwrap<T>(promise: Promise<{
     ok: true;
@@ -264,7 +263,6 @@ export function TeamsPanel(props: {
         }
     };
     return (<section className="aag-section aag-team-library">
-      <style>{TEAM_CSS}</style>
       <div className="aag-toolbar">
         {!props.sharedHeader && <div className="aag-title-row">
           {!props.sharedHeader && <h2 className="aag-title">{props.title ?? tx("专家团")}</h2>}

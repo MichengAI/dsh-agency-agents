@@ -72,19 +72,23 @@ Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_t
 > This README describes the 1.0.0 release; npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full changes and [release notes](RELEASE_NOTES.md) for the bilingual release description. Upgrades retain expert settings. Back up settings before downgrading because older versions do not support teams.
 ## Screenshots
 
-The individual-expert screenshots below illustrate earlier workflows. Version 1.0.0 unifies the controls and adds expert teams within the same settings page.
+The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.
 
 Filter by category or search in **Settings → Experts**, then enable the experts you need:
 
 ![DSH Experts panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
 
-Use `@` or the composer's **Experts** picker to choose an enabled expert:
+Switch to **Expert teams** to browse the five built-in teams, filter by status, or create a custom team:
 
-![Experts picker](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-picker.png)
+![Expert teams panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-teams.png)
 
-The localized expert name is inserted as a short tag; write the complete task next:
+Open team details to review its purpose, example tasks, and member responsibilities, then summon it or copy it for customization:
 
-![Summoning an expert from the composer](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/summon-prompt.png)
+![Expert team details](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-team-details.png)
+
+When the host supports Agent Team and the feature is enabled, view team members and shared tasks in the native panel:
+
+![Native Agent Team panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-team-panel.png)
 
 ## DSH product ecosystem
 

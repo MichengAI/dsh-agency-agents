@@ -1,4 +1,7 @@
 import React from 'react'
+import { observePluginUpdate } from '../../src/client/plugin-update-ui'
+import { createPluginUpdateIcon } from '../../src/client/index'
+import { teamText } from '../../src/team-i18n'
 import { AgentsButton, AgencySettingsPanel, CSS } from '../../src/client/index'
 import { CUSTOM_EDITOR_CSS } from '../../src/client/custom-editor'
 import { confirmTeamAction } from '../../src/client/team-confirmation'
@@ -26,7 +29,7 @@ const params = new URLSearchParams(location.search)
 const activeLocale = () => params.get('lang') === 'en' ? 'en' as const : 'zh' as const
 let deleteFailure = params.has('deleteFailure')
 let snapshot: TeamSnapshot = {
-  ...(params.has('teamDisabled') ? { engine: { state: 'disabled' as const, mode: 'subagent' as const, reason: '服务未启用', recommendation: '建议开启 Agent Team；未开启也可继续使用普通专家团。' } } : {}),
+  ...(params.has('teamDisabled') ? { engine: { state: 'disabled' as const, mode: 'subagent' as const, reason: teamText(activeLocale(), 'Agent Team 服务或当前会话工具尚未就绪。'), recommendation: teamText(activeLocale(), '建议在插件页开启 Agent Team 的 Host 与 Web 层，并重新加载会话；未开启也可继续使用普通专家团。') } } : {}),
   teams: structuredClone([...BUILTIN_TEAMS]),
   enabledTeams: params.has('visual')
     ? BUILTIN_TEAMS.slice(0, 2).map((t) => t.id)
@@ -129,8 +132,12 @@ export function TeamsFixture() {
   React.useEffect(() => {
     Object.assign(window, {
       teamFixtureLocale: (locale: string) => { params.set('lang', locale); refreshLocale(value => value + 1) },
-      teamFixtureConfirm: () => confirmTeamAction('Keep the existing draft and select this team?', activeLocale()),
+      teamFixtureConfirm: () => confirmTeamAction(teamText(activeLocale(), '草稿已有正文，是否保留正文并追加所选示例？取消则仅选择团队。'), activeLocale()),
     })
+  }, [])
+  React.useEffect(() => {
+    if (!params.has('updateUI')) return
+    return observePluginUpdate({ endpoint: '/api/plugin-update', packageName: '@michengai/dsh-agency-agents', titleRowSelector: '.aag-title-row', linksSelector: '.aag-settings-links', zhName: '专家', enName: 'Experts', createIcon: createPluginUpdateIcon })
   }, [])
   const [draft, setDraft] = React.useState('')
   const [selected, setSelected] = React.useState('')

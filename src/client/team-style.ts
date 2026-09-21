@@ -7,7 +7,7 @@ export const TEAM_CSS = `
 .aag-library-tabs button[aria-selected=true]{border-bottom-color:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary);font-weight:600}
 .aag-library-tabs button:hover{color:var(--dsw-alias-label-primary)}
 .aag-library-tabs button:focus-visible{outline:2px solid var(--dsw-alias-button-primary-fill);outline-offset:3px}
-.aag-summary-row{display:flex;align-items:center;gap:8px 12px;flex:1;flex-wrap:wrap;min-width:0}.aag-library-shell>.aag-section,.aag-library-shell>div>.aag-section{padding-bottom:0}.aag-library-shell .aag-custom-tabs{margin:0}
+.aag-library-shell>.aag-section,.aag-library-shell>div>.aag-section{padding-bottom:0}.aag-library-shell .aag-custom-tabs{margin:0}
 .aag-team-avatar{width:44px;height:44px;position:relative}
 .agt-stack{display:flex;align-items:center;flex-shrink:0}
 .agt-stack img{object-fit:cover;border-radius:50%;width:44px;height:44px}
@@ -58,9 +58,6 @@ export const TEAM_CSS = `
 .agt-editor-fields fieldset{border:0;padding:0;margin:0;min-width:0}
 .agt-section{border-bottom:1px solid var(--dsw-alias-border-l2);padding:0 0 20px;margin-bottom:20px}
 .agt-section:last-child{border:0;margin-bottom:0}
-.agt-field{display:block;margin:18px 0}
-.agt-field>span{display:block;margin-bottom:8px;font-size:14px}
-.agt-field>button{margin-top:8px}
 .agt-editor .agt-prompt{display:block;width:100%;min-height:300px;margin:12px 0 8px;font-size:13px;line-height:1.6}
 .agt-segment{display:flex;gap:8px;flex-wrap:wrap}
 .agt-segment button[aria-pressed=true]{border-color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-layer-3)}

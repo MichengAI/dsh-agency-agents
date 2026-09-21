@@ -3,7 +3,7 @@ import { LibraryEditorFooter } from './library-ui.js';
 import React from 'react';
 import { effectiveCoordinator, BUILTIN_TEAMS, TEAM_PROMPTS, teamInputSchema, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
-import { TeamDialog, TeamConfirm, Avatar, IconUsers, IconUser, IconFileText, IconChevronDown, IconPlus, IconTrash, IconRefresh, } from './team-shared.js';
+import { TeamDialog, TeamConfirm, Avatar, IconChevronDown, IconPlus, IconTrash, IconRefresh, } from './team-shared.js';
 import { TeamDetails } from './team-ui.js';
 const fresh = (tx: (key: string) => string): TeamInput => ({
     name: '',
@@ -32,6 +32,10 @@ export function TeamEditor(props: {
 
     props = { ...props, experts: localizedExperts(props.experts, locale) };
     const [draft, setDraft] = React.useState<TeamInput>(() => structuredClone(props.initial ?? fresh(tx)));
+    const [tagsInput, setTagsInput] = React.useState(() => draft.tags.join('，'));
+    const tags = tagsInput.split(/[,，]/u).map(value => value.trim()).filter(Boolean);
+    const tagsField = React.useRef<HTMLInputElement>(null);
+    const promptField = React.useRef<HTMLTextAreaElement>(null);
     const original = React.useRef(JSON.stringify(draft));
     const form = React.useRef<HTMLFormElement>(null);
     const [busy, setBusy] = React.useState(false);
@@ -49,7 +53,7 @@ export function TeamEditor(props: {
     const close = () => {
         if (busy)
             return;
-        if (JSON.stringify(draft) !== original.current)
+        if (JSON.stringify(draft) !== original.current || tagsInput !== draft.tags.join('，'))
             setConfirm('discard');
         else
             props.close();
@@ -61,9 +65,22 @@ export function TeamEditor(props: {
             return;
         if (form.current?.reportValidity() === false)
             return;
-        const parsed = teamInputSchema.safeParse(draft);
+        if (tags.length > 3 || tags.some(tag => Array.from(tag).length > 16)) {
+            setError(tx("场景标签：最多 3 个，每个标签最多 16 个字符。"));
+            tagsField.current?.focus();
+            return;
+        }
+        if (draft.coordinatorMode === 'custom' && (!draft.coordinatorPrompt.trim() || Array.from(draft.coordinatorPrompt).length > 12000)) {
+            setError(tx("主理人提示词：请填写 1～12000 个字符。"));
+            promptField.current?.focus();
+            return;
+        }
+        const parsed = teamInputSchema.safeParse({ ...draft, tags });
         if (!parsed.success) {
-            setError(tx("请填写名称、简介、目标、交付要求，选择 2～8 位不同专家并填写分工，至少保留一条任务示例；自定义提示词不能为空。"));
+            const labels: Record<string, string> = { name: tx("团队名称"), description: tx("一句话简介"), goal: tx("团队目标"), constraints: tx("通用约束（选填）"), deliveryRequirements: tx("交付要求"), members: tx("团队成员"), examples: tx("任务示例"), coordinatorPrompt: tx("主理人提示词") };
+            const key = String(parsed.error.issues[0]?.path[0] ?? 'members');
+            setError(tx("请检查字段：{0}。", [labels[key] ?? key]));
+            form.current?.querySelector<HTMLElement>(`[name="${key}"]`)?.focus();
             return;
         }
         if (enabled && missing.length && !confirmed) {
@@ -94,6 +111,7 @@ export function TeamEditor(props: {
         const latest = review.teams.find((team) => team.id === draft.id);
         if (useLatest && latest) {
             setDraft(structuredClone(latest));
+            setTagsInput(latest.tags.join('，'));
             original.current = JSON.stringify(latest);
         }
         else if (draft.id && !latest) {
@@ -106,13 +124,13 @@ export function TeamEditor(props: {
         setReview(null);
         setError('');
     };
-    const section = (id: string, title: string, summary: string, icon: React.ReactNode, children: React.ReactNode) => (<section className="agt-section" aria-label={title}>
+    const section = (title: string, children: React.ReactNode) => (<section className="agt-section" aria-label={title}>
       <h4>{title}</h4>
       <div className="agt-section-content">{children}</div>
     </section>);
     const field = (label: string, key: 'name' | 'description' | 'goal' | 'constraints' | 'deliveryRequirements', max: number, multi = false) => (<label className="aag-custom-field">
       <span>{label}{key !== 'constraints' && <small>{tx("必填")}</small>}</span>
-      {multi ? (<textarea aria-label={label} className="aag-control" value={draft[key]} maxLength={max} onChange={(e) => patch({ [key]: e.target.value })} rows={key === 'description' ? 2 : 3} required={key !== 'constraints'}/>) : (<input aria-label={label} className="aag-control" value={draft[key]} maxLength={max} required={key !== 'constraints'} onChange={(e) => patch({ [key]: e.target.value })}/>)}
+      {multi ? (<textarea aria-label={label} name={key} className="aag-control" value={draft[key]} maxLength={max} onChange={(e) => patch({ [key]: e.target.value })} rows={key === 'description' ? 2 : 3} required={key !== 'constraints'}/>) : (<input aria-label={label} name={key} className="aag-control" value={draft[key]} maxLength={max} required={key !== 'constraints'} onChange={(e) => patch({ [key]: e.target.value })}/>)}
     </label>);
     return (<TeamDialog title={props.initial?.id ? tx("编辑专家团") : tx("新建专家团")} close={close} className="agt-editor">
       <form ref={form} onSubmit={(e) => {
@@ -122,23 +140,18 @@ export function TeamEditor(props: {
         <div className="aag-custom-body agt-editor-scroll">
           <div className="agt-editor-fields">
             <fieldset disabled={busy}>
-              {section('identity', tx("团队名片"), draft.name || tx("填写名称与简介"), <IconUser />, <>
+              {section(tx("团队名片"), <>
                   {field(tx("团队名称"), 'name', 40)}
                   {field(tx("一句话简介"), 'description', 160, true)}
                   <label className="aag-custom-field">
                     <span>{tx("场景标签")}</span>
-                    <input className="aag-control" value={draft.tags.join('，')} placeholder={tx("最多 3 个，用逗号分隔")} onChange={(e) => patch({
-                tags: e.target.value
-                    .split(/[,，]/u)
-                    .map((s) => s.trim())
-                    .filter(Boolean)
-                    .slice(0, 3),
-            })}/>
+                    <input ref={tagsField} aria-label={tx("场景标签")} name="tags" className="aag-control" value={tagsInput} placeholder={tx("最多 3 个，用逗号分隔")} onChange={(e) => setTagsInput(e.target.value)}/>
+                    <small>{tx("场景标签：最多 3 个，每个标签最多 16 个字符。")}</small>
                   </label>
                   <p className="agt-help">{tx("团队头像由成员头像自动组成。")}</p>
                   <button type="button" onClick={() => setPreview(true)}>{tx("预览")}</button>
                 </>)}
-              {section('members', tx("团队成员"), tx("{0} 位专家 \u00B7 分工已配置", [draft.members.length]), <IconUsers />, <>
+              {section(tx("团队成员"), <>
                   <div className="agt-row">
                     <span>{draft.members.length} / 8</span>
                     <button type="button" disabled={draft.members.length >= 8} onClick={() => {
@@ -159,7 +172,7 @@ export function TeamEditor(props: {
                     setPicker(i);
                 }}>
                           <IconRefresh />{tx("替换")}</button>
-                        <button type="button" className="agt-icon" aria-label={tx("删除成员 {0}", [i + 1])} onClick={() => patch({
+                        <button type="button" aria-label={tx("删除成员 {0}", [i + 1])} onClick={() => patch({
                     members: draft.members.filter((_, n) => n !== i),
                 })}>
                           <IconTrash />
@@ -202,13 +215,12 @@ export function TeamEditor(props: {
                       </details>
                     </div>))}
                 </>)}
-              {section('delivery', tx("协作与交付"), draft.goal || tx("填写共同目标与交付要求"), <IconFileText />, <>
+              {section(tx("协作与交付"), <>
                   {field(tx("团队目标"), 'goal', 2000, true)}
                   {field(tx("交付要求"), 'deliveryRequirements', 2000, true)}
                   {field(tx("通用约束（选填）"), 'constraints', 2000, true)}
                 </>)}
-              {section('coordinator', tx("主理人提示词"), draft.coordinatorMode === 'template'
-            ? tx("使用团队模板 \u00B7 由当前会话执行") : tx("使用自定义规则 \u00B7 由当前会话执行"), <IconFileText />, <>
+              {section(tx("主理人提示词"), <>
                   <p className="agt-help">{tx("定义如何分配任务、处理分歧并汇总专家结果")}</p>
                   <div className="agt-row">
                     <div className="agt-segment">
@@ -222,13 +234,13 @@ export function TeamEditor(props: {
                     <button type="button" onClick={() => setConfirm('restore')}>
                       <IconRefresh />{tx("恢复团队模板")}</button>
                   </div>
-                  <textarea className="aag-control agt-prompt" aria-label={tx("主理人提示词正文")} readOnly={draft.coordinatorMode === 'template'} value={effectiveCoordinator(draft, locale)} onChange={(e) => patch({ coordinatorPrompt: e.target.value })}/>
+                  <textarea ref={promptField} name="coordinatorPrompt" className="aag-control agt-prompt" aria-label={tx("主理人提示词正文")} readOnly={draft.coordinatorMode === 'template'} value={effectiveCoordinator(draft, locale)} onChange={(e) => patch({ coordinatorPrompt: e.target.value })}/>
                   <p className="agt-help">{tx("目标、约束、成员分工和交付要求会自动加入，无需重复填写。")}<span className="agt-count">
                       {Array.from(effectiveCoordinator(draft, locale)).length} / 12000
                     </span>
                   </p>
                 </>)}
-              {section('examples', tx("任务示例"), tx("已配置 {0} 条", [draft.examples.length]), <IconFileText />, <>
+              {section(tx("任务示例"), <>
                   {draft.examples.map((example, i) => (<label key={i} className="aag-custom-field">
                       <span>{tx("任务示例")}{i + 1}</span>
                       <textarea className="aag-control" value={example} maxLength={1000} rows={2} onChange={(e) => patch({
@@ -335,6 +347,6 @@ export function TeamEditor(props: {
                 </button>))}
           </div>
         </TeamDialog>)}
-      {preview && (<TeamDetails team={{ ...draft, id: draft.id ?? 'team-preview', builtin: false }} experts={props.experts} close={() => setPreview(false)}/>)}
+      {preview && (<TeamDetails team={{ ...draft, tags, id: draft.id ?? 'team-preview', builtin: false }} experts={props.experts} close={() => setPreview(false)}/>)}
     </TeamDialog>);
 }

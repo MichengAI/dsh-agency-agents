@@ -47,6 +47,7 @@ describe('选择专家时自动填入任务示例', () => {
   it('已有正文选择团队不会覆盖草稿，也不添加默认示例', async () => {
     const value = input('请保留我的需求')
     expect(await insertTeamReference(value.target, BUILTIN_TEAMS[0])).toBe(true)
+    await new Promise<void>(resolve => setTimeout(resolve, 0))
     expect(value.snapshot().draft).toBe('@专家 请保留我的需求')
   })
   it('仅有团队触发词时，选中后仍填入默认示例', async () => {

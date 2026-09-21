@@ -90,6 +90,8 @@ describe('原生专家团启动语义', () => {
     const result = await dispatchNativeTeam({ ...input(), service })
     expect(result.dispatch.started).toBe(0)
     expect(result.dispatch.members.every(m => m.error?.includes('名额已满'))).toBe(true)
+    expect(service.updateTask).toHaveBeenCalledTimes(3)
+    expect(result.dispatch.members.every(m => m.taskId === undefined)).toBe(true)
   })
   it('同一专家队友空闲时复用，运行中不重复派发', async () => {
     const { service, members } = native()
@@ -102,6 +104,13 @@ describe('原生专家团启动语义', () => {
     expect(reused.dispatch.started).toBe(3)
     expect(service.spawnTeammate).toHaveBeenCalledTimes(3)
     expect(service.sendMessage).toHaveBeenCalledTimes(3)
+  })
+  it('清理失败时保留任务编号，方便用户定位任务板', async () => {
+    const { service } = native()
+    service.spawnTeammate.mockRejectedValue(new Error('创建失败'))
+    service.updateTask.mockRejectedValue(new Error('清理失败'))
+    const result = await dispatchNativeTeam({ ...input(), service })
+    expect(result.dispatch.members.every(member => member.status === 'failed' && member.taskId === '1' && member.error?.includes('清理失败'))).toBe(true)
   })
   it('启动前取消不创建任何队友', async () => {
     const { service } = native()

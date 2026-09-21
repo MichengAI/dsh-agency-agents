@@ -1,5 +1,14 @@
 /** 专家团共享词条；中文原文作为稳定键，插值不参与翻译匹配。 */
 export const TEAM_EN = {
+  '场景标签：最多 3 个，每个标签最多 16 个字符。': 'Tags: up to 3 tags, with at most 16 characters each.',
+  '主理人提示词：请填写 1～12000 个字符。': 'Coordinator prompt: enter 1–12000 characters.',
+  '请检查字段：{0}。': 'Check this field: {0}.',
+  '自定义专家团标识或名称重复，或使用了内置团队标识。': 'A custom team ID or name is duplicated, or uses a built-in team ID.',
+  '专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。': 'Team members cannot create subagents or expand the team. Report gaps to the coordinator.',
+  'agency-agents Remote 挂载后不可用': 'The agency-agents remote service is unavailable after mounting.',
+  '无效的专家提示词请求。': 'Invalid expert prompt request.',
+  '未找到专家提示词。': 'Expert prompt not found.',
+  '专家提示词格式无效。': 'Invalid expert prompt format.',
   '专家团只能在主会话中召唤。': 'Expert teams can only be invoked from the main conversation.',
   '专家成员不能继续召唤专家团。': 'Expert members cannot invoke additional teams.',
   '列出已启用专家团。召唤前使用 get_expert_team 读取主理人规则及成员分工。': 'List enabled teams. Read coordinator rules and assignments with get_expert_team before invocation.',

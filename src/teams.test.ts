@@ -53,6 +53,25 @@ const draft = () => {
   return { ...value, name: '我的评审团' }
 }
 describe('专家团配置与执行', () => {
+  it('服务错误按当前语言返回，不依赖客户端二次翻译', async () => {
+    const { store } = setup()
+    let locale: 'zh' | 'en' = 'zh'
+    const library = createTeamLibrary(async () => ({ experts, enabled: [], revision: store.revision() }), store, () => locale)
+    await expect(library.get('missing')).rejects.toThrow('专家团不存在')
+    locale = 'en'
+    await expect(library.get('missing')).rejects.toThrow('Team not found')
+    await expect(library.save({ ...draft(), name: 'Product Review Team' }, false, 0)).rejects.toThrow('already')
+    await expect(library.setEnabled(BUILTIN_TEAMS[0].id, true, 9)).rejects.toThrow('Settings changed')
+  })
+  it.each(['save', 'enable'] as const)('%s 保留名册暂不可用的原始启用记录', async (action) => {
+    const { store } = setup()
+    const retained = ['temporarily-conflicted', 'outside-current-divisions']
+    await store.mutate([{ path: ['enabled'], value: retained }], 0)
+    const library = createTeamLibrary(async () => ({ experts, enabled: [], revision: store.revision() }), store)
+    if (action === 'save') await library.save(draft(), true, 1)
+    else await library.setEnabled(BUILTIN_TEAMS[0].id, true, 1)
+    expect(store.read().enabled).toEqual([...retained, ...draft().members.map(member => member.expertSlug)])
+  })
   it('自定义团队不能与内置团队的英文名称冲突', async () => {
     const { library } = setup()
     await expect(library.save({ ...draft(), name: 'Product Review Team' }, false, 0)).rejects.toThrow('团队名称已被使用')
@@ -107,7 +126,7 @@ describe('专家团配置与执行', () => {
     expect(
       teamInputSchema.safeParse({
         ...draft(),
-        members: Array(9).fill(draft().members[0]),
+        members: Array.from({ length: 9 }, (_, i) => ({ ...draft().members[0], expertSlug: `expert-${i}` })),
       }).success,
     ).toBe(false)
   })

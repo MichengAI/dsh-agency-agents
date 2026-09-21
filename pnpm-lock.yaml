@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@tabler/icons-react':
-        specifier: ^3.47.0
-        version: 3.47.0(react@18.2.0)
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -105,6 +102,9 @@ importers:
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
+      '@tabler/icons-react':
+        specifier: ^3.47.0
+        version: 3.47.0(react@18.2.0)
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.1

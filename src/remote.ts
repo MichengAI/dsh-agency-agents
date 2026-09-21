@@ -1,5 +1,6 @@
 import { AGENCY_TEAM_SERVICE, type AgencyTeamLibrary } from './team-library.js'
 import { nativeTeamMemberName } from './team-engine.js'
+import { teamText } from './team-i18n.js'
 import type { TeamInput, TeamSnapshot, TeamEngineStatus } from './team-contract.js'
 import type { Context } from '@deepseek-ai/cordis'
 import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
@@ -49,7 +50,7 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
 
   private teams(): AgencyTeamLibrary {
     const library = this.ctx.get(AGENCY_TEAM_SERVICE) as AgencyTeamLibrary | undefined
-    if (!library) throw new Error('专家团服务不可用，请重新加载插件。')
+    if (!library) throw new Error(teamText(readHostLocale(this.ctx), '专家团服务不可用，请重新加载插件。'))
     return library
   }
   @Remote('getTeams')

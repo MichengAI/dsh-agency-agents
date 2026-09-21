@@ -1,3 +1,4 @@
+import { localizeTeamTool } from './team-tool-locale.js'
 import { teamText } from './team-i18n.js'
 import { teamCollaboration } from './team-collaboration.js'
 import { createTeamLibrary, AGENCY_TEAM_SERVICE } from './team-library.js'
@@ -310,23 +311,24 @@ export async function readExpertPrompt(
   slug: string,
   division: string,
   divisions: readonly string[] = DEFAULT_DIVISIONS,
+  locale: LocaleId = 'zh',
 ): Promise<{ prompt: string }> {
   if (!divisions.includes(division) || !EXPERT_PATH_SEGMENT_PATTERN.test(slug)) {
-    throw new Error('无效的专家提示词请求。')
+    throw new Error(teamText(locale, '无效的专家提示词请求。'))
   }
-  return readPersonaFile(join(root, division, `${slug}.md`));
+  return readPersonaFile(join(root, division, `${slug}.md`), locale);
 }
 
-async function readPersonaFile(filePath: string): Promise<{ prompt: string }> {
+async function readPersonaFile(filePath: string, locale: LocaleId = 'zh'): Promise<{ prompt: string }> {
   let raw: string
   try {
     raw = stripBom(await readFile(filePath, 'utf8'))
   } catch {
-    throw new Error('未找到专家提示词。')
+    throw new Error(teamText(locale, '未找到专家提示词。'))
   }
   const parsed = parseFrontmatter(raw)
   if (parsed === undefined || parsed.name === undefined || parsed.description === undefined || parsed.body === '') {
-    throw new Error('专家提示词格式无效。')
+    throw new Error(teamText(locale, '专家提示词格式无效。'))
   }
   return { prompt: parsed.body }
 }
@@ -340,7 +342,7 @@ export async function readLocalizedExpertPrompt(
   locale: LocaleId,
   divisions: readonly string[] = DEFAULT_DIVISIONS,
 ): Promise<{ prompt: string }> {
-  if (locale === 'en' || chineseRoot === undefined) return readExpertPrompt(root, slug, division, divisions)
+  if (locale === 'en' || chineseRoot === undefined) return readExpertPrompt(root, slug, division, divisions, locale)
   try {
     return await readExpertPrompt(chineseRoot, slug, division, divisions)
   } catch (error: unknown) {
@@ -368,12 +370,12 @@ export function createAgencyPersonaSource(
   return {
     async getPrompt(slug, division, locale) {
       if (!divisions.includes(division) || !EXPERT_PATH_SEGMENT_PATTERN.test(slug))
-        throw new Error("无效的专家提示词请求。");
+        throw new Error(teamText(locale, '无效的专家提示词请求。'));
       const experts = await (catalog ? catalog() : (loaded ??= loadCatalog(root, divisions, locale)));
       const expert = experts.get(slug);
       const path = expert === undefined ? undefined : personaPaths.get(expert);
       if (expert?.division !== division || path === undefined)
-        throw new Error("未找到专家提示词。");
+        throw new Error(teamText(locale, '未找到专家提示词。'));
       if (locale === "zh" && chineseRoot !== undefined) {
         try {
           return await readPersonaFile(join(chineseRoot, relative(root, path)));
@@ -381,7 +383,7 @@ export function createAgencyPersonaSource(
           if (!(error instanceof Error) || error.message !== "未找到专家提示词。") throw error;
         }
       }
-      return readPersonaFile(path);
+      return readPersonaFile(path, locale);
     },
   };
 }
@@ -546,15 +548,15 @@ export function apply(ctx: Context, config: Config): void {
     read: () => settingsSource(),
     revision: () => {
       const descriptor = ctx.settings.describe().find(item => item.ns === settingsNamespace)
-      if (!descriptor) throw new Error('专家团设置区不可用。')
+      if (!descriptor) throw new Error(formatHost(activeLocale(), 'error.settingsMissing'))
       return descriptor.revision
     },
     mutate: (ops, revision) => ctx.settings.mutate(settingsNamespace, ops, revision),
-  })
+  }, activeLocale)
   ctx.reflect.provide(AGENCY_TEAM_SERVICE, teamLibrary)
   ctx.reflect.provide('agencyAgentsTeamEngine', () => resolveTeamEngine(ctx, undefined, maxDepth).status)
   ctx.on?.('tools/pre-execute', async (exec, next) => {
-    if (blocksNativeDelegation(ctx.get('agentTeams'), exec.agent, exec.name)) return { kind: 'deny', reason: '专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。' }
+    if (blocksNativeDelegation(ctx.get('agentTeams'), exec.agent, exec.name)) return { kind: 'deny', reason: teamTx('专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。') }
     return next()
   })
   installSettingsSectionCompat<AgencySettings>(
@@ -758,9 +760,9 @@ const requireParent = (exec: ToolRunContext): void => {
 const teamOutput = { schema: { type: 'object' as const, additionalProperties: false, properties: { report: { type: 'string' as const, required: true as const } } }, render: (_args: unknown, value: {
         report?: unknown;
     }) => [{ type: 'text' as const, text: String(value.report ?? '') }] };
-ctx.tools.register(defineTool({ name: 'list_expert_teams', description: teamTx("列出已启用专家团。召唤前使用 get_expert_team 读取主理人规则及成员分工。"), parameters: {}, output: teamOutput,
-    async execute(_args, exec) { requireParent(exec); const snapshot = await teamLibrary.snapshot(); return { report: JSON.stringify(snapshot.teams.filter(t => snapshot.enabledTeams.includes(t.id)).map(t => localizeTeam(t, activeLocale())).map(t => ({ id: t.id, name: t.name, description: t.description }))) }; }, }));
-ctx.tools.register(defineTool({ name: 'get_expert_team', description: teamTx("读取已启用专家团的目标、分工和主理人提示词。当前主会话应先按该规则澄清任务，再调用 summon_expert_team，之后统一汇总。"),
+ctx.tools.register(localizeTeamTool(defineTool({ name: 'list_expert_teams', description: teamTx("列出已启用专家团。召唤前使用 get_expert_team 读取主理人规则及成员分工。"), parameters: {}, output: teamOutput,
+    async execute(_args, exec) { requireParent(exec); const snapshot = await teamLibrary.snapshot(); return { report: JSON.stringify(snapshot.teams.filter(t => snapshot.enabledTeams.includes(t.id)).map(t => localizeTeam(t, activeLocale())).map(t => ({ id: t.id, name: t.name, description: t.description }))) }; }, }), activeLocale));
+ctx.tools.register(localizeTeamTool(defineTool({ name: 'get_expert_team', description: teamTx("读取已启用专家团的目标、分工和主理人提示词。当前主会话应先按该规则澄清任务，再调用 summon_expert_team，之后统一汇总。"),
     parameters: { team: { type: 'string', required: true, description: teamTx("专家团稳定标识或完整名称。") } }, output: teamOutput,
     async execute(args, exec) {
         requireParent(exec);
@@ -771,8 +773,8 @@ ctx.tools.register(defineTool({ name: 'get_expert_team', description: teamTx("�
         const engine = resolveTeamEngine(ctx, exec.agent, maxDepth).status;
         return { report: JSON.stringify({ ...team, engine, coordinator: effectiveCoordinator(team, activeLocale()), collaboration: teamCollaboration(team, activeLocale()), revision: snapshot.revision, instruction: teamTx("确认目标与评审范围后立即将简报传给 summon_expert_team，相关资料路径可直接交给专家阅读，主理人不要预先读完整个项目。只有确实无法确定评审对象时才询问；用户已明确整体评审后不再反复确认。若 engine.recommendation 非空，简短建议开启 Agent Team，但不阻断普通调用、不自行修改配置。原生模式返回的是启动确认，必须等待实际成员结论后才汇总。") }) };
     },
-}));
-ctx.tools.register(defineTool({ name: 'summon_expert_team', description: teamTx("按专家团配置并行委派。先读取 get_expert_team 的主理人规则；提供完整任务及资料。返回成员结果和冻结的汇总规则，由当前主会话完成最终交付，不额外启动团长。"),
+}), activeLocale));
+ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', description: teamTx("按专家团配置并行委派。先读取 get_expert_team 的主理人规则；提供完整任务及资料。返回成员结果和冻结的汇总规则，由当前主会话完成最终交付，不额外启动团长。"),
     parameters: { team: { type: 'string', required: true, description: teamTx("专家团稳定标识或完整名称。") }, task: { type: 'string', required: true, description: teamTx("完整、自包含的任务、上下文和可访问资料，最多24000字。") } }, output: teamOutput,
     async execute(args, exec) {
         requireParent(exec);
@@ -814,7 +816,7 @@ ctx.tools.register(defineTool({ name: 'summon_expert_team', description: teamTx(
         });
         return { report: JSON.stringify({ ...result, engine: engine.status }) };
     },
-}));
+}), activeLocale));
 ctx.systemPrompt.section({ name: 'agency:teams', order: 118, text: context => {
         const agent = (context as {
             agent?: {

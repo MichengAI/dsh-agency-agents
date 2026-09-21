@@ -1,5 +1,6 @@
 import { BUILTIN_TEAMS, TEAM_CUSTOM_ID, teamSchema, type ExpertTeam } from './team-contract.js'
 import { randomUUID } from 'node:crypto'
+import { teamText } from './team-i18n.js'
 import schema from '@deepseek-ai/schemastery'
 import type { SettingsPathOp } from '@deepseek-ai/dsh-settings'
 import { z } from 'zod'
@@ -23,7 +24,7 @@ export function validateAgencySettings(value: AgencySettings, locale: 'zh' | 'en
   const teamNames = new Set(BUILTIN_TEAMS.map(team => normalizeName(team.name)))
   for (const team of teams) {
     if (team.builtin || !TEAM_CUSTOM_ID.test(team.id) || teamIds.has(team.id) || teamNames.has(normalizeName(team.name))) {
-      throw new Error('自定义专家团标识或名称重复，或使用了内置团队标识。')
+      throw new Error(teamText(locale, '自定义专家团标识或名称重复，或使用了内置团队标识。'))
     }
     teamIds.add(team.id)
     teamNames.add(normalizeName(team.name))

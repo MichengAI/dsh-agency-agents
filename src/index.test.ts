@@ -1331,6 +1331,27 @@ describe('list_experts 语言切换', () => {
     return { list }
   }
 
+  it('已注册团队工具的说明和参数说明随宿主语言切换', () => {
+    let locale = 'zh'
+    const tools: Array<{ name: string; description: string; parameters: unknown }> = []
+    const ctx = {
+      tools: { register: (tool: typeof tools[number]) => tools.push(tool) },
+      subagents: { getProvider: () => undefined },
+      systemPrompt: { section: () => undefined },
+      settings: { ...alphaSettings([]), get: () => ({ preference: locale }) },
+      inject: () => undefined,
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const teams = tools.filter(tool => ['list_expert_teams', 'get_expert_team', 'summon_expert_team'].includes(tool.name))
+    expect(teams).toHaveLength(3)
+    for (const tool of teams) expect(tool.description).toMatch(/[\u3400-\u9fff]/u)
+    locale = 'en'
+    for (const tool of teams) expect(JSON.stringify({ description: tool.description, parameters: tool.parameters })).not.toMatch(/[\u3400-\u9fff]/u)
+    locale = 'zh'
+    for (const tool of teams) expect(tool.description).toMatch(/[\u3400-\u9fff]/u)
+  })
+
   it('默认中文：可用中文分区名筛选，并返回中文名和简介', async () => {
     const { list } = install()
     const result = await list.execute({ division: '工程' })

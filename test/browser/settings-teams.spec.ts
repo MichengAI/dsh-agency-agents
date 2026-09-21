@@ -1,9 +1,11 @@
+import { ROSTER } from '../../src/client/roster'
+import { BUILTIN_TEAMS } from '../../src/team-contract'
 import { test, expect } from '@playwright/test'
 
 test('支持但未启用原生团队时建议开启，不阻断专家团操作', async ({ page }) => {
   await page.goto('/?teams&settings&teamDisabled')
   await page.getByRole('tab', { name: '专家团', exact: true }).click()
-  await expect(page.getByRole('note')).toContainText('建议开启 Agent Team')
+  await expect(page.getByRole('note')).toContainText('建议在插件页开启 Agent Team 的 Host 与 Web 层')
   await page.getByRole('button', { name: '新建专家团', exact: true }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
 })
@@ -171,32 +173,32 @@ test('一级页签使用下划线导航，与来源筛选保持紧凑层级', as
 })
 
 test('切换团队保留同一个公共头部及宿主注入内容', async ({ page }) => {
-  await page.goto('/?teams&settings')
+  await page.route('**/api/plugin-update', route => route.fulfill({ json: { packageName: '@michengai/dsh-agency-agents', currentVersion: '1.0.0', latestVersion: '1.0.1', updateAvailable: true, latestCheckFailed: false, profileName: 'test', canAutoUpdate: false } }))
+  await page.goto('/?teams&settings&updateUI')
   const header = page.locator('main .aag-title-row').first()
-  await header.evaluate(el => {
-    const version = document.createElement('span')
-    version.textContent = 'v0.1.44'
-    version.dataset.testid = 'host-version'
-    const update = document.createElement('button')
-    update.textContent = '检查更新'
-    update.dataset.testid = 'host-update'
-    el.append(version, update)
-  })
+  await expect(header.locator('.mpi-version')).toHaveText('v1.0.0')
+  await expect(header.locator('.mpi-check')).toBeVisible()
   const before = await header.boundingBox()
   const tabsBefore = await page.getByRole('tablist').boundingBox()
   await page.getByRole('tab', { name: '专家团', exact: true }).click()
-  await expect(page.getByTestId('host-version')).toBeVisible()
-  await expect(page.getByTestId('host-update')).toBeVisible()
+  await expect(header.locator('.mpi-version')).toHaveText('v1.0.0')
+  await expect(header.locator('.mpi-check')).toBeVisible()
   await expect(page.locator('main .aag-title-row')).toHaveCount(1)
   expect(await header.boundingBox()).toEqual(before)
   expect(await page.getByRole('tablist').boundingBox()).toEqual(tabsBefore)
   await expect(page.getByRole('button', { name: '新建专家团', exact: true })).toBeVisible()
+  await header.locator('.mpi-check').click()
+  await expect(page.locator('.mpi-dialog')).toBeVisible()
+  await expect(page.locator('.mpi-dialog')).toHaveCSS('background-color', 'rgb(43, 43, 45)')
+  await expect(page.locator('.mpi-dialog')).toHaveCSS('border-radius', '24px')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.mpi-dialog')).toHaveCount(0)
 })
 
 test('数量位于页签右侧，来源选项与新建同行', async ({ page }) => {
   await page.setViewportSize({ width: 910, height: 887 })
   await page.goto('/?teams&settings')
-  for (const [tabName, createName, total] of [['专家', '新建专家', '321'], ['专家团', '新建专家团', '5']]) {
+  for (const [tabName, createName, total] of [['专家', '新建专家', String(ROSTER.length)], ['专家团', '新建专家团', String(BUILTIN_TEAMS.length)]]) {
     await page.getByRole('tab', { name: tabName, exact: true }).click()
     const summary = page.locator('.aag-library-summary')
     await expect(summary).toContainText(total)

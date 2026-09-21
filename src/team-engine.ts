@@ -165,6 +165,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                     if (!accepted) {
                         try {
                             await args.service.updateTask(args.agent, { taskId: task.id, expectedRevision: task.revision, action: 'delete' });
+                            tasks.delete(member.slug);
                         }
                         catch (cleanup) {
                             throw new AggregateError([error, cleanup], tx("委派失败且任务 {0} 清理失败，请检查任务板。", [task.id]));

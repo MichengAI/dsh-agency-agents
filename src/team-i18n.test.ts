@@ -29,11 +29,17 @@ describe('专家团完整国际化', () => {
     for (const [key, value] of Object.entries(TEAM_EN)) {
       expect([...value.matchAll(/\{\d+\}/gu)].map(m => m[0]).sort(), key).toEqual([...key.matchAll(/\{\d+\}/gu)].map(m => m[0]).sort())
     }
-    for (const file of ['client/team-ui.tsx', 'client/team-editor.tsx', 'client/team-composer.tsx', 'client/team-shared.tsx', 'client/team-reference.ts', 'team-runtime.ts', 'team-engine.ts', 'index.ts']) {
+    for (const file of ['client/index.ts', 'client/team-confirmation.tsx', 'client/team-ui.tsx', 'client/team-editor.tsx', 'client/team-composer.tsx', 'client/team-shared.tsx', 'client/team-reference.ts', 'team-library.ts', 'remote.ts', 'expert-library.ts', 'team-runtime.ts', 'team-engine.ts', 'index.ts']) {
       const source = ts.createSourceFile(file, readFileSync(new URL(`./${file}`, import.meta.url), 'utf8'), ts.ScriptTarget.Latest, true)
       const visit = (node: ts.Node) => {
         if (ts.isCallExpression(node) && ['tx', 'teamTx'].includes(node.expression.getText(source)) && node.arguments[0] && ts.isStringLiteral(node.arguments[0])) {
           expect(TEAM_EN, `${file}: ${node.arguments[0].text}`).toHaveProperty(node.arguments[0].text)
+        }
+        if (ts.isCallExpression(node) && node.expression.getText(source) === 'teamText' && node.arguments[1] && ts.isStringLiteral(node.arguments[1])) {
+          expect(TEAM_EN, `${file}: ${node.arguments[1].text}`).toHaveProperty(node.arguments[1].text)
+        }
+        if (ts.isNewExpression(node) && node.expression.getText(source) === 'Error' && node.arguments?.[0] && ts.isStringLiteral(node.arguments[0])) {
+          expect(node.arguments[0].text, `${file}: 裸中文错误需要国际化`).not.toMatch(/[\u3400-\u9fff]/u)
         }
         ts.forEachChild(node, visit)
       }

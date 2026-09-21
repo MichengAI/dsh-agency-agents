@@ -55,7 +55,7 @@ const UPDATE_ICON_PATHS: Record<PluginUpdateIconName, readonly string[]> = {
   close: ['m4 4 8 8M12 4 4 12'],
 }
 
-function createPluginUpdateIcon(name: PluginUpdateIconName): HTMLElement {
+export function createPluginUpdateIcon(name: PluginUpdateIconName): HTMLElement {
   const element = document.createElement('span')
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   svg.setAttribute('viewBox', '0 0 16 16')
@@ -1251,7 +1251,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           key: expert.slug,
           name: `${expert.custom ? `${expert.emoji} ` : ''}${displayName(expert, props.getActive())}`,
           avatar: React.createElement('img', { className: 'aag-expert-avatar', src: avatar, width: 44, height: 44, loading: 'lazy', decoding: 'async', alt: '' }),
-          metadata: React.createElement(React.Fragment, null, inputTriggerSourceName(expert.division, props.getActive()), expert.conflict ? React.createElement('span', { className: 'aag-custom-badge' }, props.t('custom.nameConflict')) : null, expert.custom ? React.createElement('span', { className: 'aag-custom-badge' }, props.t('custom.source')) : null),
+          metadata: React.createElement(React.Fragment, null, inputTriggerSourceName(expert.division, props.getActive()), expert.conflict ? React.createElement('span', { className: 'aag-custom-badge', title: props.t('custom.nameConflictHint') }, props.t('custom.nameConflict')) : null, expert.custom ? React.createElement('span', { className: 'aag-custom-badge' }, props.t('custom.source')) : null),
           description: displayDescription(expert, props.getActive()),
           enabled, disabled: isSaving || expert.conflict === true,
           enabledLabel: props.t('settings.enabled'), disabledLabel: props.t('settings.disabled'),
@@ -1341,7 +1341,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   // 获取；直接读取 ctx.remote.agencyAgents 会要求预先注入该服务并导致死锁。
   const disposeRemote = await ctx.remote.$mount(TYPERT_REMOTE)
   const remote = ctx.get('remote.agencyAgents') as AgencyAgentsRemoteApi | undefined
-  if (remote === undefined) throw new Error('agency-agents Remote 挂载后不可用')
+  if (remote === undefined) throw new Error(teamText(getActive(), 'agency-agents Remote 挂载后不可用'))
 
   let enabledForMentions: ReadonlySet<string> | undefined
   const lexiconListeners = new Set<() => void>()
@@ -1445,7 +1445,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     const disposers: Array<() => void> = []
     try {
       const teamRemote = remote as TeamRemote
-      disposers.push(ctx.inputTriggers.registerSource({
+      if (typeof teamRemote.getTeams === 'function') disposers.push(ctx.inputTriggers.registerSource({
         trigger: '@', name: TEAM_REFERENCE_SOURCE, order: 99,
         candidates: async (_session, request) => {
           const snapshot = await unwrap(teamRemote.getTeams())

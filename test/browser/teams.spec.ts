@@ -93,6 +93,32 @@ test('聊天工具栏切换团队、查看详情、启用并填入示例', async
   await expect(page.getByLabel('任务草稿')).toHaveValue(/评估这份需求/)
 })
 
+test('标签逐字输入保留分隔符，超限字段明确反馈且保留草稿', async ({ page }) => {
+  await page.goto('/?teams')
+  await page.getByTestId('team-card').first().getByRole('button', { name: '查看详情' }).click()
+  await page.getByRole('button', { name: '复制并自定义', exact: true }).click()
+  const tags = page.getByLabel('场景标签', { exact: true })
+  await tags.fill('')
+  await tags.pressSequentially('算法，数据')
+  await expect(tags).toHaveValue('算法，数据')
+  await tags.fill('超'.repeat(17))
+  await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('每个标签最多 16 个字符')
+  await expect(tags).toBeFocused()
+  await tags.fill('算法，数据')
+  await page.getByRole('region', { name: '主理人提示词' }).getByRole('button', { name: '自定义', exact: true }).click()
+  await page.getByLabel('主理人提示词正文').fill('规'.repeat(12001))
+  await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('12000')
+  await expect(page.getByLabel('主理人提示词正文')).toBeFocused()
+  await page.getByLabel('主理人提示词正文').fill('汇总专家结论并列出证据。')
+  await page.getByLabel('团队名称', { exact: true }).fill('标签保存回归')
+  await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  const saved = await page.evaluate(() => (window as unknown as { teamFixtureState(): { teams: Array<{ name: string; tags: string[] }> } }).teamFixtureState().teams.find(team => team.name === '标签保存回归'))
+  expect(saved?.tags).toEqual(['算法', '数据'])
+})
+
 test('设计稿同尺寸视觉验收截图', async ({ page }, testInfo) => {
   const output = process.env.AGENCY_VISUAL_OUTPUT
   test.skip(!output, '按需生成本地设计验收证据')
@@ -100,7 +126,7 @@ test('设计稿同尺寸视觉验收截图', async ({ page }, testInfo) => {
   page.on('pageerror', (error) => errors.push(error.message))
   await page.setViewportSize({ width: 1536, height: 1024 })
   // 视觉验收走真实设置面板，避免独立团队夹具缺少宿主主题而误报通过。
-  await page.goto('/?teams&settings&visual')
+  await page.goto('/?teams&settings&visual&theme=dark')
   await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await expect(page.getByTestId('team-card')).toHaveCount(5)
   await expect(page.getByTestId('team-card').first()).toHaveCSS('background-color', 'rgb(43, 43, 45)')
