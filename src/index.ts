@@ -1,4 +1,5 @@
 import { localizeTeamTool } from './team-tool-locale.js'
+import { PersonaError } from './persona-error.js'
 import { teamText } from './team-i18n.js'
 import { teamCollaboration } from './team-collaboration.js'
 import { createTeamLibrary, AGENCY_TEAM_SERVICE } from './team-library.js'
@@ -323,8 +324,9 @@ async function readPersonaFile(filePath: string, locale: LocaleId = 'zh'): Promi
   let raw: string
   try {
     raw = stripBom(await readFile(filePath, 'utf8'))
-  } catch {
-    throw new Error(teamText(locale, '未找到专家提示词。'))
+  } catch (cause) {
+    const missing = (cause as NodeJS.ErrnoException)?.code === 'ENOENT'
+    throw new PersonaError(missing ? 'PERSONA_NOT_FOUND' : 'PERSONA_READ_FAILED', locale, cause)
   }
   const parsed = parseFrontmatter(raw)
   if (parsed === undefined || parsed.name === undefined || parsed.description === undefined || parsed.body === '') {
@@ -346,7 +348,7 @@ export async function readLocalizedExpertPrompt(
   try {
     return await readExpertPrompt(chineseRoot, slug, division, divisions)
   } catch (error: unknown) {
-    if (!(error instanceof Error) || error.message !== '未找到专家提示词。') throw error
+    if (!(error instanceof PersonaError) || error.code !== 'PERSONA_NOT_FOUND') throw error
     return readExpertPrompt(root, slug, division, divisions)
   }
 }
@@ -375,12 +377,12 @@ export function createAgencyPersonaSource(
       const expert = experts.get(slug);
       const path = expert === undefined ? undefined : personaPaths.get(expert);
       if (expert?.division !== division || path === undefined)
-        throw new Error(teamText(locale, '未找到专家提示词。'));
+        throw new PersonaError('PERSONA_NOT_FOUND', locale);
       if (locale === "zh" && chineseRoot !== undefined) {
         try {
           return await readPersonaFile(join(chineseRoot, relative(root, path)));
         } catch (error) {
-          if (!(error instanceof Error) || error.message !== "未找到专家提示词。") throw error;
+          if (!(error instanceof PersonaError) || error.code !== 'PERSONA_NOT_FOUND') throw error;
         }
       }
       return readPersonaFile(path, locale);

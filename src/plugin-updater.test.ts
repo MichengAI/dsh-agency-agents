@@ -5,6 +5,24 @@ import { handlePluginUpdateEscape, manualPluginUpdateCommand } from './client/pl
 import { registerPluginUpdater, isDshCliEntry, isNewerVersion, isTrustedUpdateRequest, PLUGIN_UPDATE_HEADER } from './plugin-updater.js'
 
 describe('独立插件更新', () => {
+  it('英文宿主中的配置错误和请求拒绝不会泄漏中文', async () => {
+    let handler!: (request: unknown, response: unknown) => Promise<void>
+    let invalid = true
+    const ctx = {
+      settings: { get: () => ({ preference: 'en' }) },
+      get: (name: string) => name === 'desktopProfiles' ? { current: { name: 'web', dir: invalid ? '' : process.cwd() } } : undefined,
+      webServer: { register: (route: { handler: typeof handler }) => { handler = route.handler; return () => {} } },
+      logger: { warn: vi.fn() },
+    } as unknown as Context
+    registerPluginUpdater(ctx, { endpoint: '/test', packageName: 'test', manifestUrl: new URL('../package.json', import.meta.url) })
+    const response = { writeHead: vi.fn(), end: vi.fn() }
+    await handler({ method: 'GET' }, response)
+    expect(JSON.parse(response.end.mock.lastCall![0]).error).not.toMatch(/[\u3400-\u9fff]/u)
+    invalid = false
+    await handler({ method: 'POST' }, response)
+    expect(JSON.parse(response.end.mock.lastCall![0]).error).not.toMatch(/[\u3400-\u9fff]/u)
+    expect(response.writeHead).toHaveBeenLastCalledWith(403, expect.any(Object))
+  })
   it('只把更高 semver 识别为更新', () => {
     expect(isNewerVersion('0.1.32', '0.1.33')).toBe(true)
     expect(isNewerVersion('0.1.32', '0.1.32')).toBe(false)

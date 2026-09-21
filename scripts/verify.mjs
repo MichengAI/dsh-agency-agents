@@ -14,6 +14,10 @@ function check(label, condition, detail = '') {
 
 const packageUrl = new URL('../package.json', import.meta.url)
 const packageJson = JSON.parse(await readFile(packageUrl, 'utf8'))
+check('发布文件清单没有重复项', new Set(packageJson.files).size === packageJson.files.length)
+for (const [file, text] of [['README.md', `This README describes version ${packageJson.version}`], ['README.zh-CN.md', `本 README 描述 ${packageJson.version}`]]) {
+  check(`${file} 版本说明与包版本一致`, (await readFile(new URL(`../${file}`, import.meta.url), 'utf8')).includes(text))
+}
 
 check('DSH bundle 指向 Cordis patch', packageJson.dsh?.bundle?.patch === './cordis.patch.yml')
 check(

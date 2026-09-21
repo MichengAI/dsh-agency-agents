@@ -594,6 +594,9 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
       await expect(readLocalizedExpertPrompt(englishRoot, chineseRoot, 'reviewer', 'engineering', 'zh')).resolves.toEqual({ prompt: '中文角色设定' })
       await expect(readLocalizedExpertPrompt(englishRoot, chineseRoot, 'reviewer', 'engineering', 'en')).resolves.toEqual({ prompt: 'English persona' })
       await expect(readLocalizedExpertPrompt(englishRoot, chineseRoot, 'fallback', 'engineering', 'zh')).resolves.toEqual({ prompt: 'Fallback persona' })
+      await expect(readExpertPrompt(englishRoot, 'missing', 'engineering', undefined, 'en')).rejects.toMatchObject({ code: 'PERSONA_NOT_FOUND', message: 'Expert prompt not found.' })
+      await mkdir(join(chineseRoot, 'engineering', 'fallback.md'))
+      await expect(readLocalizedExpertPrompt(englishRoot, chineseRoot, 'fallback', 'engineering', 'zh')).rejects.toMatchObject({ code: 'PERSONA_READ_FAILED' })
     } finally {
       await rm(root, { recursive: true, force: true })
     }

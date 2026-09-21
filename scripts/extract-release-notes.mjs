@@ -52,5 +52,5 @@ if (chinese && english) {
   sections.push(chinese || english)
 }
 
-writeFileSync(outputPath, `${sections.join('\n\n---\n\n')}\n`)
+writeFileSync(outputPath, `${sections.join('\n\n---\n\n')}\n`, 'utf8')
 console.log(`Wrote release notes for ${tag} to ${outputPath}`)

@@ -2,9 +2,15 @@
 
 [简体中文](CHANGELOG.zh-CN.md)
 
-This file records features and upgrade boundaries. For version 1.0.0, npm and GitHub Releases remain the publication source of truth.
+This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
-## Unreleased
+## 1.0.1 - 2026-09-21
+
+This patch is prepared for release; publication is confirmed only by npm and GitHub Releases.
+
+- Replace translated-message comparisons with stable persona error codes. Fall back to the English persona only when the translated file is absent, not when reading it fails.
+- Localize updater errors and request rejections, remove duplicate package file entries, and validate README version consistency before release.
+- Verify language switching through the real DSH tool registry and model-facing prompt assembly, including the locally installed 0.1.6-alpha.2 runtime. This does not claim live model quality or historical-host matrix acceptance.
 
 - Bundle only the referenced Tabler icons through the ESM entry and move the icon package to development dependencies. Add release checks for client size, accidental full-library bundling, and external icon imports.
 - Preserve raw expert enablement records when saving or enabling a team, including temporarily conflicting or unavailable experts. Keep revision checks and atomic writes.

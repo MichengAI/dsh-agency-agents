@@ -1,3 +1,5 @@
+import { readHostLocale } from './i18n.js'
+import { teamText, type TeamLocale } from './team-i18n.js'
 import type { Context } from '@deepseek-ai/cordis'
 import { spawn } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
@@ -105,7 +107,7 @@ function runtime(ctx: UpdateContext): Runtime {
   if (profiles?.current !== undefined) {
     const current = profiles.current
     if (!validProfileName(current.name) || typeof current.dir !== 'string' || !isAbsolute(current.dir)) {
-      throw new Error('当前 Desktop Profile 信息无效，请重启后重试。')
+      throw new Error(teamText(readHostLocale(ctx), '当前 Desktop Profile 信息无效，请重启后重试。'))
     }
     return { profileName: current.name, profileDir: resolve(current.dir), ...(typeof desktopPnpm?.runPlugin === 'function' ? { desktopPnpm } : {}) }
   }
@@ -168,14 +170,14 @@ async function latestVersion(packageName: string): Promise<string | undefined> {
   } catch { return undefined }
 }
 
-async function currentVersion(manifestUrl: URL): Promise<string> {
+async function currentVersion(manifestUrl: URL, locale: TeamLocale): Promise<string> {
   const value = JSON.parse(await readFile(manifestUrl, 'utf8')) as { version?: unknown }
-  if (typeof value.version !== 'string' || value.version === '') throw new Error('无法读取当前插件版本。')
+  if (typeof value.version !== 'string' || value.version === '') throw new Error(teamText(locale, '无法读取当前插件版本。'))
   return value.version
 }
 
-async function status(options: PluginUpdaterOptions, target: Runtime): Promise<VersionPayload> {
-  const current = await currentVersion(options.manifestUrl)
+async function status(options: PluginUpdaterOptions, target: Runtime, locale: TeamLocale): Promise<VersionPayload> {
+  const current = await currentVersion(options.manifestUrl, locale)
   const latest = await latestVersion(options.packageName)
   return {
     packageName: options.packageName,
@@ -188,8 +190,8 @@ async function status(options: PluginUpdaterOptions, target: Runtime): Promise<V
   }
 }
 
-async function runCliInstall(target: Runtime, packageSpec: string): Promise<void> {
-  if (target.cliEntry === undefined) throw new Error('当前环境不支持自动更新，请使用手工更新命令。')
+async function runCliInstall(target: Runtime, packageSpec: string, locale: TeamLocale): Promise<void> {
+  if (target.cliEntry === undefined) throw new Error(teamText(locale, '当前环境不支持自动更新，请使用手工更新命令。'))
   await new Promise<void>((resolvePromise, reject) => {
     const child = spawn(process.execPath, [target.cliEntry!, 'plugin', '--profile', target.profileName, 'add', '--config.minimumReleaseAge=0', packageSpec, '--registry=https://registry.npmjs.org/'], {
       cwd: target.profileDir, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, NO_COLOR: '1' },
@@ -197,21 +199,21 @@ async function runCliInstall(target: Runtime, packageSpec: string): Promise<void
     let detail = ''
     child.stdout?.on('data', chunk => { detail = (detail + String(chunk)).slice(-4_000) })
     child.stderr?.on('data', chunk => { detail = (detail + String(chunk)).slice(-4_000) })
-    const timer = setTimeout(() => { child.kill(); reject(new Error('更新超时，请改用手工更新。')) }, 10 * 60_000)
+    const timer = setTimeout(() => { child.kill(); reject(new Error(teamText(locale, '更新超时，请改用手工更新。'))) }, 10 * 60_000)
     child.once('error', error => { clearTimeout(timer); reject(error) })
     child.once('exit', code => {
       clearTimeout(timer)
       if (code === 0) resolvePromise()
-      else reject(new Error(detail.trim() || `更新进程退出码 ${String(code)}`))
+      else reject(new Error(teamText(locale, '更新进程退出码 {0}。', [String(code)]), { cause: detail.trim() }))
     })
   })
 }
 
-async function install(target: Runtime, packageSpec: string): Promise<void> {
-  if (target.desktopPnpm === undefined) return runCliInstall(target, packageSpec)
+async function install(target: Runtime, packageSpec: string, locale: TeamLocale): Promise<void> {
+  if (target.desktopPnpm === undefined) return runCliInstall(target, packageSpec, locale)
   const handle = target.desktopPnpm.runPlugin(['add', '--config.minimumReleaseAge=0', packageSpec, '--registry=https://registry.npmjs.org/'], target.profileDir)
   const result = await handle.done
-  if (result.exitCode !== 0) throw new Error(`更新进程退出码 ${String(result.exitCode)}。`)
+  if (result.exitCode !== 0) throw new Error(teamText(locale, '更新进程退出码 {0}。', [String(result.exitCode)]))
 }
 
 function json(response: HostResponse, statusCode: number, value: unknown): void {
@@ -219,9 +221,9 @@ function json(response: HostResponse, statusCode: number, value: unknown): void 
   response.end(JSON.stringify(value))
 }
 
-function publicError(error: unknown): string {
-  const message = error instanceof Error ? error.message : '更新暂不可用。'
-  return /[A-Za-z]:[\\/]|\/(?:home|root|Users|var|tmp)\//.test(message) ? '更新失败，请查看服务端日志。' : message
+function publicError(error: unknown, locale: TeamLocale): string {
+  const message = error instanceof Error ? error.message : teamText(locale, '更新暂不可用。')
+  return /[A-Za-z]:[\\/]|\/(?:home|root|Users|var|tmp)\//.test(message) ? teamText(locale, '更新失败，请查看服务端日志。') : message
 }
 
 export function registerPluginUpdater(ctx: Context, options: PluginUpdaterOptions): () => void {
@@ -230,24 +232,25 @@ export function registerPluginUpdater(ctx: Context, options: PluginUpdaterOption
   return host.webServer.register({
     kind: 'exact', path: options.endpoint,
     handler: async (request, response) => {
+      const locale = readHostLocale(ctx)
       try {
         const target = runtime(host)
         if (request.method === 'GET' || request.method === 'HEAD') {
-          const payload = await status(options, target)
+          const payload = await status(options, target, locale)
           response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
           response.end(request.method === 'HEAD' ? undefined : JSON.stringify(payload))
           return
         }
         if (request.method !== 'POST') { response.writeHead(405, { allow: 'GET, HEAD, POST' }); response.end(); return }
-        if (!isTrustedUpdateRequest(request)) { json(response, 403, { error: '已拒绝非本机同源更新请求。' }); return }
-        if (installing) { json(response, 409, { error: '当前插件正在更新，请稍候。' }); return }
+        if (!isTrustedUpdateRequest(request)) { json(response, 403, { error: teamText(locale, '已拒绝非本机同源更新请求。') }); return }
+        if (installing) { json(response, 409, { error: teamText(locale, '当前插件正在更新，请稍候。') }); return }
         // 查询版本也属于更新事务；先占锁，避免多窗口同时进入安装。
         installing = true
         try {
-          const before = await status(options, target)
-          if (before.latestVersion === undefined) { json(response, 503, { error: '暂时无法获取最新版本。' }); return }
+          const before = await status(options, target, locale)
+          if (before.latestVersion === undefined) { json(response, 503, { error: teamText(locale, '暂时无法获取最新版本。') }); return }
           if (!before.updateAvailable) { json(response, 200, before); return }
-          await install(target, `${options.packageName}@${before.latestVersion}`)
+          await install(target, `${options.packageName}@${before.latestVersion}`, locale)
           const notifyParent = target.desktopPnpm === undefined && typeof process.send === 'function'
           const autoReload = target.desktopPnpm !== undefined || notifyParent
           json(response, 200, { ...before, updatedVersion: before.latestVersion, restartRequired: true, autoReload })
@@ -255,7 +258,7 @@ export function registerPluginUpdater(ctx: Context, options: PluginUpdaterOption
         } finally { installing = false }
       } catch (error) {
         ctx.logger.warn(`plugin updater failed: ${String(error)}`)
-        json(response, 503, { error: publicError(error) })
+        json(response, 503, { error: publicError(error, locale) })
       }
     },
   })

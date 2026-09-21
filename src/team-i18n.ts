@@ -1,5 +1,16 @@
 /** 专家团共享词条；中文原文作为稳定键，插值不参与翻译匹配。 */
 export const TEAM_EN = {
+  '无法读取专家提示词。': 'Could not read the expert prompt.',
+  '当前 Desktop Profile 信息无效，请重启后重试。': 'The current Desktop profile is invalid. Restart and try again.',
+  '无法读取当前插件版本。': 'Could not read the current plugin version.',
+  '当前环境不支持自动更新，请使用手工更新命令。': 'Automatic updates are unavailable in this environment. Use the manual update command.',
+  '更新超时，请改用手工更新。': 'The update timed out. Use the manual update command.',
+  '更新进程退出码 {0}。': 'The update process exited with code {0}.',
+  '更新暂不可用。': 'Updates are temporarily unavailable.',
+  '更新失败，请查看服务端日志。': 'The update failed. Check the server logs.',
+  '已拒绝非本机同源更新请求。': 'Update request rejected: a local same-origin request is required.',
+  '当前插件正在更新，请稍候。': 'This plugin is being updated. Please wait.',
+  '暂时无法获取最新版本。': 'The latest version is temporarily unavailable.',
   '场景标签：最多 3 个，每个标签最多 16 个字符。': 'Tags: up to 3 tags, with at most 16 characters each.',
   '主理人提示词：请填写 1～12000 个字符。': 'Coordinator prompt: enter 1–12000 characters.',
   '请检查字段：{0}。': 'Check this field: {0}.',

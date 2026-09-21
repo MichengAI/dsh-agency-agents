@@ -69,7 +69,7 @@ Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_t
 - Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
 - Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
 
-> This README describes the 1.0.0 release; npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full changes and [release notes](RELEASE_NOTES.md) for the bilingual release description. Upgrades retain expert settings. Back up settings before downgrading because older versions do not support teams.
+> This README describes version 1.0.1; npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full changes and [release notes](RELEASE_NOTES.md) for the bilingual release description. Upgrades retain expert settings. Back up settings before downgrading because older versions do not support teams.
 ## Screenshots
 
 The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.
@@ -143,7 +143,7 @@ dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=http
 dsh --profile web --dump-config
 ```
 
-To pin a release, replace `@latest` with a version such as `@1.0.0`.
+To pin a release, replace `@latest` with a version such as `@1.0.1`.
 
 The configuration output should contain `agency-agents` and `agency-agents-remote`. Restart DSH Web and hard-refresh the browser. Do not copy client files manually: the Settings page needs the mounted Remote service.
 
