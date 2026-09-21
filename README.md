@@ -76,19 +76,19 @@ The screenshots below show the 1.0.0 interface in Chinese. Experts and expert te
 
 Filter by category or search in **Settings → Experts**, then enable the experts you need:
 
-![DSH Experts panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
+![DSH Experts panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/agent-roster.png)
 
 Switch to **Expert teams** to browse the five built-in teams, filter by status, or create a custom team:
 
-![Expert teams panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-teams.png)
+![Expert teams panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/expert-teams.png)
 
 Open team details to review its purpose, example tasks, and member responsibilities, then summon it or copy it for customization:
 
-![Expert team details](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-team-details.png)
+![Expert team details](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/expert-team-details.png)
 
 When the host supports Agent Team and the feature is enabled, view team members and shared tasks in the native panel:
 
-![Native Agent Team panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-team-panel.png)
+![Native Agent Team panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/agent-team-panel.png)
 
 ## DSH product ecosystem
 

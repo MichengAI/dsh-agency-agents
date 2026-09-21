@@ -76,19 +76,19 @@
 
 在「设置 → 专家」中按分类筛选或搜索，再启用需要的专家：
 
-![DSH 专家面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-roster.png)
+![DSH 专家面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/agent-roster.png)
 
 切换到「专家团」，浏览五个内置专家团、按状态筛选，或新建自定义专家团：
 
-![专家团面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-teams.png)
+![专家团面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/expert-teams.png)
 
 打开团队详情，查看适用场景、任务示例和成员分工，再召唤团队或复制并自定义：
 
-![专家团详情](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/expert-team-details.png)
+![专家团详情](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/expert-team-details.png)
 
 宿主支持且已启用 Agent Team 时，可在原生面板查看团队成员和共享任务：
 
-![原生 Agent Team 面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/main/assets/screenshots/agent-team-panel.png)
+![原生 Agent Team 面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/agent-team-panel.png)
 
 ## DSH 产品生态
 
