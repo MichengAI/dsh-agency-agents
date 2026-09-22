@@ -1,5 +1,7 @@
 import { useTeamLocale } from './team-locale.js';
-import { LibraryConfirm, useLibraryDialog } from './library-ui.js';
+import { LibraryConfirm } from './library-ui.js';
+import { Drawer, List, Modal } from './antd-ui.js';
+import { useEscapeLayer } from './escape-layer.js';
 import React from 'react';
 import { IconX, IconUsers, IconUser, IconFileText, IconChevronDown, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconCheck, IconTrash, IconRefresh, IconGripVertical, } from '@tabler/icons-react/dist/esm/tabler-icons-react.mjs';
 export { IconUsers, IconUser, IconFileText, IconChevronDown, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconCheck, IconTrash, IconRefresh, IconGripVertical, };
@@ -26,46 +28,29 @@ export function TeamAvatars({ team, experts, large = false, }: {
       {team.members.slice(0, 3).map((member) => (<Avatar key={member.expertSlug} expert={experts.find((e) => e.slug === member.expertSlug)} size={large ? 80 : 54}/>))}
     </div>);
 }
-/** 原生 dialog 负责焦点圈定；卸载后恢复到打开它的控件。 */
+/** 编辑走右侧抽屉，详情和成员选择走默认弹窗。 */
 export function TeamDialog({ title, children, close, className = '', }: {
     title: string;
     children: React.ReactNode;
     close(): void;
     className?: string;
 }) {
-    const { locale, tx } = useTeamLocale();
-
-    const ref = React.useRef<HTMLDialogElement>(null);
-    useLibraryDialog(ref);
+    useEscapeLayer(true, close);
     const editor = className === 'agt-editor';
-    return (<dialog ref={ref} className={`${editor ? 'aag-custom-dialog' : 'aag-prompt-modal'} agt-dialog ${className}`} aria-label={title} onMouseDown={(event) => {
-            if (editor || event.target !== event.currentTarget)
-                return;
-            const rect = event.currentTarget.getBoundingClientRect();
-            if (event.clientX < rect.left ||
-                event.clientX > rect.right ||
-                event.clientY < rect.top ||
-                event.clientY > rect.bottom) {
-                event.preventDefault();
-                close();
-            }
-        }} onCancel={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            close();
-        }} onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                e.stopPropagation();
-                close();
-            }
-        }}>
-      <header className={editor ? 'aag-custom-head' : 'aag-modal-head'}>
-        <h3 className="aag-modal-title">{title}</h3>
-        <button type="button" className={editor ? 'aag-action' : 'aag-modal-close'} aria-label={tx("关闭{0}", [title])} onClick={close}>{tx("关闭")}</button>
-      </header>{' '}
+    const opener = React.useRef<HTMLElement | null>(typeof document !== 'undefined' && document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    React.useEffect(() => () => {
+        const node = opener.current;
+        queueMicrotask(() => { if (node?.isConnected) node.focus({ preventScroll: true }); });
+    }, []);
+    if (editor) {
+        return (<Drawer classNames={{ body: `agt-dialog agt-editor ${className}` }} rootClassName="aag-editor-drawer" keyboard={false} styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 } }} title={title} open placement="right" size="min(560px, 100vw)" destroyOnHidden onClose={close}>
+          {children}
+        </Drawer>);
+    }
+    const picker = className.split(/\s+/u).includes('agt-picker');
+    return (<Modal className={`agt-dialog ${className}`} title={title} open zIndex={1200} keyboard={false} width="min(760px, calc(100vw - 32px))" footer={null} destroyOnHidden styles={{ body: { display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 160px)', overflow: picker ? 'hidden' : 'auto' } }} onCancel={close}>
       {children}
-    </dialog>);
+    </Modal>);
 }
 export function TeamConfirm({ title, children, label, onCancel, onConfirm, busy = false, cancelLabel, error, }: {
     cancelLabel?: string;
@@ -89,18 +74,12 @@ export function MemberList({ team, experts, }: {
 }) {
     const { locale, tx } = useTeamLocale();
 
-    return (<div className="agt-member-list">
-      {team.members.map((member) => {
+    return (<List className="agt-member-list" grid={{ gutter: 16, column: 2 }} dataSource={[...team.members]} rowKey={(member) => member.expertSlug} renderItem={(member) => {
             const expert = experts.find((e) => e.slug === member.expertSlug);
-            return (<div key={member.expertSlug} className="agt-member">
-            <Avatar expert={expert}/>
-            <div>
-              <strong>{(locale === 'en' ? expert?.nameEn : expert?.name) ?? tx("成员已失效")}</strong>
-              <small>{member.duty}</small>
-            </div>
-          </div>);
-        })}
-    </div>);
+            return (<List.Item>
+              <List.Item.Meta avatar={<Avatar expert={expert} size={40}/>} title={(locale === 'en' ? expert?.nameEn : expert?.name) ?? tx("成员已失效")} description={member.duty}/>
+            </List.Item>);
+        }}/>);
 }
 export const teamIssue = (team: ExpertTeam, experts: readonly ExpertSummary[], enabled: readonly string[]): string | undefined => {
     if (team.members.some((m) => !experts.some((e) => e.slug === m.expertSlug && !e.conflict)))

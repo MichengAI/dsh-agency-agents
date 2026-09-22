@@ -1,3 +1,9 @@
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { AntdProvider, Button, Modal, Progress } from './antd-ui.js'
+import { useEscapeLayer } from './escape-layer.js'
+import { antdLocale } from './antd-locale.js'
+
 export type PluginUpdateUiOptions = {
   readonly endpoint: string
   readonly packageName: string
@@ -25,8 +31,8 @@ type UpdatePayload = {
 const UPDATE_HEADER = 'x-michengai-plugin-update'
 const STYLE_ID = 'michengai-plugin-update-ui'
 const CSS = `
-.mpi-version{margin-left:8px;color:var(--dsw-alias-label-tertiary);font-family:inherit;font-size:12px;font-weight:500;line-height:18px;letter-spacing:0;white-space:nowrap;vertical-align:baseline}.mpi-check{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:28px;padding:0 8px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;font-weight:500;line-height:18px;white-space:nowrap;cursor:pointer}.mpi-check:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.mpi-check:focus-visible,.mpi-action:focus-visible,.mpi-dialog-close:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.mpi-icon{display:inline-flex;flex:0 0 auto;width:16px;height:16px;align-items:center;justify-content:center;pointer-events:none}.mpi-icon svg{display:block;width:16px;height:16px}
-.mpi-overlay{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--dsw-alias-bg-mask-1);backdrop-filter:var(--dsw-mask-blur)}.mpi-dialog{position:relative;box-sizing:border-box;width:min(680px,100%);max-height:calc(100vh - 48px);overflow:auto;border:1px solid var(--dsw-alias-border-l2);border-radius:24px;padding:22px;background:var(--dsw-alias-bg-layer-2,var(--dsw-specific-menu));color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-elevation-prominent);font-family:inherit}.mpi-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.mpi-dialog h2{margin:0;font-size:18px;line-height:26px}.mpi-dialog-close{display:inline-flex;flex:0 0 28px;width:28px;height:28px;align-items:center;justify-content:center;padding:0;border:0;border-radius:8px;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer}.mpi-dialog-close:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.mpi-intro{margin:8px 0 18px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px}.mpi-meta{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 18px;margin:0 0 16px;font-size:12px;line-height:18px}.mpi-meta dt{color:var(--dsw-alias-label-secondary)}.mpi-meta dd{margin:0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.mpi-status{margin:0 0 18px;border-radius:7px;padding:12px 14px;background:var(--dsw-alias-bg-layer-3,var(--dsw-specific-menu-item-hover));font-size:13px;font-weight:600;line-height:20px}.mpi-status[data-kind=error]{color:var(--dsw-alias-state-error-primary)}.mpi-status[data-kind=success]{color:var(--dsw-alias-state-success-primary)}.mpi-manual{border-top:1px solid var(--dsw-alias-border-l2);padding-top:16px}.mpi-manual h3{margin:0 0 6px;font-size:14px;line-height:20px}.mpi-manual p{margin:0 0 10px;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mpi-command{display:flex;align-items:center;gap:8px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;padding:10px;background:var(--dsw-alias-bg-layer-3,var(--dsw-specific-menu-item-hover))}.mpi-command code{min-width:0;flex:1;overflow:auto;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:18px;white-space:nowrap}.mpi-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:18px}.mpi-actions-group{display:flex;gap:8px}.mpi-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;border:0.5px solid var(--dsw-alias-border-l3);border-radius:18px;padding:7px 14px;background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer}.mpi-action:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.mpi-action:disabled{cursor:not-allowed;opacity:.55}.mpi-primary{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-brand-primary);color:#fff}.mpi-progress{height:4px;margin-top:10px;overflow:hidden;border-radius:99px;background:var(--dsw-alias-border-l2)}.mpi-progress::after{display:block;width:32%;height:100%;background:var(--dsw-alias-brand-primary);content:'';animation:mpi-wave 1.15s ease-in-out infinite}@keyframes mpi-wave{from{transform:translateX(-110%)}to{transform:translateX(330%)}}@media(max-width:560px){.mpi-overlay{padding:10px}.mpi-dialog{max-height:calc(100vh - 20px);padding:16px}.mpi-actions{align-items:stretch}.mpi-actions-group{justify-content:flex-end;flex-wrap:wrap}.mpi-meta{grid-template-columns:1fr;gap:2px}.mpi-meta dd{margin-bottom:6px}}
+.mpi-version{margin-left:8px;color:var(--dsw-alias-label-tertiary);font-family:inherit;font-size:12px;font-weight:500;line-height:18px;letter-spacing:0;white-space:nowrap;vertical-align:baseline}.mpi-check-host{display:inline-flex;align-items:center}.mpi-icon{display:inline-flex;flex:0 0 auto;width:16px;height:16px;align-items:center;justify-content:center;pointer-events:none}.mpi-icon svg{display:block;width:16px;height:16px}
+.mpi-intro{margin:0 0 16px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px}.mpi-meta{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 18px;margin:0 0 16px;font-size:12px;line-height:18px}.mpi-meta dt{color:var(--dsw-alias-label-secondary)}.mpi-meta dd{margin:0}.mpi-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.mpi-latest{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}.mpi-status{font-size:13px;font-weight:600;line-height:18px}.mpi-status[data-kind=error]{color:var(--dsw-alias-state-error-primary)}.mpi-status[data-kind=success]{color:var(--dsw-alias-state-success-primary)}.mpi-manual{border-top:1px solid var(--dsw-alias-border-l2);padding-top:16px}.mpi-manual h3{margin:0 0 6px;font-size:14px;line-height:20px}.mpi-manual p{margin:0 0 10px;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mpi-command{display:flex;align-items:flex-start;gap:8px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;padding:10px;background:var(--dsw-alias-bg-layer-3,var(--dsw-specific-menu-item-hover))}.mpi-command code{min-width:0;flex:1;overflow:visible;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:18px;white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:560px){.mpi-meta{grid-template-columns:1fr;gap:2px}.mpi-meta dd{margin-bottom:6px}}
 `
 
 const ZH = {
@@ -41,6 +47,12 @@ const EN = {
 }
 
 type UpdateStrings = { [Key in keyof typeof ZH]: string }
+
+function HostIcon(props: { readonly node: HTMLElement }): React.ReactElement {
+  const ref = React.useRef<HTMLSpanElement>(null)
+  React.useLayoutEffect(() => { ref.current?.replaceChildren(props.node) }, [props.node])
+  return React.createElement('span', { ref, className: 'mpi-icon', 'aria-hidden': true })
+}
 
 function strings(): UpdateStrings {
   const lang = document.documentElement.lang.toLowerCase()
@@ -96,29 +108,101 @@ export function handlePluginUpdateEscape(event: PluginUpdateEscapeEvent, close: 
   return true
 }
 
+function UpdateDialog(props: {
+  readonly name: string
+  readonly packageName: string
+  readonly initial: UpdatePayload | undefined
+  readonly refresh: () => Promise<UpdatePayload>
+  readonly update: () => Promise<UpdatePayload>
+  readonly onPayload: (value: UpdatePayload) => void
+  readonly onClose: () => void
+}): React.ReactElement {
+  const text = strings()
+  const [current, setCurrent] = React.useState(props.initial)
+  const [message, setMessage] = React.useState(props.initial === undefined ? text.checking : '')
+  const [kind, setKind] = React.useState('')
+  const [busy, setBusy] = React.useState(false)
+  const [copyLabel, setCopyLabel] = React.useState(text.copy)
+  const show = (value: UpdatePayload | undefined): void => {
+    if (value === undefined) { setMessage(text.checking); setKind(''); return }
+    if (value.latestCheckFailed) { setMessage(text.failed); setKind('error'); return }
+    if (!value.canAutoUpdate && value.updateAvailable) { setMessage(text.unavailable); setKind(''); return }
+    if (value.updateAvailable) { setMessage(`${text.found}: v${value.latestVersion ?? text.unknown}`); setKind(''); return }
+    setMessage(text.latest); setKind('success')
+  }
+  const checkNow = async (): Promise<void> => {
+    if (busy) return
+    setBusy(true); setMessage(text.checking); setKind('')
+    try {
+      const next = await props.refresh()
+      setCurrent(next); props.onPayload(next); show(next)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : text.failed); setKind('error')
+    } finally { setBusy(false) }
+  }
+  const updateNow = async (): Promise<void> => {
+    if (busy) return
+    setBusy(true); setMessage(text.updating); setKind('')
+    try {
+      const next = await props.update()
+      setCurrent(next); props.onPayload(next); show(next)
+      setMessage(next.autoReload === true ? text.restarting : text.restart); setKind('success')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : text.failed); setKind('error')
+    } finally { setBusy(false) }
+  }
+  React.useEffect(() => { void checkNow() }, [])
+  useEscapeLayer(true, props.onClose)
+  const command = manualPluginUpdateCommand(current?.profileName ?? '', props.packageName, current?.latestVersion ?? 'latest')
+  const currentVersion = current === undefined ? text.unknown : `v${current.currentVersion}`
+  const latestVersion = current?.latestVersion === undefined ? text.unknown : `v${current.latestVersion}`
+  return React.createElement(AntdProvider, { locale: antdLocale(document.documentElement.lang.toLowerCase().startsWith('en') ? 'en' : 'zh') }, React.createElement(Modal, {
+    open: true, keyboard: false, className: 'mpi-dialog', width: 680, zIndex: 1200, title: `${props.name} ${text.update}`, onCancel: props.onClose,
+    footer: [
+      React.createElement(Button, { key: 'check', disabled: busy, onClick: () => { void checkNow() } }, text.recheck),
+      React.createElement(Button, { key: 'update', type: 'primary', disabled: busy || current?.canAutoUpdate !== true || current.updateAvailable !== true, loading: busy, onClick: () => { void updateNow() } }, text.auto),
+    ],
+  },
+    React.createElement('p', { className: 'mpi-intro' }, text.intro),
+    React.createElement('dl', { className: 'mpi-meta' },
+      React.createElement('dt', null, text.current), React.createElement('dd', null, React.createElement('span', { className: 'mpi-mono' }, currentVersion)),
+      React.createElement('dt', null, text.latestLabel), React.createElement('dd', { className: 'mpi-latest' }, React.createElement('span', { className: 'mpi-mono' }, latestVersion), React.createElement('span', { className: 'mpi-status', role: 'status', 'data-kind': kind }, message)),
+      React.createElement('dt', null, text.profile), React.createElement('dd', null, React.createElement('span', { className: 'mpi-mono' }, current?.profileName ?? text.unknown))),
+    busy ? React.createElement(Progress, { percent: 100, showInfo: false, status: 'active' }) : null,
+    React.createElement('section', { className: 'mpi-manual' },
+      React.createElement('h3', null, text.manual),
+      React.createElement('p', null, text.manualHint),
+      React.createElement('div', { className: 'mpi-command' },
+        React.createElement('code', null, command),
+        React.createElement(Button, { onClick: () => {
+          void navigator.clipboard?.writeText(command).then(() => {
+            setCopyLabel(text.copied)
+            setTimeout(() => setCopyLabel(text.copy), 1_400)
+          }).catch(() => setCopyLabel(text.copyFailed))
+        } }, copyLabel)))))
+}
+
 export function observePluginUpdate(options: PluginUpdateUiOptions): () => void {
   if (typeof document === 'undefined' || document.body === null) return () => {}
   ensureStyle()
   const controller = new AbortController()
   let payload: UpdatePayload | undefined
   let overlay: HTMLElement | undefined
+  let dialogRoot: { unmount(): void } | undefined
+  let buttonHost: HTMLElement | undefined
+  let buttonRoot: ReturnType<typeof createRoot> | undefined
+  let iconNode: HTMLElement | undefined
   let frame: number | undefined
 
-  const setButtonContent = (button: HTMLButtonElement, label: string, iconName: PluginUpdateIconName): void => {
-    const icon = options.createIcon(iconName)
-    icon.classList.add('mpi-icon')
-    icon.setAttribute('aria-hidden', 'true')
-    const text = document.createElement('span')
-    text.dataset.mpiLabel = ''
-    text.textContent = label
-    button.replaceChildren(icon, text)
+  const unmountCheck = (): void => { buttonRoot?.unmount(); buttonRoot = undefined; buttonHost = undefined; iconNode = undefined }
+  const renderCheck = (): void => {
+    if (buttonRoot === undefined) return
+    iconNode ??= options.createIcon('refresh')
+    const icon = iconNode
+    buttonRoot.render(React.createElement(AntdProvider, { locale: antdLocale(document.documentElement.lang.toLowerCase().startsWith('en') ? 'en' : 'zh') }, React.createElement(Button, {
+      size: 'small', shape: 'default', onClick: openDialog, icon: React.createElement(HostIcon, { node: icon }),
+    }, React.createElement('span', { 'data-mpi-label': '' }, strings().check))))
   }
-  const setButtonLabel = (button: HTMLButtonElement, label: string): void => {
-    const text = button.querySelector<HTMLElement>('[data-mpi-label]')
-    if (text === null) button.textContent = label
-    else text.textContent = label
-  }
-
   const applyControls = (): void => {
     const row = document.querySelector<HTMLElement>(options.titleRowSelector)
     if (row === null) return
@@ -134,15 +218,22 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
       const versionLabel = `v${payload.currentVersion}`
       if (version.textContent !== versionLabel) version.textContent = versionLabel
     }
+    if (buttonHost !== undefined && !buttonHost.isConnected) unmountCheck()
     const links = row.querySelector<HTMLElement>(options.linksSelector)
-    if (links === null || links.querySelector(`[data-mpi-check="${options.packageName}"]`) !== null) return
-    const button = document.createElement('button')
-    button.type = 'button'
-    button.className = 'mpi-check'
-    button.dataset.mpiCheck = options.packageName
-    setButtonContent(button, strings().check, 'refresh')
-    button.addEventListener('click', openDialog)
-    links.append(button)
+    if (links === null) return
+    const existing = links.querySelector<HTMLElement>(`[data-mpi-check="${options.packageName}"]`)
+    if (existing !== null) {
+      const label = existing.querySelector('[data-mpi-label]')
+      if (label === null || label.textContent !== strings().check) renderCheck()
+      return
+    }
+    const host = document.createElement('span')
+    host.dataset.mpiCheck = options.packageName
+    host.className = 'mpi-check-host'
+    links.append(host)
+    buttonHost = host
+    buttonRoot = createRoot(host)
+    renderCheck()
   }
 
   const load = async (): Promise<UpdatePayload> => {
@@ -151,100 +242,25 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
     return payload
   }
 
-  const closeDialog = (): void => { overlay?.remove(); overlay = undefined }
+  const closeDialog = (): void => { dialogRoot?.unmount(); dialogRoot = undefined; overlay?.remove(); overlay = undefined }
 
   function openDialog(): void {
     closeDialog()
-    const text = strings()
-    overlay = document.createElement('div')
-    overlay.className = 'mpi-overlay'
-    const dialog = document.createElement('section')
-    dialog.className = 'mpi-dialog'
-    dialog.setAttribute('role', 'dialog')
-    dialog.setAttribute('aria-modal', 'true')
-    dialog.innerHTML = `<header class="mpi-head"><h2></h2><button type="button" class="mpi-dialog-close" data-action="close"></button></header><p class="mpi-intro"></p><dl class="mpi-meta"><dt></dt><dd data-role="current"></dd><dt></dt><dd data-role="latest"></dd><dt></dt><dd data-role="profile"></dd></dl><div class="mpi-status" role="status"></div><div class="mpi-progress" hidden></div><section class="mpi-manual"><h3></h3><p></p><div class="mpi-command"><code></code><button type="button" class="mpi-action" data-action="copy"></button></div></section><footer class="mpi-actions"><div class="mpi-actions-group"><button type="button" class="mpi-action" data-action="check"></button><button type="button" class="mpi-action mpi-primary" data-action="update"></button></div></footer>`
-    const name = document.documentElement.lang.toLowerCase().startsWith('en') ? options.enName : options.zhName
-    dialog.querySelector('h2')!.textContent = `${name} ${text.update}`
-    dialog.querySelector<HTMLElement>('.mpi-intro')!.textContent = text.intro
-    const terms = dialog.querySelectorAll('dt')
-    terms[0]!.textContent = text.current
-    terms[1]!.textContent = text.latestLabel
-    terms[2]!.textContent = text.profile
-    dialog.querySelector<HTMLElement>('.mpi-manual h3')!.textContent = text.manual
-    dialog.querySelector<HTMLElement>('.mpi-manual p')!.textContent = text.manualHint
-    const status = dialog.querySelector<HTMLElement>('.mpi-status')!
-    const progress = dialog.querySelector<HTMLElement>('.mpi-progress')!
-    const command = dialog.querySelector<HTMLElement>('.mpi-command code')!
-    const close = dialog.querySelector<HTMLButtonElement>('[data-action=close]')!
-    const check = dialog.querySelector<HTMLButtonElement>('[data-action=check]')!
-    const update = dialog.querySelector<HTMLButtonElement>('[data-action=update]')!
-    const copy = dialog.querySelector<HTMLButtonElement>('[data-action=copy]')!
-    setButtonContent(close, text.close, 'close')
-    close.querySelector('[data-mpi-label]')?.remove()
-    close.setAttribute('aria-label', text.close)
-    close.title = text.close
-    setButtonContent(check, text.recheck, 'refresh')
-    setButtonContent(update, text.auto, 'download')
-    setButtonContent(copy, text.copy, 'copy')
-    let busy = false
-    const setMessage = (message: string, kind = ''): void => { status.textContent = message; status.dataset.kind = kind }
-    const setBusy = (value: boolean): void => {
-      busy = value
-      check.disabled = value
-      copy.disabled = value
-      update.disabled = value || payload?.canAutoUpdate !== true || payload.updateAvailable !== true
-      progress.hidden = !value
-    }
-    const render = (): void => {
-      dialog.querySelector<HTMLElement>('[data-role=current]')!.textContent = payload === undefined ? text.unknown : `v${payload.currentVersion}`
-      dialog.querySelector<HTMLElement>('[data-role=latest]')!.textContent = payload?.latestVersion === undefined ? text.unknown : `v${payload.latestVersion}`
-      dialog.querySelector<HTMLElement>('[data-role=profile]')!.textContent = payload?.profileName ?? text.unknown
-      command.textContent = manualPluginUpdateCommand(payload?.profileName ?? '', options.packageName, payload?.latestVersion ?? 'latest')
-      update.disabled = busy || payload?.canAutoUpdate !== true || payload.updateAvailable !== true
-      if (payload === undefined) setMessage(text.checking)
-      else if (payload.latestCheckFailed) setMessage(text.failed, 'error')
-      else if (payload.updateAvailable) setMessage(`${text.found}: v${payload.latestVersion ?? text.unknown}`)
-      else setMessage(text.latest, 'success')
-      if (payload !== undefined && !payload.canAutoUpdate && payload.updateAvailable) setMessage(text.unavailable)
-    }
-    const checkNow = async (): Promise<void> => {
-      if (busy) return
-      setBusy(true); setMessage(text.checking)
-      try {
-        await load()
-        setBusy(false)
-        render()
-      } catch (error) {
-        setBusy(false)
-        setMessage(error instanceof Error ? error.message : text.failed, 'error')
-      }
-    }
-    const updateNow = async (): Promise<void> => {
-      if (busy) return
-      setBusy(true); setButtonLabel(update, text.updating); setMessage(text.updating)
-      try {
-        payload = await requestStatus(options.endpoint, 'POST', controller.signal)
-        applyControls(); render()
-        setMessage(payload.autoReload === true ? text.restarting : text.restart, 'success')
-      } catch (error) { setMessage(error instanceof Error ? error.message : text.failed, 'error') }
-      finally { setButtonLabel(update, text.auto); setBusy(false) }
-    }
-    close.addEventListener('click', closeDialog)
-    check.addEventListener('click', () => { void checkNow() })
-    update.addEventListener('click', () => { void updateNow() })
-    copy.addEventListener('click', () => {
-      void navigator.clipboard?.writeText(command.textContent ?? '').then(() => {
-        setButtonLabel(copy, text.copied)
-        setTimeout(() => { setButtonLabel(copy, text.copy) }, 1_400)
-      }).catch(() => { setButtonLabel(copy, text.copyFailed) })
-    })
-    overlay.addEventListener('click', event => { if (event.target === overlay) closeDialog() })
-    overlay.addEventListener('keydown', event => { handlePluginUpdateEscape(event, closeDialog) }, true)
-    overlay.append(dialog)
-    document.body.append(overlay)
-    render()
-    close.focus()
-    void checkNow()
+    const host = document.createElement('div')
+    host.className = 'mpi-dialog-root'
+    document.body.append(host)
+    const root = createRoot(host)
+    overlay = host
+    dialogRoot = root
+    root.render(React.createElement(UpdateDialog, {
+      name: document.documentElement.lang.toLowerCase().startsWith('en') ? options.enName : options.zhName,
+      packageName: options.packageName,
+      initial: payload,
+      refresh: () => load(),
+      update: () => requestStatus(options.endpoint, 'POST', controller.signal),
+      onPayload: (next: UpdatePayload) => { payload = next; applyControls() },
+      onClose: closeDialog,
+    }))
   }
 
   const observer = new MutationObserver(() => {
@@ -255,7 +271,7 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
   applyControls()
   void load().catch(() => {})
   return () => {
-    controller.abort(); observer.disconnect(); closeDialog()
+    controller.abort(); observer.disconnect(); closeDialog(); unmountCheck()
     if (frame !== undefined) window.cancelAnimationFrame(frame)
     document.querySelectorAll(`[data-mpi-check="${options.packageName}"],.mpi-version[data-package="${options.packageName}"]`).forEach(node => node.remove())
   }

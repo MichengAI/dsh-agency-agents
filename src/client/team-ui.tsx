@@ -2,16 +2,15 @@ import { catalogState } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
-import { Button, Input } from '@deepseek-ai/dsh-client-ui-primitives';
-import { SegmentedTabs } from './segmented-tabs.js';
+import { AntdProvider, Button, Input } from './antd-ui.js';
+import { antdLocale } from './antd-locale.js';
 import { CategorySelect } from './category-select.js';
-import { IconX } from '@tabler/icons-react/dist/esm/tabler-icons-react.mjs';
 import React from 'react';
 import { effectiveCoordinator, type ExpertTeam, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
 import type { AgencyCatalogRemote, AgencyTeamsRemote } from './remote.js';
 import { TeamEditor } from './team-editor.js';
-import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconRefresh, } from './team-shared.js';
+import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, } from './team-shared.js';
 export { TEAM_CSS } from './team-style.js';
 export type TeamRemote = AgencyCatalogRemote & AgencyTeamsRemote;
 export async function unwrap<T>(promise: Promise<{
@@ -45,33 +44,35 @@ export function TeamDetails(props: {
       <header className="agt-detail-head">
         <TeamAvatars team={props.team} experts={props.experts} large/>
         <div>
-          <h2>{props.team.name}</h2>
+          <div className="agt-name-line">
+            <h2>{props.team.name}</h2>
+            {props.team.tags.length > 0 && (<div className="agt-tags">
+              {props.team.tags.map((tag) => (<span className="agt-tag" key={tag}>
+                  {tag}
+                </span>))}
+            </div>)}
+          </div>
           <p>
             {props.team.builtin ? tx("内置专家团") : tx("我的专家团")} ·{' '}
             {props.team.members.length}{tx("位专家")}</p>
           <div className="agt-row">
-            {props.onSelect && (<button type="button" className="agt-primary" onClick={() => props.onSelect?.()}>
-                <IconSend />{tx("召唤专家团")}</button>)}
-            {props.onCopy && (<button type="button" onClick={props.onCopy}>
-                <IconCopy />{tx("复制并自定义")}</button>)}
-            {props.onEdit && (<button type="button" onClick={props.onEdit}>{tx("编辑专家团")}</button>)}
+            {props.onSelect && (<Button type="primary" onClick={() => props.onSelect?.()}>
+                <IconSend size={16}/>{tx("召唤专家团")}</Button>)}
+            {props.onCopy && (<Button onClick={props.onCopy}>
+                <IconCopy size={16}/>{tx("复制并自定义")}</Button>)}
+            {props.onEdit && (<Button onClick={props.onEdit}>{tx("编辑专家团")}</Button>)}
           </div>
         </div>
       </header>
       <p className="agt-description">{props.team.description}</p>
-      <div className="agt-tags">
-        {props.team.tags.map((tag) => (<span className="agt-tag" key={tag}>
-            {tag}
-          </span>))}
-      </div>
       <section>
         <h3>
           <IconBulb />{tx("团队帮你做")}</h3>
         <div className="agt-examples">
-          {props.team.examples.map((example, i) => (<button type="button" key={i} disabled={!props.onSelect} onClick={() => props.onSelect?.(example)}>
+          {props.team.examples.map((example, i) => (<Button key={i} block disabled={!props.onSelect} style={{ height: 'auto', whiteSpace: 'normal', justifyContent: 'space-between' }} onClick={() => props.onSelect?.(example)}>
               <span>“{example}”</span>
-              <IconSend />
-            </button>))}
+              <IconSend size={16}/>
+            </Button>))}
         </div>
         <p className="agt-help">{tx("选择后填入聊天草稿，由你确认发送。")}</p>
       </section>
@@ -96,12 +97,10 @@ export function TeamDetails(props: {
         <h3>
           <IconFileText />{tx("你将获得")}</h3>
         <p>{props.team.deliveryRequirements}</p>
-        <button type="button" className="agt-link" onClick={() => setPrompt(!prompt)} aria-expanded={prompt}>{tx("查看主理人提示词")}</button>
-        {prompt && (<pre className="agt-read-prompt">
-            {effectiveCoordinator(props.team, locale)}
-          </pre>)}
+        <Button style={{ marginTop: 8 }} onClick={() => setPrompt(!prompt)} aria-expanded={prompt}>{tx("查看主理人提示词")}</Button>
+        {prompt && (<Input.TextArea className="agt-read-prompt" readOnly aria-label={tx("主理人提示词正文")} value={effectiveCoordinator(props.team, locale)} style={{ height: 280, resize: 'none', overflow: 'auto' }}/>)}
       </section>
-      {props.onDelete && (<button type="button" className="agt-danger" onClick={props.onDelete}>{tx("删除专家团")}</button>)}
+      {props.onDelete && (<Button danger style={{ margin: '0 16px 16px', alignSelf: 'flex-start' }} onClick={props.onDelete}>{tx("删除专家团")}</Button>)}
     </TeamDialog>);
 }
 export function TeamsPanel(props: {
@@ -288,46 +287,40 @@ export function TeamsPanel(props: {
             setError(cause instanceof Error ? tx(cause.message) : tx("复制失败，请重试。"));
         }
     };
-    return (<section className="aag-section aag-team-library" id="aag-team-source-panel">
-      <div className="aag-toolbar">
-        {!props.sharedHeader && <div className="aag-title-row">
+    return (<AntdProvider locale={antdLocale(locale)}><section className="aag-section aag-team-library" id="aag-team-source-panel">
+      {!props.sharedHeader && <div className="aag-toolbar">
+        <div className="aag-title-row">
           {!props.sharedHeader && <h2 className="aag-title">{props.title ?? tx("专家团")}</h2>}
           {!props.sharedHeader && props.headerLinks}
           <span className="aag-header-stat">
             <strong>{snapshot?.teams.length ?? 0}</strong>{tx("个专家团")}</span>
           <span className="aag-header-stat">{tx("已启用")}<strong>{snapshot?.enabledTeams.length ?? 0}</strong>
           </span>
-        </div>}
-        <div className="aag-actions">
-          <Button variant="primary" size="sm" disabled={!snapshot || busy} onClick={() => setEditor({ enabled: false, revision: snapshot!.revision })}>{tx("新建专家团")}</Button>
-          <Button variant="outline" size="sm" aria-label={tx("刷新")} title={tx("刷新")} disabled={busy} onClick={() => void load()} icon={<IconRefresh size={16}/>}/>
         </div>
-      </div>
+      </div>}
 
-      <div className="aag-custom-tabs">
-      <SegmentedTabs className="aag-library-tabs" label={tx("来源")} value={filter} onChange={(value) => { if (value === 'builtin' || value === 'custom' || value === 'all') setFilter(value) }} items={[
-            { value: 'all', label: tx("全部"), id: 'aag-team-source-all', panelId: 'aag-team-source-panel' },
-            { value: 'builtin', label: tx("内置"), id: 'aag-team-source-builtin', panelId: 'aag-team-source-panel' },
-            { value: 'custom', label: tx("自定义"), id: 'aag-team-source-custom', panelId: 'aag-team-source-panel' },
-        ]}/>
-      </div>
       <div className="aag-filters aag-card-filters">
+        <div className="aag-field aag-field-source">
+          <CategorySelect id="aag-team-source" label={tx("来源")} value={filter} onChange={(value) => { if (value === 'builtin' || value === 'custom' || value === 'all') setFilter(value) }} options={[
+            { value: 'all', label: tx("全部来源") },
+            { value: 'builtin', label: tx("内置") },
+            { value: 'custom', label: tx("自定义") },
+          ]}/>
+        </div>
         <div className="aag-field aag-field-status">
-          <label className="aag-label" htmlFor="aag-team-status">{tx("状态")}</label>
-          <CategorySelect id="aag-team-status" value={status} onChange={setStatus} options={[
+          <CategorySelect id="aag-team-status" label={tx("状态")} value={status} onChange={setStatus} options={[
             { value: '', label: tx("全部状态") },
             { value: 'enabled', label: tx("已启用") },
             { value: 'disabled', label: tx("已停用") },
         ]}/>
         </div>
         <div className="aag-field aag-field-search">
-          <label className="aag-label" htmlFor="aag-team-search">{tx("搜索")}</label>
           <div className="aag-search-wrap">
-            <Input id="aag-team-search" className="aag-search" type="search" aria-label={tx("搜索专家团")} placeholder={tx("搜索团队、用途或成员")} value={query} autoComplete="off" spellCheck={false} icon={<IconSearch size={16}/>} onChange={(event) => setQuery(event.target.value)}/>
-            {query && (<button type="button" className="aag-search-clear" aria-label={tx("清除搜索")} onClick={() => setQuery('')}>
-                <IconX size={18}/>
-              </button>)}
+            <Input id="aag-team-search" className="aag-search" aria-label={tx("搜索专家团")} placeholder={tx("搜索团队、用途或成员")} value={query} autoComplete="off" spellCheck={false} prefix={<IconSearch size={16}/>} allowClear={{ clearIcon: <span aria-label={tx("清除搜索")}/> }} onChange={(event) => setQuery(event.target.value)}/>
           </div>
+        </div>
+        <div className="aag-filter-actions">
+          <Button type="primary" disabled={!snapshot || busy} onClick={() => setEditor({ enabled: false, revision: snapshot!.revision })}>{tx("新建专家团")}</Button>
         </div>
       </div>
       {error && (<div className="aag-error" role="alert">
@@ -347,7 +340,7 @@ export function TeamsPanel(props: {
                   <TeamAvatars team={team} experts={experts}/>
                 </div>} metadata={tx("{0} 位专家", [team.members.length])} description={enabled && issue
                     ? `${team.description} ${tx(issue)}`
-                    : team.description} enabled={enabled} disabled={busy} enabledLabel={tx("已启用")} disabledLabel={tx("已停用")} toggle={() => void change(team, 'enable')} moreLabel={tx("更多")} moreItems={[
+                    : team.description} enabled={enabled} disabled={busy} enabledLabel={tx("已启用")} disabledLabel={tx("已停用")} toggle={() => void change(team, 'enable')} moreItems={[
                     { id: 'edit', label: team.builtin ? tx("复制并自定义") : tx("编辑专家团"), disabled: busy, onSelect: () => (team.builtin ? copy(team) : edit(team)) },
                     ...(!team.builtin ? [{ id: 'delete', label: tx("删除专家团"), danger: true, disabled: busy, onSelect: () => void change(team, 'delete') }] : []),
                 ]} actions={<>
@@ -364,7 +357,7 @@ export function TeamsPanel(props: {
           <IconUsers size={40}/>
           <h3>{tx("没有找到专家团")}</h3>
           <p>{tx("换个关键词，或创建自己的专家团。")}</p>
-          <Button variant="outline" size="sm" onClick={() => {
+          <Button onClick={() => {
                 setQuery('');
                 setFilter('all');
             }}>{tx("清除筛选")}</Button>
@@ -403,5 +396,5 @@ export function TeamsPanel(props: {
                     .join(locale === 'en' ? ', ' : '、')])}
           </p>
         </TeamConfirm>)}
-    </section>);
+    </section></AntdProvider>);
 }

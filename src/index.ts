@@ -568,9 +568,11 @@ export function apply(ctx: Context, config: Config): void {
     if (loadError !== null) throw new Error(formatHost(activeLocale(), 'error.catalogLoad', { detail: loadError }))
   }
 
+  let baseSummaries: Array<Expert & { custom: false }> | undefined
   const library = createExpertLibrary(async () => {
     await ensureReady()
-    return [...experts.values()].map(expert => ({ ...expert, custom: false }))
+    baseSummaries ??= [...experts.values()].map(expert => ({ ...expert, custom: false }))
+    return baseSummaries
   }, {
     read: () => settingsSource(),
     revision: () => {

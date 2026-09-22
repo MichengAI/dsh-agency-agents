@@ -13,7 +13,6 @@ function cssModulesPlugin() {
     enforce: 'pre',
     /** @param {string} source @param {string | undefined} importer */
     resolveId(source, importer) {
-      if (source === '@deepseek-ai/dsh-client-ui-primitives') return fileURLToPath(new URL('../test/runtime-modules.ts', import.meta.url))
       if (!source.endsWith('.css') || importer === undefined) return
       const from = importer.startsWith('file:') ? fileURLToPath(importer) : importer
       return `\0style:${Buffer.from(resolve(dirname(from), source)).toString('base64')}`

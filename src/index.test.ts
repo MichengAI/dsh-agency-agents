@@ -1139,11 +1139,11 @@ describe('专家库目标稿样式契约', () => {
     expect(CARD_SETTINGS_CSS).toContain('min-height:48px')
   })
 
-  it('分类与搜索筛选等宽，并与双列卡片保持相同分栏比例', () => {
-    expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters{align-items:flex-end;gap:12px}')
-    expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-search{flex:1 1 0}')
+  it('筛选按内容宽度排列，搜索吃掉剩余空间', () => {
+    expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters{align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:8px 12px;min-width:0}')
+    expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters .aag-field-source,.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-status{flex:0 0 auto;width:auto;max-width:none}')
+    expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters .aag-field-search{flex:1 1 0;min-width:0}')
     expect(CARD_SETTINGS_CSS).not.toContain('.aag-field-category{flex:0 1 220px}')
-    expect(CARD_SETTINGS_CSS).not.toContain('.aag-field-search{flex:1 1 240px}')
   })
 
   it('卡片设置页使用宿主主题表面和边框颜色', () => {
@@ -1187,7 +1187,7 @@ describe('@ 菜单分组标题本地化', () => {
   it('DSH 开发依赖固定为 0.1.6-alpha.2', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe(name === '@deepseek-ai/dsh-client-ui-primitives' ? '0.1.7-alpha.1' : '0.1.6-alpha.2')
+        expect(version).toBe('0.1.6-alpha.2')
       }
     }
   })

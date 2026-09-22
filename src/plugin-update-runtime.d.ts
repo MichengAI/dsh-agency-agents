@@ -9,9 +9,3 @@ declare module 'react-dom/client' {
   }
 }
 
-declare module '@deepseek-ai/dsh-client-ui-primitives' {
-  export function IconRefreshOutline16(props: { readonly size?: number }): JSX.Element
-  export function IconDownloadOutline16(props: { readonly size?: number }): JSX.Element
-  export function IconCopyOutline16(props: { readonly size?: number }): JSX.Element
-  export function IconCloseOutline16(props: { readonly size?: number }): JSX.Element
-}

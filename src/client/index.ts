@@ -1,5 +1,5 @@
-import { Button, Input } from '@deepseek-ai/dsh-client-ui-primitives'
-import { SegmentedControl, SegmentedTabs } from './segmented-tabs.js'
+import { AntdProvider, Button, Input, Segmented } from './antd-ui.js'
+import { antdLocale } from './antd-locale.js'
 import { LibraryCard } from './library-ui.js'
 import type { AgencyTeamsRemote } from './remote.js'
 import { TeamsPanel, unwrap, type TeamRemote } from './team-ui.js'
@@ -114,24 +114,10 @@ function Eye(props: LineIconProps): React.ReactElement {
     React.createElement('circle', { cx: 12, cy: 12, r: 3 }))
 }
 
-function RefreshCw(props: LineIconProps): React.ReactElement {
-  return lineIcon(props,
-    React.createElement('path', { d: 'M21 12a9 9 0 0 0-15.17-6.53L3 8' }),
-    React.createElement('path', { d: 'M3 3v5h5' }),
-    React.createElement('path', { d: 'M3 12a9 9 0 0 0 15.17 6.53L21 16' }),
-    React.createElement('path', { d: 'M16 16h5v5' }))
-}
-
 function Search(props: LineIconProps): React.ReactElement {
   return lineIcon(props,
     React.createElement('circle', { cx: 11, cy: 11, r: 8 }),
     React.createElement('path', { d: 'm21 21-4.3-4.3' }))
-}
-
-function X(props: LineIconProps): React.ReactElement {
-  return lineIcon(props,
-    React.createElement('path', { d: 'M18 6 6 18' }),
-    React.createElement('path', { d: 'm6 6 12 12' }))
 }
 
 /**
@@ -485,37 +471,18 @@ export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inl
 export const SETTINGS_CSS = `
 .aag-section{box-sizing:border-box;display:flex;min-width:0;max-width:760px;width:100%;margin:0 auto;flex-direction:column;gap:16px;padding:0 0 32px;color:var(--dsw-alias-label-primary)}
 .aag-toolbar{display:flex;align-items:flex-start;gap:16px;padding-bottom:12px}
-.aag-title-row{display:flex;align-items:center;gap:8px;min-width:0}.aag-settings-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.aag-settings-link{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:0 8px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:12px;font-weight:500;line-height:18px;text-decoration:none;white-space:nowrap}.aag-settings-link:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-settings-link:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}.aag-settings-link svg{flex:none}
+.aag-title-row{display:flex;align-items:center;gap:8px;min-width:0}.aag-settings-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .aag-title{margin:0;font-size:20px;line-height:28px;font-weight:650;letter-spacing:-.2px}
-.aag-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
-.aag-action{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:0 12px;border:0;border-radius:8px;background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);font:inherit;font-size:13px;line-height:20px;cursor:pointer}
-.aag-action:hover:not(:disabled){background:var(--dsw-alias-button-primary-hover)}.aag-action:disabled{opacity:.4;cursor:not-allowed}
-.aag-action:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
 .aag-note{overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;text-overflow:ellipsis;white-space:nowrap}
 .aag-error{color:var(--dsw-alias-state-error-primary);font-size:13px;line-height:20px}
 .aag-filters{display:flex;align-items:flex-end;gap:10px;width:100%;min-width:0;max-width:100%}
 .aag-field{display:flex;min-width:0;flex:1;flex-direction:column;gap:6px}
-.aag-field-category{flex:0 1 220px;max-width:220px}
+.aag-field-source,.aag-field-category,.aag-field-status{flex:0 0 auto;width:auto;max-width:100%}
 .aag-field-search{flex:1 1 0;min-width:0;max-width:100%}
-.aag-label{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:16px}
-.aag-control{box-sizing:border-box;width:100%;min-height:32px;padding:0 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-button-elevated-fill));color:var(--dsw-alias-label-primary);font:inherit;font-size:13px}
-.aag-control:focus-visible{outline:none;border-color:var(--dsw-alias-label-tertiary)}
-.aag-select-trigger{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:32px;padding:0 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-button-elevated-fill));color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;text-align:left;cursor:pointer}
-.aag-select-trigger:hover{background:var(--dsw-alias-interactive-bg-hover)}
-.aag-select-trigger:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
-.aag-select-trigger[aria-expanded="true"]{border-color:var(--dsw-alias-label-tertiary)}
-.aag-select-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.aag-select-caret{flex:none;width:12px;height:12px;color:var(--dsw-alias-label-tertiary)}
-.aag-search-wrap{position:relative;display:flex;align-items:center;width:100%;min-width:0;max-width:100%}
-.aag-search{box-sizing:border-box;display:flex;align-items:center;width:100%;min-width:0;max-width:100%;height:32px;margin:0;padding:0 28px 0 8px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-button-elevated-fill))}
-.aag-search input{flex:1 1 auto;width:0;min-width:0;height:22px;margin:0;padding:0;border:0;outline:none;background:transparent;font:inherit;font-size:14px;line-height:22px;color:inherit}
-.aag-search input::-webkit-search-cancel-button,.aag-search input::-webkit-search-decoration{-webkit-appearance:none;appearance:none}
-.aag-search-clear{position:absolute;right:4px;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:var(--dsw-alias-label-tertiary);font:inherit;font-size:16px;line-height:1;cursor:pointer}
-.aag-search-clear:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
-.aag-search-clear:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
+.aag-search-wrap{display:flex;align-items:center;width:100%;min-width:0;max-width:100%}
+.aag-search{box-sizing:border-box;width:100%;min-width:0;max-width:100%}
 .aag-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 16px;border:1px dashed var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;text-align:center}
-@media (max-width:560px){.aag-toolbar,.aag-title-row{flex-wrap:wrap}.aag-actions{margin-left:0}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}}
-@media (prefers-reduced-motion:reduce){.aag-action{transition:none}}
+@media (max-width:560px){.aag-toolbar,.aag-title-row{flex-wrap:wrap}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}}
 `
 export const CARD_SETTINGS_CSS = `
 .aag-section{container-type:inline-size}
@@ -524,21 +491,18 @@ export const CARD_SETTINGS_CSS = `
 .aag-title{font-size:24px;line-height:32px;font-weight:600;letter-spacing:-.4px;white-space:nowrap}
 .aag-header-stat{display:inline-flex;align-items:baseline;gap:5px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;white-space:nowrap}
 .aag-header-stat strong{color:var(--dsw-alias-label-primary);font-weight:500}
-.aag-actions{margin-left:auto}
-.aag-card-action:focus-visible,.aag-modal-close:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
-.aag-card-filters{align-items:flex-end;gap:12px;min-width:0}
-.aag-card-filters .aag-field-category{flex:0 1 220px;max-width:220px}
+.aag-card-action:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
+.aag-card-filters{align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:8px 12px;min-width:0}
+.aag-filter-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}
+.aag-card-filters .aag-field-source,.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-status{flex:0 0 auto;width:auto;max-width:none}
 .aag-card-filters .aag-field-search{flex:1 1 0;min-width:0}
-.aag-card-filters .aag-field-status{flex:0 1 150px;max-width:150px}
-.aag-card-filters .aag-field>span{display:flex;width:100%;min-width:0}
+.aag-card-filters .aag-field>span{display:inline-flex;width:auto;max-width:none}
 @media(max-width:560px){.aag-card-filters{align-items:stretch}.aag-card-filters .aag-field{flex:none;width:100%}}
-.aag-card-filters .aag-select-trigger{min-height:32px;font-size:14px}
-.aag-search-wrap{position:relative;display:flex;align-items:center;width:100%;height:32px;min-width:0;max-width:100%}
-.aag-search-wrap>.aag-search{box-sizing:border-box;display:flex;align-items:center;width:100%;min-width:0;max-width:100%;height:32px;margin:0;padding:0 28px 0 8px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-button-elevated-fill));font-size:14px;line-height:22px;outline:none}
-.aag-search-wrap>.aag-search input{flex:1 1 auto;width:0;min-width:0;height:22px;margin:0;padding:0;border:0;outline:none;background:transparent;font:inherit;font-size:14px;line-height:22px;color:inherit}
+.aag-search-wrap{display:flex;align-items:center;width:100%;min-width:0;max-width:100%}
+.aag-search-wrap>.aag-search{width:100%;min-width:0;max-width:100%}
 .aag-search-wrap>.aag-search input::placeholder{color:var(--dsw-alias-label-dimmed)}
-.aag-search-clear{right:2px;width:28px;height:28px}
 .aag-expert-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;margin-top:2px}
+.aag-expert-window{position:relative;margin-top:2px;overflow-anchor:none}.aag-expert-window>.aag-expert-grid{position:absolute;right:0;left:0;margin-top:0}
 .aag-expert-card{display:grid;min-width:0;min-height:190px;overflow:hidden;grid-template-rows:minmax(141px,1fr) 48px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:var(--dsw-alias-bg-layer-2)}
 .aag-expert-card:hover{border-color:var(--dsw-alias-border-l3)}
 .aag-card-body{position:relative;display:grid;min-width:0;grid-template-columns:44px minmax(0,1fr);column-gap:10px;row-gap:9px;padding:12px}
@@ -547,21 +511,16 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-name{display:-webkit-box;overflow:hidden;font-size:16px;font-weight:650;line-height:22px;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .aag-card-division{margin-top:2px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:18px}
 .aag-card-description{grid-column:1/-1;display:-webkit-box;min-height:60px;margin:0;overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:20px;-webkit-box-orient:vertical;-webkit-line-clamp:3}
-.aag-card-actions{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--dsw-alias-border-l2)}
-.aag-card-action{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:48px;padding:0 8px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;line-height:18px;cursor:pointer}
+.aag-card-actions{display:flex;border-top:1px solid var(--dsw-alias-border-l2)}
+.aag-card-action{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:0;flex:1 1 0;overflow:hidden;min-height:48px;padding:0 6px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;line-height:18px;white-space:nowrap;cursor:pointer}
 .aag-card-action+.aag-card-action{border-left:1px solid var(--dsw-alias-border-l2)}
 .aag-card-action:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
 .aag-card-action:disabled{opacity:.5;cursor:default}
 .aag-card-action-primary{color:var(--dsw-alias-label-secondary)}
-.aag-switch{position:absolute;top:12px;right:12px;display:flex;align-items:center;flex-direction:column;gap:3px;cursor:pointer}.aag-switch [role=switch][aria-checked=true]{background:var(--dsw-alias-state-success-primary)}.aag-switch-fallback{box-sizing:border-box;position:relative;flex:0 0 auto;width:36px;height:20px;padding:2px;border:0;border-radius:10px;corner-shape:round;background:var(--dsw-alias-border-l3);cursor:pointer}.aag-switch-fallback[aria-checked=true]{background:var(--dsw-alias-brand-primary)}.aag-switch-fallback:disabled{cursor:default;opacity:.5}.aag-switch-fallback:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.aag-switch-fallback-thumb{display:block;width:16px;height:16px;border-radius:50%;corner-shape:round;background:var(--dsw-alias-label-primary-foreground);transition:transform 120ms ease}.aag-switch-fallback[aria-checked=true] .aag-switch-fallback-thumb{transform:translateX(16px)}@media (prefers-reduced-motion:reduce){.aag-switch-fallback-thumb{transition:none}}
+.aag-card-action-danger{color:var(--dsw-alias-state-error-primary)}
+.aag-switch{position:absolute;top:12px;right:12px;display:flex;align-items:center;flex-direction:column;gap:3px}
 .aag-switch-state{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;white-space:nowrap}
-.aag-prompt-modal::backdrop{background:var(--dsw-alias-bg-mask-1);backdrop-filter:var(--dsw-mask-blur)}
-.aag-prompt-modal[open]{display:flex}
-.aag-prompt-modal{box-sizing:border-box;margin:auto;padding:0;color:var(--dsw-alias-label-primary);width:min(760px,calc(100vw - 40px));max-height:min(720px,calc(100vh - 40px));flex-direction:column;border:0;border-radius:24px;background:var(--dsw-alias-bg-layer-2,var(--dsw-specific-menu));box-shadow:var(--dsw-elevation-prominent)}
-.aag-modal-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-bottom:1px solid var(--dsw-alias-border-l1)}
-.aag-modal-title{margin:0;font-size:15px;line-height:22px}
-.aag-modal-close{min-height:32px;padding:0 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;cursor:pointer}
-.aag-prompt-content{margin:0;overflow:auto;padding:16px;white-space:pre-wrap;color:var(--dsw-alias-label-primary);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.65}
+.ant-modal .aag-prompt-body.ant-input{display:block;box-sizing:border-box;height:min(560px,calc(100vh - 220px));min-height:240px;margin:0;resize:none;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;line-height:1.65}
 @container (max-width:519px){.aag-expert-grid{grid-template-columns:1fr}.aag-title-row{gap:8px 12px}.aag-settings-links{flex-basis:100%}}
 @container (max-width:430px){.aag-card-body{grid-template-columns:40px minmax(0,1fr);column-gap:10px}.aag-expert-avatar{width:40px;height:40px}.aag-card-name{font-size:16px;line-height:22px}}
 `
@@ -642,14 +601,16 @@ function feedbackMark16(): React.ReactElement {
 }
 
 function settingsGithubLinks(t: TranslateNS<'agency'>): React.ReactElement {
-  return React.createElement('div', { className: 'aag-settings-links' }, SETTINGS_GITHUB_LINKS.map((link) => React.createElement('a', {
+  return React.createElement('div', { className: 'aag-settings-links' }, SETTINGS_GITHUB_LINKS.map((link) => React.createElement(Button, {
     key: link.href,
-    className: 'aag-settings-link',
+    size: 'small',
+    shape: 'default',
     href: link.href,
     target: '_blank',
     rel: 'noreferrer',
     'aria-label': t(link.labelKey),
-  }, link.icon === 'github' ? githubMark16() : feedbackMark16(), t(link.labelKey))))
+    icon: link.icon === 'github' ? githubMark16() : feedbackMark16(),
+  }, t(link.labelKey))))
 }
 
 /** 工具栏菜单不能接管焦点，否则 Lexical 无法按检测坐标插入原子引用。 */
@@ -892,6 +853,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     const onPointerDown = (ev: PointerEvent): void => {
       const target = ev.target
       if (target instanceof Node && rootRef.current?.contains(target)) return
+      if (target instanceof Element && target.closest('.ant-modal, .ant-drawer, .ant-select-dropdown, .ant-dropdown')) return
       close()
     }
     document.addEventListener('pointerdown', onPointerDown)
@@ -976,13 +938,13 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     },
       insertError === null ? null : React.createElement('div', { className: 'aag-error', role: 'alert' }, insertError,
         React.createElement('button', { type: 'button', disabled: busy, onClick: () => load() }, props.t('btn.refresh'))),
-      'getTeams' in props.remote ? React.createElement(SegmentedControl, {
-        id: 'aag-composer-mode', value: mode, label: teamText(props.getActive(), '专家'),
+      'getTeams' in props.remote ? React.createElement(Segmented, {
+        block: true, 'aria-label': teamText(props.getActive(), '专家'), value: mode,
         options: [
           { value: 'experts' as const, label: teamText(props.getActive(), '专家') },
           { value: 'teams' as const, label: teamText(props.getActive(), '专家团') },
         ],
-        onChange: (value: string) => setMode(value === 'teams' ? 'teams' : 'experts'),
+        onChange: (value: unknown) => setMode(value === 'teams' ? 'teams' : 'experts'),
       }) : null,
       mode === 'teams' && 'getTeams' in props.remote ? React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamMenu, { remote: props.remote as TeamRemote,
         prepareSelect: props.prepareTeamSelection, onSelected: () => close(), onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) } })) :
@@ -990,17 +952,98 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
         query, onQuery: setQuery, busy, hasMore: searching && matches.length > results.length, onPick: slug => { void pick(slug) } }))
     : null
 
-  return React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef, onBlur: (event: React.FocusEvent) => {
-    if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) close()
+  return React.createElement(AntdProvider, { locale: antdLocale(props.getActive()) }, React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef, onBlur: (event: React.FocusEvent) => {
+    const next = event.relatedTarget
+    if (document.querySelector('.ant-modal, .ant-drawer')) return
+    if (next instanceof Element && (event.currentTarget.contains(next) || next.closest('.ant-select-dropdown, .ant-dropdown'))) return
+    if (next instanceof Node && !event.currentTarget.contains(next)) close()
   } },
-    React.createElement('span', { ref: triggerRef }, React.createElement(Button, { type: 'button', className: 'aag-btn', variant: 'toolbar', size: 'sm', title: props.t('button.title'), 'aria-expanded': open, 'aria-haspopup': 'dialog', 'aria-controls': open ? menuId : undefined, onMouseDown: keepComposerFocus, onClick }, expertIcon(), props.t('settings.nav'))),
-    menu)
+    React.createElement('span', { ref: triggerRef }, React.createElement('button', { type: 'button', className: 'aag-btn', title: props.t('button.title'), 'aria-expanded': open, 'aria-haspopup': 'dialog', 'aria-controls': open ? menuId : undefined, onMouseDown: keepComposerFocus, onClick }, expertIcon(), props.t('settings.nav'))),
+    menu))
 }
 
 interface OpenPrompt {
   readonly name: string
   readonly prompt: string
   readonly returnFocus: HTMLButtonElement
+}
+
+const EXPERT_CARD_GAP = 10
+const EXPERT_CARD_ROW = 200
+
+function scrollParent(node: HTMLElement): HTMLElement | Window {
+  let current = node.parentElement
+  while (current !== null && current !== document.body && current !== document.documentElement) {
+    const overflow = getComputedStyle(current).overflowY
+    if (overflow === 'auto' || overflow === 'scroll' || overflow === 'overlay') return current
+    current = current.parentElement
+  }
+  return window
+}
+
+/** 只挂载视口内的专家卡片。一次创建三百多张带开关的卡片会把设置页卡住。 */
+function ExpertCardWindow(props: {
+  items: readonly ExpertView[]
+  resetKey: string
+  render: (item: ExpertView) => React.ReactNode
+}): React.ReactElement {
+  const ref = React.useRef<HTMLDivElement>(null)
+  const countRef = React.useRef(props.items.length)
+  countRef.current = props.items.length
+  const [range, setRange] = React.useState({ start: 0, end: 8, columns: 2, row: EXPERT_CARD_ROW, key: props.resetKey })
+  const active = range.key === props.resetKey ? range : { start: 0, end: 8, columns: range.columns, row: range.row, key: props.resetKey }
+  if (range.key !== props.resetKey) setRange(active)
+  React.useLayoutEffect(() => {
+    const node = ref.current
+    if (node === null) return
+    const scroller = scrollParent(node)
+    const viewTop = scroller instanceof HTMLElement ? scroller.getBoundingClientRect().top : 0
+    const viewHeight = scroller instanceof HTMLElement ? scroller.clientHeight : window.innerHeight
+    const top = node.getBoundingClientRect().top
+    if (top < viewTop || top > viewTop + viewHeight) node.scrollIntoView({ block: 'nearest' })
+    let frame = 0
+    const measure = (): void => {
+      const card = node.querySelector('.aag-expert-card')
+      const row = card instanceof HTMLElement && card.offsetHeight > 0 ? card.offsetHeight + EXPERT_CARD_GAP : EXPERT_CARD_ROW
+      const section = node.closest('.aag-section')
+      const width = section instanceof HTMLElement ? section.clientWidth : node.clientWidth
+      const columns = width > 0 && width <= 519 ? 1 : 2
+      const viewTop = scroller instanceof HTMLElement ? scroller.getBoundingClientRect().top : 0
+      const viewHeight = scroller instanceof HTMLElement ? scroller.clientHeight : window.innerHeight
+      const startPx = Math.max(0, viewTop - node.getBoundingClientRect().top)
+      const rows = Math.ceil(countRef.current / columns)
+      const start = Math.max(0, Math.floor(startPx / row) - 1)
+      const end = Math.min(rows, Math.max(start + 1, Math.ceil((startPx + viewHeight) / row) + 2))
+      setRange(current => current.key === props.resetKey && current.start === start && current.end === end && current.columns === columns && current.row === row
+        ? current
+        : { start, end, columns, row, key: props.resetKey })
+    }
+    measure()
+    const onScroll = (): void => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(measure)
+    }
+    const target: HTMLElement | Window = scroller instanceof HTMLElement ? scroller : window
+    target.addEventListener('scroll', onScroll, { passive: true })
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(onScroll)
+    observer?.observe(node)
+    if (scroller instanceof HTMLElement) observer?.observe(scroller)
+    window.addEventListener('resize', onScroll)
+    return () => {
+      cancelAnimationFrame(frame)
+      target.removeEventListener('scroll', onScroll)
+      observer?.disconnect()
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [props.resetKey, props.items.length])
+  const columns = Math.max(1, active.columns)
+  const rows = Math.ceil(props.items.length / columns)
+  const start = rows === 0 ? 0 : Math.min(active.start, rows - 1)
+  const end = Math.min(rows, Math.max(start, active.end))
+  const height = rows === 0 ? 0 : rows * active.row - EXPERT_CARD_GAP
+  return React.createElement('div', { ref, className: 'aag-expert-window', style: { height } },
+    React.createElement('div', { className: 'aag-expert-grid', style: { top: start * active.row } },
+      props.items.slice(start * columns, end * columns).map(item => props.render(item))))
 }
 
 function ExpertCardsSettings(props: PropsLocale<'agency'> & {
@@ -1010,17 +1053,18 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   getActive: () => 'zh' | 'en'
   onEnabledChange?: (enabled: ReadonlySet<string>) => void
 }): React.ReactElement {
-  const [state, setState] = React.useState<EnabledState | null>(null)
+  const cached = catalogState(props.remote)
+  const [state, setState] = React.useState<EnabledState | null>(cached.revision < 0 ? null : cached)
   React.useEffect(() => {
     props.onSummary?.({ total: state?.experts.length ?? 0, enabled: state?.enabled.size ?? 0 })
   }, [state?.experts.length, state?.enabled.size, props.onSummary])
-  const [initialOrder, setInitialOrder] = React.useState<ReadonlyArray<string> | null>(null)
+  const [initialOrder, setInitialOrder] = React.useState<ReadonlyArray<string> | null>(cached.revision < 0 ? null : sortExpertsByEnabled(cached.experts, cached.enabled).map(expert => expert.slug))
   const [error, setError] = React.useState<string | null>(null)
   const [query, setQuery] = React.useState('')
   const [division, setDivision] = React.useState('')
   const [status, setStatus] = React.useState('')
   const [openPrompt, setOpenPrompt] = React.useState<OpenPrompt | null>(null)
-  const [promptBusySlug, setPromptBusySlug] = React.useState<string | null>(null)
+  const promptLock = React.useRef(false)
   const [copiedSlug, setCopiedSlug] = React.useState<string | null>(null)
   const copiedResetTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const saving = React.useRef(false)
@@ -1038,16 +1082,16 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     setError(null)
   }
   const openEditor = (expert?: ExpertView): void => {
-    if (state === null || isSaving || promptBusySlug !== null) return
+    if (state === null || isSaving || promptLock.current) return
     if (expert === undefined) { setEditor({ enabled: false, revision: state.revision }); return }
     const revision = state.revision
     if (expert.custom) {
-      setPromptBusySlug(expert.slug)
+      promptLock.current = true
       void props.remote.getCustomExpert(expert.slug).then(result => {
         if (!result.ok) throw new Error(result.error.message)
         setEditor({ expert: result.value, enabled: state.enabled.has(expert.slug), revision })
       }).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
-        .finally(() => setPromptBusySlug(null))
+        .finally(() => { promptLock.current = false })
     } else {
       withPrompt(expert, prompt => {
         const original = displayName(expert, props.getActive())
@@ -1076,23 +1120,24 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       }).finally(() => { saving.current = false; setIsSaving(false) })
   }
 
-  const load = React.useCallback((): void => {
-    void readEnabled(props.remote).then((current) => {
-      setState(current)
-      setInitialOrder((order) => order ?? sortExpertsByEnabled(current.experts, current.enabled).map((expert) => expert.slug))
-      setError(null)
-      props.onEnabledChange?.(current.enabled)
-    }).catch((err: unknown) => { setError(err instanceof Error ? err.message : String(err)) })
-  }, [props.onEnabledChange, props.remote])
-
   React.useEffect(() => {
     let alive = true
-    void readEnabled(props.remote).then((current) => {
-      if (!alive) return
+    const applySnapshot = (current: EnabledState): void => {
       setState(current)
       setInitialOrder((order) => order ?? sortExpertsByEnabled(current.experts, current.enabled).map((expert) => expert.slug))
       props.onEnabledChange?.(current.enabled)
-    }).catch((err: unknown) => { if (alive) setError(err instanceof Error ? err.message : String(err)) })
+    }
+    const loadCatalog = (): Promise<void> => readEnabled(props.remote).then((current) => { if (alive) applySnapshot(current) })
+    const known = catalogState(props.remote)
+    const pending = known.revision < 0
+      ? loadCatalog()
+      : props.remote.getEnabled().then(result => {
+        if (!alive || !result.ok || result.value.revision === known.revision) return
+        return loadCatalog()
+      })
+    void pending.catch((err: unknown) => {
+      if (alive && catalogState(props.remote).revision < 0) setError(err instanceof Error ? err.message : String(err))
+    })
     return () => { alive = false }
   }, [props.onEnabledChange, props.remote])
 
@@ -1135,13 +1180,13 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   }
 
   const withPrompt = (expert: ExpertView, action: (prompt: string) => Promise<void> | void): void => {
-    if (promptBusySlug !== null) return
-    setPromptBusySlug(expert.slug)
+    if (promptLock.current) return
+    promptLock.current = true
     setError(null)
     void readPrompt(props.remote, expert.slug, expert.division)
       .then(action)
       .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
-      .finally(() => setPromptBusySlug(null))
+      .finally(() => { promptLock.current = false })
   }
 
   const viewPrompt = (expert: ExpertView, returnFocus: HTMLButtonElement): void => {
@@ -1175,53 +1220,45 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     const total = state.experts.length
     if (state.experts.some(expert => expert.conflict)) nodes.push(React.createElement('div', { key: 'conflicts', className: 'aag-error', role: 'alert' }, props.t('custom.nameConflictHint')))
     const hasFilter = normalizeExpertQuery(query) !== '' || division !== '' || status !== ''
-    const resetFilters = (): void => { setQuery(''); setDivision(''); setStatus('') }
-    nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
-      props.sharedHeader ? null : React.createElement('div', { className: 'aag-title-row' },
-        props.sharedHeader ? null : React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')),
-        props.sharedHeader ? null : settingsGithubLinks(props.t),
+    const resetFilters = (): void => { setSource('all'); setQuery(''); setDivision(''); setStatus('') }
+    if (!props.sharedHeader) nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
+      React.createElement('div', { className: 'aag-title-row' },
+        React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')),
+        settingsGithubLinks(props.t),
         React.createElement('span', { className: 'aag-header-stat' },
           React.createElement('strong', null, total),
           props.t(total === 1 ? 'summary.total.one' : 'summary.total.other', { count: total })),
         React.createElement('span', { className: 'aag-header-stat' },
           props.t('summary.enabledPrefix'),
-          React.createElement('strong', null, enabledCount))),
-      React.createElement('div', { className: 'aag-actions' },
-        React.createElement(Button, { variant: 'primary', size: 'sm', disabled: isSaving, onClick: () => openEditor() }, props.t('custom.new')),
-        React.createElement(Button, {
-          variant: 'outline', size: 'sm', disabled: isSaving, onClick: load,
-          title: props.t('btn.refresh'), 'aria-label': props.t('btn.refresh'),
-          icon: React.createElement(RefreshCw, { size: 16, strokeWidth: 1.8, 'aria-hidden': true }),
-        }))))
-    nodes.push(React.createElement('div', { key: 'sources', className: 'aag-custom-tabs' }, React.createElement(SegmentedTabs, {
-      className: 'aag-library-tabs', label: props.t('custom.source'), value: source,
-      onChange: (value: string) => setSource(value === 'base' || value === 'custom' ? value : 'all'),
-      items: [
-        { value: 'all' as const, label: props.t('custom.all'), id: 'aag-expert-source-all', panelId: 'aag-expert-source-panel' },
-        { value: 'base' as const, label: props.t('custom.base'), id: 'aag-expert-source-base', panelId: 'aag-expert-source-panel' },
-        { value: 'custom' as const, label: props.t('custom.source'), id: 'aag-expert-source-custom', panelId: 'aag-expert-source-panel' },
-      ],
-    })))
+          React.createElement('strong', null, enabledCount)))))
+    const filterActions = React.createElement('div', { className: 'aag-filter-actions' },
+      React.createElement(Button, { type: 'primary', disabled: isSaving, onClick: () => openEditor() }, props.t('custom.new')))
     if (notice !== null) nodes.push(React.createElement('div', { key: 'notice', className: 'aag-custom-notice', role: 'status' }, notice))
     nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters aag-card-filters' },
+      React.createElement('div', { className: 'aag-field aag-field-source' },
+        React.createElement(CategorySelect, {
+          id: 'aag-filter-source', value: source, label: props.t('settings.filter.source'),
+          onChange: (value) => setSource(value === 'base' || value === 'custom' ? value : 'all'),
+          options: [
+            { value: 'all', label: props.t('settings.filter.allSources') },
+            { value: 'base', label: props.t('custom.base') },
+            { value: 'custom', label: props.t('custom.source') },
+          ],
+        })),
       React.createElement('div', { className: 'aag-field aag-field-category' },
-        React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-category' }, props.t('settings.filter.category')),
         React.createElement(CategorySelect, {
           id: 'aag-filter-category',
           value: division,
+          label: props.t('settings.filter.category'),
           onChange: setDivision,
           options: [...new Set([...expertDivisionFilterValues(), ...state.experts.map(expert => expert.division)])].map((value) => ({
             value,
-            label: props.t('settings.filter.option', {
-              name: value === '' ? props.t('settings.filter.all') : inputTriggerSourceName(value, props.getActive()),
-              count: value === '' ? total : state.experts.filter(expert => expert.division === value).length,
-            }),
+            label: value === '' ? props.t('settings.filter.allCategories') : inputTriggerSourceName(value, props.getActive()),
           })),
         })),
       React.createElement('div', { className: 'aag-field aag-field-status' },
-        React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-status' }, props.t('settings.filter.status')),
         React.createElement(CategorySelect, {
-          id: 'aag-filter-status', value: status, onChange: setStatus,
+          id: 'aag-filter-status', value: status, label: props.t('settings.filter.status'), onChange: setStatus,
           options: [
             { value: '', label: props.t('settings.filter.allStatuses') },
             { value: 'enabled', label: props.t('settings.enabled') },
@@ -1229,28 +1266,25 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           ],
         })),
       React.createElement('div', { className: 'aag-field aag-field-search' },
-        React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-search' }, props.t('settings.search')),
         React.createElement('div', { className: 'aag-search-wrap' },
           React.createElement(Input, {
-            id: 'aag-filter-search', className: 'aag-search', type: 'search', value: query,
-            icon: React.createElement(Search, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }),
+            id: 'aag-filter-search', className: 'aag-search', allowClear: { clearIcon: React.createElement('span', { 'aria-label': props.t('settings.search.clear') }) },
+            value: query, prefix: React.createElement(Search, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }),
             autoComplete: 'off', spellCheck: false, placeholder: props.t('settings.search.placeholder'),
             'aria-label': props.t('settings.search'),
             onChange: (event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.currentTarget.value),
-          }),
-          query !== '' ? React.createElement('button', {
-            type: 'button', className: 'aag-search-clear', 'aria-label': props.t('settings.search.clear'), onClick: () => setQuery(''),
-          }, React.createElement(X, { size: 18, strokeWidth: 1.8, 'aria-hidden': true })) : null))))
+          }))),
+      filterActions))
     if (filtered.length === 0) {
       nodes.push(React.createElement('div', { key: 'empty', className: 'aag-empty' },
-        React.createElement('div', null, source === 'custom' && !hasFilter ? props.t('custom.emptyTitle') : props.t('settings.empty', { all: props.t('settings.filter.all') })),
+        React.createElement('div', null, source === 'custom' && !hasFilter ? props.t('custom.emptyTitle') : props.t('settings.empty', { all: props.t('settings.filter.allCategories') })),
         source === 'custom' && !hasFilter ? React.createElement('p', { className: 'aag-note' }, props.t('custom.emptyHint')) : null,
-        source === 'custom' && !hasFilter ? React.createElement(Button, { variant: 'primary', size: 'sm', onClick: () => openEditor() }, props.t('custom.new')) : null,
-        hasFilter ? React.createElement(Button, { variant: 'outline', size: 'sm', onClick: resetFilters }, props.t('settings.empty.reset')) : null))
+        source === 'custom' && !hasFilter ? React.createElement(Button, { type: 'primary', onClick: () => openEditor() }, props.t('custom.new')) : null,
+        hasFilter ? React.createElement(Button, { onClick: resetFilters }, props.t('settings.empty.reset')) : null))
     } else {
-      nodes.push(React.createElement('div', { key: 'cards', className: 'aag-expert-grid' }, filtered.map((expert) => {
+      nodes.push(React.createElement(ExpertCardWindow, {
+        key: 'cards', items: filtered, resetKey: `${source}\0${division}\0${status}\0${query}`, render: (expert: ExpertView) => {
         const enabled = state.enabled.has(expert.slug)
-        const busy = promptBusySlug === expert.slug
         const avatar = EXPERT_AVATAR_URLS[expert.custom ? expert.avatar ?? 0 : expertAvatarIndexForDivision(expert.slug, expert.division)] ?? EXPERT_AVATAR_URLS[0]
         return React.createElement(LibraryCard, {
           key: expert.slug,
@@ -1260,18 +1294,18 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           description: displayDescription(expert, props.getActive()),
           enabled, disabled: isSaving || expert.conflict === true,
           enabledLabel: props.t('settings.enabled'), disabledLabel: props.t('settings.disabled'),
-          toggle: () => toggle(expert.slug), moreLabel: props.t('custom.more'),
+          toggle: () => toggle(expert.slug),
           moreItems: [
-            { id: 'edit', label: props.t(expert.custom ? 'custom.edit' : 'custom.copy'), disabled: isSaving || promptBusySlug !== null, onSelect: () => openEditor(expert) },
+            { id: 'edit', label: props.t(expert.custom ? 'custom.edit' : 'custom.copy'), disabled: isSaving, onSelect: () => openEditor(expert) },
             ...(expert.custom ? [{ id: 'delete', label: props.t('custom.delete'), danger: true, disabled: isSaving, onSelect: () => { setDeleting(expert); setDeleteError(null) } }] : []),
           ],
           actions: React.createElement(React.Fragment, null,
-            React.createElement('button', { type: 'button', className: 'aag-card-action', disabled: promptBusySlug !== null, 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
-              React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), busy ? props.t('settings.promptLoading') : props.t('settings.viewPrompt')),
-            React.createElement('button', { type: 'button', className: 'aag-card-action aag-card-action-primary', disabled: promptBusySlug !== null, onClick: () => copyPrompt(expert) },
+            React.createElement('button', { type: 'button', className: 'aag-card-action', 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
+              React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), props.t('settings.viewPrompt')),
+            React.createElement('button', { type: 'button', className: 'aag-card-action aag-card-action-primary', onClick: () => copyPrompt(expert) },
               React.createElement(Copy, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPrompt'))),
         })
-      })))
+      } }))
     }
   }
   return React.createElement('section', { className: 'aag-section', id: 'aag-expert-source-panel' }, nodes,
@@ -1300,24 +1334,24 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
     React.createElement('span', { className: 'aag-tab-count', 'aria-hidden': true }, React.createElement('strong', null, total)),
     React.createElement('span', { className: 'aag-tab-count', 'aria-hidden': true }, props.t('summary.enabledPrefix'), React.createElement('strong', null, enabled)),
   )
-  const navigation = React.createElement(SegmentedTabs, {
-    className: 'aag-library-tabs', label: tx('专家库类型'), value: view,
-    onChange: (value) => { if (value === 'experts' || value === 'teams') setView(value) },
-    items: [
-      { value: 'experts' as const, label: tabLabel(tx('专家'), expertSummary.total, expertSummary.enabled), id: 'aag-library-tab-experts', panelId: 'aag-library-panel-experts' },
-      { value: 'teams' as const, label: tabLabel(tx('专家团'), teamSummary.total, teamSummary.enabled), id: 'aag-library-tab-teams', panelId: 'aag-library-panel-teams' },
+  const navigation = React.createElement(Segmented, {
+    block: true, className: 'aag-library-tabs', 'aria-label': tx('专家库类型'), value: view,
+    onChange: (value: unknown) => { if (value === 'experts' || value === 'teams') setView(value) },
+    options: [
+      { value: 'experts' as const, label: tabLabel(tx('专家'), expertSummary.total, expertSummary.enabled) },
+      { value: 'teams' as const, label: tabLabel(tx('专家团'), teamSummary.total, teamSummary.enabled) },
     ],
   })
   // 两个名册都保持挂载，切换时不丢失筛选，也不重新等待第一次加载。
-  return React.createElement('section', { className: 'aag-section aag-library-shell' },
+  return React.createElement(AntdProvider, { locale: antdLocale(props.getActive()) }, React.createElement('section', { className: 'aag-section aag-library-shell' },
     React.createElement('header', { className: 'aag-toolbar' }, React.createElement('div', { className: 'aag-title-row' },
       React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')), settingsGithubLinks(props.t))),
     React.createElement('div', { className: 'aag-library-navigation' }, navigation),
-    React.createElement('div', { id: 'aag-library-panel-experts', role: 'tabpanel', 'aria-labelledby': 'aag-library-tab-experts', hidden: view !== 'experts' }, React.createElement(ExpertCardsSettings, { ...props, sharedHeader: true, onSummary: setExpertSummary })),
-    React.createElement('div', { id: 'aag-library-panel-teams', role: 'tabpanel', 'aria-labelledby': 'aag-library-tab-teams', hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
+    React.createElement('div', { id: 'aag-library-panel-experts', hidden: view !== 'experts' }, React.createElement(ExpertCardsSettings, { ...props, sharedHeader: true, onSummary: setExpertSummary })),
+    React.createElement('div', { id: 'aag-library-panel-teams', hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
       remote: props.remote as TeamRemote, sharedHeader: true, onSummary: setTeamSummary, prepareSelect: props.prepareTeamSelection,
       onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) },
-    }))))
+    })))))
 }
 export const inject = ['slots', 'inputTriggers', 'locale', 'remote', 'sessions', 'conversation']
 

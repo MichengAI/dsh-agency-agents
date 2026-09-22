@@ -3,8 +3,93 @@ import { LibraryEditorFooter } from './library-ui.js';
 import React from 'react';
 import { effectiveCoordinator, BUILTIN_TEAMS, TEAM_PROMPTS, teamInputSchema, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
-import { TeamDialog, TeamConfirm, Avatar, IconChevronDown, IconPlus, IconTrash, IconRefresh, } from './team-shared.js';
+import { Button, Input } from './antd-ui.js';
+import { CategorySelect } from './category-select.js';
+import { EN_DIVISION, ZH_DIVISION } from '../names.js';
+import { TeamDialog, TeamConfirm, Avatar, IconPlus, IconTrash, IconRefresh, IconSearch, } from './team-shared.js';
 import { TeamDetails } from './team-ui.js';
+
+const PICKER_ROW = 72
+
+/** 只挂载可见行。一次渲染三百多位专家会把打开弹窗卡住。 */
+function MemberPicker(props: {
+    experts: readonly ExpertSummary[]
+    locale: 'zh' | 'en'
+    query: string
+    source: 'all' | 'base' | 'custom'
+    division: string
+    taken: readonly { expertSlug: string }[]
+    replacing: number
+    tx(key: string): string
+    onQuery(value: string): void
+    onSource(value: 'all' | 'base' | 'custom'): void
+    onDivision(value: string): void
+    onPick(expert: ExpertSummary): void
+    close(): void
+}) {
+    const names = props.locale === 'en' ? EN_DIVISION : ZH_DIVISION
+    const options = React.useMemo(() => {
+        const values = [...new Set(props.experts.map((expert) => expert.division))]
+        values.sort((left, right) => (names[left] ?? left).localeCompare(names[right] ?? right, props.locale))
+        return [{ value: '', label: props.tx("全部分类") }, ...values.map((value) => ({ value, label: names[value] ?? value }))]
+    }, [props.experts, props.locale, names, props.tx])
+    const needle = props.query.trim().toLowerCase()
+    const matches = props.experts.filter((expert) => !expert.conflict
+        && !props.taken.some((member, index) => member.expertSlug === expert.slug && index !== props.replacing)
+        && (props.source === 'all' || expert.custom === (props.source === 'custom'))
+        && (props.division === '' || expert.division === props.division)
+        && (needle === '' || `${expert.name} ${expert.nameEn} ${expert.description}`.toLowerCase().includes(needle)))
+    const scroller = React.useRef<HTMLDivElement>(null)
+    const [top, setTop] = React.useState(0)
+    const [height, setHeight] = React.useState(360)
+    React.useLayoutEffect(() => {
+        const node = scroller.current
+        if (node === null) return
+        const measure = () => setHeight(node.clientHeight)
+        measure()
+        const observer = new ResizeObserver(measure)
+        observer.observe(node)
+        return () => observer.disconnect()
+    }, [matches.length])
+    React.useEffect(() => {
+        scroller.current?.scrollTo({ top: 0 })
+        setTop(0)
+    }, [props.query, props.source, props.division])
+    const start = Math.max(0, Math.floor(top / PICKER_ROW) - 4)
+    const count = Math.ceil(height / PICKER_ROW) + 8
+    const slice = matches.slice(start, start + count)
+    return (<TeamDialog title={props.tx("选择团队成员")} close={props.close} className="agt-picker">
+      <div className="aag-filters aag-card-filters agt-picker-tools">
+        <div className="aag-field aag-field-source">
+          <CategorySelect id="agt-picker-source" value={props.source} label={props.tx("来源")} onChange={(value) => props.onSource(value === 'base' || value === 'custom' ? value : 'all')} options={[
+            { value: 'all', label: props.tx("全部来源") },
+            { value: 'base', label: props.tx("内置") },
+            { value: 'custom', label: props.tx("自定义") },
+          ]}/>
+        </div>
+        <div className="aag-field aag-field-category">
+          <CategorySelect id="agt-picker-category" value={props.division} label={props.tx("分类")} onChange={props.onDivision} options={options}/>
+        </div>
+        <div className="aag-field aag-field-search">
+          <div className="aag-search-wrap">
+            <Input className="aag-search" aria-label={props.tx("搜索团队成员")} autoFocus autoComplete="off" spellCheck={false} allowClear={{ clearIcon: <span aria-label={props.tx("清除搜索")}/> }} placeholder={props.tx("搜索专家、职责或领域")} prefix={<IconSearch size={16}/>} value={props.query} onChange={(event) => props.onQuery(event.target.value)}/>
+          </div>
+        </div>
+      </div>
+      <div className="agt-picker-list" ref={scroller} onScroll={(event) => setTop(event.currentTarget.scrollTop)}>
+        {matches.length === 0 ? <p className="agt-help">{props.tx("没有匹配的专家")}</p> : <div style={{ height: matches.length * PICKER_ROW, position: 'relative' }}>
+          {slice.map((expert, index) => (<button type="button" key={expert.slug} style={{ position: 'absolute', top: (start + index) * PICKER_ROW, left: 0, right: 0, height: PICKER_ROW }} onClick={() => props.onPick(expert)}>
+            <Avatar expert={expert} size={40}/>
+            <span>
+              <strong>{expert.name}</strong>
+              <small>{names[expert.division] ?? expert.division} · {expert.description}</small>
+            </span>
+          </button>))}
+        </div>}
+      </div>
+    </TeamDialog>)
+}
+
 const fresh = (tx: (key: string) => string): TeamInput => ({
     name: '',
     description: '',
@@ -34,8 +119,6 @@ export function TeamEditor(props: {
     const [draft, setDraft] = React.useState<TeamInput>(() => structuredClone(props.initial ?? fresh(tx)));
     const [tagsInput, setTagsInput] = React.useState(() => draft.tags.join('，'));
     const tags = tagsInput.split(/[,，]/u).map(value => value.trim()).filter(Boolean);
-    const tagsField = React.useRef<HTMLInputElement>(null);
-    const promptField = React.useRef<HTMLTextAreaElement>(null);
     const original = React.useRef(JSON.stringify(draft));
     const form = React.useRef<HTMLFormElement>(null);
     const [busy, setBusy] = React.useState(false);
@@ -47,6 +130,8 @@ export function TeamEditor(props: {
     const latestTeam = review?.teams.find((team) => team.id === draft.id);
     const [picker, setPicker] = React.useState<number | null>(null);
     const [query, setQuery] = React.useState('');
+    const [pickerSource, setPickerSource] = React.useState<'all' | 'base' | 'custom'>('all');
+    const [pickerDivision, setPickerDivision] = React.useState('');
     const [confirm, setConfirm] = React.useState<'discard' | 'restore' | 'enable' | null>(null);
     const [preview, setPreview] = React.useState(false);
     const patch = (next: Partial<TeamInput>) => setDraft((value) => ({ ...value, ...next }));
@@ -67,12 +152,12 @@ export function TeamEditor(props: {
             return;
         if (tags.length > 3 || tags.some(tag => Array.from(tag).length > 16)) {
             setError(tx("场景标签：最多 3 个，每个标签最多 16 个字符。"));
-            tagsField.current?.focus();
+            form.current?.querySelector<HTMLElement>('[name="tags"]')?.focus();
             return;
         }
         if (draft.coordinatorMode === 'custom' && (!draft.coordinatorPrompt.trim() || Array.from(draft.coordinatorPrompt).length > 12000)) {
             setError(tx("主理人提示词：请填写 1～12000 个字符。"));
-            promptField.current?.focus();
+            form.current?.querySelector<HTMLElement>('[name="coordinatorPrompt"]')?.focus();
             return;
         }
         const parsed = teamInputSchema.safeParse({ ...draft, tags });
@@ -130,7 +215,7 @@ export function TeamEditor(props: {
     </section>);
     const field = (label: string, key: 'name' | 'description' | 'goal' | 'constraints' | 'deliveryRequirements', max: number, multi = false) => (<label className="aag-custom-field">
       <span>{label}{key !== 'constraints' && <small>{tx("必填")}</small>}</span>
-      {multi ? (<textarea aria-label={label} name={key} className="aag-control" value={draft[key]} maxLength={max} onChange={(e) => patch({ [key]: e.target.value })} rows={key === 'description' ? 2 : 3} required={key !== 'constraints'}/>) : (<input aria-label={label} name={key} className="aag-control" value={draft[key]} maxLength={max} required={key !== 'constraints'} onChange={(e) => patch({ [key]: e.target.value })}/>)}
+      {multi ? (<Input.TextArea aria-label={label} name={key} value={draft[key]} maxLength={max} onChange={(e) => patch({ [key]: e.target.value })} rows={key === 'description' ? 2 : 3} required={key !== 'constraints'}/>) : (<Input aria-label={label} name={key} value={draft[key]} maxLength={max} required={key !== 'constraints'} onChange={(e) => patch({ [key]: e.target.value })}/>)}
     </label>);
     return (<TeamDialog title={props.initial?.id ? tx("编辑专家团") : tx("新建专家团")} close={close} className="agt-editor">
       <form ref={form} onSubmit={(e) => {
@@ -145,20 +230,22 @@ export function TeamEditor(props: {
                   {field(tx("一句话简介"), 'description', 160, true)}
                   <label className="aag-custom-field">
                     <span>{tx("场景标签")}</span>
-                    <input ref={tagsField} aria-label={tx("场景标签")} name="tags" className="aag-control" value={tagsInput} placeholder={tx("最多 3 个，用逗号分隔")} onChange={(e) => setTagsInput(e.target.value)}/>
+                    <Input aria-label={tx("场景标签")} name="tags" value={tagsInput} placeholder={tx("最多 3 个，用逗号分隔")} onChange={(e) => setTagsInput(e.target.value)}/>
                     <small>{tx("场景标签：最多 3 个，每个标签最多 16 个字符。")}</small>
                   </label>
                   <p className="agt-help">{tx("团队头像由成员头像自动组成。")}</p>
-                  <button type="button" onClick={() => setPreview(true)}>{tx("预览")}</button>
+                  <Button onClick={() => setPreview(true)}>{tx("预览")}</Button>
                 </>)}
               {section(tx("团队成员"), <>
                   <div className="agt-row">
                     <span>{draft.members.length} / 8</span>
-                    <button type="button" disabled={draft.members.length >= 8} onClick={() => {
+                    <Button disabled={draft.members.length >= 8} onClick={() => {
                 setQuery('');
+                setPickerSource('all');
+                setPickerDivision('');
                 setPicker(-1);
             }}>
-                      <IconPlus />{tx("添加成员")}</button>
+                      <IconPlus />{tx("添加成员")}</Button>
                   </div>
                   {draft.members.map((m, i) => (<div className="agt-edit-member" key={m.expertSlug}>
                       <div className="agt-row">
@@ -167,20 +254,22 @@ export function TeamEditor(props: {
                           {props.experts.find((e) => e.slug === m.expertSlug)
                     ?.name ?? tx("成员已失效")}
                         </strong>
-                        <button type="button" onClick={() => {
+                        <Button onClick={() => {
                     setQuery('');
+                    setPickerSource('all');
+                    setPickerDivision('');
                     setPicker(i);
                 }}>
-                          <IconRefresh />{tx("替换")}</button>
-                        <button type="button" aria-label={tx("删除成员 {0}", [i + 1])} onClick={() => patch({
+                          <IconRefresh />{tx("替换")}</Button>
+                        <Button aria-label={tx("删除成员 {0}", [i + 1])} onClick={() => patch({
                     members: draft.members.filter((_, n) => n !== i),
                 })}>
                           <IconTrash />
-                        </button>
+                        </Button>
                       </div>
                       <label className="aag-custom-field">
                         <span>{tx("职责摘要")}</span>
-                        <input className="aag-control" value={m.duty} maxLength={100} onChange={(e) => patch({
+                        <Input aria-label={tx("职责摘要")} value={m.duty} maxLength={100} onChange={(e) => patch({
                     members: draft.members.map((v, n) => n === i ? { ...v, duty: e.target.value } : v),
                 })}/>
                       </label>
@@ -188,29 +277,29 @@ export function TeamEditor(props: {
                         <summary>{tx("展开详细分工")}</summary>
                         <label className="aag-custom-field">
                           <span>{tx("详细分工")}</span>
-                          <textarea className="aag-control" value={m.instructions} maxLength={2000} rows={3} onChange={(e) => patch({
+                          <Input.TextArea aria-label={tx("详细分工")} value={m.instructions} maxLength={2000} rows={3} onChange={(e) => patch({
                     members: draft.members.map((v, n) => n === i
                         ? { ...v, instructions: e.target.value }
                         : v),
                 })}/>
                         </label>
                         <div className="agt-row">
-                          <button type="button" disabled={i === 0} onClick={() => {
+                          <Button disabled={i === 0} onClick={() => {
                     const members = [...draft.members];
                     [members[i - 1], members[i]] = [
                         members[i],
                         members[i - 1],
                     ];
                     patch({ members });
-                }}>{tx("上移")}</button>
-                          <button type="button" disabled={i === draft.members.length - 1} onClick={() => {
+                }}>{tx("上移")}</Button>
+                          <Button disabled={i === draft.members.length - 1} onClick={() => {
                     const members = [...draft.members];
                     [members[i + 1], members[i]] = [
                         members[i],
                         members[i + 1],
                     ];
                     patch({ members });
-                }}>{tx("下移")}</button>
+                }}>{tx("下移")}</Button>
                         </div>
                       </details>
                     </div>))}
@@ -224,17 +313,17 @@ export function TeamEditor(props: {
                   <p className="agt-help">{tx("定义如何分配任务、处理分歧并汇总专家结果")}</p>
                   <div className="agt-row">
                     <div className="agt-segment">
-                      <button type="button" aria-pressed={draft.coordinatorMode === 'template'} onClick={() => patch({ coordinatorMode: 'template' })}>{tx("团队模板")}</button>
-                      <button type="button" aria-pressed={draft.coordinatorMode === 'custom'} onClick={() => patch({
+                      <Button type={draft.coordinatorMode === 'template' ? 'primary' : 'default'} aria-pressed={draft.coordinatorMode === 'template'} onClick={() => patch({ coordinatorMode: 'template' })}>{tx("团队模板")}</Button>
+                      <Button type={draft.coordinatorMode === 'custom' ? 'primary' : 'default'} aria-pressed={draft.coordinatorMode === 'custom'} onClick={() => patch({
                 coordinatorMode: 'custom',
                 coordinatorPrompt: draft.coordinatorPrompt ||
                     effectiveCoordinator(draft, locale),
-            })}>{tx("自定义")}</button>
+            })}>{tx("自定义")}</Button>
                     </div>
-                    <button type="button" onClick={() => setConfirm('restore')}>
-                      <IconRefresh />{tx("恢复团队模板")}</button>
+                    <Button onClick={() => setConfirm('restore')}>
+                      <IconRefresh />{tx("恢复团队模板")}</Button>
                   </div>
-                  <textarea ref={promptField} name="coordinatorPrompt" className="aag-control agt-prompt" aria-label={tx("主理人提示词正文")} readOnly={draft.coordinatorMode === 'template'} value={effectiveCoordinator(draft, locale)} onChange={(e) => patch({ coordinatorPrompt: e.target.value })}/>
+                  <Input.TextArea name="coordinatorPrompt" className="agt-prompt" aria-label={tx("主理人提示词正文")} readOnly={draft.coordinatorMode === 'template'} value={effectiveCoordinator(draft, locale)} onChange={(e) => patch({ coordinatorPrompt: e.target.value })}/>
                   <p className="agt-help">{tx("目标、约束、成员分工和交付要求会自动加入，无需重复填写。")}<span className="agt-count">
                       {Array.from(effectiveCoordinator(draft, locale)).length} / 12000
                     </span>
@@ -243,29 +332,29 @@ export function TeamEditor(props: {
               {section(tx("任务示例"), <>
                   {draft.examples.map((example, i) => (<label key={i} className="aag-custom-field">
                       <span>{tx("任务示例")}{i + 1}</span>
-                      <textarea className="aag-control" value={example} maxLength={1000} rows={2} onChange={(e) => patch({
+                      <Input.TextArea aria-label={`${tx("任务示例")}${i + 1}`} value={example} maxLength={1000} rows={2} onChange={(e) => patch({
                     examples: draft.examples.map((v, n) => n === i ? e.target.value : v),
                 })}/>
-                      <button type="button" disabled={draft.examples.length <= 1} onClick={() => patch({
+                      <Button disabled={draft.examples.length <= 1} onClick={() => patch({
                     examples: draft.examples.filter((_, n) => n !== i),
-                })}>{tx("移除此示例")}</button>
+                })}>{tx("移除此示例")}</Button>
                     </label>))}
-                  <button type="button" disabled={draft.examples.length >= 3} onClick={() => patch({ examples: [...draft.examples, ''] })}>
-                    <IconPlus />{tx("添加示例")}</button>
+                  <Button disabled={draft.examples.length >= 3} onClick={() => patch({ examples: [...draft.examples, ''] })}>
+                    <IconPlus />{tx("添加示例")}</Button>
                 </>)}
             </fieldset>
             {error && (<div className="aag-error" role="alert">
                 {error}
               </div>)}
             {needsReview && (<section className="aag-custom-review">
-                <button type="button" disabled={busy} onClick={() => {
+                <Button disabled={busy} onClick={() => {
                 setBusy(true);
                 void props
                     .refresh()
                     .then(setReview)
                     .catch((cause) => setError(cause instanceof Error ? tx(cause.message) : tx("刷新失败。")))
                     .finally(() => setBusy(false));
-            }}>{tx("读取最新配置")}</button>
+            }}>{tx("读取最新配置")}</Button>
                 {review && (<>
                     <h4>{tx("最新内容")}</h4>
                     {latestTeam ? (<>
@@ -282,12 +371,12 @@ export function TeamEditor(props: {
                             {props.experts.find((expert) => expert.slug === member.expertSlug)?.name ?? tx("成员已失效")}
                             ：{member.duty}。{member.instructions}
                           </p>))}
-                        <textarea className="aag-control" aria-label={tx("最新主理人提示词")} readOnly value={effectiveCoordinator(latestTeam, locale)} rows={8}/>
+                        <Input.TextArea aria-label={tx("最新主理人提示词")} readOnly value={effectiveCoordinator(latestTeam, locale)} rows={8}/>
                       </>) : (<p>{tx("该专家团已被删除，保留草稿将另存为新团队。")}</p>)}
                     <p>{tx("请核对差异，再选择保留草稿或采用最新配置。")}</p>
                     <div className="aag-custom-review-actions">
-                      <button type="button" onClick={() => continueReview(false)}>{tx("保留我的草稿")}</button>
-                      {review.teams.some((team) => team.id === draft.id) && (<button type="button" onClick={() => continueReview(true)}>{tx("使用最新内容")}</button>)}
+                      <Button onClick={() => continueReview(false)}>{tx("保留我的草稿")}</Button>
+                      {review.teams.some((team) => team.id === draft.id) && (<Button onClick={() => continueReview(true)}>{tx("使用最新内容")}</Button>)}
                     </div>
                   </>)}
               </section>)}{' '}
@@ -316,37 +405,19 @@ export function TeamEditor(props: {
                 ? tx("只恢复主理人规则，不修改成员分工、目标或交付要求。") : tx("未保存的表单改动将丢弃。")}
           </p>
         </TeamConfirm>)}
-      {picker !== null && (<TeamDialog title={tx("选择团队成员")} close={() => setPicker(null)} className="agt-picker">
-          <h2>{tx("选择团队成员")}</h2>
-          <input className="aag-control" aria-label={tx("搜索团队成员")} autoFocus placeholder={tx("搜索专家名称或领域")} value={query} onChange={(e) => setQuery(e.target.value)}/>
-          <div className="agt-picker-list">
-            {props.experts
-                .filter((e) => !e.conflict &&
-                !draft.members.some((m, i) => m.expertSlug === e.slug && i !== picker) &&
-                `${e.name} ${e.nameEn} ${e.description}`
-                    .toLowerCase()
-                    .includes(query.toLowerCase()))
-                .map((e) => (<button type="button" key={e.slug} onClick={() => {
-                    const m = {
-                        expertSlug: e.slug,
-                        duty: e.description.slice(0, 100) || tx("提供本专业分析"),
-                        instructions: e.description || tx("从自身专业角度分析任务，给出结论、依据和建议。"),
-                    };
-                    patch({
-                        members: picker === -1
-                            ? [...draft.members, m]
-                            : draft.members.map((v, i) => i === picker ? { ...v, expertSlug: e.slug } : v),
-                    });
-                    setPicker(null);
-                }}>
-                  <Avatar expert={e}/>
-                  <span>
-                    <strong>{e.name}</strong>
-                    <small>{e.description}</small>
-                  </span>
-                </button>))}
-          </div>
-        </TeamDialog>)}
+      {picker !== null && (<MemberPicker experts={props.experts} locale={locale} query={query} source={pickerSource} division={pickerDivision} taken={draft.members} replacing={picker} tx={tx} onQuery={setQuery} onSource={setPickerSource} onDivision={setPickerDivision} close={() => setPicker(null)} onPick={(expert) => {
+            const member = {
+                expertSlug: expert.slug,
+                duty: expert.description.slice(0, 100) || tx("提供本专业分析"),
+                instructions: expert.description || tx("从自身专业角度分析任务，给出结论、依据和建议。"),
+            };
+            patch({
+                members: picker === -1
+                    ? [...draft.members, member]
+                    : draft.members.map((value, index) => index === picker ? { ...value, expertSlug: expert.slug } : value),
+            });
+            setPicker(null);
+        }}/>)}
       {preview && (<TeamDetails team={{ ...draft, tags, id: draft.id ?? 'team-preview', builtin: false }} experts={props.experts} close={() => setPreview(false)}/>)}
     </TeamDialog>);
 }

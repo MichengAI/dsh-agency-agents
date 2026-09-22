@@ -62,8 +62,7 @@
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-api-remotes",
         "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-client-ui-input-trigger",
-        "@deepseek-ai/dsh-client-ui-primitives"
+        "@deepseek-ai/dsh-client-ui-input-trigger"
       ],
       "platform": "web"
     }
@@ -120,7 +119,6 @@
     "@deepseek-ai/dsh-client-locale": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-client-ui-conversation": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-client-ui-input-trigger": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-client-ui-primitives": "0.1.7-alpha.1",
     "@deepseek-ai/dsh-client-ui-settings": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-host-webserver": "0.1.6-alpha.2",
@@ -146,6 +144,7 @@
     "@types/node": "^22.20.0",
     "@types/react": "~18.3.1",
     "@types/react-dom": "18.3.7",
+    "antd": "^6.6.5",
     "react": "^18.2.0",
     "react-dom": "18.3.1",
     "tsdown": "^0.22.2",

@@ -1,6 +1,6 @@
+import { AntdProvider, Button, Modal, Switch } from './antd-ui.js'
+import { useEscapeLayer } from './escape-layer.js'
 import React from 'react'
-import { Button, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
-import { Switch } from './host-switch.js'
 
 export interface LibraryMenuItem {
   id: string
@@ -31,11 +31,11 @@ export function LibraryEditorFooter(props: {
     >
       <p className="aag-note">{props.help}</p>
       <div>
-        <Button variant="outline" size="sm" disabled={props.busy} onClick={props.close}>{props.cancelLabel}</Button>
+        <Button disabled={props.busy} onClick={props.close}>{props.cancelLabel}</Button>
         {!props.editing && (
-          <Button variant="outline" size="sm" disabled={props.busy || props.blocked} onClick={props.save}>{props.saveLabel}</Button>
+          <Button disabled={props.busy || props.blocked} onClick={props.save}>{props.saveLabel}</Button>
         )}
-        <Button variant="primary" size="sm" disabled={props.busy || props.blocked} onClick={props.primary}>{props.primaryLabel}</Button>
+        <Button type="primary" disabled={props.busy || props.blocked} onClick={props.primary}>{props.primaryLabel}</Button>
       </div>
     </footer>
   )
@@ -54,10 +54,8 @@ export function LibraryCard(props: {
   toggle(): void
   actions: React.ReactNode
   moreItems: readonly LibraryMenuItem[]
-  moreLabel: string
   testId?: string
 }) {
-  const [moreOpen, setMoreOpen] = React.useState(false)
   return (
     <article className="aag-expert-card" data-testid={props.testId}>
       <div className="aag-card-body">
@@ -75,7 +73,7 @@ export function LibraryCard(props: {
           <Switch
             checked={props.enabled}
             disabled={props.disabled}
-            label={`${props.name}：${props.enabled ? props.enabledLabel : props.disabledLabel}`}
+            aria-label={`${props.name}：${props.enabled ? props.enabledLabel : props.disabledLabel}`}
             title={props.enabled ? props.enabledLabel : props.disabledLabel}
             onChange={() => props.toggle()}
           />
@@ -84,64 +82,23 @@ export function LibraryCard(props: {
           </span>
         </div>
       </div>
-      <div className="aag-card-actions aag-card-actions-with-more">
-        <Menu
-          className="aag-card-more-anchor"
-          open={moreOpen}
-          side="top"
-          align="end"
-          portal
-          compact
-          onClose={() => setMoreOpen(false)}
-          onSelect={(id) => {
-            setMoreOpen(false)
-            props.moreItems.find((item) => item.id === id)?.onSelect()
-          }}
-          items={props.moreItems.map((item) => ({
-            id: item.id,
-            label: item.label,
-            disabled: item.disabled,
-            danger: item.danger,
-          }))}
-          anchor={(
-            <button
-              type="button"
-              className="aag-card-more"
-              aria-label={`${props.name} · ${props.moreLabel}`}
-              aria-expanded={moreOpen}
-              title={props.moreLabel}
-              onClick={() => setMoreOpen((current) => !current)}
-            >
-              ⋯
-            </button>
-          )}
-        />
+      <div className="aag-card-actions">
         {props.actions}
+        {props.moreItems.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={item.danger ? 'aag-card-action aag-card-action-danger' : 'aag-card-action'}
+            disabled={item.disabled}
+            title={item.label}
+            onClick={() => item.onSelect()}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
     </article>
   )
-}
-
-/** 原生弹窗统一恢复触发控件，兼容弹窗嵌套与异步打开。 */
-export function useLibraryDialog(
-  ref: React.RefObject<HTMLDialogElement>,
-  target?: HTMLElement,
-) {
-  React.useLayoutEffect(() => {
-    const node = ref.current
-    const previous =
-      target ??
-      (document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null)
-    node?.showModal()
-    return () => {
-      node?.close()
-      queueMicrotask(() => {
-        if (previous?.isConnected) previous.focus({ preventScroll: true })
-      })
-    }
-  }, [ref, target])
 }
 
 /** 删除、放弃修改及启用依赖使用同一种确认弹窗。 */
@@ -155,40 +112,29 @@ export function LibraryConfirm(props: {
   confirm(): void
   close(): void
 }) {
-  const ref = React.useRef<HTMLDialogElement>(null)
-  useLibraryDialog(ref)
-  const close = () => {
-    if (!props.busy) props.close()
-  }
+  useEscapeLayer(true, () => { if (!props.busy) props.close() })
   return (
-    <dialog
-      ref={ref}
-      className="aag-custom-delete"
-      aria-label={props.title}
-      onCancel={(event) => {
-        event.preventDefault()
-        event.stopPropagation()
-        close()
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault()
-          event.stopPropagation()
-          close()
-        }
-      }}
+    <AntdProvider>
+    <Modal
+      open
+      zIndex={1300}
+      keyboard={false}
+      title={props.title}
+      onCancel={() => { if (!props.busy) props.close() }}
+      maskClosable={!props.busy}
+      closable={!props.busy}
+      footer={[
+        <Button key="cancel" autoFocus disabled={props.busy} onClick={() => { if (!props.busy) props.close() }}>{props.cancelLabel}</Button>,
+        <Button key="confirm" type="primary" disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
+      ]}
     >
-      <h3>{props.title}</h3>
       {props.children}
       {props.error && (
         <p className="aag-error" role="alert">
           {props.error}
         </p>
       )}
-      <div className="aag-custom-delete-actions">
-        <Button variant="outline" size="sm" autoFocus disabled={props.busy} onClick={close}>{props.cancelLabel}</Button>
-        <Button variant="primary" size="sm" disabled={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>
-      </div>
-    </dialog>
+    </Modal>
+    </AntdProvider>
   )
 }

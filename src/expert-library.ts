@@ -80,10 +80,19 @@ export function createExpertLibrary(
   const assertUnique = (expert: ExpertSummary, others: readonly ExpertSummary[]): void => {
     if (others.some(other => overlaps(expert, other))) throw customError('duplicate', locale())
   }
+  // 内置名册不变时复用冲突结果。每次打开设置都全量两两比较会把名册请求拖慢。
+  let builtinMemo: { source: readonly ExpertSummary[]; experts: ExpertSummary[] } | undefined
+  const projectBuiltins = (builtins: readonly ExpertSummary[]): readonly ExpertSummary[] => {
+    if (builtinMemo?.source === builtins) return builtinMemo.experts
+    const experts = builtins.map(expert => ({ ...expert, conflict: builtins.some(other => other !== expert && overlaps(expert, other)) }))
+    builtinMemo = { source: builtins, experts }
+    return experts
+  }
   const project = (builtins: readonly ExpertSummary[], state: ReturnType<typeof read>): CatalogSnapshot => {
+    const ready = projectBuiltins(builtins)
     const custom = state.customExperts.filter(item => !item.deleted).map(summary)
-    const experts = [...builtins.map(expert => ({ ...expert, conflict: builtins.some(other => other !== expert && overlaps(expert, other)) })),
-      ...custom.map(expert => ({ ...expert, conflict: [...builtins, ...custom.filter(other => other !== expert)].some(other => overlaps(expert, other)) }))]
+    const experts = [...ready,
+      ...custom.map(expert => ({ ...expert, conflict: [...ready, ...custom.filter(other => other !== expert)].some(other => overlaps(expert, other)) }))]
     const available = new Set(experts.filter(expert => !expert.conflict).map(expert => expert.slug))
     return { experts, enabled: [...new Set(state.enabled.filter(slug => available.has(slug)))], revision: store.revision() }
   }

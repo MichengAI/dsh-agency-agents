@@ -1,4 +1,6 @@
-import { LibraryConfirm, LibraryEditorFooter, useLibraryDialog } from './library-ui.js'
+import { LibraryConfirm, LibraryEditorFooter } from './library-ui.js'
+import { Button, Drawer, Input } from './antd-ui.js'
+import { useEscapeLayer } from './escape-layer.js'
 import React from 'react'
 import { CategorySelect } from './category-select.js'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
@@ -22,7 +24,7 @@ export interface CustomEditorProps {
   readonly onClose: () => void
 }
 
-/** 原生 dialog 负责焦点约束，独立滚动表单和固定底栏适应设置页内的窄视口。 */
+/** 右侧抽屉承载表单，确认层用独立弹窗，避免被抽屉挡住。 */
 export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement {
   const [initial, setInitial] = React.useState(() => ({
     ...props.expert,
@@ -39,14 +41,13 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
   const saving = React.useRef(false)
   const [error, setError] = React.useState<string | null>(null)
   const [discard, setDiscard] = React.useState(false)
-  const dialog = React.useRef<HTMLDialogElement | null>(null)
   const form = React.useRef<HTMLFormElement | null>(null)
-  useLibraryDialog(dialog)
   const close = (): void => {
     if (saving.current) return
     if (JSON.stringify(draft) !== JSON.stringify(initial)) setDiscard(true)
     else props.onClose()
   }
+  useEscapeLayer(true, () => { if (discard) setDiscard(false); else close() })
   const set = (key: 'name' | 'description' | 'division' | 'prompt', value: string): void => {
     setDraft(current => ({ ...current, [key]: value }))
     setError(null)
@@ -93,26 +94,18 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
   }
   const label = (text: string, control: React.ReactNode, required = false): React.ReactElement => h('label', { className: 'aag-custom-field' },
     h('span', null, text, required ? h('small', null, props.t('custom.required')) : null), control)
-  const input = (key: 'name' | 'description', text: string, maxLength: number): React.ReactElement => h('input', {
-    className: 'aag-control', value: draft[key], maxLength, required: true, disabled: busy,
+  const input = (key: 'name' | 'description', text: string, maxLength: number): React.ReactElement => h(Input, {
+    value: draft[key], maxLength, required: true, disabled: busy,
     'aria-label': text, onChange: (event: React.ChangeEvent<HTMLInputElement>) => set(key, event.currentTarget.value),
     ...(key === 'name' ? { placeholder: props.t('custom.namePlaceholder') } : {}),
   })
-  return h('dialog', {
-    ref: dialog, role: 'dialog', 'aria-modal': true, className: 'aag-custom-dialog', 'aria-label': props.t(draft.slug ? 'custom.edit' : 'custom.new'),
-    onCancel: (event: React.SyntheticEvent) => { event.preventDefault(); event.stopPropagation(); if (discard) setDiscard(false); else close() },
-    onKeyDown: (event: React.KeyboardEvent) => {
-      if (event.key !== 'Escape') return
-      event.preventDefault()
-      event.stopPropagation()
-      if (discard) setDiscard(false)
-      else close()
-    },
+  return h(Drawer, {
+    open: true, keyboard: false, placement: 'right', size: 'min(560px, 100vw)', destroyOnHidden: true,
+    rootClassName: 'aag-editor-drawer', styles: { body: { padding: 0 } }, title: props.t(draft.slug ? 'custom.edit' : 'custom.new'),
+    onClose: () => { if (discard) setDiscard(false); else close() },
   },
-  h('header', { className: 'aag-custom-head' }, h('h3', null, props.t(draft.slug ? 'custom.edit' : 'custom.new')),
-    h('button', { type: 'button', className: 'aag-action', disabled: busy, onClick: close }, props.t('settings.promptClose'))),
   h('form', { ref: form, className: 'aag-custom-body', onSubmit: (event: React.FormEvent) => event.preventDefault(), inert: discard ? '' : undefined },
-    h('p', { className: 'aag-note' }, props.t('custom.intro')),
+    h('p', { className: 'aag-editor-intro' }, props.t('custom.intro')),
     h('fieldset', { className: 'aag-custom-avatars', disabled: busy }, h('legend', null, props.t('custom.avatar')),
       EXPERT_AVATAR_URLS.map((url, index) => h('button', {
         key: url, type: 'button', 'aria-label': `${props.t('custom.avatar')} ${index + 1}`,
@@ -120,8 +113,8 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
         onClick: () => setDraft(current => ({ ...current, avatar: index })),
       }, h('img', { src: url, width: 36, height: 36, alt: '', loading: 'lazy' })))),
     label(props.t('custom.name'), input('name', props.t('custom.name'), 40), true),
-    label(props.t('custom.description'), h('textarea', {
-      className: 'aag-control', value: draft.description, rows: 2, maxLength: 160, required: true, disabled: busy,
+    label(props.t('custom.description'), h(Input.TextArea, {
+      value: draft.description, rows: 2, maxLength: 160, required: true, disabled: busy,
       'aria-label': props.t('custom.description'), placeholder: props.t('custom.descriptionPlaceholder'),
       onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => set('description', event.currentTarget.value),
     }), true),
@@ -132,17 +125,15 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
         onChange: (value: string) => set('division', value),
         options: props.divisions.map(division => ({ value: division, label: (props.locale === 'en' ? EN_DIVISION : ZH_DIVISION)[division] ?? division })),
       })),
-    h('div', { className: 'aag-custom-preview' }, h('span', null, props.t('custom.preview')),
-      h('strong', null, draft.name || props.t('custom.name'))),
     h('div', { className: 'aag-custom-prompt-head' }, h('label', { htmlFor: 'aag-custom-prompt' }, props.t('custom.prompt')),
-      draft.prompt === '' ? h('button', { type: 'button', className: 'aag-action', disabled: busy, onClick: () => set('prompt', props.t('custom.templateText')) }, props.t('custom.template')) : null),
-    h('textarea', {
-      id: 'aag-custom-prompt', className: 'aag-control aag-custom-prompt', value: draft.prompt, required: true, maxLength: 20_000, disabled: busy,
+      draft.prompt === '' ? h(Button, { disabled: busy, onClick: () => set('prompt', props.t('custom.templateText')) }, props.t('custom.template')) : null),
+    h(Input.TextArea, {
+      id: 'aag-custom-prompt', className: 'aag-custom-prompt', value: draft.prompt, rows: 8, required: true, maxLength: 20_000, disabled: busy,
       'aria-label': props.t('custom.prompt'), placeholder: props.t('custom.promptPlaceholder'),
       onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => set('prompt', event.currentTarget.value),
     }), error === null ? null : h('div', { className: 'aag-error', role: 'alert' }, error),
       needsReview ? h("section", { className: "aag-custom-review" },
-        h("button", { type: "button", className: "aag-action", disabled: busy, onClick: refreshReview }, props.t("custom.reviewLatest")),
+        h(Button, { disabled: busy, onClick: refreshReview }, props.t("custom.reviewLatest")),
         review === null ? null : h(React.Fragment, null,
           h("h4", null, props.t("custom.latestContent")),
           review.expert === undefined
@@ -152,12 +143,12 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
                 h("p", null, review.expert.description),
                 h("p", null, props.locale === "zh" ? ZH_DIVISION[review.expert.division] ?? review.expert.division : EN_DIVISION[review.expert.division] ?? review.expert.division),
                 h("img", { src: EXPERT_AVATAR_URLS[review.expert.avatar ?? 0], width: 36, height: 36, alt: props.t("custom.avatar") }),
-                h("textarea", { className: "aag-control", readOnly: true, value: review.expert.prompt, "aria-label": props.t("custom.latestContent"), rows: 8 }),
+                h(Input.TextArea, { readOnly: true, value: review.expert.prompt, "aria-label": props.t("custom.latestContent"), rows: 8 }),
               ),
           h("p", null, props.t("custom.reviewHint")),
           h("div", { className: "aag-custom-review-actions" },
-            h("button", { type: "button", className: "aag-action", disabled: busy, onClick: () => continueReview(false) }, props.t(draft.slug && review.expert === undefined ? "custom.continueAsNew" : "custom.keepDraft")),
-            review.expert === undefined ? null : h("button", { type: "button", className: "aag-action", disabled: busy, onClick: () => continueReview(true) }, props.t("custom.useLatest")),
+            h(Button, { disabled: busy, onClick: () => continueReview(false) }, props.t(draft.slug && review.expert === undefined ? "custom.continueAsNew" : "custom.keepDraft")),
+            review.expert === undefined ? null : h(Button, { disabled: busy, onClick: () => continueReview(true) }, props.t("custom.useLatest")),
           ),
         ),
       ) : null,
@@ -175,15 +166,28 @@ export function CustomDeleteDialog(props: { name: string; busy: boolean; error: 
     h('p', null, props.name), h('p', { className: 'aag-note' }, props.t('custom.deleteHint')))
 }
 export const CUSTOM_EDITOR_CSS = `
-.aag-custom-dialog .aag-control:focus-visible{outline:none;border-color:var(--dsw-alias-label-tertiary)}
-
-.aag-custom-tabs .aag-action:hover:not(:disabled),.aag-custom-dialog .aag-action:not(.aag-custom-primary):hover:not(:disabled),.aag-custom-delete .aag-action:not(.aag-custom-primary):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
-
-.aag-action.aag-custom-primary:hover:not(:disabled),.aag-custom-dialog .aag-action.aag-custom-primary:hover:not(:disabled),.aag-custom-delete .aag-action.aag-custom-primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-foreground)}
-.aag-custom-dialog::backdrop,.aag-custom-delete::backdrop{background:var(--dsw-alias-bg-mask-1);backdrop-filter:var(--dsw-mask-blur)}
-
-.aag-custom-dialog{position:fixed;inset:0 0 0 auto;margin:0;width:min(560px,100vw);height:100dvh;max-width:100vw;max-height:100dvh;border:0;border-left:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);padding:0;overflow:hidden;font-family:inherit}.aag-custom-dialog[open]{display:flex;flex-direction:column}.aag-custom-dialog::backdrop,.aag-custom-delete::backdrop{background:var(--dsw-alias-bg-mask-1);backdrop-filter:var(--dsw-mask-blur)}.aag-custom-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid var(--dsw-alias-border-l2);flex-shrink:0}.aag-custom-head h3{margin:0;font-size:19px}.aag-custom-body{overflow-y:auto;overscroll-behavior:contain;padding:20px 24px;flex:1;min-height:0}.aag-custom-body>.aag-note{margin:0 0 16px}.aag-custom-field{display:block;margin:18px 0;font-size:14px}.aag-custom-field>span,.aag-custom-field>label{display:block;margin-bottom:8px}.aag-custom-field small{font-size:11px;opacity:.65;margin-left:8px}.aag-custom-dialog .aag-control{box-sizing:border-box;width:100%;max-width:100%;font:inherit;background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-button-elevated-fill));color:inherit;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;padding:6px 8px;min-height:32px}.aag-custom-dialog textarea{resize:vertical}.aag-custom-avatars{border:0;padding:0;margin:20px 0;display:flex;gap:8px;flex-wrap:wrap;max-height:120px;overflow:auto}.aag-custom-avatars legend{margin-bottom:10px;font-size:13px}.aag-custom-avatars button{padding:3px;border:2px solid transparent;background:transparent;border-radius:12px;cursor:pointer}.aag-custom-avatars img{border-radius:8px;object-fit:cover}.aag-custom-avatars button.is-selected{border-color:var(--dsw-alias-label-tertiary)}.aag-custom-preview{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:12px 0;margin:10px 0 20px;font-size:12px}.aag-custom-preview strong{background:var(--dsw-alias-interactive-bg-active);color:var(--dsw-alias-label-primary);border-radius:5px;padding:4px 9px;font-weight:500;font-family:'Segoe UI Emoji',inherit}.aag-custom-prompt-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;font-size:14px}.aag-custom-dialog .aag-custom-prompt{min-height:200px;line-height:1.8}.aag-custom-body .aag-error{margin-top:14px}.aag-custom-footer{padding:16px 24px 22px;border-top:1px solid var(--dsw-alias-border-l2);flex-shrink:0}.aag-custom-footer>div{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}.aag-custom-footer>div>button:first-child{margin-right:auto}.aag-action.aag-custom-primary,.aag-custom-dialog .aag-action.aag-custom-primary,.aag-custom-delete .aag-action.aag-custom-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:transparent}.aag-custom-dialog button:focus-visible,.aag-custom-dialog input:focus-visible,.aag-custom-dialog textarea:focus-visible,.aag-custom-dialog select:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}.aag-custom-dialog button:disabled{opacity:.5;cursor:default}.aag-custom-delete{max-width:min(440px,calc(100vw - 32px));padding:24px;border:1px solid var(--dsw-alias-border-l3);border-radius:24px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-elevation-prominent)}.aag-custom-delete-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:24px}.aag-custom-tabs{display:flex;gap:10px;margin:18px 0;flex-wrap:wrap}.aag-custom-tabs button[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover);border-color:var(--dsw-alias-label-tertiary)}.aag-custom-badge{display:inline-block;font-size:10px;padding:1px 5px;border:1px solid var(--dsw-alias-border-l3);border-radius:4px;margin-left:6px;color:var(--dsw-alias-label-secondary)}.aag-custom-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0;font-size:13px;color:var(--dsw-alias-label-primary)}body:has(.aag-custom-dialog[open]),body:has(.aag-custom-delete[open]){overflow:hidden}
-.aag-custom-tabs .aag-action,.aag-custom-dialog .aag-action,.aag-custom-delete .aag-action,.aag-custom-notice .aag-action{border:1px solid var(--dsw-alias-border-l3);border-radius:8px;background:transparent;color:var(--dsw-alias-label-primary);min-height:32px;padding:0 12px;font:inherit;cursor:pointer}.aag-custom-tabs button[aria-pressed=true]{background:var(--dsw-alias-bg-layer-3);border-color:var(--dsw-alias-label-tertiary)}.aag-card-actions-with-more{position:relative;padding-right:34px}.aag-card-more-anchor{position:absolute;right:0;bottom:0;width:34px;height:47px}.aag-card-more{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border:0;border-left:1px solid var(--dsw-alias-border-l2);background:transparent;color:var(--dsw-alias-label-secondary);font-size:20px;cursor:pointer}.aag-card-more:hover,.aag-card-more[aria-expanded=true]{background:var(--dsw-alias-interactive-bg-hover)}.aag-card-more:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:-3px}
-.aag-custom-review{margin-top:16px;padding:14px;border:1px solid var(--dsw-alias-brand-primary);border-radius:8px}.aag-custom-review-actions{display:flex;flex-wrap:wrap;gap:8px}.aag-custom-review p{overflow-wrap:anywhere}.aag-custom-dialog .aag-select-trigger{min-height:32px;font-size:14px}
-@media(max-width:560px){.aag-custom-body{padding:16px}.aag-custom-head{padding:18px 16px}.aag-custom-footer{padding:14px 16px 20px}.aag-custom-avatars{max-height:112px}.aag-custom-dialog .aag-action{font-size:13px}.aag-custom-prompt-head{flex-wrap:wrap}}
+.aag-editor-drawer .ant-drawer-body{padding:0}
+.aag-custom-body{overflow-y:auto;overscroll-behavior:contain;padding:20px 24px;flex:1;min-height:0}
+.aag-editor-intro{margin:0 0 16px;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:22px}
+.aag-custom-field{display:block;margin:18px 0;font-size:14px}
+.aag-custom-field>span,.aag-custom-field>label{display:block;margin-bottom:8px}
+.aag-custom-field small{font-size:11px;opacity:.65;margin-left:8px}
+.aag-custom-avatars{border:0;padding:0;margin:20px 0;display:flex;gap:8px;flex-wrap:wrap}
+.aag-custom-avatars legend{margin-bottom:10px;font-size:13px}
+.aag-custom-avatars button{padding:3px;border:2px solid transparent;background:transparent;border-radius:12px;cursor:pointer}
+.aag-custom-avatars img{border-radius:8px;object-fit:cover}
+.aag-custom-avatars button.is-selected{border-color:var(--dsw-alias-label-tertiary)}
+.aag-custom-prompt-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;font-size:14px}
+.aag-editor-drawer .aag-custom-prompt{min-height:220px;line-height:1.8}
+.aag-custom-body .aag-error{margin-top:14px}
+.aag-custom-footer{padding:16px 24px 22px;border-top:1px solid var(--dsw-alias-border-l2);flex-shrink:0}
+.aag-custom-footer>div{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+.aag-custom-footer>div>button:first-child{margin-right:auto}
+.aag-editor-drawer input:focus-visible,.aag-editor-drawer textarea:focus-visible,.aag-editor-drawer .ant-input:focus,.aag-editor-drawer .ant-input:focus-visible,.ant-modal input:focus-visible,.ant-modal textarea:focus-visible{outline:none}
+.aag-custom-badge{display:inline-block;font-size:10px;padding:1px 5px;border:1px solid var(--dsw-alias-border-l3);border-radius:4px;margin-left:6px;color:var(--dsw-alias-label-secondary)}
+.aag-custom-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0;font-size:13px;color:var(--dsw-alias-label-primary)}
+.aag-custom-review{margin-top:16px;padding:14px;border:1px solid var(--dsw-alias-brand-primary);border-radius:8px}
+.aag-custom-review-actions{display:flex;flex-wrap:wrap;gap:8px}
+.aag-custom-review p{overflow-wrap:anywhere}
+@media(max-width:560px){.aag-custom-body{padding:16px}.aag-custom-footer{padding:14px 16px 20px}.aag-custom-prompt-head{flex-wrap:wrap}}
 `

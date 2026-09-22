@@ -1,43 +1,38 @@
-import { useLibraryDialog } from './library-ui.js'
-import React from "react";
+import { AntdProvider, Button, Input, Modal } from './antd-ui.js'
+import { useEscapeLayer } from './escape-layer.js'
+import React from 'react'
 
-/** 原生预览弹窗约束焦点，并让 Escape 只关闭当前层。 */
+/** 提示词预览。关闭后把焦点还给打开它的按钮。 */
 export function PromptDialog(props: {
-  readonly value: { name: string; prompt: string };
-  readonly title: string;
-  readonly closeLabel: string;
-  readonly returnFocus: HTMLElement;
-  readonly onClose: () => void;
+  readonly value: { name: string; prompt: string }
+  readonly title: string
+  readonly closeLabel: string
+  readonly returnFocus: HTMLElement
+  readonly onClose: () => void
 }): React.ReactElement {
-  const dialog = React.useRef<HTMLDialogElement | null>(null);
-  useLibraryDialog(dialog, props.returnFocus);
-  return React.createElement("dialog", {
-    ref: dialog,
-    className: "aag-prompt-modal",
-    role: "dialog",
-    "aria-modal": true,
-    "aria-label": props.title,
-    onCancel: (event: React.SyntheticEvent) => {
-      event.preventDefault(); event.stopPropagation(); props.onClose();
-    },
-    onKeyDown: (event: React.KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault(); event.stopPropagation(); props.onClose();
-    },
-    onMouseDown: (event: React.MouseEvent<HTMLDialogElement>) => {
-      if (event.target !== event.currentTarget) return;
-      const rect = event.currentTarget.getBoundingClientRect();
-      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) {
-        // 防止 mousedown 的默认聚焦覆盖卸载时恢复的按钮焦点。
-        event.preventDefault();
-        props.onClose();
-      }
-    },
-  },
-    React.createElement("div", { className: "aag-modal-head" },
-      React.createElement("h3", { className: "aag-modal-title" }, props.title),
-      React.createElement("button", { type: "button", className: "aag-modal-close", autoFocus: true, onClick: props.onClose }, props.closeLabel),
-    ),
-    React.createElement("pre", { className: "aag-prompt-content" }, props.value.prompt),
-  );
+  const close = (): void => {
+    props.onClose()
+    queueMicrotask(() => {
+      if (props.returnFocus.isConnected) props.returnFocus.focus({ preventScroll: true })
+    })
+  }
+  useEscapeLayer(true, close)
+  return React.createElement(AntdProvider, null, React.createElement(Modal, {
+    open: true,
+    title: props.title,
+    width: 760,
+    keyboard: false,
+    closable: false,
+    maskClosable: true,
+    onCancel: close,
+    footer: [
+      React.createElement(Button, { key: 'close', type: 'primary', autoFocus: true, onClick: close }, props.closeLabel),
+    ],
+  }, React.createElement(Input.TextArea, {
+    className: 'aag-prompt-body',
+    readOnly: true,
+    value: props.value.prompt,
+    'aria-label': props.title,
+    style: { height: 'min(560px, calc(100vh - 220px))', minHeight: 240, resize: 'none', overflow: 'auto' },
+  })))
 }

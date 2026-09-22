@@ -81,7 +81,7 @@ test('未保存修改确认、主理人恢复模板与窄屏无溢出', async ({
 test('聊天工具栏切换团队、查看详情、启用并填入示例', async ({ page }) => {
   await page.goto('/?teams&menu')
   await page.getByRole('button', { name: '专家', exact: true }).click()
-  await page.getByRole('tab', { name: '专家团', exact: true }).click()
+  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
   await page.getByLabel('搜索专家团').fill('产品')
   await page.getByRole('button', { name: '查看产品方案评审团详情' }).click()
   await expect(
@@ -127,7 +127,7 @@ test('设计稿同尺寸视觉验收截图', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1536, height: 1024 })
   // 视觉验收走真实设置面板，避免独立团队夹具缺少宿主主题而误报通过。
   await page.goto('/?teams&settings&visual&theme=dark')
-  await page.getByRole('tab', { name: '专家团', exact: true }).click()
+  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
   await expect(page.getByTestId('team-card')).toHaveCount(5)
   await expect(page.getByTestId('team-card').first()).toHaveCSS('background-color', 'rgb(43, 43, 45)')
   await expect(
