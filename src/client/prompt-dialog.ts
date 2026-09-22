@@ -1,4 +1,4 @@
-import { AntdProvider, Button, Input, Modal } from './antd-ui.js'
+import { Button, Input, MaybeAntdProvider, Modal } from './antd-ui.js'
 import { documentAntdLocale } from './antd-locale.js'
 import { useEscapeLayer } from './escape-layer.js'
 import React from 'react'
@@ -18,7 +18,7 @@ export function PromptDialog(props: {
     })
   }
   useEscapeLayer(true, close)
-  return React.createElement(AntdProvider, { locale: documentAntdLocale() }, React.createElement(Modal, {
+  return React.createElement(MaybeAntdProvider, { locale: documentAntdLocale() }, React.createElement(Modal, {
     open: true,
     title: props.title,
     width: 760,

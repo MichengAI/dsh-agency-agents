@@ -2,7 +2,7 @@ import { catalogState } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
-import { AntdProvider, Button, Input, useAntdMounted } from './antd-ui.js';
+import { Button, Input, MaybeAntdProvider } from './antd-ui.js';
 import { antdLocale } from './antd-locale.js';
 import { CategorySelect } from './category-select.js';
 import React from 'react';
@@ -117,7 +117,6 @@ export function TeamsPanel(props: {
     title?: string;
 }) {
     const { locale, tx } = useTeamLocale();
-    const antdMounted = useAntdMounted();
 
     const [snapshot, setSnapshot] = React.useState<TeamSnapshot | null>(() => teamState(props.remote));
     React.useEffect(() => {
@@ -325,7 +324,7 @@ export function TeamsPanel(props: {
                     { id: 'edit', label: team.builtin ? tx("复制并自定义") : tx("编辑专家团"), disabled: busy, onSelect: () => (team.builtin ? copy(team) : edit(team)) },
                     ...(!team.builtin ? [{ id: 'delete', label: tx("删除专家团"), danger: true, disabled: busy, onSelect: () => void change(team, 'delete') }] : []),
                 ]} actions={<>
-                  <button type="button" className="aag-card-action" title={tx("查看详情")} aria-haspopup="dialog" onClick={() => setDetails(team)}>
+                  <button type="button" className="aag-card-action" title={tx("查看详情")} aria-label={tx("查看详情")} aria-haspopup="dialog" onClick={() => setDetails(team)}>
                     <IconEye size={18}/>{tx("查看详情")}</button>
                 </>}/>);
         })}
@@ -374,5 +373,5 @@ export function TeamsPanel(props: {
           </p>
         </TeamConfirm>)}
     </section>);
-    return antdMounted ? panel : <AntdProvider locale={antdLocale(locale)}>{panel}</AntdProvider>;
+    return <MaybeAntdProvider locale={antdLocale(locale)}>{panel}</MaybeAntdProvider>;
 }

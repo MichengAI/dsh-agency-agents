@@ -1317,9 +1317,9 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
             ...(expert.custom ? [{ id: 'delete', label: props.t('custom.delete'), danger: true, disabled: isSaving, onSelect: () => { setDeleting(expert); setDeleteError(null) } }] : []),
           ],
           actions: React.createElement(React.Fragment, null,
-            React.createElement('button', { type: 'button', className: 'aag-card-action', title: props.t('settings.viewPrompt'), 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
+            React.createElement('button', { type: 'button', className: 'aag-card-action', title: props.t('settings.viewPromptTitle'), 'aria-label': props.t('settings.viewPromptTitle'), 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
               React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), props.t('settings.viewPrompt')),
-            React.createElement('button', { type: 'button', className: 'aag-card-action aag-card-action-primary', title: copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPrompt'), onClick: () => copyPrompt(expert) },
+            React.createElement('button', { type: 'button', className: 'aag-card-action aag-card-action-primary', title: copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPromptTitle'), 'aria-label': copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPromptTitle'), onClick: () => copyPrompt(expert) },
               React.createElement(Copy, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPrompt'))),
         })
       } }))

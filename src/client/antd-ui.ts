@@ -72,3 +72,10 @@ export function AntdProvider(props: { locale?: Locale; children?: React.ReactNod
     },
   }, props.children))
 }
+
+/** 设置页已经有主题时不再包一层，独立挂载时才补上。 */
+export function MaybeAntdProvider(props: { locale?: Locale; children?: React.ReactNode }): React.ReactElement {
+  return useAntdMounted()
+    ? React.createElement(React.Fragment, null, props.children)
+    : React.createElement(AntdProvider, { locale: props.locale }, props.children)
+}

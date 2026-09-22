@@ -2,7 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { AntdProvider, Button, Modal, Progress } from './antd-ui.js'
 import { useEscapeLayer } from './escape-layer.js'
-import { antdLocale } from './antd-locale.js'
+import { documentAntdLocale, documentUiLocale } from './antd-locale.js'
 
 export type PluginUpdateUiOptions = {
   readonly endpoint: string
@@ -156,7 +156,7 @@ function UpdateDialog(props: {
   const command = manualPluginUpdateCommand(current?.profileName ?? '', props.packageName, current?.latestVersion ?? 'latest')
   const currentVersion = current === undefined ? text.unknown : `v${current.currentVersion}`
   const latestVersion = current?.latestVersion === undefined ? text.unknown : `v${current.latestVersion}`
-  return React.createElement(AntdProvider, { locale: antdLocale(document.documentElement.lang.toLowerCase().startsWith('en') ? 'en' : 'zh') }, React.createElement(Modal, {
+  return React.createElement(AntdProvider, { locale: documentAntdLocale() }, React.createElement(Modal, {
     open: true, keyboard: false, className: 'mpi-dialog', width: 680, zIndex: 1200, title: `${props.name} ${text.update}`, onCancel: props.onClose,
     footer: [
       React.createElement(Button, { key: 'check', disabled: busy, onClick: () => { void checkNow() } }, text.recheck),
@@ -199,7 +199,7 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
     if (buttonRoot === undefined) return
     iconNode ??= options.createIcon('refresh')
     const icon = iconNode
-    buttonRoot.render(React.createElement(AntdProvider, { locale: antdLocale(document.documentElement.lang.toLowerCase().startsWith('en') ? 'en' : 'zh') }, React.createElement(Button, {
+    buttonRoot.render(React.createElement(AntdProvider, { locale: documentAntdLocale() }, React.createElement(Button, {
       size: 'small', shape: 'default', onClick: openDialog, icon: React.createElement(HostIcon, { node: icon }),
     }, React.createElement('span', { 'data-mpi-label': '' }, strings().check))))
   }
@@ -253,7 +253,7 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
     overlay = host
     dialogRoot = root
     root.render(React.createElement(UpdateDialog, {
-      name: document.documentElement.lang.toLowerCase().startsWith('en') ? options.enName : options.zhName,
+      name: documentUiLocale() === 'en' ? options.enName : options.zhName,
       packageName: options.packageName,
       initial: payload,
       refresh: () => load(),

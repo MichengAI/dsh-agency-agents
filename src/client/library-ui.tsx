@@ -1,4 +1,4 @@
-import { AntdProvider, Button, Modal, Switch } from './antd-ui.js'
+import { Button, MaybeAntdProvider, Modal, Switch } from './antd-ui.js'
 import { documentAntdLocale } from './antd-locale.js'
 import { useEscapeLayer } from './escape-layer.js'
 import React from 'react'
@@ -115,7 +115,7 @@ export function LibraryConfirm(props: {
 }) {
   useEscapeLayer(true, () => { if (!props.busy) props.close() })
   return (
-    <AntdProvider locale={documentAntdLocale()}>
+    <MaybeAntdProvider locale={documentAntdLocale()}>
     <Modal
       open
       zIndex={1300}
@@ -136,6 +136,6 @@ export function LibraryConfirm(props: {
         </p>
       )}
     </Modal>
-    </AntdProvider>
+    </MaybeAntdProvider>
   )
 }
