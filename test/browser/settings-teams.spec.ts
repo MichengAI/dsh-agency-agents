@@ -145,13 +145,14 @@ test('专家保留原标题工具栏与来源筛选，专家团采用同一结�
 
 test('切换专家团后保留专家搜索和来源筛选', async ({ page }) => {
   await page.goto('/?teams&settings')
-  await page.locator('#aag-filter-source').click()
+  const sourceSelect = page.locator('#aag-filter-source').locator('xpath=ancestor-or-self::*[contains(@class,"aag-select")]')
+  await sourceSelect.click()
   await page.getByRole('option', { name: '内置', exact: true }).click()
   await page.locator('#aag-filter-search').fill('人类学')
   await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
   await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家', exact: true }) }).click()
   await expect(page.locator('#aag-filter-search')).toHaveValue('人类学')
-  await expect(page.locator('#aag-filter-source')).toContainText('内置')
+  await expect(sourceSelect).toContainText('内置')
   await expect(page.locator('.aag-expert-card:visible')).toHaveCount(1)
 })
 
@@ -193,8 +194,8 @@ test('数量写在对应页签上，来源选项与新建同行', async ({ page 
     await tab.click()
     await expect(tab).toContainText(total)
     await expect(tab).toContainText('已启用')
-    const source = page.locator('#aag-filter-source:visible, #aag-team-source:visible')
-    const status = page.locator('#aag-filter-status:visible, #aag-team-status:visible')
+    const source = page.locator('#aag-filter-source, #aag-team-source').locator('xpath=ancestor-or-self::*[contains(@class,"aag-select")]').locator('visible=true')
+    const status = page.locator('#aag-filter-status, #aag-team-status').locator('xpath=ancestor-or-self::*[contains(@class,"aag-select")]').locator('visible=true')
     await expect(source).toContainText('全部')
     const sourceBox = await source.boundingBox()
     const statusBox = await status.boundingBox()

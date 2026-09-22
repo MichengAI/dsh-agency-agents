@@ -15,14 +15,15 @@ export function CategorySelect(props: {
   readonly options: ReadonlyArray<CategoryOption>
   readonly onChange: (value: string) => void
 }): React.ReactElement {
-  return React.createElement('span', { id: props.id, className: 'aag-select' },
-    React.createElement(Select, {
-      'aria-label': props.label,
-      disabled: props.disabled,
-      value: props.value,
-      options: props.options.map((option) => ({ value: option.value, label: option.label })),
-      popupMatchSelectWidth: false,
-      listHeight: 320,
-      onChange: (value: unknown) => props.onChange(String(value)),
-    }))
+  return React.createElement(Select, {
+    id: props.id,
+    className: 'aag-select',
+    'aria-label': props.label,
+    disabled: props.disabled,
+    value: props.value,
+    options: props.options.map((option) => ({ value: option.value, label: option.label })),
+    popupMatchSelectWidth: false,
+    listHeight: 320,
+    onChange: (value: unknown) => props.onChange(String(value)),
+  })
 }

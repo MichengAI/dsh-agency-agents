@@ -1,4 +1,4 @@
-import { AntdProvider, Button, Input, Modal } from './antd-ui.js'
+import { Button, Input, Modal } from './antd-ui.js'
 import { useEscapeLayer } from './escape-layer.js'
 import React from 'react'
 
@@ -17,7 +17,7 @@ export function PromptDialog(props: {
     })
   }
   useEscapeLayer(true, close)
-  return React.createElement(AntdProvider, null, React.createElement(Modal, {
+  return React.createElement(Modal, {
     open: true,
     title: props.title,
     width: 760,
@@ -34,5 +34,5 @@ export function PromptDialog(props: {
     value: props.value.prompt,
     'aria-label': props.title,
     style: { height: 'min(560px, calc(100vh - 220px))', minHeight: 240, resize: 'none', overflow: 'auto' },
-  })))
+  }))
 }

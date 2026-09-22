@@ -954,8 +954,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
 
   return React.createElement(AntdProvider, { locale: antdLocale(props.getActive()) }, React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef, onBlur: (event: React.FocusEvent) => {
     const next = event.relatedTarget
-    if (document.querySelector('.ant-modal, .ant-drawer')) return
-    if (next instanceof Element && (event.currentTarget.contains(next) || next.closest('.ant-select-dropdown, .ant-dropdown'))) return
+    if (next instanceof Element && (event.currentTarget.contains(next) || next.closest('.ant-modal, .ant-drawer, .ant-select-dropdown, .ant-dropdown'))) return
     if (next instanceof Node && !event.currentTarget.contains(next)) close()
   } },
     React.createElement('span', { ref: triggerRef }, React.createElement('button', { type: 'button', className: 'aag-btn', title: props.t('button.title'), 'aria-expanded': open, 'aria-haspopup': 'dialog', 'aria-controls': open ? menuId : undefined, onMouseDown: keepComposerFocus, onClick }, expertIcon(), props.t('settings.nav'))),
@@ -975,13 +974,22 @@ function scrollParent(node: HTMLElement): HTMLElement | Window {
   let current = node.parentElement
   while (current !== null && current !== document.body && current !== document.documentElement) {
     const overflow = getComputedStyle(current).overflowY
-    if (overflow === 'auto' || overflow === 'scroll' || overflow === 'overlay') return current
+    if (overflow === 'auto' || overflow === 'scroll') return current
     current = current.parentElement
   }
   return window
 }
 
-/** 只挂载视口内的专家卡片。一次创建三百多张带开关的卡片会把设置页卡住。 */
+function focusedCardIndex(node: HTMLElement): number | null {
+  const active = document.activeElement
+  if (!(active instanceof HTMLElement) || !node.contains(active)) return null
+  const card = active.closest('[data-expert-index]')
+  if (!(card instanceof HTMLElement) || !node.contains(card)) return null
+  const index = Number(card.dataset.expertIndex)
+  return Number.isInteger(index) ? index : null
+}
+
+/** 只挂载视口内的专家卡片。持有焦点的卡片留在树上，避免滚动后焦点掉到页面。 */
 function ExpertCardWindow(props: {
   items: readonly ExpertView[]
   resetKey: string
@@ -990,17 +998,13 @@ function ExpertCardWindow(props: {
   const ref = React.useRef<HTMLDivElement>(null)
   const countRef = React.useRef(props.items.length)
   countRef.current = props.items.length
-  const [range, setRange] = React.useState({ start: 0, end: 8, columns: 2, row: EXPERT_CARD_ROW, key: props.resetKey })
-  const active = range.key === props.resetKey ? range : { start: 0, end: 8, columns: range.columns, row: range.row, key: props.resetKey }
+  const [range, setRange] = React.useState({ start: 0, end: 8, columns: 2, row: EXPERT_CARD_ROW, pin: null as number | null, key: props.resetKey })
+  const active = range.key === props.resetKey ? range : { start: 0, end: 8, columns: range.columns, row: range.row, pin: null, key: props.resetKey }
   if (range.key !== props.resetKey) setRange(active)
   React.useLayoutEffect(() => {
     const node = ref.current
     if (node === null) return
     const scroller = scrollParent(node)
-    const viewTop = scroller instanceof HTMLElement ? scroller.getBoundingClientRect().top : 0
-    const viewHeight = scroller instanceof HTMLElement ? scroller.clientHeight : window.innerHeight
-    const top = node.getBoundingClientRect().top
-    if (top < viewTop || top > viewTop + viewHeight) node.scrollIntoView({ block: 'nearest' })
     let frame = 0
     const measure = (): void => {
       const card = node.querySelector('.aag-expert-card')
@@ -1014,9 +1018,10 @@ function ExpertCardWindow(props: {
       const rows = Math.ceil(countRef.current / columns)
       const start = Math.max(0, Math.floor(startPx / row) - 1)
       const end = Math.min(rows, Math.max(start + 1, Math.ceil((startPx + viewHeight) / row) + 2))
-      setRange(current => current.key === props.resetKey && current.start === start && current.end === end && current.columns === columns && current.row === row
+      const pin = focusedCardIndex(node)
+      setRange(current => current.key === props.resetKey && current.start === start && current.end === end && current.columns === columns && current.row === row && current.pin === pin
         ? current
-        : { start, end, columns, row, key: props.resetKey })
+        : { start, end, columns, row, pin, key: props.resetKey })
     }
     measure()
     const onScroll = (): void => {
@@ -1037,13 +1042,24 @@ function ExpertCardWindow(props: {
     }
   }, [props.resetKey, props.items.length])
   const columns = Math.max(1, active.columns)
-  const rows = Math.ceil(props.items.length / columns)
+  const count = props.items.length
+  const rows = Math.ceil(count / columns)
   const start = rows === 0 ? 0 : Math.min(active.start, rows - 1)
   const end = Math.min(rows, Math.max(start, active.end))
+  const shown = new Set<number>()
+  for (let index = start * columns; index < Math.min(end * columns, count); index += 1) shown.add(index)
+  if (active.pin !== null && active.pin >= 0 && active.pin < count) shown.add(active.pin)
   const height = rows === 0 ? 0 : rows * active.row - EXPERT_CARD_GAP
-  return React.createElement('div', { ref, className: 'aag-expert-window', style: { height } },
-    React.createElement('div', { className: 'aag-expert-grid', style: { top: start * active.row } },
-      props.items.slice(start * columns, end * columns).map(item => props.render(item))))
+  return React.createElement('div', { ref, className: 'aag-expert-window', role: 'list', 'aria-rowcount': rows, style: { height } },
+    React.createElement('div', { className: 'aag-expert-grid', style: { top: 0, gridAutoRows: `${Math.max(active.row - EXPERT_CARD_GAP, 1)}px` } },
+      [...shown].sort((left, right) => left - right).map((index) => React.createElement('div', {
+        key: index,
+        role: 'listitem',
+        'data-expert-index': index,
+        'aria-setsize': count,
+        'aria-posinset': index + 1,
+        style: { gridColumn: (index % columns) + 1, gridRow: Math.floor(index / columns) + 1 },
+      }, props.render(props.items[index]!)))))
 }
 
 function ExpertCardsSettings(props: PropsLocale<'agency'> & {
@@ -1300,9 +1316,9 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
             ...(expert.custom ? [{ id: 'delete', label: props.t('custom.delete'), danger: true, disabled: isSaving, onSelect: () => { setDeleting(expert); setDeleteError(null) } }] : []),
           ],
           actions: React.createElement(React.Fragment, null,
-            React.createElement('button', { type: 'button', className: 'aag-card-action', 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
+            React.createElement('button', { type: 'button', className: 'aag-card-action', title: props.t('settings.viewPrompt'), 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
               React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), props.t('settings.viewPrompt')),
-            React.createElement('button', { type: 'button', className: 'aag-card-action aag-card-action-primary', onClick: () => copyPrompt(expert) },
+            React.createElement('button', { type: 'button', className: 'aag-card-action aag-card-action-primary', title: copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPrompt'), onClick: () => copyPrompt(expert) },
               React.createElement(Copy, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPrompt'))),
         })
       } }))

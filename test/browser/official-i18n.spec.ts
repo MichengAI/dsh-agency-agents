@@ -12,7 +12,7 @@ test('英文设置页与专家团详情、编辑表单没有中文界面残留',
   await page.getByRole('button', { name: 'View coordinator prompt' }).click()
   await expect(page.getByRole('dialog')).not.toContainText(/[\u3400-\u9fff]/u)
   await page.screenshot({ path: 'test-results/team-details-english.png' })
-  await page.getByRole('button', { name: 'Copy and customize' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Copy and customize' }).click()
   await expect(page.getByRole('dialog')).not.toContainText(/[\u3400-\u9fff]/u)
   await expect(page.getByLabel('Coordinator prompt text')).not.toHaveValue(/[\u3400-\u9fff]/u)
   await page.getByLabel('Team name', { exact: true }).fill('我的自定义名称')
@@ -25,7 +25,7 @@ test('英文设置页与专家团详情、编辑表单没有中文界面残留',
 
 for (const theme of ['dark', 'light']) test(`${theme}：分类菜单和启用开关使用宿主角色`, async ({ page }) => {
   await page.goto(`/?teams&settings&theme=${theme}`)
-  await page.locator('#aag-filter-source').click()
+  await page.locator('#aag-filter-source').locator('xpath=ancestor-or-self::*[contains(@class,"aag-select")]').click()
   await expect(page.getByRole('option').first()).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('switch').first()).toBeVisible()

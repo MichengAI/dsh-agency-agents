@@ -80,7 +80,7 @@ export function createExpertLibrary(
   const assertUnique = (expert: ExpertSummary, others: readonly ExpertSummary[]): void => {
     if (others.some(other => overlaps(expert, other))) throw customError('duplicate', locale())
   }
-  // 内置名册不变时复用冲突结果。每次打开设置都全量两两比较会把名册请求拖慢。
+  // 只按数组引用缓存。调用方必须返回同一份基础名册；就地修改该数组不会使冲突标记失效。
   let builtinMemo: { source: readonly ExpertSummary[]; experts: ExpertSummary[] } | undefined
   const projectBuiltins = (builtins: readonly ExpertSummary[]): readonly ExpertSummary[] => {
     if (builtinMemo?.source === builtins) return builtinMemo.experts

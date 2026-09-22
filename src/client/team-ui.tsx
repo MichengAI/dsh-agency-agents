@@ -344,9 +344,9 @@ export function TeamsPanel(props: {
                     { id: 'edit', label: team.builtin ? tx("复制并自定义") : tx("编辑专家团"), disabled: busy, onSelect: () => (team.builtin ? copy(team) : edit(team)) },
                     ...(!team.builtin ? [{ id: 'delete', label: tx("删除专家团"), danger: true, disabled: busy, onSelect: () => void change(team, 'delete') }] : []),
                 ]} actions={<>
-                  <button type="button" className="aag-card-action" aria-haspopup="dialog" onClick={() => setDetails(team)}>
+                  <button type="button" className="aag-card-action" title={tx("查看详情")} aria-haspopup="dialog" onClick={() => setDetails(team)}>
                     <IconEye size={18}/>{tx("查看详情")}</button>
-                  <button type="button" className="aag-card-action" onClick={() => void copyPrompt(team)}>
+                  <button type="button" className="aag-card-action" title={copied === team.id ? tx("已复制") : tx("复制提示词")} onClick={() => void copyPrompt(team)}>
                     <IconCopy size={18}/>
                     {copied === team.id ? tx("已复制") : tx("复制提示词")}
                   </button>

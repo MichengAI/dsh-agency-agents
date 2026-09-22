@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 for (const theme of ['dark', 'light']) test(`${theme}：沿用归档插件控件，启用状态保持绿色`, async ({ page }) => {
   await page.goto(`/?teams&settings&visual&theme=${theme}`)
   const search = page.locator('#aag-filter-search')
-  const select = page.locator('#aag-filter-source')
+  const select = page.locator('#aag-filter-source').locator('xpath=ancestor-or-self::*[contains(@class,"aag-select")]')
   await expect(search).toBeVisible()
   await expect(select).toBeVisible()
   await select.click()
