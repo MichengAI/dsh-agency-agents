@@ -68,8 +68,11 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
   const card = page.getByTestId('team-card').first()
   await expect(card.getByRole('switch')).toBeVisible()
   await expect(
-    card.getByRole('button', { name: '复制提示词', exact: true }),
+    card.getByRole('button', { name: '查看详情', exact: true }),
   ).toBeVisible()
+  await expect(
+    card.getByRole('button', { name: '复制提示词', exact: true }),
+  ).toHaveCount(0)
   await card.getByRole('button', { name: '复制并自定义', exact: true }).click()
   const teamDialog = page.getByRole('dialog')
   await expect(teamDialog).toBeVisible()

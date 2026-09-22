@@ -131,9 +131,6 @@ export function TeamsPanel(props: {
     const [query, setQuery] = React.useState('');
     const [filter, setFilter] = React.useState<'all' | 'builtin' | 'custom'>('all');
     const [status, setStatus] = React.useState('');
-    const [copied, setCopied] = React.useState('');
-    const copiedTimer = React.useRef<ReturnType<typeof setTimeout>>();
-    React.useEffect(() => () => clearTimeout(copiedTimer.current), []);
     const [error, setError] = React.useState('');
     const [notice, setNotice] = React.useState('');
     const [busy, setBusy] = React.useState(false);
@@ -271,23 +268,6 @@ export function TeamsPanel(props: {
         enabled: snapshot!.enabledTeams.includes(team.id),
         revision: snapshot!.revision,
     });
-    const copyPrompt = async (team: ExpertTeam) => {
-        try {
-            await navigator.clipboard.writeText([
-                effectiveCoordinator(team, locale),
-                tx("团队目标：{0}", [team.goal]),
-                tx("共同约束：{0}", [team.constraints]),
-                tx("交付要求：{0}", [team.deliveryRequirements]),
-                ...team.members.map((member) => `${experts.find((expert) => expert.slug === member.expertSlug)?.name ?? member.expertSlug}：${member.duty}\n${member.instructions}`),
-            ].join('\n\n'));
-            setCopied(team.id);
-            clearTimeout(copiedTimer.current);
-            copiedTimer.current = setTimeout(() => setCopied(''), 2000);
-        }
-        catch (cause) {
-            setError(cause instanceof Error ? tx(cause.message) : tx("复制失败，请重试。"));
-        }
-    };
     const panel = (<section className="aag-section aag-team-library" id="aag-team-source-panel">
       {!props.sharedHeader && <div className="aag-toolbar">
         <div className="aag-title-row">
@@ -347,10 +327,6 @@ export function TeamsPanel(props: {
                 ]} actions={<>
                   <button type="button" className="aag-card-action" title={tx("查看详情")} aria-haspopup="dialog" onClick={() => setDetails(team)}>
                     <IconEye size={18}/>{tx("查看详情")}</button>
-                  <button type="button" className="aag-card-action" title={copied === team.id ? tx("已复制") : tx("复制提示词")} onClick={() => void copyPrompt(team)}>
-                    <IconCopy size={18}/>
-                    {copied === team.id ? tx("已复制") : tx("复制提示词")}
-                  </button>
                 </>}/>);
         })}
       </div>{' '}

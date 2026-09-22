@@ -12,6 +12,7 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 - Expert and team pickers show avatars. Custom experts no longer ask for a summon emoji.
 - Team lists stay cached and update across the composer and settings when a team changes.
 - Settings controls now use Ant Design bundled with the plugin. Light and dark follow the host. Buttons keep Ant Design's default blue. Expert and team counts sit on the tabs. The chat entry stays the original toolbar button. The client bundle is therefore larger than 1 MB; the published file is minified, and the check allows up to 1.5 MB.
+- Team cards no longer offer “Copy prompt”. The coordinator prompt stays in team details and is not copied to the clipboard.
 
 ### Fixes
 
