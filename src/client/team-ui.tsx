@@ -2,7 +2,7 @@ import { catalogState } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
-import { AntdProvider, Button, Input } from './antd-ui.js';
+import { AntdProvider, Button, Input, useAntdMounted } from './antd-ui.js';
 import { antdLocale } from './antd-locale.js';
 import { CategorySelect } from './category-select.js';
 import React from 'react';
@@ -117,6 +117,7 @@ export function TeamsPanel(props: {
     title?: string;
 }) {
     const { locale, tx } = useTeamLocale();
+    const antdMounted = useAntdMounted();
 
     const [snapshot, setSnapshot] = React.useState<TeamSnapshot | null>(() => teamState(props.remote));
     React.useEffect(() => {
@@ -287,7 +288,7 @@ export function TeamsPanel(props: {
             setError(cause instanceof Error ? tx(cause.message) : tx("复制失败，请重试。"));
         }
     };
-    return (<AntdProvider locale={antdLocale(locale)}><section className="aag-section aag-team-library" id="aag-team-source-panel">
+    const panel = (<section className="aag-section aag-team-library" id="aag-team-source-panel">
       {!props.sharedHeader && <div className="aag-toolbar">
         <div className="aag-title-row">
           {!props.sharedHeader && <h2 className="aag-title">{props.title ?? tx("专家团")}</h2>}
@@ -396,5 +397,6 @@ export function TeamsPanel(props: {
                     .join(locale === 'en' ? ', ' : '、')])}
           </p>
         </TeamConfirm>)}
-    </section></AntdProvider>);
+    </section>);
+    return antdMounted ? panel : <AntdProvider locale={antdLocale(locale)}>{panel}</AntdProvider>;
 }

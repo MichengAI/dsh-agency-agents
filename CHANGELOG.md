@@ -11,7 +11,7 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 - Support DSH 0.1.7-alpha.1 while keeping previously supported versions. Expert and team settings follow the host's live configuration, and a one-time import recovers data left in `settings.yaml.imported`.
 - Expert and team pickers show avatars. Custom experts no longer ask for a summon emoji.
 - Team lists stay cached and update across the composer and settings when a team changes.
-- Settings use the host's buttons, switches, menus, and tabs. Expert and team counts sit on those tabs, and the enable switch stays green. Hosts older than the tab or switch components get a local copy of the same control.
+- Settings controls now use Ant Design bundled with the plugin. Light and dark follow the host. Buttons keep Ant Design's default blue. Expert and team counts sit on the tabs. The chat entry stays the original toolbar button. The client bundle is therefore larger than 1 MB; the published file is minified, and the check allows up to 1.5 MB.
 
 ### Fixes
 

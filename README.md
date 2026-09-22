@@ -116,7 +116,7 @@ For a desktop workbench, download [DSH Codex Desktop](https://github.com/Micheng
 
 ## Host dependencies and compatibility
 
-DSH `dsh.client.inject` controls browser module loading order. Missing graph entries are skipped, and frozen modules need not exist as npm packages in a profile. Runtime / primitives entries remain for validated older RCs. Required peers such as `dsh-client-ui-slots` retain the runtime contract. Profiles with `auto-install-peers` disabled may report unmet peers; strict peer checks may also block installation. Check the host version and browser module availability rather than inferring runtime failure solely from the npm tree.
+DSH `dsh.client.inject` controls browser module loading order. Missing graph entries are skipped, and frozen modules need not exist as npm packages in a profile. Settings controls bundle Ant Design with the plugin and no longer inject host primitives. Required peers such as `dsh-client-ui-slots` retain the runtime contract. Profiles with `auto-install-peers` disabled may report unmet peers; strict peer checks may also block installation. Check the host version and browser module availability rather than inferring runtime failure solely from the npm tree.
 
 ## Installation
 

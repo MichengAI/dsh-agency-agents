@@ -41,7 +41,7 @@ for (const file of ['../lib/index.js', '../lib/remote.js', '../lib/client.js', '
 }
 
 const clientBundle = await readFile(new URL('../lib/client.js', import.meta.url), 'utf8')
-check('客户端原始体积不超过 1 MB', Buffer.byteLength(clientBundle, 'utf8') <= 1_000_000)
+check('客户端原始体积不超过 1.5 MB', Buffer.byteLength(clientBundle, 'utf8') <= 1_500_000)
 check('客户端未整包引入图标库', (clientBundle.match(/createReactComponent\(/gu) ?? []).length <= 32)
 check('客户端图标已内联，无运行时外部依赖', !/require\(["']@tabler\/icons-react(?:\/[^"']*)?["']\)/u.test(clientBundle))
 check('图标库仅为开发依赖', !packageJson.dependencies?.['@tabler/icons-react'] && !!packageJson.devDependencies?.['@tabler/icons-react'])

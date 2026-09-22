@@ -61,6 +61,7 @@ const client: UserConfig = {
   platform: 'browser',
   dts: false,
   clean: false,
+  minify: true,
   deps: {
     neverBundle: [...CLIENT_EXTERNALS],
     alwaysBundle: (id: string) => !CLIENT_EXTERNALS.includes(id),

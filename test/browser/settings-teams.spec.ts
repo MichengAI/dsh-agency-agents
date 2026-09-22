@@ -52,7 +52,13 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
   await page.setViewportSize({ width: 910, height: 887 })
   await page.goto('/?teams&settings')
   await page.getByRole('button', { name: '新建专家', exact: true }).click()
-  const expertDrawer = await page.getByRole('dialog').boundingBox()
+  const expertDialog = page.getByRole('dialog')
+  await expect(expertDialog).toBeVisible()
+  await page.waitForFunction(() => {
+    const panel = document.querySelector('.ant-drawer-content-wrapper')
+    return panel !== null && getComputedStyle(panel).transform === 'none'
+  })
+  const expertDrawer = await expertDialog.boundingBox()
   await page.screenshot({ path: 'test-results/expert-editor-unified.png' })
   await page.keyboard.press('Escape')
   await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
@@ -65,7 +71,13 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
     card.getByRole('button', { name: '复制提示词', exact: true }),
   ).toBeVisible()
   await card.getByRole('button', { name: '复制并自定义', exact: true }).click()
-  const teamDrawer = await page.getByRole('dialog').boundingBox()
+  const teamDialog = page.getByRole('dialog')
+  await expect(teamDialog).toBeVisible()
+  await page.waitForFunction(() => {
+    const panel = document.querySelector('.ant-drawer-content-wrapper')
+    return panel !== null && getComputedStyle(panel).transform === 'none'
+  })
+  const teamDrawer = await teamDialog.boundingBox()
   expect(teamDrawer!.width).toBe(expertDrawer!.width)
   expect(teamDrawer!.x).toBe(expertDrawer!.x)
   await page.getByLabel('团队名称', { exact: true }).fill('统一交互测试')
@@ -145,7 +157,7 @@ test('专家保留原标题工具栏与来源筛选，专家团采用同一结�
 
 test('切换专家团后保留专家搜索和来源筛选', async ({ page }) => {
   await page.goto('/?teams&settings')
-  const sourceSelect = page.locator('#aag-filter-source').locator('xpath=ancestor-or-self::*[contains(@class,"aag-select")]')
+  const sourceSelect = page.locator('.aag-field-source:visible .ant-select')
   await sourceSelect.click()
   await page.getByRole('option', { name: '内置', exact: true }).click()
   await page.locator('#aag-filter-search').fill('人类学')
@@ -194,8 +206,8 @@ test('数量写在对应页签上，来源选项与新建同行', async ({ page 
     await tab.click()
     await expect(tab).toContainText(total)
     await expect(tab).toContainText('已启用')
-    const source = page.locator('#aag-filter-source, #aag-team-source').locator('xpath=ancestor-or-self::*[contains(@class,"aag-select")]').locator('visible=true')
-    const status = page.locator('#aag-filter-status, #aag-team-status').locator('xpath=ancestor-or-self::*[contains(@class,"aag-select")]').locator('visible=true')
+    const source = page.locator('.aag-field-source:visible .ant-select')
+    const status = page.locator('.aag-field-status:visible .ant-select')
     await expect(source).toContainText('全部')
     const sourceBox = await source.boundingBox()
     const statusBox = await status.boundingBox()

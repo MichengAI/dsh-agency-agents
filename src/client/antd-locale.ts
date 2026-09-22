@@ -19,3 +19,9 @@ const enUS: Locale = {
 export function antdLocale(active: 'zh' | 'en'): Locale {
   return active === 'en' ? enUS : zhCN
 }
+
+/** 独立挂载的弹窗没有上层主题时，按页面语言选择文案。 */
+export function documentAntdLocale(): Locale {
+  const lang = typeof document === 'undefined' ? '' : document.documentElement.lang.toLowerCase()
+  return antdLocale(lang.startsWith('en') ? 'en' : 'zh')
+}

@@ -53,15 +53,22 @@ export const Switch = unwrap<React.ComponentType<SwitchProps>>(SwitchImport)
 const darkAlgorithm = unwrap<NonNullable<ConfigProviderProps['theme']> extends { algorithm?: infer Algorithm } ? Algorithm : never>(darkAlgorithmImport)
 const defaultAlgorithm = unwrap<NonNullable<ConfigProviderProps['theme']> extends { algorithm?: infer Algorithm } ? Algorithm : never>(defaultAlgorithmImport)
 
-/** 按钮不插汉字空格，亮暗跟随宿主的 data-ds-dark-theme。 */
+const antdMounted = React.createContext(false)
+
+/** 当前树里是否已经有插件的 Ant Design 主题。 */
+export function useAntdMounted(): boolean {
+  return React.useContext(antdMounted)
+}
+
+/** 按钮不插汉字空格。亮暗跟随宿主，主色保持 Ant Design 默认蓝。 */
 export function AntdProvider(props: { locale?: Locale; children?: React.ReactNode }): React.ReactElement {
   const dark = useHostDark()
-  return React.createElement(ConfigProvider, {
+  return React.createElement(antdMounted.Provider, { value: true }, React.createElement(ConfigProvider, {
     locale: props.locale,
     button: { autoInsertSpace: false },
     theme: {
       algorithm: dark ? darkAlgorithm : defaultAlgorithm,
       components: { Button: { borderRadius: 8 } },
     },
-  }, props.children)
+  }, props.children))
 }

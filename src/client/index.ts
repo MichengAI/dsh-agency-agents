@@ -511,8 +511,8 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-name{display:-webkit-box;overflow:hidden;font-size:16px;font-weight:650;line-height:22px;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .aag-card-division{margin-top:2px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:18px}
 .aag-card-description{grid-column:1/-1;display:-webkit-box;min-height:60px;margin:0;overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:20px;-webkit-box-orient:vertical;-webkit-line-clamp:3}
-.aag-card-actions{display:flex;border-top:1px solid var(--dsw-alias-border-l2)}
-.aag-card-action{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:0;flex:1 1 0;overflow:hidden;min-height:48px;padding:0 6px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;line-height:18px;white-space:nowrap;cursor:pointer}
+.aag-card-actions{display:flex;align-items:stretch;min-height:48px;border-top:1px solid var(--dsw-alias-border-l2)}
+.aag-card-action{display:inline-flex;align-items:center;justify-content:center;gap:4px;flex:1 0 auto;min-height:48px;padding:0 8px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;line-height:18px;white-space:nowrap;cursor:pointer}
 .aag-card-action+.aag-card-action{border-left:1px solid var(--dsw-alias-border-l2)}
 .aag-card-action:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
 .aag-card-action:disabled{opacity:.5;cursor:default}
@@ -999,8 +999,9 @@ function ExpertCardWindow(props: {
   const countRef = React.useRef(props.items.length)
   countRef.current = props.items.length
   const [range, setRange] = React.useState({ start: 0, end: 8, columns: 2, row: EXPERT_CARD_ROW, pin: null as number | null, key: props.resetKey })
-  const active = range.key === props.resetKey ? range : { start: 0, end: 8, columns: range.columns, row: range.row, pin: null, key: props.resetKey }
-  if (range.key !== props.resetKey) setRange(active)
+  React.useLayoutEffect(() => {
+    setRange((current) => current.key === props.resetKey ? current : { start: 0, end: 8, columns: current.columns, row: current.row, pin: null, key: props.resetKey })
+  }, [props.resetKey])
   React.useLayoutEffect(() => {
     const node = ref.current
     if (node === null) return
@@ -1041,17 +1042,17 @@ function ExpertCardWindow(props: {
       window.removeEventListener('resize', onScroll)
     }
   }, [props.resetKey, props.items.length])
-  const columns = Math.max(1, active.columns)
+  const columns = Math.max(1, range.columns)
   const count = props.items.length
   const rows = Math.ceil(count / columns)
-  const start = rows === 0 ? 0 : Math.min(active.start, rows - 1)
-  const end = Math.min(rows, Math.max(start, active.end))
+  const start = rows === 0 ? 0 : Math.min(range.start, rows - 1)
+  const end = Math.min(rows, Math.max(start, range.end))
   const shown = new Set<number>()
   for (let index = start * columns; index < Math.min(end * columns, count); index += 1) shown.add(index)
-  if (active.pin !== null && active.pin >= 0 && active.pin < count) shown.add(active.pin)
-  const height = rows === 0 ? 0 : rows * active.row - EXPERT_CARD_GAP
+  if (range.pin !== null && range.pin >= 0 && range.pin < count) shown.add(range.pin)
+  const height = rows === 0 ? 0 : rows * range.row - EXPERT_CARD_GAP
   return React.createElement('div', { ref, className: 'aag-expert-window', role: 'list', 'aria-rowcount': rows, style: { height } },
-    React.createElement('div', { className: 'aag-expert-grid', style: { top: 0, gridAutoRows: `${Math.max(active.row - EXPERT_CARD_GAP, 1)}px` } },
+    React.createElement('div', { className: 'aag-expert-grid', style: { top: 0, gridAutoRows: `${Math.max(range.row - EXPERT_CARD_GAP, 1)}px` } },
       [...shown].sort((left, right) => left - right).map((index) => React.createElement('div', {
         key: index,
         role: 'listitem',
