@@ -23,7 +23,7 @@ test('五团展示、复制编辑主理人规则、启用成员与删除团队',
     page
       .getByTestId('team-card')
       .filter({ hasText: '我的产品评审团' })
-      .getByRole('checkbox'),
+      .getByRole('switch'),
   ).toBeChecked()
   await page
     .getByTestId('team-card')
@@ -81,7 +81,7 @@ test('未保存修改确认、主理人恢复模板与窄屏无溢出', async ({
 test('聊天工具栏切换团队、查看详情、启用并填入示例', async ({ page }) => {
   await page.goto('/?teams&menu')
   await page.getByRole('button', { name: '专家', exact: true }).click()
-  await page.getByRole('button', { name: '专家团', exact: true }).click()
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await page.getByLabel('搜索专家团').fill('产品')
   await page.getByRole('button', { name: '查看产品方案评审团详情' }).click()
   await expect(
@@ -130,7 +130,7 @@ test('设计稿同尺寸视觉验收截图', async ({ page }, testInfo) => {
   await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await expect(page.getByTestId('team-card')).toHaveCount(5)
   await expect(page.getByTestId('team-card').first()).toHaveCSS('background-color', 'rgb(43, 43, 45)')
-  await expect(page.getByTestId('team-card').first().locator('.aag-switch-track')).toHaveCSS('background-color', 'rgb(37, 207, 105)')
+  await expect(page.getByTestId('team-card').first().getByRole('switch')).toHaveCSS('background-color', 'rgb(37, 207, 105)')
   await expect(
     page.getByRole('button', { name: '新建专家团' }),
   ).toBeInViewport()

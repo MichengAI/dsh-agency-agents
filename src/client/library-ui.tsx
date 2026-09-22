@@ -1,4 +1,14 @@
 import React from 'react'
+import { Button, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Switch } from './host-switch.js'
+
+export interface LibraryMenuItem {
+  id: string
+  label: string
+  disabled?: boolean
+  danger?: boolean
+  onSelect(): void
+}
 
 /** 创建可选择保存或保存并启用；编辑只保存修改并保留当前启用状态。 */
 export function LibraryEditorFooter(props: {
@@ -21,32 +31,11 @@ export function LibraryEditorFooter(props: {
     >
       <p className="aag-note">{props.help}</p>
       <div>
-        <button
-          type="button"
-          className="aag-action"
-          disabled={props.busy}
-          onClick={props.close}
-        >
-          {props.cancelLabel}
-        </button>
+        <Button variant="outline" size="sm" disabled={props.busy} onClick={props.close}>{props.cancelLabel}</Button>
         {!props.editing && (
-          <button
-            type="button"
-            className="aag-action"
-            disabled={props.busy || props.blocked}
-            onClick={props.save}
-          >
-            {props.saveLabel}
-          </button>
+          <Button variant="outline" size="sm" disabled={props.busy || props.blocked} onClick={props.save}>{props.saveLabel}</Button>
         )}
-        <button
-          type="button"
-          className="aag-action aag-custom-primary"
-          disabled={props.busy || props.blocked}
-          onClick={props.primary}
-        >
-          {props.primaryLabel}
-        </button>
+        <Button variant="primary" size="sm" disabled={props.busy || props.blocked} onClick={props.primary}>{props.primaryLabel}</Button>
       </div>
     </footer>
   )
@@ -64,10 +53,11 @@ export function LibraryCard(props: {
   disabledLabel: string
   toggle(): void
   actions: React.ReactNode
-  more: React.ReactNode
+  moreItems: readonly LibraryMenuItem[]
   moreLabel: string
   testId?: string
 }) {
+  const [moreOpen, setMoreOpen] = React.useState(false)
   return (
     <article className="aag-expert-card" data-testid={props.testId}>
       <div className="aag-card-body">
@@ -81,53 +71,51 @@ export function LibraryCard(props: {
         <div className="aag-card-description" title={props.description}>
           {props.description}
         </div>
-        <label
-          className="aag-switch"
-          title={props.enabled ? props.enabledLabel : props.disabledLabel}
-        >
-          <input
-            type="checkbox"
-            className="aag-switch-input"
+        <div className="aag-switch">
+          <Switch
             checked={props.enabled}
             disabled={props.disabled}
-            onChange={props.toggle}
-            aria-label={`${props.name}：${props.enabled ? props.enabledLabel : props.disabledLabel}`}
+            label={`${props.name}：${props.enabled ? props.enabledLabel : props.disabledLabel}`}
+            title={props.enabled ? props.enabledLabel : props.disabledLabel}
+            onChange={() => props.toggle()}
           />
-          <span className="aag-switch-track" aria-hidden="true" />
           <span className="aag-switch-state">
             {props.enabled ? props.enabledLabel : props.disabledLabel}
           </span>
-        </label>
+        </div>
       </div>
       <div className="aag-card-actions aag-card-actions-with-more">
-        <details
-          className="aag-card-more"
-          onBlur={(event) => {
-            if (
-              !event.currentTarget.contains(event.relatedTarget as Node | null)
-            )
-              event.currentTarget.open = false
+        <Menu
+          className="aag-card-more-anchor"
+          open={moreOpen}
+          side="top"
+          align="end"
+          portal
+          compact
+          onClose={() => setMoreOpen(false)}
+          onSelect={(id) => {
+            setMoreOpen(false)
+            props.moreItems.find((item) => item.id === id)?.onSelect()
           }}
-        >
-          <summary
-            aria-label={`${props.name} · ${props.moreLabel}`}
-            title={props.moreLabel}
-          >
-            ⋯
-          </summary>
-          <div
-            className="aag-card-more-panel"
-            onClick={(event) => {
-              if ((event.target as HTMLElement).closest('button')) {
-                const menu = event.currentTarget.closest('details')
-                menu?.removeAttribute('open')
-                menu?.querySelector('summary')?.focus()
-              }
-            }}
-          >
-            {props.more}
-          </div>
-        </details>
+          items={props.moreItems.map((item) => ({
+            id: item.id,
+            label: item.label,
+            disabled: item.disabled,
+            danger: item.danger,
+          }))}
+          anchor={(
+            <button
+              type="button"
+              className="aag-card-more"
+              aria-label={`${props.name} · ${props.moreLabel}`}
+              aria-expanded={moreOpen}
+              title={props.moreLabel}
+              onClick={() => setMoreOpen((current) => !current)}
+            >
+              ⋯
+            </button>
+          )}
+        />
         {props.actions}
       </div>
     </article>
@@ -198,23 +186,8 @@ export function LibraryConfirm(props: {
         </p>
       )}
       <div className="aag-custom-delete-actions">
-        <button
-          type="button"
-          className="aag-action aag-action-secondary"
-          autoFocus
-          disabled={props.busy}
-          onClick={close}
-        >
-          {props.cancelLabel}
-        </button>
-        <button
-          type="button"
-          className="aag-action aag-custom-primary"
-          disabled={props.busy}
-          onClick={props.confirm}
-        >
-          {props.confirmLabel}
-        </button>
+        <Button variant="outline" size="sm" autoFocus disabled={props.busy} onClick={close}>{props.cancelLabel}</Button>
+        <Button variant="primary" size="sm" disabled={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>
       </div>
     </dialog>
   )

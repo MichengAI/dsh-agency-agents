@@ -3,6 +3,7 @@ import { loadEditorReview, continueEditorReview } from "./client/editor-review.j
 import { describe, expect, it, vi } from "vitest";
 import React from "react";
 import { CustomExpertEditor } from "./client/custom-editor.js";
+import type { Button } from "@deepseek-ai/dsh-client-ui-primitives";
 import { buildExpertReference, writeEnabled, matchExpertQuery } from "./client/index.js";
 import { Context } from "@deepseek-ai/cordis";
 import {
@@ -618,6 +619,7 @@ it.each(["删除", "改名"] as const)("他窗%s释放名称后，编辑器保�
   const elements = (node: React.ReactNode): React.ReactElement<ElementProps>[] => {
     if (!React.isValidElement<ElementProps>(node)) return [];
     if (node.type === LibraryEditorFooter) return elements(LibraryEditorFooter(node.props as React.ComponentProps<typeof LibraryEditorFooter>));
+    if (typeof node.type === 'function' && node.type.name === 'Button') return elements((node.type as (props: React.ComponentProps<typeof Button>) => React.ReactElement)(node.props as React.ComponentProps<typeof Button>));
     return [node, ...React.Children.toArray(node.props.children).flatMap(elements)];
   };
   const render = () => {

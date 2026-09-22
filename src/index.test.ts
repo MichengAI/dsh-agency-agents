@@ -1187,7 +1187,7 @@ describe('@ 菜单分组标题本地化', () => {
   it('DSH 开发依赖固定为 0.1.6-alpha.2', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.1.6-alpha.2')
+        expect(version).toBe(name === '@deepseek-ai/dsh-client-ui-primitives' ? '0.1.7-alpha.1' : '0.1.6-alpha.2')
       }
     }
   })

@@ -1,3 +1,5 @@
+import { Button, Input } from '@deepseek-ai/dsh-client-ui-primitives'
+import { SegmentedControl, SegmentedTabs } from './segmented-tabs.js'
 import { LibraryCard } from './library-ui.js'
 import type { AgencyTeamsRemote } from './remote.js'
 import { TeamsPanel, unwrap, type TeamRemote } from './team-ui.js'
@@ -539,7 +541,7 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-filters .aag-select-trigger{min-height:32px;font-size:14px}
 .aag-search-wrap{position:relative;display:flex;align-items:center}
 .aag-search-icon{position:absolute;left:8px;width:16px;height:16px;z-index:1;color:var(--dsw-alias-label-secondary);pointer-events:none}
-.aag-search{height:32px;padding:0 32px;border-color:var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-button-elevated-fill));font-size:14px;line-height:22px}
+.aag-search{box-sizing:border-box;height:32px;padding:0 32px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-button-elevated-fill));font-size:14px;line-height:22px;outline:none}
 .aag-search::placeholder{color:var(--dsw-alias-label-dimmed)}
 .aag-search-clear{right:2px;width:28px;height:28px}
 .aag-expert-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;margin-top:2px}
@@ -557,7 +559,7 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-action:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
 .aag-card-action:disabled{opacity:.5;cursor:default}
 .aag-card-action-primary{color:var(--dsw-alias-label-secondary)}
-.aag-switch{position:absolute;top:12px;right:12px;display:flex;align-items:center;flex-direction:column;gap:3px;cursor:pointer}
+.aag-switch{position:absolute;top:12px;right:12px;display:flex;align-items:center;flex-direction:column;gap:3px;cursor:pointer}.aag-switch [role=switch][aria-checked=true]{background:var(--dsw-alias-state-success-primary)}.aag-switch-fallback{box-sizing:border-box;position:relative;flex:0 0 auto;width:36px;height:20px;padding:2px;border:0;border-radius:10px;corner-shape:round;background:var(--dsw-alias-border-l3);cursor:pointer}.aag-switch-fallback[aria-checked=true]{background:var(--dsw-alias-brand-primary)}.aag-switch-fallback:disabled{cursor:default;opacity:.5}.aag-switch-fallback:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.aag-switch-fallback-thumb{display:block;width:16px;height:16px;border-radius:50%;corner-shape:round;background:var(--dsw-alias-label-primary-foreground);transition:transform 120ms ease}.aag-switch-fallback[aria-checked=true] .aag-switch-fallback-thumb{transform:translateX(16px)}@media (prefers-reduced-motion:reduce){.aag-switch-fallback-thumb{transition:none}}
 .aag-switch-input{position:absolute;width:1px;height:1px;opacity:0}
 .aag-switch-track{box-sizing:border-box;position:relative;display:block;width:36px;height:20px;border:0;border-radius:10px;corner-shape:round;background:var(--dsw-alias-border-l3)}
 .aag-switch-track::after{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;corner-shape:round;background:var(--dsw-static-neutral-00,#fff);content:"";transition:transform 120ms ease}
@@ -852,7 +854,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
   const [busy, setBusy] = React.useState(false)
   const working = React.useRef(false)
   const epoch = React.useRef(0)
-  const triggerRef = React.useRef<HTMLButtonElement | null>(null)
+  const triggerRef = React.useRef<HTMLSpanElement | null>(null)
   const menuId = React.useId()
   const [menuPosition, setMenuPosition] = React.useState<ExpertMenuPosition | undefined>()
   const [menuLeft, setMenuLeft] = React.useState(0)
@@ -864,7 +866,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
   const close = (restoreFocus = false): void => {
     epoch.current++
     setOpen(false)
-    if (restoreFocus) triggerRef.current?.focus()
+    if (restoreFocus) triggerRef.current?.querySelector('button')?.focus()
   }
   React.useEffect(() => () => { epoch.current++ }, [])
 
@@ -987,9 +989,14 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     },
       insertError === null ? null : React.createElement('div', { className: 'aag-error', role: 'alert' }, insertError,
         React.createElement('button', { type: 'button', disabled: busy, onClick: () => load() }, props.t('btn.refresh'))),
-      'getTeams' in props.remote ? React.createElement('div', { className: 'agt-composer-tabs' },
-        React.createElement('button', { type: 'button', 'aria-pressed': mode === 'experts', onClick: () => setMode('experts') }, teamText(props.getActive(), '专家')),
-        React.createElement('button', { type: 'button', 'aria-pressed': mode === 'teams', onClick: () => setMode('teams') }, teamText(props.getActive(), '专家团'))) : null,
+      'getTeams' in props.remote ? React.createElement(SegmentedControl, {
+        id: 'aag-composer-mode', value: mode, label: teamText(props.getActive(), '专家'),
+        options: [
+          { value: 'experts' as const, label: teamText(props.getActive(), '专家') },
+          { value: 'teams' as const, label: teamText(props.getActive(), '专家团') },
+        ],
+        onChange: (value: string) => setMode(value === 'teams' ? 'teams' : 'experts'),
+      }) : null,
       mode === 'teams' && 'getTeams' in props.remote ? React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamMenu, { remote: props.remote as TeamRemote,
         prepareSelect: props.prepareTeamSelection, onSelected: () => close(), onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) } })) :
       React.createElement(ExpertDiscovery, { experts: results, enabled: catalog.enabled, locale: props.getActive(), t: props.t, avatarSrc: menuAvatar,
@@ -999,7 +1006,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
   return React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef, onBlur: (event: React.FocusEvent) => {
     if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) close()
   } },
-    React.createElement('button', { type: 'button', ref: triggerRef, className: 'aag-btn', title: props.t('button.title'), 'aria-expanded': open, 'aria-haspopup': 'dialog', 'aria-controls': open ? menuId : undefined, onMouseDown: keepComposerFocus, onClick }, expertIcon(), React.createElement('span', null, props.t('settings.nav'))),
+    React.createElement('span', { ref: triggerRef }, React.createElement(Button, { type: 'button', className: 'aag-btn', variant: 'toolbar', size: 'sm', title: props.t('button.title'), 'aria-expanded': open, 'aria-haspopup': 'dialog', 'aria-controls': open ? menuId : undefined, onMouseDown: keepComposerFocus, onClick }, expertIcon(), props.t('settings.nav'))),
     menu)
 }
 
@@ -1193,13 +1200,21 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           props.t('summary.enabledPrefix'),
           React.createElement('strong', null, enabledCount))),
       React.createElement('div', { className: 'aag-actions' },
-        React.createElement('button', { type: 'button', className: 'aag-action aag-custom-primary', disabled: isSaving, onClick: () => openEditor() }, props.t('custom.new')),
-        React.createElement('button', {
-          type: 'button', className: 'aag-refresh-button', disabled: isSaving, onClick: load,
+        React.createElement(Button, { variant: 'primary', size: 'sm', disabled: isSaving, onClick: () => openEditor() }, props.t('custom.new')),
+        React.createElement(Button, {
+          variant: 'outline', size: 'sm', disabled: isSaving, onClick: load,
           title: props.t('btn.refresh'), 'aria-label': props.t('btn.refresh'),
-        }, React.createElement(RefreshCw, { size: 20, strokeWidth: 1.8, 'aria-hidden': true })))))
-    nodes.push(React.createElement('div', { key: 'sources', className: 'aag-custom-tabs', role: 'group', 'aria-label': props.t('custom.source') },
-      (['all', 'base', 'custom'] as const).map(value => React.createElement('button', { key: value, type: 'button', className: 'aag-action', 'aria-pressed': source === value, onClick: () => setSource(value) }, props.t(value === 'custom' ? 'custom.source' : `custom.${value}`)))))
+          icon: React.createElement(RefreshCw, { size: 16, strokeWidth: 1.8, 'aria-hidden': true }),
+        }))))
+    nodes.push(React.createElement('div', { key: 'sources', className: 'aag-custom-tabs' }, React.createElement(SegmentedTabs, {
+      className: 'aag-library-tabs', label: props.t('custom.source'), value: source,
+      onChange: (value: string) => setSource(value === 'base' || value === 'custom' ? value : 'all'),
+      items: [
+        { value: 'all' as const, label: props.t('custom.all'), id: 'aag-expert-source-all', panelId: 'aag-expert-source-panel' },
+        { value: 'base' as const, label: props.t('custom.base'), id: 'aag-expert-source-base', panelId: 'aag-expert-source-panel' },
+        { value: 'custom' as const, label: props.t('custom.source'), id: 'aag-expert-source-custom', panelId: 'aag-expert-source-panel' },
+      ],
+    })))
     if (notice !== null) nodes.push(React.createElement('div', { key: 'notice', className: 'aag-custom-notice', role: 'status' }, notice))
     nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters aag-card-filters' },
       React.createElement('div', { className: 'aag-field aag-field-category' },
@@ -1229,13 +1244,12 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       React.createElement('div', { className: 'aag-field aag-field-search' },
         React.createElement('label', { className: 'aag-label', htmlFor: 'aag-filter-search' }, props.t('settings.search')),
         React.createElement('div', { className: 'aag-search-wrap' },
-          React.createElement(Search, { className: 'aag-search-icon', size: 24, strokeWidth: 1.7, 'aria-hidden': true }),
-          React.createElement('input', {
-            id: 'aag-filter-search', className: 'aag-control aag-search', type: 'search', value: query,
+          React.createElement(Input, {
+            id: 'aag-filter-search', className: 'aag-search', type: 'search', value: query,
+            icon: React.createElement(Search, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }),
             autoComplete: 'off', spellCheck: false, placeholder: props.t('settings.search.placeholder'),
-            onChange: (event: { currentTarget: { value: string } }) => {
-              setQuery(event.currentTarget.value)
-            },
+            'aria-label': props.t('settings.search'),
+            onChange: (event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.currentTarget.value),
           }),
           query !== '' ? React.createElement('button', {
             type: 'button', className: 'aag-search-clear', 'aria-label': props.t('settings.search.clear'), onClick: () => setQuery(''),
@@ -1244,8 +1258,8 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       nodes.push(React.createElement('div', { key: 'empty', className: 'aag-empty' },
         React.createElement('div', null, source === 'custom' && !hasFilter ? props.t('custom.emptyTitle') : props.t('settings.empty', { all: props.t('settings.filter.all') })),
         source === 'custom' && !hasFilter ? React.createElement('p', { className: 'aag-note' }, props.t('custom.emptyHint')) : null,
-        source === 'custom' && !hasFilter ? React.createElement('button', { type: 'button', className: 'aag-action aag-custom-primary', onClick: () => openEditor() }, props.t('custom.new')) : null,
-        hasFilter ? React.createElement('button', { type: 'button', className: 'aag-action aag-action-secondary', onClick: resetFilters }, props.t('settings.empty.reset')) : null))
+        source === 'custom' && !hasFilter ? React.createElement(Button, { variant: 'primary', size: 'sm', onClick: () => openEditor() }, props.t('custom.new')) : null,
+        hasFilter ? React.createElement(Button, { variant: 'outline', size: 'sm', onClick: resetFilters }, props.t('settings.empty.reset')) : null))
     } else {
       nodes.push(React.createElement('div', { key: 'cards', className: 'aag-expert-grid' }, filtered.map((expert) => {
         const enabled = state.enabled.has(expert.slug)
@@ -1260,9 +1274,10 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           enabled, disabled: isSaving || expert.conflict === true,
           enabledLabel: props.t('settings.enabled'), disabledLabel: props.t('settings.disabled'),
           toggle: () => toggle(expert.slug), moreLabel: props.t('custom.more'),
-          more: React.createElement(React.Fragment, null,
-            React.createElement('button', { type: 'button', disabled: isSaving || promptBusySlug !== null, onClick: () => openEditor(expert) }, props.t(expert.custom ? 'custom.edit' : 'custom.copy')),
-            expert.custom ? React.createElement('button', { type: 'button', className: 'aag-custom-danger', disabled: isSaving, onClick: () => { setDeleting(expert); setDeleteError(null) } }, props.t('custom.delete')) : null),
+          moreItems: [
+            { id: 'edit', label: props.t(expert.custom ? 'custom.edit' : 'custom.copy'), disabled: isSaving || promptBusySlug !== null, onSelect: () => openEditor(expert) },
+            ...(expert.custom ? [{ id: 'delete', label: props.t('custom.delete'), danger: true, disabled: isSaving, onSelect: () => { setDeleting(expert); setDeleteError(null) } }] : []),
+          ],
           actions: React.createElement(React.Fragment, null,
             React.createElement('button', { type: 'button', className: 'aag-card-action', disabled: promptBusySlug !== null, 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
               React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), busy ? props.t('settings.promptLoading') : props.t('settings.viewPrompt')),
@@ -1272,7 +1287,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       })))
     }
   }
-  return React.createElement('section', { className: 'aag-section' }, nodes,
+  return React.createElement('section', { className: 'aag-section', id: 'aag-expert-source-panel' }, nodes,
     editor === null || state === null ? null : React.createElement(CustomExpertEditor, {
       ...editor, remote: props.remote, t: props.t, locale: props.getActive(),
       divisions: [...new Set([...Object.keys(ZH_DIVISION), ...state.experts.map(expert => expert.division)])],
@@ -1293,23 +1308,26 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
   const [view, setView] = React.useState<'experts' | 'teams'>('experts')
   const [expertSummary, setExpertSummary] = React.useState({ total: 0, enabled: 0 })
   const [teamSummary, setTeamSummary] = React.useState({ total: 0, enabled: 0 })
-  const summary = view === 'experts' ? expertSummary : teamSummary
-  const navigation = React.createElement('div', { className: 'aag-library-tabs', role: 'tablist', 'aria-label': tx('专家库类型') },
-    (['experts', 'teams'] as const).map(value => React.createElement('button', {
-      key: value, type: 'button', role: 'tab', 'aria-selected': view === value,
-      onClick: () => setView(value),
-    }, tx(value === 'experts' ? '专家' : '专家团'))))
+  const tabLabel = (name: string, total: number, enabled: number) => React.createElement(React.Fragment, null,
+    name,
+    React.createElement('span', { className: 'aag-tab-count', 'aria-hidden': true }, React.createElement('strong', null, total)),
+    React.createElement('span', { className: 'aag-tab-count', 'aria-hidden': true }, props.t('summary.enabledPrefix'), React.createElement('strong', null, enabled)),
+  )
+  const navigation = React.createElement(SegmentedTabs, {
+    className: 'aag-library-tabs', label: tx('专家库类型'), value: view,
+    onChange: (value) => { if (value === 'experts' || value === 'teams') setView(value) },
+    items: [
+      { value: 'experts' as const, label: tabLabel(tx('专家'), expertSummary.total, expertSummary.enabled), id: 'aag-library-tab-experts', panelId: 'aag-library-panel-experts' },
+      { value: 'teams' as const, label: tabLabel(tx('专家团'), teamSummary.total, teamSummary.enabled), id: 'aag-library-tab-teams', panelId: 'aag-library-panel-teams' },
+    ],
+  })
   // 两个名册都保持挂载，切换时不丢失筛选，也不重新等待第一次加载。
   return React.createElement('section', { className: 'aag-section aag-library-shell' },
     React.createElement('header', { className: 'aag-toolbar' }, React.createElement('div', { className: 'aag-title-row' },
       React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')), settingsGithubLinks(props.t))),
-    React.createElement('div', { className: 'aag-library-navigation' }, navigation,
-      React.createElement('div', { className: 'aag-library-summary', role: 'status' },
-        React.createElement('span', { className: 'aag-header-stat' }, React.createElement('strong', null, summary.total),
-          view === 'teams' ? tx('个专家团') : props.t(summary.total === 1 ? 'summary.total.one' : 'summary.total.other', { count: summary.total })),
-        React.createElement('span', { className: 'aag-header-stat' }, props.t('summary.enabledPrefix'), React.createElement('strong', null, summary.enabled)))),
-    React.createElement('div', { hidden: view !== 'experts' }, React.createElement(ExpertCardsSettings, { ...props, sharedHeader: true, onSummary: setExpertSummary })),
-    React.createElement('div', { hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
+    React.createElement('div', { className: 'aag-library-navigation' }, navigation),
+    React.createElement('div', { id: 'aag-library-panel-experts', role: 'tabpanel', 'aria-labelledby': 'aag-library-tab-experts', hidden: view !== 'experts' }, React.createElement(ExpertCardsSettings, { ...props, sharedHeader: true, onSummary: setExpertSummary })),
+    React.createElement('div', { id: 'aag-library-panel-teams', role: 'tabpanel', 'aria-labelledby': 'aag-library-tab-teams', hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
       remote: props.remote as TeamRemote, sharedHeader: true, onSummary: setTeamSummary, prepareSelect: props.prepareTeamSelection,
       onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) },
     }))))

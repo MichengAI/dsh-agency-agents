@@ -2,6 +2,8 @@ import { catalogState } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
+import { Button, Input } from '@deepseek-ai/dsh-client-ui-primitives';
+import { SegmentedTabs } from './segmented-tabs.js';
 import { CategorySelect } from './category-select.js';
 import { IconX } from '@tabler/icons-react/dist/esm/tabler-icons-react.mjs';
 import React from 'react';
@@ -127,7 +129,7 @@ export function TeamsPanel(props: {
     });
     const experts = localizedExperts(rawExperts, locale);
     const [query, setQuery] = React.useState('');
-    const [filter, setFilter] = React.useState('all');
+    const [filter, setFilter] = React.useState<'all' | 'builtin' | 'custom'>('all');
     const [status, setStatus] = React.useState('');
     const [copied, setCopied] = React.useState('');
     const copiedTimer = React.useRef<ReturnType<typeof setTimeout>>();
@@ -170,15 +172,17 @@ export function TeamsPanel(props: {
         const generation = ++sequence.current;
         try {
             const teams = await refreshTeams(props.remote);
-            if (!alive.current || generation !== sequence.current)
+            if (!alive.current)
                 return;
-            setSnapshot(teams);
+            // 团队缓存通知会推进 sequence，避免旧查询覆盖新快照；专家名册仍要落到当前面板。
+            if (generation === sequence.current)
+                setSnapshot(teams);
             const known = catalogState(props.remote);
             if (known.revision >= 0)
                 setExperts([...known.experts]);
             else {
                 const catalog = await unwrap(props.remote.getCatalog());
-                if (!alive.current || generation !== sequence.current)
+                if (!alive.current)
                     return;
                 setExperts(catalog.experts);
             }
@@ -284,7 +288,7 @@ export function TeamsPanel(props: {
             setError(cause instanceof Error ? tx(cause.message) : tx("复制失败，请重试。"));
         }
     };
-    return (<section className="aag-section aag-team-library">
+    return (<section className="aag-section aag-team-library" id="aag-team-source-panel">
       <div className="aag-toolbar">
         {!props.sharedHeader && <div className="aag-title-row">
           {!props.sharedHeader && <h2 className="aag-title">{props.title ?? tx("专家团")}</h2>}
@@ -295,21 +299,17 @@ export function TeamsPanel(props: {
           </span>
         </div>}
         <div className="aag-actions">
-          <button type="button" className="aag-action aag-custom-primary" disabled={!snapshot || busy} onClick={() => setEditor({ enabled: false, revision: snapshot!.revision })}>{tx("新建专家团")}</button>
-          <button type="button" className="aag-refresh-button" aria-label={tx("刷新")} title={tx("刷新")} disabled={busy} onClick={() => void load()}>
-            <IconRefresh size={20}/>
-          </button>
+          <Button variant="primary" size="sm" disabled={!snapshot || busy} onClick={() => setEditor({ enabled: false, revision: snapshot!.revision })}>{tx("新建专家团")}</Button>
+          <Button variant="outline" size="sm" aria-label={tx("刷新")} title={tx("刷新")} disabled={busy} onClick={() => void load()} icon={<IconRefresh size={16}/>}/>
         </div>
       </div>
 
-      <div className="aag-custom-tabs" role="group" aria-label={tx("来源")}>
-        {[
-            ['all', tx("全部")],
-            ['builtin', tx("内置")],
-            ['custom', tx("自定义")],
-        ].map(([value, label]) => (<button type="button" className="aag-action" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>
-            {label}
-          </button>))}
+      <div className="aag-custom-tabs">
+      <SegmentedTabs className="aag-library-tabs" label={tx("来源")} value={filter} onChange={(value) => { if (value === 'builtin' || value === 'custom' || value === 'all') setFilter(value) }} items={[
+            { value: 'all', label: tx("全部"), id: 'aag-team-source-all', panelId: 'aag-team-source-panel' },
+            { value: 'builtin', label: tx("内置"), id: 'aag-team-source-builtin', panelId: 'aag-team-source-panel' },
+            { value: 'custom', label: tx("自定义"), id: 'aag-team-source-custom', panelId: 'aag-team-source-panel' },
+        ]}/>
       </div>
       <div className="aag-filters aag-card-filters">
         <div className="aag-field aag-field-status">
@@ -323,8 +323,7 @@ export function TeamsPanel(props: {
         <div className="aag-field aag-field-search">
           <label className="aag-label" htmlFor="aag-team-search">{tx("搜索")}</label>
           <div className="aag-search-wrap">
-            <IconSearch className="aag-search-icon" size={24}/>
-            <input id="aag-team-search" className="aag-control aag-search" type="search" aria-label={tx("搜索专家团")} placeholder={tx("搜索团队、用途或成员")} value={query} autoComplete="off" spellCheck={false} onChange={(event) => setQuery(event.target.value)}/>
+            <Input id="aag-team-search" className="aag-search" type="search" aria-label={tx("搜索专家团")} placeholder={tx("搜索团队、用途或成员")} value={query} autoComplete="off" spellCheck={false} icon={<IconSearch size={16}/>} onChange={(event) => setQuery(event.target.value)}/>
             {query && (<button type="button" className="aag-search-clear" aria-label={tx("清除搜索")} onClick={() => setQuery('')}>
                 <IconX size={18}/>
               </button>)}
@@ -348,12 +347,10 @@ export function TeamsPanel(props: {
                   <TeamAvatars team={team} experts={experts}/>
                 </div>} metadata={tx("{0} 位专家", [team.members.length])} description={enabled && issue
                     ? `${team.description} ${tx(issue)}`
-                    : team.description} enabled={enabled} disabled={busy} enabledLabel={tx("已启用")} disabledLabel={tx("已停用")} toggle={() => void change(team, 'enable')} moreLabel={tx("更多")} more={<>
-                  <button type="button" disabled={busy} onClick={() => (team.builtin ? copy(team) : edit(team))}>
-                    {team.builtin ? tx("复制并自定义") : tx("编辑专家团")}
-                  </button>
-                  {!team.builtin && (<button type="button" className="aag-custom-danger" disabled={busy} onClick={() => void change(team, 'delete')}>{tx("删除专家团")}</button>)}
-                </>} actions={<>
+                    : team.description} enabled={enabled} disabled={busy} enabledLabel={tx("已启用")} disabledLabel={tx("已停用")} toggle={() => void change(team, 'enable')} moreLabel={tx("更多")} moreItems={[
+                    { id: 'edit', label: team.builtin ? tx("复制并自定义") : tx("编辑专家团"), disabled: busy, onSelect: () => (team.builtin ? copy(team) : edit(team)) },
+                    ...(!team.builtin ? [{ id: 'delete', label: tx("删除专家团"), danger: true, disabled: busy, onSelect: () => void change(team, 'delete') }] : []),
+                ]} actions={<>
                   <button type="button" className="aag-card-action" aria-haspopup="dialog" onClick={() => setDetails(team)}>
                     <IconEye size={18}/>{tx("查看详情")}</button>
                   <button type="button" className="aag-card-action" onClick={() => void copyPrompt(team)}>
@@ -367,10 +364,10 @@ export function TeamsPanel(props: {
           <IconUsers size={40}/>
           <h3>{tx("没有找到专家团")}</h3>
           <p>{tx("换个关键词，或创建自己的专家团。")}</p>
-          <button type="button" onClick={() => {
+          <Button variant="outline" size="sm" onClick={() => {
                 setQuery('');
                 setFilter('all');
-            }}>{tx("清除筛选")}</button>
+            }}>{tx("清除筛选")}</Button>
         </div>)}
       {details && (<TeamDetails team={details} experts={experts} close={() => setDetails(null)} onCopy={() => copy(details)} onSelect={(example) => void change(details, 'select', example)} onEdit={!details.builtin
                 ? () => {
