@@ -23,19 +23,12 @@ test('英文设置页与专家团详情、编辑表单没有中文界面残留',
   await expect(page.getByLabel('Team name', { exact: true })).toHaveValue('我的自定义名称')
 })
 
-for (const theme of ['dark', 'light']) test(`${theme}：控件使用官方主题变量及交互状态`, async ({ page }) => {
+for (const theme of ['dark', 'light']) test(`${theme}：分类菜单和启用开关使用宿主角色`, async ({ page }) => {
   await page.goto(`/?teams&settings&theme=${theme}`)
-  await page.evaluate(() => {
-    document.body.style.setProperty('--dsw-alias-brand-primary', '#7055cc')
-    document.body.style.setProperty('--dsw-alias-button-primary-fill', '#7055cc')
-    document.body.style.setProperty('--dsw-alias-button-primary-hover', '#6044bb')
-    document.body.style.setProperty('--dsw-alias-label-primary-foreground', '#ffffff')
-  })
-  const primary = page.getByRole('button', { name: '新建专家', exact: true })
-  await expect(primary).toHaveCSS('background-color', 'rgb(112, 85, 204)')
   await page.locator('.aag-select-trigger').first().click()
   await expect(page.getByRole('menuitem').first()).toBeVisible()
-  await expect(page.getByRole('switch').first()).toHaveCSS('width', '36px')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('switch').first()).toBeVisible()
   await page.screenshot({ path: `test-results/official-controls-${theme}.png` })
 })
 

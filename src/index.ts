@@ -619,7 +619,7 @@ export function apply(ctx: Context, config: Config): void {
       readHostLocale(ctx),
     )
   } else if (isLiveValue((config as { enabled?: unknown }).enabled)) {
-    settingsSource = () => readAgencySettings(config)
+    settingsSource = () => readAgencySettings(config, readHostLocale(ctx))
     retryCleanup()
     const settingsApi = ctx.settings as { configure?: (policy: { auto?: boolean }, owner?: unknown) => () => void }
     const fiber = (ctx as { fiber?: object }).fiber
@@ -629,7 +629,7 @@ export function apply(ctx: Context, config: Config): void {
     if (typeof ctx.effect === 'function') {
       ctx.effect(() => {
         let cancelled = false
-        void recoverImportedAgencySettings(ctx, settingsNamespace, () => settingsSource(), () => cancelled).catch((error: unknown) => {
+        void recoverImportedAgencySettings(ctx, settingsNamespace, () => settingsSource(), () => cancelled, undefined, readHostLocale(ctx)).catch((error: unknown) => {
           console.warn('[agency-agents] 旧设置导入失败，数据仍保留在 settings.yaml.imported：', error)
         })
         return () => { cancelled = true }

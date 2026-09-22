@@ -1,5 +1,8 @@
 import React from 'react'
 
+// 浏览器测试把官方组件换成这个桩。圆角、宽高和颜色写在这里，只对齐 0.1.7 实测值，
+// 不能当成宿主真组件或本地回退实现的验收。角色和 aria 状态跟宿主一致。
+
 export function createRoot(): { render(node: React.ReactNode): void } {
   return { render: () => {} }
 }

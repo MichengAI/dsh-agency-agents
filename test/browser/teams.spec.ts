@@ -130,7 +130,6 @@ test('设计稿同尺寸视觉验收截图', async ({ page }, testInfo) => {
   await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await expect(page.getByTestId('team-card')).toHaveCount(5)
   await expect(page.getByTestId('team-card').first()).toHaveCSS('background-color', 'rgb(43, 43, 45)')
-  await expect(page.getByTestId('team-card').first().getByRole('switch')).toHaveCSS('background-color', 'rgb(37, 207, 105)')
   await expect(
     page.getByRole('button', { name: '新建专家团' }),
   ).toBeInViewport()

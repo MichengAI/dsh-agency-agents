@@ -1101,7 +1101,7 @@ describe('专家库目标稿样式契约', () => {
   it('浮层菜单使用宿主半透明底色，并加上背景模糊', () => {
     const frosted = 'background:var(--dsw-specific-menu);backdrop-filter:var(--dsw-menu-backdrop-filter)'
     expect(COMPOSER_CSS).toContain(frosted)
-    expect(SETTINGS_CSS).toContain(frosted)
+    expect(SETTINGS_CSS).not.toContain('.aag-select-menu')
   })
 
   it('设置页大标题使用简洁的专家名称', () => {

@@ -130,7 +130,7 @@ export function hasAgencySettingsData(value: AgencySettings): boolean {
 }
 
 /** 从插件配置读取启用名单。volatile 引用每次调用都重新取值，并复制冻结快照。 */
-export function readAgencySettings(config: object): AgencySettings {
+export function readAgencySettings(config: object, locale: 'zh' | 'en' = 'zh'): AgencySettings {
   const record = config as {
     enabled?: unknown
     customExperts?: unknown
@@ -143,7 +143,7 @@ export function readAgencySettings(config: object): AgencySettings {
     customTeams: objectList(unwrapLive(record.customTeams)) as AgencySettings['customTeams'],
     enabledTeams: stringList(unwrapLive(record.enabledTeams)),
   }
-  validateAgencySettings(value)
+  validateAgencySettings(value, locale)
   try {
     return structuredClone(value)
   } catch {
@@ -231,6 +231,7 @@ export async function recoverImportedAgencySettings(
   current: () => AgencySettings,
   isCancelled: () => boolean = () => false,
   parse: (text: string) => unknown = parseHostYaml,
+  locale: 'zh' | 'en' = 'zh',
 ): Promise<void> {
   const loader = (ctx as Context & { root?: { loader?: { await?: () => Promise<unknown> } } }).root?.loader
   try {
@@ -254,7 +255,7 @@ export async function recoverImportedAgencySettings(
   const section = agencySettingsFromLegacyDocument(document)
   if (section === undefined || !hasAgencySettingsData(section)) return
   try {
-    validateAgencySettings(section)
+    validateAgencySettings(section, locale)
   } catch (error: unknown) {
     console.warn('[agency-agents] 旧设置未通过校验，已保留在 settings.yaml.imported：', error)
     return

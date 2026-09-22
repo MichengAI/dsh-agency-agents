@@ -161,12 +161,7 @@ test('切换专家团后保留专家搜索和来源筛选', async ({ page }) => 
 test('一级页签使用官方分段页签，与来源筛选保持紧凑层级', async ({ page }) => {
   await page.setViewportSize({ width: 910, height: 887 })
   await page.goto('/?teams&settings')
-  const tab = page.getByRole('tab', { name: '专家', exact: true })
-  const appearance = await tab.evaluate(el => {
-    const style = getComputedStyle(el)
-    return { top: style.borderTopWidth, radius: style.borderRadius, bottom: style.borderBottomWidth, background: style.backgroundColor }
-  })
-  expect(appearance).toEqual({ top: '0px', radius: '8px', bottom: '0px', background: 'rgba(0, 0, 0, 0)' })
+  await expect(page.getByRole('tab', { name: '专家', exact: true })).toHaveAttribute('aria-selected', 'true')
   const navigation = await page.locator('main .aag-section:not(.aag-library-shell):visible > .aag-toolbar').boundingBox()
   const sources = await page.getByRole('tablist', { name: '自定义', exact: true }).boundingBox()
   expect(sources!.y - navigation!.y - navigation!.height).toBeLessThanOrEqual(20)
