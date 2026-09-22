@@ -106,8 +106,10 @@ describe('DSH settings 兼容层', () => {
 
   it('旧 schemastery 不标记 volatile，避免把用户数据写进会重载插件的普通配置', () => {
     expect(liveSchemaField(z.string().default('plain'))).toBeUndefined()
-    expect(hasLegacySettingsInstall({ settings: { installSection: () => undefined } } as unknown as Context)).toBe(true)
+    expect(hasLegacySettingsInstall({ settings: { installSection: () => undefined } } as unknown as Context, {})).toBe(true)
     expect(hasLegacySettingsInstall({ settings: {} } as unknown as Context, {})).toBe(false)
+    expect(hasLegacySettingsInstall({ settings: {} } as unknown as Context, { installSettingsSection: () => undefined })).toBe(true)
+    expect(() => readAgencySettings({ enabled: [], customExperts: [{ slug: 'bad' }] })).toThrow()
   })
 
   it('0.1.7 从 volatile 引用读取启用名单，并关闭自动生成的原始配置表单', async () => {

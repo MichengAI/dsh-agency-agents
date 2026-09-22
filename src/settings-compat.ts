@@ -50,9 +50,31 @@ export function settingsNamespaceCompat(value: string, module: object = dshSetti
     : value as SettingsNamespace
 }
 
+let hostSettingsModule: object | undefined
+
+/** 旧 RC 的模块助手必须从宿主入口解析。插件自己的依赖可能更旧，不能用来判断当前宿主。 */
+function settingsModuleFromHost(): object {
+  if (hostSettingsModule !== undefined) return hostSettingsModule
+  const entry = process.argv[1]
+  if (entry === undefined || entry === '') return hostSettingsModule = {}
+  try {
+    hostSettingsModule = createRequire(resolve(entry))('@deepseek-ai/dsh-settings') as object
+  } catch {
+    hostSettingsModule = {}
+  }
+  return hostSettingsModule
+}
+
+function installSectionMissing(locale: 'zh' | 'en'): string {
+  return locale === 'en'
+    ? 'This DSH settings service has no installSection.'
+    : '当前 DSH settings 服务不支持 installSection。'
+}
+
 /**
  * RC releases expose installSettingsSection as a module helper. Alpha.2 moved
  * the same owner-scoped lifecycle wiring onto ctx.settings.installSection.
+ * The running host context decides; a helper found only in this package does not.
  */
 export function installSettingsSectionCompat<T>(
   ctx: Context,
@@ -60,26 +82,27 @@ export function installSettingsSectionCompat<T>(
   schema: unknown,
   entry: T,
   hooks: SettingsSectionHooks<T>,
-  module: object = dshSettings,
+  module: object = settingsModuleFromHost(),
+  locale: 'zh' | 'en' = 'zh',
 ): void {
+  const settings = (ctx as Context & { settings?: AlphaSettingsService }).settings
+  if (typeof settings?.installSection === 'function') {
+    settings.installSection(ctx, namespace, schema, entry, hooks)
+    return
+  }
   const legacy = moduleExport(module, 'installSettingsSection')
   if (typeof legacy === 'function') {
     ;(legacy as NonNullable<LegacySettingsModule['installSettingsSection']>)(ctx, namespace, schema, entry, hooks)
     return
   }
-
-  const settings = (ctx as Context & { settings?: AlphaSettingsService }).settings
-  if (settings === undefined || typeof settings.installSection !== 'function') {
-    throw new Error('当前 DSH settings 服务不支持 installSection。')
-  }
-  settings.installSection(ctx, namespace, schema, entry, hooks)
+  throw new Error(installSectionMissing(locale))
 }
 
 /** 0.1.6 及更早宿主仍通过 installSection 保存启用名单；0.1.7 已移除该接口。 */
-export function hasLegacySettingsInstall(ctx: Context, module: object = dshSettings): boolean {
-  if (typeof moduleExport(module, 'installSettingsSection') === 'function') return true
+export function hasLegacySettingsInstall(ctx: Context, module: object = settingsModuleFromHost()): boolean {
   const settings = (ctx as Context & { settings?: { installSection?: unknown } }).settings
-  return typeof settings?.installSection === 'function'
+  if (typeof settings?.installSection === 'function') return true
+  return typeof moduleExport(module, 'installSettingsSection') === 'function'
 }
 
 /** 0.1.7 的 volatile 配置字段是带 get() 的稳定引用，读取时必须取当前快照。 */
@@ -120,6 +143,7 @@ export function readAgencySettings(config: object): AgencySettings {
     customTeams: objectList(unwrapLive(record.customTeams)) as AgencySettings['customTeams'],
     enabledTeams: stringList(unwrapLive(record.enabledTeams)),
   }
+  validateAgencySettings(value)
   try {
     return structuredClone(value)
   } catch {

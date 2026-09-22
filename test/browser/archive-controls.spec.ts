@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 for (const theme of ['dark', 'light']) test(`${theme}：沿用归档插件控件，启用状态保持绿色`, async ({ page }) => {
   await page.goto(`/?teams&settings&visual&theme=${theme}`)
-  const search = page.locator('.aag-search')
+  const search = page.locator('.aag-search:visible')
   const select = page.locator('.aag-select-trigger').first()
   await expect(search).toHaveCSS('height', '32px')
   await expect(select).toHaveCSS('height', '32px')

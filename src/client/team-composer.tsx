@@ -1,5 +1,5 @@
 import { catalogState } from './catalog.js';
-import { acceptTeams, refreshTeams, teamState } from './team-cache.js';
+import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import React from 'react';
 import type { ExpertTeam, TeamSnapshot } from '../team-contract.js';
@@ -32,8 +32,16 @@ export function TeamMenu(props: {
     React.useEffect(() => {
         alive.current = true;
         void load();
+        const unsubscribe = subscribeTeams(props.remote, () => {
+            if (!alive.current)
+                return;
+            const next = teamState(props.remote);
+            if (next)
+                setSnapshot(next);
+        });
         return () => {
             alive.current = false;
+            unsubscribe();
         };
     }, [props.remote]);
     const load = async () => {

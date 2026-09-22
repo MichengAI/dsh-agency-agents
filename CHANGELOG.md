@@ -4,6 +4,19 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.0.2 - 2026-09-22
+
+### Improvements
+
+- Support DSH 0.1.7-alpha.1 while keeping previously supported versions. Expert and team settings follow the host's live configuration, and a one-time import recovers data left in `settings.yaml.imported`.
+- Expert and team pickers show avatars. Custom experts no longer ask for a summon emoji.
+- Team lists stay cached and update across the composer and settings when a team changes.
+
+### Fixes
+
+- Menus use the host's translucent surface together with its backdrop blur, so text behind them is not readable through the panel.
+- Detect the legacy settings API from the running host, not from this package's own older dependency.
+
 ## 1.0.1 - 2026-09-21
 
 ### Improvements

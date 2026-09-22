@@ -2,16 +2,14 @@
 
 ### 体验优化
 
-- 大幅缩减插件体积，优化专家与专家团页面加载。
-- 完善中英文提示，语言切换后的显示更加一致。
-- 更新功能截图和使用说明。
+- 支持 DSH 0.1.7-alpha.1，并保留此前已支持的版本。专家和专家团设置跟随宿主的实时配置；若旧数据留在 `settings.yaml.imported`，会在配置仍为空时补写一次。
+- 专家和专家团的选择菜单改为显示头像。新建自定义专家不再要求填写召唤图标。
+- 专家团列表会缓存，并在聊天菜单和设置页之间保持同步。
 
 ### 问题修复
 
-- 修复输入多个标签时分隔符丢失的问题。
-- 修复启用专家团后，部分专家启用状态意外丢失的问题。
-- 改善配置保存失败时的提示，更容易找到需要修改的字段。
-- 修复部分协作状态显示和旧版 DSH 兼容问题。
+- 菜单同时使用宿主的半透明底色和背景模糊，背后的文字不再透出来。
+- 是否仍使用旧设置接口，改为看当前宿主，而不是本包里可能更旧的依赖。
 
 ---
 
@@ -19,13 +17,11 @@
 
 ### Improvements
 
-- Significantly reduced plugin size to improve loading of expert and team pages.
-- Improved Chinese and English messages and consistency when switching languages.
-- Updated feature screenshots and usage guidance.
+- Support DSH 0.1.7-alpha.1 while keeping previously supported versions. Expert and team settings follow the host's live configuration, and a one-time import recovers data left in `settings.yaml.imported`.
+- Expert and team pickers show avatars. Custom experts no longer ask for a summon emoji.
+- Team lists stay cached and update across the composer and settings when a team changes.
 
 ### Fixes
 
-- Fixed separators disappearing when entering multiple tags.
-- Fixed some experts unexpectedly losing their enabled state when enabling a team.
-- Made validation messages clearer so fields needing attention are easier to find.
-- Fixed issues with collaboration status display and compatibility with older DSH versions.
+- Menus use the host's translucent surface together with its backdrop blur, so text behind them is not readable through the panel.
+- Detect the legacy settings API from the running host, not from this package's own older dependency.

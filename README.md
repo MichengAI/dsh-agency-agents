@@ -69,7 +69,7 @@ Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_t
 - Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
 - Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
 
-> This README describes version 1.0.1; npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full changes and [release notes](RELEASE_NOTES.md) for the bilingual release description. Upgrades retain expert settings. Back up settings before downgrading because older versions do not support teams.
+> This README describes version 1.0.2; npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full changes and [release notes](RELEASE_NOTES.md) for the bilingual release description. Upgrades retain expert settings. Back up settings before downgrading because older versions do not support teams.
 ## Screenshots
 
 The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.
@@ -153,7 +153,7 @@ The settings title shows the installed version and a **Check for updates** butto
 
 ## Usage
 
-1. Open the composer **Experts** picker. It shows enabled experts in a compact list grouped by category, with emoji and names. Categories retain their original order, with experts sorted by their localized names within each category.
+1. Open the composer **Experts** picker. It shows enabled experts in a compact list grouped by category, with an avatar and a name on each row. Categories retain their original order, with experts sorted by their localized names within each category.
 2. Search the full roster by name, field or keyword, including disabled experts. One- or two-character English terms match whole words; terms of three or more characters also match word prefixes. Click a row to select it; disabled rows are marked **Enable and select**. Enabled experts also appear in the `@` shortcut list.
 3. The localized expert name is inserted as a short tag. Continue with the complete task. Selecting does not send the message or replace existing text or attachments.
 
@@ -816,7 +816,7 @@ Coverage includes expert/team filtering, creation, copying, editing, enablement,
 
 ## Custom experts
 
-Open Settings → Experts → New expert. Set a name, description, category and prompt, then choose an avatar and a separate summon emoji (default 🧩). Save and enable makes the expert immediately available through @ and the Experts button. Reference labels use the standard expert icon and plain name, matching built-in experts; the emoji appears in candidate menus. Copy a base expert to customize it, or edit, enable, disable and delete custom experts. Deletion permanently removes the expert content and enabled state; it cannot be undone.
+Open Settings → Experts → New expert. Set a name, description, category, prompt, and avatar. Save and enable makes the expert immediately available through @ and the Experts button. Reference labels use the standard expert icon and plain name, matching built-in experts; candidate menus show avatars. Copy a base expert to customize it, or edit, enable, disable and delete custom experts. Deletion permanently removes the expert content and enabled state; it cannot be undone.
 
 Data lives in the DSH settings agency-agents namespace outside the plugin directory and survives upgrades. External root still replaces the base roster; custom experts are appended. Viewing, copying, and summoning nested experts use the actual file selected by the catalog. The limit is 200 existing custom experts. Deletion frees a slot; legacy soft-deleted records are cleaned up on startup and subsequent writes. Name conflicts introduced by a base catalog update remain visible in Settings for renaming or deletion, but conflicting experts cannot be summoned. Concurrent changes reject stale saves and keep the draft in the editor. Read and compare the latest content, choose to keep your draft or load that content, then save explicitly. Deleted experts can only be continued as new experts. Remove disabled draft references or re-enable the expert; remove and reselect deleted or conflicting references. Writes carry a revision; see the [Remote contract](src/remote-contract.ts). Back up current settings before downgrading: restoring custom data is separate from rolling back plugin code.
 

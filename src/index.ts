@@ -615,6 +615,8 @@ export function apply(ctx: Context, config: Config): void {
         onChange: () => {},
         validate: (value) => validateAgencySettings(value, readHostLocale(ctx)),
       },
+      undefined,
+      readHostLocale(ctx),
     )
   } else if (isLiveValue((config as { enabled?: unknown }).enabled)) {
     settingsSource = () => readAgencySettings(config)

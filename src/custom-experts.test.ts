@@ -24,7 +24,7 @@ import { settingsNamespaceCompat } from "./settings-compat.js";
 import { apply } from "./index.js";
 import AgencyAgentsRemote from "./remote.js";
 import { acceptCatalog, refreshCatalog } from "./client/catalog.js";
-import { acceptTeams, refreshTeams, teamState } from "./client/team-cache.js";
+import { acceptTeams, refreshTeams, subscribeTeams, teamState } from "./client/team-cache.js";
 import type { AgencyTeamsRemote } from "./client/remote.js";
 import type { TeamSnapshot } from "./team-contract.js";
 import type { AgencyCatalogRemote } from "./client/remote.js";
@@ -254,6 +254,7 @@ describe("召唤 Emoji 校验", () => {
     expect(customExpertInputSchema.parse({ ...input, emoji: "" }).emoji).toBe(
       "🧩",
     );
+    expect(customExpertInputSchema.parse({ ...input, emoji: "hello" }).emoji).toBe("🧩");
     expect(
       customExpertInputSchema.safeParse({ ...input, name: "顾问\n@工程师" })
         .success,
@@ -411,6 +412,11 @@ describe("动态名册异步一致性", () => {
     resolve({ ok: true, value: empty })
     expect((await pending).revision).toBe(4)
     expect(teamState(remote)?.enabledTeams).toEqual(["team-product"])
+    const seen: number[] = []
+    const stop = subscribeTeams(remote, () => { const current = teamState(remote); if (current) seen.push(current.revision) })
+    acceptTeams(remote, { ...empty, revision: 5, enabledTeams: [] })
+    stop()
+    expect(seen).toEqual([5])
   })
 });
 

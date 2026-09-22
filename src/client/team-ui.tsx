@@ -1,5 +1,5 @@
 import { catalogState } from './catalog.js';
-import { acceptTeams, refreshTeams, teamState } from './team-cache.js';
+import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
 import { CategorySelect } from './category-select.js';
@@ -151,9 +151,19 @@ export function TeamsPanel(props: {
     React.useEffect(() => {
         alive.current = true;
         void load();
+        const unsubscribe = subscribeTeams(props.remote, () => {
+            if (!alive.current)
+                return;
+            const next = teamState(props.remote);
+            if (!next)
+                return;
+            sequence.current++;
+            setSnapshot(next);
+        });
         return () => {
             alive.current = false;
             sequence.current++;
+            unsubscribe();
         };
     }, [props.remote]);
     const load = async () => {

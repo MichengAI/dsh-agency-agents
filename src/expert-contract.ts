@@ -18,7 +18,10 @@ export const customExpertInputSchema = z.object({
   name: nameSchema,
   description: z.string().trim().min(1).max(160),
   division: z.string().regex(/^[a-z][a-z0-9-]{0,63}$/u),
-  emoji: z.string().trim().default(DEFAULT_EXPERT_EMOJI).transform(value => value || DEFAULT_EXPERT_EMOJI).refine(isExpertEmoji),
+  emoji: z.string().default(DEFAULT_EXPERT_EMOJI).transform(value => {
+    const trimmed = value.trim()
+    return trimmed !== '' && isExpertEmoji(trimmed) ? trimmed : DEFAULT_EXPERT_EMOJI
+  }),
   avatar: z.number().int().min(0).max(35).default(0),
   prompt: z.string().trim().min(1).max(20_000),
 }).strict()
@@ -47,7 +50,7 @@ export type CatalogSnapshot = z.infer<typeof catalogSnapshotSchema>
 export const expertEditSchema = customExpertSchema.omit({ deleted: true, wasEnabled: true })
 
 const messages = {
-  invalid: ['请检查名称、简介、分类和提示词；召唤图标必须是一个 Emoji。', 'Check the name, description, category and prompt; the summon icon must be one emoji.'],
+  invalid: ['请检查名称、简介、分类和提示词。', 'Check the name, description, category and prompt.'],
   duplicate: ['专家名称已被使用，请换一个名称。', 'This expert name is already in use. Choose another name.'],
   unavailable: ['所选专家不存在、已删除或名称冲突，请刷新后重新选择。', 'An expert is missing, deleted or has a name conflict. Refresh and choose again.'],
   missing: ['自定义专家不存在或已删除，请刷新后重试。', 'The custom expert is missing or deleted. Refresh and try again.'],
