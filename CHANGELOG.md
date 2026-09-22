@@ -4,20 +4,21 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
-## 1.0.2 - 2026-09-22
+## 1.0.2 - 2026-09-23
 
 ### Improvements
 
-- Support DSH 0.1.7-alpha.1 while keeping previously supported versions. Expert and team settings follow the host's live configuration, and a one-time import recovers data left in `settings.yaml.imported`.
+- Support DSH 0.1.7 while keeping previously supported versions.
 - Expert and team pickers show avatars. Custom experts no longer ask for a summon emoji.
-- Team lists stay cached and update across the composer and settings when a team changes.
-- Settings controls now use Ant Design bundled with the plugin. Light and dark follow the host. Buttons keep Ant Design's default blue. Expert and team counts sit on the tabs. The chat entry stays the original toolbar button. The client bundle is therefore larger than 1 MB; the published file is minified, and the check allows up to 1.5 MB.
-- Team cards no longer offer “Copy prompt”. The coordinator prompt stays in team details and is not copied to the clipboard.
+- Team lists stay in sync between the chat menu and settings.
+- Expert and team counts sit on the tabs, including how many are enabled.
+- Settings look more consistent and follow the system light or dark appearance.
+- Team cards no longer offer “Copy prompt”. View the coordinator prompt in team details when needed.
 
 ### Fixes
 
-- Menus use the host's translucent surface together with its backdrop blur, so text behind them is not readable through the panel.
-- Detect the legacy settings API from the running host, not from this package's own older dependency.
+- Expert menus no longer show text from behind the panel.
+- Settings on newer DSH versions read the current configuration correctly.
 
 ## 1.0.1 - 2026-09-21
 
