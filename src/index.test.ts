@@ -6,15 +6,15 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import z from '@deepseek-ai/schemastery'
-import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, loadCatalog, createAgencyPersonaSource, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
+import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, liveSchemaField, loadCatalog, createAgencyPersonaSource, mapPool, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote, { readExpertPrompt, readLocalizedExpertPrompt } from './remote.js'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
-import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, COPY_PROMPT_FEEDBACK_MS, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveExpertMenuPosition, resolveReferenceInsertionTarget, resolveTargetSessionId, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, sortExpertsByOrder, writeErrorKey, writeErrorMessage } from './client/index.js'
+import { buildExpertMentionLexicon, buildExpertReference, CARD_SETTINGS_CSS, compareExpertName, COMPOSER_CSS, COPY_PROMPT_FEEDBACK_MS, EXPERT_AVATAR_POOL_INDEXES, expertAvatarIndex, expertAvatarIndexForDivision, expertDivisionFilterValues, expertMentionFromReference, filterExperts, formatExpertMention, formatExpertMentionInsertion, inject as clientInject, inputTriggerCandidateName, inputTriggerPickName, inputTriggerSourceId, inputTriggerSourceName, insertExpertReference, insertSelectedExpert, keepComposerFocus, matchExpertQuery, normalizeExpertQuery, resolveExpertMenuPosition, resolveReferenceInsertionTarget, resolveTargetSessionId, SETTINGS_CSS, SETTINGS_GITHUB_LINKS, sortExpertsByEnabled, sortExpertsByOrder, writeErrorKey, writeErrorMessage } from './client/index.js'
 import { en, zh, type AgencyKey } from './client/locales.js'
 import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
-import { installSettingsSectionCompat, settingsNamespaceCompat } from './settings-compat.js'
+import { agencySettingsFromLegacyDocument, hasLegacySettingsInstall, installSettingsSectionCompat, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
 
 const PACKAGE_MANIFEST = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
   packageManager?: string
@@ -102,6 +102,125 @@ describe('DSH settings 兼容层', () => {
 
     expect(namespace).toBe('agency-agents')
     expect(calls).toEqual([[ctx, namespace, schema, entry, hooks]])
+  })
+
+  it('旧 schemastery 不标记 volatile，避免把用户数据写进会重载插件的普通配置', () => {
+    expect(liveSchemaField(z.string().default('plain'))).toBeUndefined()
+    expect(hasLegacySettingsInstall({ settings: { installSection: () => undefined } } as unknown as Context)).toBe(true)
+    expect(hasLegacySettingsInstall({ settings: {} } as unknown as Context, {})).toBe(false)
+  })
+
+  it('0.1.7 从 volatile 引用读取启用名单，并关闭自动生成的原始配置表单', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aag-live-settings-'))
+    const stored = { enabled: ['reviewer'] as string[] }
+    const configured: unknown[] = []
+    const services = new Map<string, { catalog(): Promise<{ enabled: string[]; revision: number }> }>()
+    try {
+      await mkdir(join(root, 'engineering'), { recursive: true })
+      await writeFile(join(root, 'engineering', 'reviewer.md'), '---\nname: Reviewer\ndescription: desc\n---\nPersona', 'utf8')
+      const ctx = {
+        settings: {
+          describe: () => [{ ns: 'agency-agents', revision: 4, value: stored }],
+          mutate: async () => undefined,
+          configure: (policy: unknown) => {
+            configured.push(policy)
+            return () => undefined
+          },
+        },
+        effect: (callback: () => (() => void) | void) => {
+          const dispose = callback()
+          return typeof dispose === 'function' ? dispose : () => undefined
+        },
+        fiber: { id: 'agency-agents' },
+        reflect: { provide: (name: string, value: { catalog(): Promise<{ enabled: string[]; revision: number }> }) => { services.set(name, value) } },
+        tools: { register: () => undefined },
+        subagents: { getProvider: () => undefined },
+        systemPrompt: { section: () => undefined },
+        get: () => undefined,
+      } as unknown as Context
+      apply(ctx, {
+        root,
+        provider: 'spawn',
+        divisions: ['engineering'],
+        enabled: { get: () => stored.enabled },
+        customExperts: { get: () => [] },
+        customTeams: { get: () => [] },
+        enabledTeams: { get: () => [] },
+      } as unknown as Parameters<typeof apply>[1])
+      await expect(services.get('agencyAgentsLibrary')?.catalog()).resolves.toMatchObject({ enabled: ['reviewer'], revision: 4 })
+      expect(configured).toEqual([{ auto: false }])
+      expect(readAgencySettings({ enabled: { get: () => ['reviewer'] } }).enabled).toEqual(['reviewer'])
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  it('已改名的 settings.yaml 在当前配置为空时补写一次', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'aag-legacy-settings-'))
+    const written: unknown[] = []
+    try {
+      await writeFile(join(home, 'settings.yaml.imported'), JSON.stringify({
+        'agency-agents': { enabled: ['reviewer'], customExperts: [], note: 'ignore' },
+      }), 'utf8')
+      const ctx = {
+        get: (name: string) => name === 'profileContext' ? { home } : undefined,
+        settings: {
+          describe: () => [{ ns: 'agency-agents', revision: 1 }],
+          update: async (_namespace: string, patch: unknown) => { written.push(patch) },
+        },
+      } as unknown as Context
+      await recoverImportedAgencySettings(ctx, 'agency-agents', () => ({ enabled: [] }), () => false, JSON.parse)
+      expect(written).toEqual([{ enabled: ['reviewer'], customExperts: [], customTeams: [], enabledTeams: [] }])
+      written.length = 0
+      await writeFile(join(home, 'settings.yaml'), 'agency-agents: {}\n', 'utf8')
+      await recoverImportedAgencySettings(ctx, 'agency-agents', () => ({ enabled: [] }), () => false, JSON.parse)
+      expect(written).toEqual([])
+      expect(agencySettingsFromLegacyDocument({ 'agency-agents': { enabled: [1, 'reviewer'] } })?.enabled).toEqual(['reviewer'])
+    } finally {
+      await rm(home, { recursive: true, force: true })
+    }
+  })
+
+  it('启动事务尚未结束时，补写会先离开 HMR 事务', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'aag-legacy-hmr-'))
+    const written: unknown[] = []
+    let inside = true
+    try {
+      await writeFile(join(home, 'settings.yaml.imported'), JSON.stringify({
+        'agency-agents': { enabled: ['reviewer'] },
+      }), 'utf8')
+      const ctx = {
+        get: (name: string) => {
+          if (name === 'profileContext') return { home }
+          if (name === 'hmr') return {
+            executing: {
+              getStore: () => inside,
+              exit: (callback: () => Promise<void>) => {
+                const previous = inside
+                inside = false
+                try {
+                  return callback()
+                } finally {
+                  inside = previous
+                }
+              },
+            },
+          }
+          return undefined
+        },
+        settings: {
+          describe: () => [{ ns: 'agency-agents', revision: 1 }],
+          update: async (_namespace: string, patch: unknown) => {
+            if (inside) throw new Error('HMR transactions cannot be nested')
+            written.push(patch)
+          },
+        },
+      } as unknown as Context
+      await recoverImportedAgencySettings(ctx, 'agency-agents', () => ({ enabled: [] }), () => false, JSON.parse)
+      expect(written).toEqual([{ enabled: ['reviewer'], customExperts: [], customTeams: [], enabledTeams: [] }])
+    } finally {
+      await rm(home, { recursive: true, force: true })
+    }
   })
 })
 
@@ -652,6 +771,16 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
     expect(registered).toHaveLength(1)
     expect(remote.getEnabled()).toEqual({ enabled: [], revision: 0 })
 
+    const liveCtx = {
+      reflect: { provide: () => undefined },
+      get: () => undefined,
+      typert: { register: () => undefined },
+      settings: {
+        describe: () => [{ ns: 'agency-agents', revision: 6, value: { enabled: ['reviewer', 1] } }],
+      },
+    } as unknown as Context
+    expect(new AgencyAgentsRemote(liveCtx).getEnabled()).toEqual({ enabled: ['reviewer'], revision: 6 })
+
     await expect(remote.setEnabled(['reviewer', 'coder'], 0)).resolves.toEqual({ enabled: ['reviewer', 'coder'], revision: 1 })
     await expect(remote.setEnabled(['writer'], 0)).rejects.toThrow('stale revision')
   })
@@ -757,6 +886,7 @@ describe('宿主 i18n', () => {
     expect(resolveHostLocale('en-US')).toBe('zh')
     expect(readHostLocale({})).toBe('zh')
     expect(readHostLocale({ settings: { get: () => ({ preference: 'en' }) } })).toBe('en')
+    expect(readHostLocale({ settings: { describe: () => [{ ns: 'locale', value: { preference: 'en' } }] } })).toBe('en')
     expect(zh['settings.nav']).toBe('专家')
     expect(en['settings.nav']).toBe('Experts')
     expect(readHostLocale({ settings: { get: () => { throw new Error('missing') } } })).toBe('zh')
@@ -966,6 +1096,12 @@ describe('expertAvatarIndex', () => {
 })
 
 describe('专家库目标稿样式契约', () => {
+  it('浮层菜单使用宿主半透明底色，并加上背景模糊', () => {
+    const frosted = 'background:var(--dsw-specific-menu);backdrop-filter:var(--dsw-menu-backdrop-filter)'
+    expect(COMPOSER_CSS).toContain(frosted)
+    expect(SETTINGS_CSS).toContain(frosted)
+  })
+
   it('设置页大标题使用简洁的专家名称', () => {
     expect(zh['settings.title']).toBe('专家')
     expect(en['settings.title']).toBe('Experts')
@@ -1017,7 +1153,7 @@ describe('专家库目标稿样式契约', () => {
 
 describe('@ 菜单分组标题本地化', () => {
   it("DSH peer 枚举已验证宿主版本，保留旧 runtime 可选声明", () => {
-    const range = "0.1.0-rc.8 || 0.1.1-rc.2 || 0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.6-alpha.1 || 0.1.6-alpha.2";
+    const range = "0.1.0-rc.8 || 0.1.1-rc.2 || 0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.6-alpha.1 || 0.1.6-alpha.2 || 0.1.7-alpha.1";
     const peers = PACKAGE_MANIFEST.peerDependencies;
     expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
     expect(PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh"]?.optional).toBe(true);
@@ -1079,10 +1215,10 @@ describe('@ 菜单分组标题本地化', () => {
     expect(inputTriggerSourceName('custom', 'zh')).toBe('custom')
   })
 
-  it('把 emoji 合并到可见名称，并在选中时恢复纯专家名', () => {
+  it('候选名称只保留专家名，选中时也不带回 emoji', () => {
     const expert = { name: '代码审查工程师', nameEn: 'Code Reviewer', emoji: '🔍' }
-    expect(inputTriggerCandidateName(expert, 'zh')).toBe('🔍 代码审查工程师')
-    expect(inputTriggerCandidateName(expert, 'en')).toBe('🔍 Code Reviewer')
+    expect(inputTriggerCandidateName(expert, 'zh')).toBe('代码审查工程师')
+    expect(inputTriggerCandidateName(expert, 'en')).toBe('Code Reviewer')
     expect(inputTriggerPickName('engineering-code-reviewer', '🔍 代码审查工程师', 'zh')).toBe('代码审查工程师')
     expect(inputTriggerPickName('engineering-code-reviewer', '🔍 Code Reviewer', 'en')).toBe('Code Reviewer')
     expect(inputTriggerPickName('missing', '未知专家', 'zh')).toBe('未知专家')

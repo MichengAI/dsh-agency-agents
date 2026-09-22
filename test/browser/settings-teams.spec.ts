@@ -155,7 +155,7 @@ test('切换专家团后保留专家搜索和来源筛选', async ({ page }) => 
   await page.getByRole('tab', { name: '专家', exact: true }).click()
   await expect(page.locator('#aag-filter-search')).toHaveValue('人类学')
   await expect(page.getByRole('button', { name: '内置', exact: true })).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.locator('.aag-expert-card')).toHaveCount(1)
+  await expect(page.locator('.aag-expert-card:visible')).toHaveCount(1)
 })
 
 test('一级页签使用下划线导航，与来源筛选保持紧凑层级', async ({ page }) => {

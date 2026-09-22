@@ -97,10 +97,16 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
   /** 返回配置中记录的启用项以兼容旧调用方；实际可召唤项请读取 getCatalog().enabled。 */
   @Remote('getEnabled')
   getEnabled(): { enabled: string[]; revision: number } {
-    const value = this.ctx.settings.get(AGENCY_SETTINGS_NAMESPACE) as { enabled?: unknown } | undefined
-    const enabled = value?.enabled
-    const descriptor = this.ctx.settings.describe().find((candidate) => candidate.ns === AGENCY_SETTINGS_NAMESPACE)
+    const settings = this.ctx.settings as {
+      get?: (namespace: typeof AGENCY_SETTINGS_NAMESPACE) => unknown
+      describe: () => ReadonlyArray<{ ns: typeof AGENCY_SETTINGS_NAMESPACE; revision: number; value?: { enabled?: unknown } }>
+    }
+    const descriptor = settings.describe().find((candidate) => candidate.ns === AGENCY_SETTINGS_NAMESPACE)
     if (descriptor === undefined) throw new Error(formatHost('zh', 'error.settingsMissing'))
+    const stored = typeof settings.get === 'function'
+      ? settings.get(AGENCY_SETTINGS_NAMESPACE) as { enabled?: unknown } | undefined
+      : descriptor.value
+    const enabled = stored?.enabled
     return {
       enabled: Array.isArray(enabled) ? enabled.filter((slug): slug is string => typeof slug === 'string') : [],
       revision: descriptor.revision,

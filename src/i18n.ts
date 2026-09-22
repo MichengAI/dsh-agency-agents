@@ -39,6 +39,7 @@ export const zhHost = {
   'error.partialOutput': '\n部分输出：\n{text}',
   'error.maxDepth': 'agency-agents 配置 maxDepth 必须是正安全整数',
   'error.settingsMissing': 'agency-agents 设置区尚未注册',
+  'error.settingsLiveUnsupported': '当前 DSH settings 服务不支持 installSection，且 agency-agents 配置没有可实时更新的字段。',
   'error.personaSourceUnavailable': '专家提示词服务尚未就绪，请稍后重试。',
   'list.empty': '暂无可用专家。',
   'list.emptyDivision': '没有匹配分区 "{division}" 的专家。',
@@ -78,6 +79,7 @@ export const enHost = {
   'error.partialOutput': '\nPartial output:\n{text}',
   'error.maxDepth': 'agency-agents config maxDepth must be a positive safe integer',
   'error.settingsMissing': 'agency-agents settings section is not registered',
+  'error.settingsLiveUnsupported': 'This DSH settings service has no installSection, and the agency-agents config has no live-updating fields.',
   'error.personaSourceUnavailable': 'The expert prompt service is not ready. Try again shortly.',
   'list.empty': 'No experts available.',
   'list.emptyDivision': 'No experts matched division "{division}".',
@@ -101,12 +103,26 @@ export function formatHost(locale: LocaleId, key: HostKey, params?: Record<strin
   return text
 }
 
-/** 从宿主 settings 的 locale.preference 读取语言，缺失或异常时回退 zh。 */
-export function readHostLocale(ctx: { settings?: { get?: (ns: SettingsNamespace) => unknown } }): LocaleId {
+/** 从宿主 locale.preference 读取语言，缺失或异常时回退 zh。0.1.7 起该值在 describe() 的实时配置里。 */
+export function readHostLocale(ctx: {
+  settings?: {
+    get?: (ns: SettingsNamespace) => unknown
+    describe?: () => ReadonlyArray<{ ns?: unknown; value?: unknown }>
+  }
+}): LocaleId {
   try {
     // Cordis 对未注入服务的属性访问会直接抛错，optional chaining 拦不住。
-    const section = ctx.settings?.get?.(LOCALE_SETTINGS_NAMESPACE) as { preference?: unknown } | undefined
-    return resolveHostLocale(section?.preference)
+    const settings = ctx.settings
+    if (typeof settings?.get === 'function') {
+      const section = settings.get(LOCALE_SETTINGS_NAMESPACE) as { preference?: unknown } | undefined
+      if (section !== undefined) return resolveHostLocale(section.preference)
+    }
+    const described = settings?.describe?.().find((item) => item.ns === LOCALE_SETTINGS_NAMESPACE)
+    const value = described?.value
+    const preference = value !== null && typeof value === 'object' && 'preference' in value
+      ? (value as { preference?: unknown }).preference
+      : undefined
+    return resolveHostLocale(preference)
   } catch {
     return 'zh'
   }

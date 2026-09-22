@@ -20,7 +20,7 @@ export const TEAM_CSS = `
 .agt-dialog{font-family:inherit;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary)}
 .agt-dialog *{box-sizing:border-box}
 .agt-dialog.aag-prompt-modal[open]{display:block;overflow:auto}
-.agt-dialog>.aag-modal-head{position:sticky;top:0;z-index:1;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-2))}
+.agt-dialog>.aag-modal-head{position:sticky;top:0;z-index:1;background:var(--dsw-alias-bg-layer-2,var(--dsw-specific-menu))}
 .agt-dialog>.aag-custom-head{flex-shrink:0}
 .agt-dialog button:not(.aag-action){display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:0 12px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;cursor:pointer}
 .agt-dialog button:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
@@ -76,7 +76,10 @@ export const TEAM_CSS = `
 .agt-composer-tabs button[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover)}
 .agt-compact-list{overflow:auto;max-height:250px}
 .agt-compact-row{display:flex;align-items:center;padding:4px 8px}
-.agt-compact-row>button:first-child{flex:1;text-align:left;border:0;background:transparent;color:inherit;cursor:pointer;padding:8px}
+.agt-compact-row>button:first-child{flex:1;display:flex;align-items:center;gap:8px;min-width:0;text-align:left;border:0;background:transparent;color:inherit;cursor:pointer;padding:8px}
+.agt-compact-row .agt-stack img{width:22px;height:22px;object-position:center 20%;border:2px solid var(--dsw-specific-menu,var(--dsw-alias-bg-layer-2))}
+.agt-compact-row .agt-stack img+img{margin-left:-8px}
+.agt-compact-row>button:first-child>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .agt-compact-row small{margin-left:8px;opacity:.65}
 .agt-compact-row>button:last-child{background:transparent;border:0;color:inherit;cursor:pointer}
 .agt-compact input{width:calc(100% - 16px);margin:8px;padding:8px;box-sizing:border-box;background:transparent;color:inherit;border:1px solid var(--dsw-alias-border-l2);border-radius:6px}

@@ -69,17 +69,20 @@ export function blocksNativeDelegation(service: unknown, agent: object | undefin
 export function isNativeTeamService(value: unknown): value is NativeTeamService {
     return value !== null && typeof value === 'object' && methods.every(key => typeof (value as Record<string, unknown>)[key] === 'function');
 }
-/** 安装探测从宿主启动入口解析，避免插件自身依赖版本冒充宿主能力。 */
+let agentTeamInstalled: boolean | undefined
+/** 安装探测从宿主启动入口解析，避免插件自身依赖版本冒充宿主能力。同一进程只探测一次。 */
 export function hostHasAgentTeam(): boolean {
+    if (agentTeamInstalled !== undefined)
+        return agentTeamInstalled;
     if (!process.argv[1])
-        return false;
+        return agentTeamInstalled = false;
     try {
         createRequire(resolve(process.argv[1])).resolve('@deepseek-ai/dsh-experimental-agent-team');
-        return true;
+        return agentTeamInstalled = true;
     }
     catch (error) {
         if ((error as NodeJS.ErrnoException).code === 'MODULE_NOT_FOUND')
-            return false;
+            return agentTeamInstalled = false;
         throw error;
     }
 }

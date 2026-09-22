@@ -38,13 +38,14 @@ import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { SubagentRun } from '@deepseek-ai/dsh-subagent'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { open, readdir, readFile, stat } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { join, resolve, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
-import { installSettingsSectionCompat, settingsNamespaceCompat } from './settings-compat.js'
+import { hasLegacySettingsInstall, installSettingsSectionCompat, isLiveValue, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
 import { registerPluginUpdater } from './plugin-updater.js'
 import { AGENCY_LIBRARY_SERVICE, agencySettingsSchema, createExpertLibrary, validateAgencySettings, type AgencySettings } from './expert-library.js'
 
@@ -199,13 +200,46 @@ const BUNDLED_ROOT = fileURLToPath(new URL('../assets/agency-agents/', import.me
 const BUNDLED_CHINESE_ROOT = fileURLToPath(new URL('../assets/agency-agents-zh/', import.meta.url))
 export const AGENCY_PERSONA_SERVICE = 'agencyAgentsPersona'
 
-export const Config: z<Config> = z.object({
-  root: z.string().default(''),
-  provider: z.string().default('spawn'),
-  divisions: z.array(z.string()).default(DEFAULT_DIVISIONS),
+/** 仅当宿主 schemastery 提供 volatile() 时，把字段标成可实时更新。旧宿主保持原配置结构。 */
+export function liveSchemaField<T>(field: z<T>): z<T> | undefined {
+  const candidate = field as z<T> & { volatile?: () => z<T> }
+  return typeof candidate.volatile === 'function' ? candidate.volatile() : undefined
+}
+
+/** 插件自己的 schemastery 可能早于 volatile。配置树必须用带该方法的那一份来构建。 */
+function schemaBuilder(): typeof z {
+  if (liveSchemaField(z.string()) !== undefined) return z
+  const entry = process.argv[1]
+  if (entry === undefined || entry === '') return z
+  try {
+    const loaded = createRequire(resolve(entry))('@deepseek-ai/schemastery') as typeof z & { default?: typeof z }
+    const host = typeof loaded.string === 'function' ? loaded : loaded.default
+    if (host !== undefined && liveSchemaField(host.string()) !== undefined) return host
+  } catch {
+    // 当前进程解析不到新 schemastery 时，继续使用本包导入的版本。
+  }
+  return z
+}
+
+const schema = schemaBuilder()
+const configFields: Record<string, unknown> = {
+  root: schema.string().default(''),
+  provider: schema.string().default('spawn'),
+  divisions: schema.array(schema.string()).default(DEFAULT_DIVISIONS),
   // schemastery 没有 .optional()：未调用 .required() 的字段本身即可选，缺省不参与校验
-  maxDepth: z.natural().min(1),
-})
+  maxDepth: schema.natural().min(1),
+}
+for (const [key, field] of [
+  ['enabled', schema.array(schema.string()).default([])],
+  ['customExperts', schema.array(schema.any()).default([])],
+  ['customTeams', schema.array(schema.any()).default([])],
+  ['enabledTeams', schema.array(schema.string()).default([])],
+] as const) {
+  const live = liveSchemaField(field)
+  if (live !== undefined) configFields[key] = live
+}
+
+export const Config: z<Config> = schema.object(configFields) as unknown as z<Config>
 
 /** 解析智能体根目录：显式配置优先，其次读取环境变量，最后使用包内资产。 */
 export function resolveCatalogRoot(root: string): string {
@@ -561,26 +595,47 @@ export function apply(ctx: Context, config: Config): void {
     if (blocksNativeDelegation(ctx.get('agentTeams'), exec.agent, exec.name)) return { kind: 'deny', reason: teamTx('专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。') }
     return next()
   })
-  installSettingsSectionCompat<AgencySettings>(
-    ctx,
-    settingsNamespace,
-    agencySettingsSchema,
-    { enabled: [], customExperts: [] },
-    {
-      setSource: (current) => {
-        settingsSource = current;
-        // 库内部判断是否有旧记录，默认源与卸载回退均为空操作。
-        void library.cleanupDeleted().catch((error: unknown) =>
-          console.warn(
-            "[agency-agents] 旧删除记录清理失败，下次写入时重试：",
-            error,
-          ),
-        );
+  const retryCleanup = (): void => {
+    // 库内部判断是否有旧记录，默认源与卸载回退均为空操作。
+    void library.cleanupDeleted().catch((error: unknown) =>
+      console.warn('[agency-agents] 旧删除记录清理失败，下次写入时重试：', error),
+    )
+  }
+  if (hasLegacySettingsInstall(ctx)) {
+    installSettingsSectionCompat<AgencySettings>(
+      ctx,
+      settingsNamespace,
+      agencySettingsSchema,
+      { enabled: [], customExperts: [] },
+      {
+        setSource: (current) => {
+          settingsSource = current
+          retryCleanup()
+        },
+        onChange: () => {},
+        validate: (value) => validateAgencySettings(value, readHostLocale(ctx)),
       },
-      onChange: () => {},
-      validate: (value) => validateAgencySettings(value, readHostLocale(ctx)),
-    },
-  );
+    )
+  } else if (isLiveValue((config as { enabled?: unknown }).enabled)) {
+    settingsSource = () => readAgencySettings(config)
+    retryCleanup()
+    const settingsApi = ctx.settings as { configure?: (policy: { auto?: boolean }, owner?: unknown) => () => void }
+    const fiber = (ctx as { fiber?: object }).fiber
+    if (typeof ctx.effect === 'function' && fiber !== undefined && typeof settingsApi.configure === 'function') {
+      ctx.effect(() => settingsApi.configure!({ auto: false }, fiber), 'agency-agents: settings presentation')
+    }
+    if (typeof ctx.effect === 'function') {
+      ctx.effect(() => {
+        let cancelled = false
+        void recoverImportedAgencySettings(ctx, settingsNamespace, () => settingsSource(), () => cancelled).catch((error: unknown) => {
+          console.warn('[agency-agents] 旧设置导入失败，数据仍保留在 settings.yaml.imported：', error)
+        })
+        return () => { cancelled = true }
+      }, 'agency-agents: import legacy settings')
+    }
+  } else {
+    throw new Error(formatHost(readHostLocale(ctx), 'error.settingsLiveUnsupported'))
+  }
   // 闭包读取当前 source，避免 settings 服务替换时继续持有旧快照。
   const personaSource: AgencyPersonaSource = {
     async getPrompt(slug, division, locale) {

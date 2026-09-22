@@ -1,3 +1,5 @@
+import { catalogState } from './catalog.js';
+import { acceptTeams, refreshTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
 import { CategorySelect } from './category-select.js';
@@ -115,11 +117,14 @@ export function TeamsPanel(props: {
 }) {
     const { locale, tx } = useTeamLocale();
 
-    const [snapshot, setSnapshot] = React.useState<TeamSnapshot | null>(null);
+    const [snapshot, setSnapshot] = React.useState<TeamSnapshot | null>(() => teamState(props.remote));
     React.useEffect(() => {
         props.onSummary?.({ total: snapshot?.teams.length ?? 0, enabled: snapshot?.enabledTeams.length ?? 0 });
     }, [snapshot?.teams.length, snapshot?.enabledTeams.length, props.onSummary]);
-    const [rawExperts, setExperts] = React.useState<ExpertSummary[]>([]);
+    const [rawExperts, setExperts] = React.useState<ExpertSummary[]>(() => {
+        const catalog = catalogState(props.remote);
+        return catalog.revision < 0 ? [] : [...catalog.experts];
+    });
     const experts = localizedExperts(rawExperts, locale);
     const [query, setQuery] = React.useState('');
     const [filter, setFilter] = React.useState('all');
@@ -154,14 +159,19 @@ export function TeamsPanel(props: {
     const load = async () => {
         const generation = ++sequence.current;
         try {
-            const [teams, catalog] = await Promise.all([
-                unwrap(props.remote.getTeams()),
-                unwrap(props.remote.getCatalog()),
-            ]);
+            const teams = await refreshTeams(props.remote);
             if (!alive.current || generation !== sequence.current)
                 return;
             setSnapshot(teams);
-            setExperts(catalog.experts);
+            const known = catalogState(props.remote);
+            if (known.revision >= 0)
+                setExperts([...known.experts]);
+            else {
+                const catalog = await unwrap(props.remote.getCatalog());
+                if (!alive.current || generation !== sequence.current)
+                    return;
+                setExperts(catalog.experts);
+            }
             setError('');
         }
         catch (cause) {
@@ -173,7 +183,9 @@ export function TeamsPanel(props: {
         if (!alive.current)
             return;
         sequence.current++;
-        setSnapshot(previous => ({ ...value, engine: value.engine ?? previous?.engine }));
+        const next = { ...value, engine: value.engine ?? snapshot?.engine };
+        acceptTeams(props.remote, next);
+        setSnapshot(next);
         props.onExpertsChanged?.();
     };
     const change = async (team: ExpertTeam, action: 'enable' | 'delete' | 'select', example?: string, confirmed = false) => {

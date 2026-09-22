@@ -24,6 +24,9 @@ import { settingsNamespaceCompat } from "./settings-compat.js";
 import { apply } from "./index.js";
 import AgencyAgentsRemote from "./remote.js";
 import { acceptCatalog, refreshCatalog } from "./client/catalog.js";
+import { acceptTeams, refreshTeams, teamState } from "./client/team-cache.js";
+import type { AgencyTeamsRemote } from "./client/remote.js";
+import type { TeamSnapshot } from "./team-contract.js";
 import type { AgencyCatalogRemote } from "./client/remote.js";
 import type { CatalogSnapshot } from "./expert-contract.js";
 import type { RemoteResult } from "@deepseek-ai/dsh-typert-protocol";
@@ -395,6 +398,20 @@ describe("动态名册异步一致性", () => {
     expect((await restarted).experts).toEqual([]);
     expect((await restarted).revision).toBe(0);
   });
+
+  it("专家团查询在途时复用同一次请求，过期回执不覆盖更新的快照", async () => {
+    const empty: TeamSnapshot = { teams: [], enabledTeams: [], enabledExperts: [], revision: 1 }
+    let resolve!: (result: RemoteResult<TeamSnapshot>) => void
+    const remote = {
+      getTeams: () => new Promise<RemoteResult<TeamSnapshot>>(done => { resolve = done }),
+    } as AgencyTeamsRemote
+    const pending = refreshTeams(remote)
+    expect(refreshTeams(remote)).toBe(pending)
+    acceptTeams(remote, { ...empty, revision: 4, enabledTeams: ["team-product"] })
+    resolve({ ok: true, value: empty })
+    expect((await pending).revision).toBe(4)
+    expect(teamState(remote)?.enabledTeams).toEqual(["team-product"])
+  })
 });
 
 

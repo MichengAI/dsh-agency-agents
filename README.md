@@ -15,7 +15,7 @@
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm downloads](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20downloads)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH supported through 0.1.6-alpha.2](https://img.shields.io/badge/DSH-up%20to%200.1.6--alpha.2-2563eb.svg)](#prerequisites)
+  [![DSH supported through 0.1.7-alpha.1](https://img.shields.io/badge/DSH-up%20to%200.1.7--alpha.1-2563eb.svg)](#prerequisites)
 </div>
 
 > DSH Agency Agents is a community-maintained DeepSeek Harness (DSH) plugin, not an official DeepSeek AI product.
@@ -120,7 +120,7 @@ DSH `dsh.client.inject` controls browser module loading order. Missing graph ent
 
 ## Installation
 
-Supported DeepSeek Harness versions: `0.1.0-rc.8`, `0.1.1-rc.2`, `0.1.2-rc.1`, `0.1.5-rc.1`, `0.1.5-rc.2`, `0.1.6-alpha.1`, and `0.1.6-alpha.2`. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
+Supported DeepSeek Harness versions: `0.1.0-rc.8`, `0.1.1-rc.2`, `0.1.2-rc.1`, `0.1.5-rc.1`, `0.1.5-rc.2`, `0.1.6-alpha.1`, `0.1.6-alpha.2`, and `0.1.7-alpha.1`. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
 
 The installation commands below use the official npm registry.
 

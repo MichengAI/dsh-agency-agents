@@ -10,7 +10,6 @@ import { EN_DIVISION, ZH_DIVISION } from '../names.js'
 import { loadEditorReview, continueEditorReview, type EditorReview } from "./editor-review.js";
 
 const h = React.createElement
-const EMOJI_CHOICES = ['🧩', '📦', '💻', '🎨', '✍️', '🔎', '📊', '⚖️', '🧠', '🛠️', '💡', '📚']
 export interface CustomEditorProps {
   readonly expert?: CustomExpertInput
   readonly enabled: boolean
@@ -133,12 +132,6 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
         onChange: (value: string) => set('division', value),
         options: props.divisions.map(division => ({ value: division, label: (props.locale === 'en' ? EN_DIVISION : ZH_DIVISION)[division] ?? division })),
       })),
-    label(props.t('custom.emoji'), input('emoji', props.t('custom.emoji'), 32)),
-    h('div', { className: 'aag-custom-emojis' }, EMOJI_CHOICES.map(emoji => h('button', {
-      key: emoji, type: 'button', disabled: busy, 'aria-label': `${props.t('custom.emoji')} ${emoji}`,
-      'aria-pressed': draft.emoji === emoji, onClick: () => set('emoji', emoji),
-    }, emoji))),
-    h('p', { className: 'aag-note' }, props.t('custom.emojiHint')),
     h('div', { className: 'aag-custom-preview' }, h('span', null, props.t('custom.preview')),
       h('strong', null, draft.name || props.t('custom.name'))),
     h('div', { className: 'aag-custom-prompt-head' }, h('label', { htmlFor: 'aag-custom-prompt' }, props.t('custom.prompt')),
@@ -157,7 +150,7 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
             : h(React.Fragment, null,
                 h("p", null, review.expert.name),
                 h("p", null, review.expert.description),
-                h("p", null, `${review.expert.emoji} · ${props.locale === "zh" ? ZH_DIVISION[review.expert.division] ?? review.expert.division : EN_DIVISION[review.expert.division] ?? review.expert.division}`),
+                h("p", null, props.locale === "zh" ? ZH_DIVISION[review.expert.division] ?? review.expert.division : EN_DIVISION[review.expert.division] ?? review.expert.division),
                 h("img", { src: EXPERT_AVATAR_URLS[review.expert.avatar ?? 0], width: 36, height: 36, alt: props.t("custom.avatar") }),
                 h("textarea", { className: "aag-control", readOnly: true, value: review.expert.prompt, "aria-label": props.t("custom.latestContent"), rows: 8 }),
               ),

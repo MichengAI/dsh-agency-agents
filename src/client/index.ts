@@ -33,6 +33,7 @@ import { observePluginUpdate, type PluginUpdateIconName } from './plugin-update-
 import { DEFAULT_EXPERT_EMOJI, type CustomExpertInput, type CatalogSnapshot } from '../expert-contract.js'
 import { CustomExpertEditor, CustomDeleteDialog, CUSTOM_EDITOR_CSS } from './custom-editor.js'
 import { acceptEnabled, acceptCatalog, catalogState, refreshCatalog, subscribeCatalog } from './catalog.js'
+import { refreshTeams, teamState } from './team-cache.js'
 import { installNativeTeamNames } from './native-team-names.js'
 import type { AgencyCatalogRemote } from './remote.js'
 
@@ -381,13 +382,17 @@ function displayName(e: ExpertView, active: 'zh' | 'en'): string {
   return active === 'en' ? e.nameEn : e.name
 }
 
-/** 把 emoji 放进宿主稳定渲染的名称节点，避免依赖可能丢失文本的独立图标槽。 */
+/** 候选名称只保留专家名。选择菜单使用头像，不再把 emoji 写进可见文字。 */
 export function inputTriggerCandidateName(
-  expert: Pick<ExpertView, 'name' | 'nameEn' | 'emoji'>,
+  expert: Pick<ExpertView, 'name' | 'nameEn'>,
   active: 'zh' | 'en',
 ): string {
-  const name = active === 'en' ? expert.nameEn : expert.name
-  return expert.emoji === '' ? name : `${expert.emoji} ${name}`
+  return active === 'en' ? expert.nameEn : expert.name
+}
+
+function menuAvatar(expert: Pick<ExpertView, 'slug' | 'division' | 'custom' | 'avatar'>): string {
+  const index = expert.custom ? expert.avatar ?? 0 : expertAvatarIndexForDivision(expert.slug, expert.division)
+  return EXPERT_AVATAR_URLS[index] ?? EXPERT_AVATAR_URLS[0]
 }
 
 /** 选中候选后按内部标识还原纯专家名，防止展示用 emoji 进入召唤标签。 */
@@ -472,11 +477,10 @@ const EXPERT_MENU_ITEM_SELECTORS = DIVISION_ORDER
 const MENU_NAME_OVERRIDE = EXPERT_MENU_ITEM_SELECTORS
   .map((selector) => `${selector} span:last-child`)
   .join(',')
-/** Windows 优先使用彩色 emoji 字体，名称中的普通文字由后续字体安全回退。 */
-const EXPERT_MENU_NAME_STYLE = 'flex:1 1 auto;max-width:none;min-width:0;font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif!important;font-variant-emoji:emoji!important'
-const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inline-flex;flex:0 0 auto}.aag-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 8px;white-space:nowrap;border:none;border-radius:24px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover,.aag-btn[aria-expanded="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-btn:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}.aag-btn>svg{flex:none}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100dvh - 24px);overflow-y:auto;border:0;border-radius:20px;background:var(--dsw-specific-menu);box-shadow:var(--dsw-elevation-prominent);z-index:10000}.aag-menu[data-placement="below"]{top:calc(100% + 4px);bottom:auto}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:10px;background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-emoji{flex:0 0 auto;font-size:16px}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}'
+const EXPERT_MENU_NAME_STYLE = 'flex:1 1 auto;max-width:none;min-width:0'
+export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inline-flex;flex:0 0 auto}.aag-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 8px;white-space:nowrap;border:none;border-radius:24px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover,.aag-btn[aria-expanded="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-btn:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}.aag-btn>svg{flex:none}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100dvh - 24px);overflow-y:auto;border:0;border-radius:20px;background:var(--dsw-specific-menu);backdrop-filter:var(--dsw-menu-backdrop-filter);box-shadow:var(--dsw-elevation-prominent);z-index:10000}.aag-menu[data-placement="below"]{top:calc(100% + 4px);bottom:auto}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:10px;background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}'
 // 设置页版式对齐 dsh-skills-manager：工具栏 + 汇总条 + 分组卡片 + 行内启停按钮。
-const SETTINGS_CSS = `
+export const SETTINGS_CSS = `
 .aag-section{box-sizing:border-box;display:flex;min-width:0;max-width:760px;width:100%;margin:0 auto;flex-direction:column;gap:16px;padding:0 0 32px;color:var(--dsw-alias-label-primary)}
 .aag-toolbar{display:flex;align-items:flex-start;gap:16px;padding-bottom:12px}
 .aag-title-row{display:flex;align-items:center;gap:8px;min-width:0}.aag-settings-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.aag-settings-link{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:0 8px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:12px;font-weight:500;line-height:18px;text-decoration:none;white-space:nowrap}.aag-settings-link:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-settings-link:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}.aag-settings-link svg{flex:none}
@@ -503,7 +507,7 @@ const SETTINGS_CSS = `
 .aag-select-trigger[aria-expanded="true"]{border-color:var(--dsw-alias-label-tertiary)}
 .aag-select-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .aag-select-caret{flex:none;width:12px;height:12px;color:var(--dsw-alias-label-tertiary)}
-.aag-select-menu{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;box-sizing:border-box;max-height:280px;overflow:auto;padding:4px;border:1px solid var(--dsw-alias-border-l2);border-radius:10px;background:var(--dsw-specific-menu);--dsw-elevation-stroke-color:var(--dsw-alias-border-l1);box-shadow:var(--dsw-elevation-prominent);--dsh-scrollbar-thumb:var(--dsw-alias-scrollbar-bg-l2);--dsh-scrollbar-thumb-hover:var(--dsw-alias-scrollbar-hover-l2)}
+.aag-select-menu{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;box-sizing:border-box;max-height:280px;overflow:auto;padding:4px;border:1px solid var(--dsw-alias-border-l2);border-radius:10px;background:var(--dsw-specific-menu);backdrop-filter:var(--dsw-menu-backdrop-filter);--dsw-elevation-stroke-color:var(--dsw-alias-border-l1);box-shadow:var(--dsw-elevation-prominent);--dsh-scrollbar-thumb:var(--dsw-alias-scrollbar-bg-l2);--dsh-scrollbar-thumb-hover:var(--dsw-alias-scrollbar-hover-l2)}
 .aag-select-option{box-sizing:border-box;display:flex;align-items:center;width:100%;min-height:32px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;text-align:left;cursor:pointer}
 .aag-select-option:hover,.aag-select-option[data-active="true"]{background:var(--dsw-alias-interactive-bg-hover)}
 .aag-select-option[aria-selected="true"]{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}
@@ -563,7 +567,7 @@ export const CARD_SETTINGS_CSS = `
 .aag-switch-state{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;white-space:nowrap}
 .aag-prompt-modal::backdrop{background:var(--dsw-alias-bg-mask-1);backdrop-filter:var(--dsw-mask-blur)}
 .aag-prompt-modal[open]{display:flex}
-.aag-prompt-modal{box-sizing:border-box;margin:auto;padding:0;color:var(--dsw-alias-label-primary);width:min(760px,calc(100vw - 40px));max-height:min(720px,calc(100vh - 40px));flex-direction:column;border:0;border-radius:24px;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-2));box-shadow:var(--dsw-elevation-prominent)}
+.aag-prompt-modal{box-sizing:border-box;margin:auto;padding:0;color:var(--dsw-alias-label-primary);width:min(760px,calc(100vw - 40px));max-height:min(720px,calc(100vh - 40px));flex-direction:column;border:0;border-radius:24px;background:var(--dsw-alias-bg-layer-2,var(--dsw-specific-menu));box-shadow:var(--dsw-elevation-prominent)}
 .aag-modal-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-bottom:1px solid var(--dsw-alias-border-l1)}
 .aag-modal-title{margin:0;font-size:15px;line-height:22px}
 .aag-modal-close{min-height:32px;padding:0 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;cursor:pointer}
@@ -988,7 +992,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
         React.createElement('button', { type: 'button', 'aria-pressed': mode === 'teams', onClick: () => setMode('teams') }, teamText(props.getActive(), '专家团'))) : null,
       mode === 'teams' && 'getTeams' in props.remote ? React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamMenu, { remote: props.remote as TeamRemote,
         prepareSelect: props.prepareTeamSelection, onSelected: () => close(), onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) } })) :
-      React.createElement(ExpertDiscovery, { experts: results, enabled: catalog.enabled, locale: props.getActive(), t: props.t,
+      React.createElement(ExpertDiscovery, { experts: results, enabled: catalog.enabled, locale: props.getActive(), t: props.t, avatarSrc: menuAvatar,
         query, onQuery: setQuery, busy, hasMore: searching && matches.length > results.length, onPick: slug => { void pick(slug) } }))
     : null
 
@@ -1249,7 +1253,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
         const avatar = EXPERT_AVATAR_URLS[expert.custom ? expert.avatar ?? 0 : expertAvatarIndexForDivision(expert.slug, expert.division)] ?? EXPERT_AVATAR_URLS[0]
         return React.createElement(LibraryCard, {
           key: expert.slug,
-          name: `${expert.custom ? `${expert.emoji} ` : ''}${displayName(expert, props.getActive())}`,
+          name: displayName(expert, props.getActive()),
           avatar: React.createElement('img', { className: 'aag-expert-avatar', src: avatar, width: 44, height: 44, loading: 'lazy', decoding: 'async', alt: '' }),
           metadata: React.createElement(React.Fragment, null, inputTriggerSourceName(expert.division, props.getActive()), expert.conflict ? React.createElement('span', { className: 'aag-custom-badge', title: props.t('custom.nameConflictHint') }, props.t('custom.nameConflict')) : null, expert.custom ? React.createElement('span', { className: 'aag-custom-badge' }, props.t('custom.source')) : null),
           description: displayDescription(expert, props.getActive()),
@@ -1295,7 +1299,7 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
       key: value, type: 'button', role: 'tab', 'aria-selected': view === value,
       onClick: () => setView(value),
     }, tx(value === 'experts' ? '专家' : '专家团'))))
-  // 保持专家组件挂载，切换团队时不丢失原筛选和搜索状态。
+  // 两个名册都保持挂载，切换时不丢失筛选，也不重新等待第一次加载。
   return React.createElement('section', { className: 'aag-section aag-library-shell' },
     React.createElement('header', { className: 'aag-toolbar' }, React.createElement('div', { className: 'aag-title-row' },
       React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')), settingsGithubLinks(props.t))),
@@ -1305,10 +1309,10 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
           view === 'teams' ? tx('个专家团') : props.t(summary.total === 1 ? 'summary.total.one' : 'summary.total.other', { count: summary.total })),
         React.createElement('span', { className: 'aag-header-stat' }, props.t('summary.enabledPrefix'), React.createElement('strong', null, summary.enabled)))),
     React.createElement('div', { hidden: view !== 'experts' }, React.createElement(ExpertCardsSettings, { ...props, sharedHeader: true, onSummary: setExpertSummary })),
-    view === 'teams' ? React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
+    React.createElement('div', { hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
       remote: props.remote as TeamRemote, sharedHeader: true, onSummary: setTeamSummary, prepareSelect: props.prepareTeamSelection,
       onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) },
-    })) : null)
+    }))))
 }
 export const inject = ['slots', 'inputTriggers', 'locale', 'remote', 'sessions', 'conversation']
 
@@ -1360,11 +1364,13 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     updateEnabledForMentions(catalogState(remote).enabled)
     for (const listener of lexiconListeners) listener()
   }), 'agency-agents: catalog changes')
+  if (typeof remote.getTeams === 'function') void refreshTeams(remote as TeamRemote).catch((error: unknown) => console.warn('[agency-agents] 专家团预加载失败：', error))
   await readEnabled(remote).catch((error: unknown) => console.warn('[agency-agents] 初始名册读取失败，设置页可重试：', error))
   ctx.effect(() => {
     const names = installNativeTeamNames(async () => {
       if (!remote.getTeams) return new Map<string, string>()
-      const snapshot = await unwrap(remote.getTeams())
+      const teamsRemote = remote as TeamRemote
+      const snapshot = teamState(teamsRemote) ?? await refreshTeams(teamsRemote)
       const experts = catalogState(remote).experts
       return new Map(Object.entries(snapshot.nativeMembers ?? {}).flatMap(([identity, slug]) => {
         const expert = experts.find(item => item.slug === slug && !item.conflict)
@@ -1448,7 +1454,9 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       if (typeof teamRemote.getTeams === 'function') disposers.push(ctx.inputTriggers.registerSource({
         trigger: '@', name: TEAM_REFERENCE_SOURCE, order: 99,
         candidates: async (_session, request) => {
-          const snapshot = await unwrap(teamRemote.getTeams())
+          const cached = teamState(teamRemote)
+          const snapshot = cached ?? await refreshTeams(teamRemote)
+          if (cached) void refreshTeams(teamRemote).catch((error: unknown) => console.warn('[agency-agents] 专家团刷新失败：', error))
           teamCache = snapshot.teams.map(team => localizeTeam(team, active))
           return teamCache.filter(team => snapshot.enabledTeams.includes(team.id) && `${team.name} ${team.description}`.toLowerCase().includes(String(request.query ?? '').toLowerCase())).map(team => ({ name: `${team.name} · ${teamText(active, '专家团')}`, hint: team.id, section: teamText(active, '专家团') }))
         },
@@ -1463,7 +1471,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
         codec: {
           clipboardText: id => teamText(active, '@专家团：{0}\u00a0', [teamCache.find(team => team.id === id)?.name ?? teamText(active, '已移除团队（请重新选择）')]),
           serialize: async id => {
-            const [snapshot, catalog] = await Promise.all([unwrap(teamRemote.getTeams()), unwrap(teamRemote.getCatalog())])
+            const [snapshot, catalog] = await Promise.all([refreshTeams(teamRemote), unwrap(teamRemote.getCatalog())])
             teamCache = snapshot.teams.map(team => localizeTeam(team, active))
             const team = teamCache.find(team => team.id === id)
             if (!team || !snapshot.enabledTeams.includes(id) || team.members.some(member => !catalog.enabled.includes(member.expertSlug) || !catalog.experts.some(e => e.slug === member.expertSlug && !e.conflict))) throw new Error(teamText(active, '团队已停用或成员失效，请修复后再发送。'))

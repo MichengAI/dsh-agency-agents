@@ -1,9 +1,11 @@
+import { catalogState } from './catalog.js';
+import { acceptTeams, refreshTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import React from 'react';
 import type { ExpertTeam, TeamSnapshot } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
 import { TeamDetails, unwrap, type TeamRemote } from './team-ui.js';
-import { TeamConfirm, teamIssue, IconUsers, IconEye } from './team-shared.js';
+import { TeamAvatars, TeamConfirm, teamIssue, IconEye } from './team-shared.js';
 export function TeamMenu(props: {
     remote: TeamRemote;
     prepareSelect?(): (team: ExpertTeam, example?: string) => boolean | Promise<boolean>;
@@ -12,8 +14,11 @@ export function TeamMenu(props: {
 }) {
     const { locale, tx } = useTeamLocale();
 
-    const [snapshot, setSnapshot] = React.useState<TeamSnapshot | null>(null);
-    const [rawExperts, setExperts] = React.useState<ExpertSummary[]>([]);
+    const [snapshot, setSnapshot] = React.useState<TeamSnapshot | null>(() => teamState(props.remote));
+    const [rawExperts, setExperts] = React.useState<ExpertSummary[]>(() => {
+        const catalog = catalogState(props.remote);
+        return catalog.revision < 0 ? [] : [...catalog.experts];
+    });
     const experts = localizedExperts(rawExperts, locale);
     const [query, setQuery] = React.useState('');
     const [error, setError] = React.useState('');
@@ -33,15 +38,20 @@ export function TeamMenu(props: {
     }, [props.remote]);
     const load = async () => {
         try {
-            const [teams, catalog] = await Promise.all([
-                unwrap(props.remote.getTeams()),
-                unwrap(props.remote.getCatalog()),
-            ]);
-            if (alive.current) {
-                setSnapshot(teams);
-                setExperts(catalog.experts);
-                setError('');
+            const teams = await refreshTeams(props.remote);
+            if (!alive.current)
+                return;
+            setSnapshot(teams);
+            const known = catalogState(props.remote);
+            if (known.revision >= 0)
+                setExperts([...known.experts]);
+            else {
+                const catalog = await unwrap(props.remote.getCatalog());
+                if (alive.current)
+                    setExperts(catalog.experts);
             }
+            if (alive.current)
+                setError('');
         }
         catch (cause) {
             if (alive.current)
@@ -64,6 +74,7 @@ export function TeamMenu(props: {
                 const next = await unwrap(props.remote.setTeamEnabled(team.id, true, snapshot.revision));
                 if (!alive.current)
                     return;
+                acceptTeams(props.remote, next);
                 setSnapshot(next);
                 props.onExpertsChanged?.();
             }
@@ -95,7 +106,8 @@ export function TeamMenu(props: {
       <div className="agt-compact-list">
         {teams.map((team) => (<div className="agt-compact-row" key={team.id}>
             <button type="button" disabled={busy} onClick={() => void pick(team)}>
-              <IconUsers size={16}/> {team.name}
+              <TeamAvatars team={team} experts={experts}/>
+              <span>{team.name}</span>
               <small>
                 {team.members.length}{tx("人")}{snapshot?.enabledTeams.includes(team.id)
                 ? ''

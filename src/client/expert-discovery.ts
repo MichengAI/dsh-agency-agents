@@ -12,9 +12,10 @@ interface DiscoveryProps {
   readonly hasMore: boolean
   readonly onQuery: (query: string) => void
   readonly onPick: (slug: string) => void
+  readonly avatarSrc: (expert: ExpertView) => string
 }
 
-/** 保留原分类和 Emoji 单行列表，只增加覆盖全名册的搜索。 */
+/** 按分区排列专家，行首使用头像。 */
 export function ExpertDiscovery(props: DiscoveryProps): React.ReactElement {
   const groups = new Map<string, ExpertView[]>()
   for (const expert of props.experts) {
@@ -42,7 +43,9 @@ export function ExpertDiscovery(props: DiscoveryProps): React.ReactElement {
             'aria-label': action === '' ? name(expert) : `${name(expert)} · ${action}`,
             title: props.locale === 'en' ? expert.descriptionEn || expert.description : expert.description,
             disabled: props.busy || expert.conflict === true, onClick: () => props.onPick(expert.slug),
-          }, React.createElement('span', { className: 'aag-emoji', 'aria-hidden': true }, expert.emoji),
+          }, React.createElement('img', {
+            className: 'aag-discovery-avatar', src: props.avatarSrc(expert), alt: '', width: 22, height: 22, loading: 'lazy', decoding: 'async',
+          }),
           React.createElement('span', { className: 'aag-discovery-name' }, name(expert)),
           action === '' ? null : React.createElement('span', { className: 'aag-discovery-action' }, action))
         })))))
@@ -54,6 +57,6 @@ export const DISCOVERY_CSS = `
 .aag-discovery input{box-sizing:border-box;width:100%;min-height:36px;padding:7px 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-1);color:inherit;font:inherit}
 .aag-discovery input:focus-visible,.aag-discovery button:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:-2px}
 .aag-discovery button:disabled{opacity:.55;cursor:default}.aag-discovery-results{overflow-y:auto;min-height:0;overscroll-behavior:contain}
-.aag-discovery-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.aag-discovery-action{flex:none;color:var(--dsw-alias-label-secondary);font-size:11px}
+.aag-discovery-avatar{flex:none;width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:center 20%}.aag-discovery-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.aag-discovery-action{flex:none;color:var(--dsw-alias-label-secondary);font-size:11px}
 .aag-discovery>.aag-error{padding:8px;flex:none}
 `
