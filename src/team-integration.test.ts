@@ -1,25 +1,16 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { NativeTeamService } from './team-engine.js'
 import { Context } from '@deepseek-ai/cordis'
-import {
-  SettingsProvider,
-  type SettingsNamespace,
-} from '@deepseek-ai/dsh-settings'
+import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import { apply, DEFAULT_DIVISIONS } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { BUILTIN_TEAMS } from './team-contract.js'
-class TestSettings extends SettingsProvider {
-  readonly writable = true
-  protected async load(): Promise<Record<string, unknown>> {
-    return {}
-  }
+import { MemorySettings } from './settings-memory.js'
+class TestSettings extends MemorySettings {
   protected async persist(
     _ns: SettingsNamespace,
     _section: Record<string, unknown>,
   ): Promise<void> {}
-  restore(document: Record<string, unknown>): void {
-    this.publish(document)
-  }
 }
 describe('专家团宿主与远端集成', () => {
   it('五团名册、启用、主理人规则、三人委派、子会话隔离与停用', async () => {

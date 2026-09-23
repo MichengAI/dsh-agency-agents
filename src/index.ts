@@ -200,28 +200,29 @@ const BUNDLED_ROOT = fileURLToPath(new URL('../assets/agency-agents/', import.me
 const BUNDLED_CHINESE_ROOT = fileURLToPath(new URL('../assets/agency-agents-zh/', import.meta.url))
 export const AGENCY_PERSONA_SERVICE = 'agencyAgentsPersona'
 
-/** 仅当宿主 schemastery 提供 volatile() 时，把字段标成可实时更新。旧宿主保持原配置结构。 */
-export function liveSchemaField<T>(field: z<T>): z<T> | undefined {
-  const candidate = field as z<T> & { volatile?: () => z<T> }
+/** 仅当宿主 schemastery 提供 volatile() 时，把字段标成可实时更新。插件自己的新版本不能代替宿主判断。 */
+export function liveSchemaField<T>(field: z<T>): unknown {
+  const candidate = field as { volatile?: () => unknown }
   return typeof candidate.volatile === 'function' ? candidate.volatile() : undefined
 }
 
-/** 插件自己的 schemastery 可能早于 volatile。配置树必须用带该方法的那一份来构建。 */
-function schemaBuilder(): typeof z {
-  if (liveSchemaField(z.string()) !== undefined) return z
+/** 从当前进程入口解析宿主 schemastery。解析不到时不把插件依赖当成宿主能力。 */
+function hostSchemastery(): typeof z | undefined {
   const entry = process.argv[1]
-  if (entry === undefined || entry === '') return z
+  if (entry === undefined || entry === '') return undefined
   try {
     const loaded = createRequire(resolve(entry))('@deepseek-ai/schemastery') as typeof z & { default?: typeof z }
     const host = typeof loaded.string === 'function' ? loaded : loaded.default
     if (host !== undefined && liveSchemaField(host.string()) !== undefined) return host
   } catch {
-    // 当前进程解析不到新 schemastery 时，继续使用本包导入的版本。
+    // 当前进程解析不到宿主 schemastery 时，保持普通配置结构。
   }
-  return z
+  return undefined
 }
 
-const schema = schemaBuilder()
+const hostSchema = hostSchemastery()
+const schema = hostSchema ?? z
+const markLiveFields = hostSchema !== undefined
 const configFields: Record<string, unknown> = {
   root: schema.string().default(''),
   provider: schema.string().default('spawn'),
@@ -235,7 +236,7 @@ for (const [key, field] of [
   ['customTeams', schema.array(schema.any()).default([])],
   ['enabledTeams', schema.array(schema.string()).default([])],
 ] as const) {
-  const live = liveSchemaField(field)
+  const live = markLiveFields ? liveSchemaField(field) : undefined
   if (live !== undefined) configFields[key] = live
 }
 

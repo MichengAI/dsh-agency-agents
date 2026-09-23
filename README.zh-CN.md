@@ -15,7 +15,7 @@
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm 下载量](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH 支持至 0.1.7-alpha.1](https://img.shields.io/badge/DSH-up%20to%200.1.7--alpha.1-2563eb.svg)](#前置条件)
+  [![DSH 支持至 0.1.7-rc.1](https://img.shields.io/badge/DSH-up%20to%200.1.7--rc.1-2563eb.svg)](#前置条件)
 </div>
 
 > DSH Agency Agents 是社区维护的 DeepSeek Harness（DSH）插件，并非 DeepSeek AI 官方产品。
@@ -69,7 +69,7 @@
 - 团队配置保存在宿主 `agency-agents` 命名空间。编辑冲突保留草稿并提示核对最新配置；停用或删除团队不会停用专家，也不会删除历史会话。
 - 专家不得继续召唤专家或自动追加分析轮次。取消会停止未启动任务；已有结果和失败原因分别报告。
 
-> 本 README 描述 1.0.2，正式发行以 npm 和 GitHub Releases 为准。完整改动见[更新日志](CHANGELOG.zh-CN.md)，双语版本说明见[发行说明](RELEASE_NOTES.md)。升级保留已有专家配置；回退旧版前先备份设置，旧版不具备团队功能。
+> 本 README 描述 1.0.3，正式发行以 npm 和 GitHub Releases 为准。完整改动见[更新日志](CHANGELOG.zh-CN.md)，双语版本说明见[发行说明](RELEASE_NOTES.md)。升级保留已有专家配置；回退旧版前先备份设置，旧版不具备团队功能。
 ## 界面预览
 
 以下为 1.0.0 中文界面截图，专家与专家团共用同一个设置页面。
@@ -120,7 +120,7 @@ DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块�
 
 ## 安装
 
-支持的 DeepSeek Harness 版本：`0.1.0-rc.8`、`0.1.1-rc.2`、`0.1.2-rc.1`、`0.1.5-rc.1`、`0.1.5-rc.2`、`0.1.6-alpha.1`、`0.1.6-alpha.2`、`0.1.7-alpha.1`。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装；后续宿主版本需另行验证兼容性。
+支持的 DeepSeek Harness 版本：`0.1.0-rc.8`、`0.1.1-rc.2`、`0.1.2-rc.1`、`0.1.5-rc.1`、`0.1.5-rc.2`、`0.1.7-rc.1`。不再支持 Alpha 版本。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装；后续宿主版本需另行验证兼容性。
 
 以下安装命令使用官方 npm 源。
 

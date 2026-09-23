@@ -104,8 +104,8 @@ describe('DSH settings 兼容层', () => {
     expect(calls).toEqual([[ctx, namespace, schema, entry, hooks]])
   })
 
-  it('旧 schemastery 不标记 volatile，避免把用户数据写进会重载插件的普通配置', () => {
-    expect(liveSchemaField(z.string().default('plain'))).toBeUndefined()
+  it('没有 volatile 方法时不标记实时字段，避免旧宿主把用户数据写进会重载插件的普通配置', () => {
+    expect(liveSchemaField({ default: () => 'plain' } as unknown as z<string>)).toBeUndefined()
     expect(hasLegacySettingsInstall({ settings: { installSection: () => undefined } } as unknown as Context, {})).toBe(true)
     expect(hasLegacySettingsInstall({ settings: {} } as unknown as Context, {})).toBe(false)
     expect(hasLegacySettingsInstall({ settings: {} } as unknown as Context, { installSettingsSection: () => undefined })).toBe(true)
@@ -1154,15 +1154,17 @@ describe('专家库目标稿样式契约', () => {
 })
 
 describe('@ 菜单分组标题本地化', () => {
-  it("DSH peer 枚举已验证宿主版本，保留旧 runtime 可选声明", () => {
-    const range = "0.1.0-rc.8 || 0.1.1-rc.2 || 0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.6-alpha.1 || 0.1.6-alpha.2 || 0.1.7-alpha.1";
+  it("DSH peer 只枚举已验证的 RC，并覆盖最新 RC", () => {
+    const range = "0.1.0-rc.8 || 0.1.1-rc.2 || 0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.7-rc.1";
     const peers = PACKAGE_MANIFEST.peerDependencies;
     expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
     expect(PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh"]?.optional).toBe(true);
 
     for (const [name, version] of Object.entries(peers ?? {})) {
       if (name.startsWith("@deepseek-ai/dsh-")) {
-        expect(version).toBe(name === "@deepseek-ai/dsh-client-runtime" ? "0.1.0-rc.8 || 0.1.1-rc.2" : range);
+        // 宿主把每条 dsh-* peer 都当成运行时版本约束，旧 runtime 窄范围会让 0.1.7-rc.1 禁用插件。
+        expect(version).toBe(range);
+        expect(version).not.toMatch(/alpha/u);
       }
     }
     expect(
@@ -1184,10 +1186,11 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 0.1.6-alpha.2', () => {
+  it('DSH 开发依赖固定为 0.1.7-rc.1', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.1.6-alpha.2')
+        expect(version).toBe('0.1.7-rc.1')
+        expect(version).not.toMatch(/alpha/u)
       }
     }
   })

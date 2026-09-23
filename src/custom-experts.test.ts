@@ -5,10 +5,7 @@ import React from "react";
 import { CustomExpertEditor } from "./client/custom-editor.js";
 import { buildExpertReference, writeEnabled, matchExpertQuery } from "./client/index.js";
 import { Context } from "@deepseek-ai/cordis";
-import {
-  SettingsProvider,
-  type SettingsNamespace,
-} from "@deepseek-ai/dsh-settings";
+import type { SettingsNamespace } from "@deepseek-ai/dsh-settings";
 import {
   agencySettingsSchema,
   createExpertLibrary,
@@ -21,6 +18,7 @@ import {
   type ExpertSummary,
 } from "./expert-contract.js";
 import { settingsNamespaceCompat } from "./settings-compat.js";
+import { MemorySettings } from "./settings-memory.js";
 import { apply } from "./index.js";
 import AgencyAgentsRemote from "./remote.js";
 import { acceptCatalog, refreshCatalog } from "./client/catalog.js";
@@ -31,22 +29,13 @@ import type { AgencyCatalogRemote } from "./client/remote.js";
 import type { CatalogSnapshot } from "./expert-contract.js";
 import type { RemoteResult } from "@deepseek-ai/dsh-typert-protocol";
 
-class TestSettings extends SettingsProvider {
-  readonly writable = true;
-  disk: Record<string, unknown> = {};
-  fail = false;
-  protected async load(): Promise<Record<string, unknown>> {
-    return this.disk;
-  }
+class TestSettings extends MemorySettings {
   protected async persist(
     ns: SettingsNamespace,
     section: Record<string, unknown>,
   ): Promise<void> {
     if (this.fail) throw new Error("disk full");
     this.disk[ns] = structuredClone(section);
-  }
-  restore(document: Record<string, unknown>): void {
-    this.publish(document);
   }
 }
 const builtin: ExpertSummary = {
