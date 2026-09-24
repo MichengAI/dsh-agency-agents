@@ -4,6 +4,12 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.0.4 - 2026-09-25
+
+### Fixes
+
+- Agency Agents now starts on DSH 0.1.7-rc.1 installed globally on Linux or in Docker, and still reads the current settings.
+
 ## 1.0.3 - 2026-09-24
 
 ### Improvements

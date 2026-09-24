@@ -38,14 +38,13 @@ import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { SubagentRun } from '@deepseek-ai/dsh-subagent'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { open, readdir, readFile, stat } from 'node:fs/promises'
-import { createRequire } from 'node:module'
-import { join, resolve, relative } from 'node:path'
+import { join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
-import { hasLegacySettingsInstall, installSettingsSectionCompat, isLiveValue, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
+import { hasLegacySettingsInstall, installSettingsSectionCompat, isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
 import { registerPluginUpdater } from './plugin-updater.js'
 import { AGENCY_LIBRARY_SERVICE, agencySettingsSchema, createExpertLibrary, validateAgencySettings, type AgencySettings } from './expert-library.js'
 
@@ -206,12 +205,10 @@ export function liveSchemaField<T>(field: z<T>): unknown {
   return typeof candidate.volatile === 'function' ? candidate.volatile() : undefined
 }
 
-/** 从当前进程入口解析宿主 schemastery。解析不到时不把插件依赖当成宿主能力。 */
+/** 从当前宿主安装位置解析 schemastery。解析不到时不把插件依赖当成宿主能力。 */
 function hostSchemastery(): typeof z | undefined {
-  const entry = process.argv[1]
-  if (entry === undefined || entry === '') return undefined
   try {
-    const loaded = createRequire(resolve(entry))('@deepseek-ai/schemastery') as typeof z & { default?: typeof z }
+    const loaded = loadHostModule('@deepseek-ai/schemastery') as typeof z & { default?: typeof z }
     const host = typeof loaded.string === 'function' ? loaded : loaded.default
     if (host !== undefined && liveSchemaField(host.string()) !== undefined) return host
   } catch {

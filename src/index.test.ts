@@ -14,7 +14,7 @@ import { en, zh, type AgencyKey } from './client/locales.js'
 import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
-import { agencySettingsFromLegacyDocument, hasLegacySettingsInstall, installSettingsSectionCompat, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
+import { agencySettingsFromLegacyDocument, hasLegacySettingsInstall, installSettingsSectionCompat, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
 
 const PACKAGE_MANIFEST = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
   packageManager?: string
@@ -110,6 +110,42 @@ describe('DSH settings 兼容层', () => {
     expect(hasLegacySettingsInstall({ settings: {} } as unknown as Context, {})).toBe(false)
     expect(hasLegacySettingsInstall({ settings: {} } as unknown as Context, { installSettingsSection: () => undefined })).toBe(true)
     expect(() => readAgencySettings({ enabled: [], customExperts: [{ slug: 'bad' }] })).toThrow()
+  })
+
+  it('从 Linux 全局安装的 bin 垫片解析宿主模块', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aag-host-prefix-'))
+    const entry = join(root, 'bin', 'dsh')
+    const pkgDir = join(root, 'lib', 'node_modules', '@deepseek-ai', 'schemastery')
+    try {
+      await mkdir(join(root, 'bin'), { recursive: true })
+      await mkdir(pkgDir, { recursive: true })
+      await writeFile(entry, '#!/bin/sh\n', 'utf8')
+      await writeFile(join(pkgDir, 'package.json'), JSON.stringify({ name: '@deepseek-ai/schemastery', main: 'index.cjs' }), 'utf8')
+      await writeFile(join(pkgDir, 'index.cjs'), 'module.exports = { marker: "host-schema" }\n', 'utf8')
+      expect(loadHostModule('@deepseek-ai/schemastery', entry)).toEqual({ marker: 'host-schema' })
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  it('从宿主 bin.js 解析同一安装树里的模块', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aag-host-bin-'))
+    const entry = join(root, 'node_modules', '@deepseek-ai', 'dsh', 'lib', 'bin.js')
+    const pkgDir = join(root, 'node_modules', '@deepseek-ai', 'schemastery')
+    try {
+      await mkdir(join(root, 'node_modules', '@deepseek-ai', 'dsh', 'lib'), { recursive: true })
+      await mkdir(pkgDir, { recursive: true })
+      await writeFile(entry, '', 'utf8')
+      await writeFile(join(pkgDir, 'package.json'), JSON.stringify({ name: '@deepseek-ai/schemastery', main: 'index.cjs' }), 'utf8')
+      await writeFile(join(pkgDir, 'index.cjs'), 'module.exports = { marker: "host-schema" }\n', 'utf8')
+      expect(loadHostModule('@deepseek-ai/schemastery', entry)).toEqual({ marker: 'host-schema' })
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  it('入口不在宿主安装布局时不改用插件自己的依赖', () => {
+    expect(() => loadHostModule('@deepseek-ai/schemastery', join(tmpdir(), 'not-a-dsh-entry'))).toThrow(/Cannot find module/)
   })
 
   it('0.1.7 从 volatile 引用读取启用名单，并关闭自动生成的原始配置表单', async () => {

@@ -2,9 +2,9 @@ import type { Context } from '@deepseek-ai/cordis'
 import * as dshSettings from '@deepseek-ai/dsh-settings'
 import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import { createRequire } from 'node:module'
-import { existsSync } from 'node:fs'
+import { existsSync, realpathSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { validateAgencySettings, type AgencySettings } from './expert-library.js'
 
 type SettingsSectionHooks<T> = {
@@ -52,13 +52,61 @@ export function settingsNamespaceCompat(value: string, module: object = dshSetti
 
 let hostSettingsModule: object | undefined
 
+function missingHostModule(specifier: string): NodeJS.ErrnoException {
+  const error = new Error(`Cannot find module '${specifier}'`) as NodeJS.ErrnoException
+  error.code = 'MODULE_NOT_FOUND'
+  return error
+}
+
+/** 宿主 bin 可能是符号链接，或停在 prefix/bin，模块实际在 prefix/lib/node_modules。 */
+function hostModuleAnchors(entry: string): string[] {
+  const resolved = resolve(entry)
+  const anchors = [resolved]
+  try {
+    const real = realpathSync(resolved)
+    if (real !== resolved) anchors.push(real)
+  } catch {
+    // 垫片路径不一定是已存在的模块文件，继续按安装布局找。
+  }
+  const dir = dirname(resolved)
+  anchors.push(
+    join(dir, '..', 'lib', 'node_modules', '@deepseek-ai', 'dsh', 'package.json'),
+    join(dir, 'node_modules', '@deepseek-ai', 'dsh', 'package.json'),
+  )
+  return anchors
+}
+
+function hostRequireFor(specifier: string, entry = process.argv[1]): NodeRequire {
+  if (entry === undefined || entry === '') throw missingHostModule(specifier)
+  let last: unknown = missingHostModule(specifier)
+  for (const anchor of hostModuleAnchors(entry)) {
+    try {
+      const hostRequire = createRequire(anchor)
+      hostRequire.resolve(specifier)
+      return hostRequire
+    } catch (error) {
+      last = error
+      if ((error as NodeJS.ErrnoException).code !== 'MODULE_NOT_FOUND') throw error
+    }
+  }
+  throw last
+}
+
+/** 从当前宿主安装位置加载模块。解析不到时抛出 MODULE_NOT_FOUND，不回退到插件自己的依赖。 */
+export function loadHostModule(specifier: string, entry = process.argv[1]): unknown {
+  return hostRequireFor(specifier, entry)(specifier)
+}
+
+/** 只确认宿主模块能否解析，不执行包入口。 */
+export function resolveHostModule(specifier: string, entry = process.argv[1]): string {
+  return hostRequireFor(specifier, entry).resolve(specifier)
+}
+
 /** 旧 RC 的模块助手必须从宿主入口解析。插件自己的依赖可能更旧，不能用来判断当前宿主。 */
 function settingsModuleFromHost(): object {
   if (hostSettingsModule !== undefined) return hostSettingsModule
-  const entry = process.argv[1]
-  if (entry === undefined || entry === '') return hostSettingsModule = {}
   try {
-    hostSettingsModule = createRequire(resolve(entry))('@deepseek-ai/dsh-settings') as object
+    hostSettingsModule = loadHostModule('@deepseek-ai/dsh-settings') as object
   } catch {
     hostSettingsModule = {}
   }
@@ -177,10 +225,8 @@ function profileHome(ctx: Context): string | undefined {
 }
 
 function parseHostYaml(text: string): unknown {
-  const entry = process.argv[1]
-  if (entry === undefined || entry === '') return undefined
   try {
-    const yaml = createRequire(resolve(entry))('yaml') as { parse?: (source: string) => unknown }
+    const yaml = loadHostModule('yaml') as { parse?: (source: string) => unknown }
     return typeof yaml.parse === 'function' ? yaml.parse(text) : undefined
   } catch {
     return undefined

@@ -1,9 +1,8 @@
+import { resolveHostModule } from './settings-compat.js';
 import { readHostLocale } from './i18n.js';
 import { localizeTeam } from './team-content-en.js';
 import { teamText } from './team-i18n.js';
 import { createHash } from 'node:crypto';
-import { createRequire } from 'node:module';
-import { resolve } from 'node:path';
 import type { Context } from '@deepseek-ai/cordis';
 import type { Agent } from '@deepseek-ai/dsh-agent';
 import { executeTeam } from './team-runtime.js';
@@ -77,7 +76,7 @@ export function hostHasAgentTeam(): boolean {
     if (!process.argv[1])
         return agentTeamInstalled = false;
     try {
-        createRequire(resolve(process.argv[1])).resolve('@deepseek-ai/dsh-experimental-agent-team');
+        resolveHostModule('@deepseek-ai/dsh-experimental-agent-team');
         return agentTeamInstalled = true;
     }
     catch (error) {
