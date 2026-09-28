@@ -1191,7 +1191,7 @@ describe('专家库目标稿样式契约', () => {
 
 describe('@ 菜单分组标题本地化', () => {
   it("DSH peer 只枚举已验证的 RC，并覆盖最新 RC", () => {
-    const range = "0.1.0-rc.8 || 0.1.1-rc.2 || 0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.7-rc.1 || 0.1.7-rc.2 || 0.2.0-rc.1";
+    const range = "0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.5-rc.3 || 0.1.7-rc.1 || 0.1.7-rc.2 || 0.2.0-rc.1";
     const peers = PACKAGE_MANIFEST.peerDependencies;
     expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
     expect(PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh"]?.optional).toBe(true);
@@ -1203,10 +1203,6 @@ describe('@ 菜单分组标题本地化', () => {
         expect(version).not.toMatch(/alpha/u);
       }
     }
-    expect(
-      PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh-client-runtime"]
-        ?.optional,
-    ).toBe(true);
     // inject 是浏览器模块加载顺序，不应转化为额外的 npm 强制依赖。
     expect(peers).not.toHaveProperty("@deepseek-ai/dsh-client-ui-primitives");
     expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain(

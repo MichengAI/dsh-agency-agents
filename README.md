@@ -120,7 +120,7 @@ DSH `dsh.client.inject` controls browser module loading order. Missing graph ent
 
 ## Installation
 
-Supported DeepSeek Harness versions: `0.1.0-rc.8`, `0.1.1-rc.2`, `0.1.2-rc.1`, `0.1.5-rc.1`, `0.1.5-rc.2`, `0.1.7-rc.1`, `0.1.7-rc.2`, and `0.2.0-rc.1`. Alpha releases are not supported. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
+Supported DeepSeek Harness versions: `0.1.2-rc.1`, `0.1.5-rc.1`, `0.1.5-rc.2`, `0.1.5-rc.3`, `0.1.7-rc.1`, `0.1.7-rc.2`, and `0.2.0-rc.1`. Alpha releases are not supported. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
 
 The installation commands below use the official npm registry.
 
