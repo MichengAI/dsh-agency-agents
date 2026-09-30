@@ -2,7 +2,7 @@
 
 ### 体验优化
 
-- 支持 DeepSeek Harness 0.2.0-rc.1，并继续兼容此前已支持的 RC 版本。
+- 支持 DeepSeek Harness 0.2.0-rc.2，并继续兼容此前已支持的 RC 版本。
 
 ---
 
@@ -10,4 +10,4 @@
 
 ### Improvements
 
-- Support DeepSeek Harness 0.2.0-rc.1, and keep the previously supported release candidates.
+- Support DeepSeek Harness 0.2.0-rc.2, and keep the previously supported release candidates.

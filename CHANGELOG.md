@@ -4,6 +4,12 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.0.7 - 2026-09-30
+
+### Improvements
+
+- Support DeepSeek Harness 0.2.0-rc.2, and keep the previously supported release candidates.
+
 ## 1.0.6 - 2026-09-28
 
 ### Improvements
