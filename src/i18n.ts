@@ -129,15 +129,15 @@ export function readHostLocale(ctx: {
   }
 }
 
-/** 工具 schema 只读语言快照；昂贵的 describe 仅在初始化和语言变更后调用。 */
+/** 工具 schema 只读语言快照；初始化、locale 激活和语言变更后才调用 describe。 */
 export function createHostLocaleReader(ctx: Context): () => LocaleId {
   let current = readHostLocale(ctx)
   let scheduled = false
   let refreshing = false
   let disposed = false
 
-  ctx.on?.('settings/document-updated', (ns) => {
-    if (ns !== LOCALE_SETTINGS_NAMESPACE || disposed || refreshing || scheduled) return
+  const scheduleRefresh = (): void => {
+    if (disposed || refreshing || scheduled) return
     scheduled = true
     // describe 本身也会发设置事件，不能在其调用栈里再读 describe。
     queueMicrotask(() => {
@@ -146,6 +146,14 @@ export function createHostLocaleReader(ctx: Context): () => LocaleId {
       refreshing = true
       try { current = readHostLocale(ctx) } finally { refreshing = false }
     })
+  }
+  ctx.on?.('settings/document-updated', (ns) => {
+    if (ns === LOCALE_SETTINGS_NAMESPACE) scheduleRefresh()
+  })
+  ctx.on?.('internal/status', (fiber) => {
+    // apply 可能早于 locale 的首次激活；不能依赖 schema 读取来纠正初始回退值。
+    const entry = (fiber as { entry?: { options?: { id?: string } } }).entry
+    if (fiber.state === 2 && entry?.options?.id === LOCALE_SETTINGS_NAMESPACE) scheduleRefresh()
   })
   ctx.effect?.(() => () => { disposed = true })
 

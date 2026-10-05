@@ -12,6 +12,35 @@ const { ToolRuntime, defineTool } = await import(pathToFileURL(hostRequire.resol
 const { SystemPrompt } = await import(pathToFileURL(hostRequire.resolve('@deepseek-ai/dsh-system-prompt')).href) as typeof import('@deepseek-ai/dsh-system-prompt')
 
 describe('真实宿主工具注册与模型提示组装', () => {
+  it('locale 晚于插件激活时纠正初始中文快照，无需工具扫描或设置面板', async () => {
+    const ctx = new Context()
+    let active = false
+    const describeSettings = vi.fn(() => active ? [{ ns: 'locale', value: { preference: 'en' } }] : [])
+    const locale = createHostLocaleReader({
+      settings: { describe: describeSettings },
+      on: ctx.on.bind(ctx), effect: ctx.effect.bind(ctx),
+    } as unknown as typeof ctx)
+    try {
+      expect(locale()).toBe('zh')
+      for (let i = 0; i < 76; i++) locale()
+      expect(describeSettings).toHaveBeenCalledTimes(1)
+      const activated = (id: string) => ctx.emit('internal/status', {
+        state: 2, entry: { options: { id } },
+      } as unknown as typeof ctx.fiber, 1)
+      activated('unrelated-plugin')
+      await Promise.resolve()
+      expect(describeSettings).toHaveBeenCalledTimes(1)
+
+      active = true
+      activated('locale')
+      await Promise.resolve()
+      expect(locale()).toBe('en')
+      expect(describeSettings).toHaveBeenCalledTimes(2)
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
   it('批量 schema 扫描不重新投影设置，语言事件合并刷新并避免同步重入', async () => {
     const ctx = new Context()
     new SystemPrompt(ctx, { includeHarnessIdentity: false, includeRuntimeContext: false })

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -1506,6 +1506,33 @@ describe('list_experts 语言切换', () => {
     }
     return { list }
   }
+
+  it('apply 注册的团队工具反复读取 schema 时不重新 describe 设置', () => {
+    const tools: Array<{ name: string; description: string; parameters: unknown }> = []
+    const describeSettings = vi.fn(() => [
+      { ns: 'locale', value: { preference: 'en' } },
+      { ns: 'agency-agents', revision: 0 },
+    ])
+    const ctx = {
+      tools: { register: (tool: typeof tools[number]) => tools.push(tool) },
+      subagents: { getProvider: () => undefined },
+      systemPrompt: { section: () => undefined },
+      settings: { ...alphaSettings([]), describe: describeSettings },
+      inject: () => undefined,
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const teams = tools.filter(tool => ['list_expert_teams', 'get_expert_team', 'summon_expert_team'].includes(tool.name))
+    expect(teams).toHaveLength(3)
+    const readsAfterApply = describeSettings.mock.calls.length
+    expect(readsAfterApply).toBeGreaterThan(0)
+    for (let i = 0; i < 76; i++) {
+      for (const tool of teams) {
+        expect(JSON.stringify({ description: tool.description, parameters: tool.parameters })).not.toMatch(/[\u3400-\u9fff]/u)
+      }
+    }
+    expect(describeSettings).toHaveBeenCalledTimes(readsAfterApply)
+  })
 
   it('已注册团队工具的说明和参数说明随宿主语言切换', () => {
     let locale = 'zh'
