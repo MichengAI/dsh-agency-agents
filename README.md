@@ -752,7 +752,7 @@ Set `AGENCY_AGENTS_ROOT` to use an external expert directory. Persona bodies fro
 
 ## Secondary development
 
-`lib` is not tracked in Git. Run `pnpm build` before using a source checkout. The release gate builds and verifies `lib`; npm packages still include the compiled runtime.
+Both GitHub and npm include a ready-to-run `lib`. After changing the source in a clone, run `pnpm build` before committing, or a source install keeps the previous runtime.
 
 
 ### Install from source

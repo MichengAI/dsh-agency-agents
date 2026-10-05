@@ -4,6 +4,10 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## Unreleased
+
+- Installing from GitHub now includes the compiled runtime, so no manual build is required.
+
 ## 1.0.8 - 2026-10-05
 
 ### Improvements

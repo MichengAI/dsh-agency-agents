@@ -752,7 +752,7 @@ dsh --profile web --dump-config
 
 ## 二次开发
 
-`lib` 不提交到 GitHub；从源码使用前运行 `pnpm build`。发布门禁生成并验证 `lib`，npm 包仍包含可直接运行的编译产物。
+GitHub 与 npm 都包含可直接运行的 `lib`。克隆后如果改了源码，提交前运行 `pnpm build`，否则源码安装仍是旧的运行文件。
 
 
 ### 从源码安装

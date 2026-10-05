@@ -26,6 +26,7 @@ check(
     .every((entry) => packageJson.files?.includes(entry)),
 )
 check('包许可证为 Apache-2.0', packageJson.license === 'Apache-2.0')
+check('Git 安装不依赖被拦截的构建脚本', packageJson.scripts?.prepare === undefined && !(await readFile(new URL('../.gitignore', import.meta.url), 'utf8')).split(/\r?\n/u).includes('/lib/'))
 check(
   '包仓库元数据与发布溯源仓库一致',
   packageJson.repository?.type === 'git' && packageJson.repository?.url === 'https://github.com/MichengAI/dsh-agency-agents.git',
