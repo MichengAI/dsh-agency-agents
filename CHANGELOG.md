@@ -4,9 +4,12 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
-## Unreleased
+## 1.0.8 - 2026-10-05
 
-- Read a locale snapshot for team tool schemas instead of repeatedly describing global settings. Coalesce locale-change refreshes while preserving live Chinese/English switching and direct reads on older hosts.
+### Improvements
+
+- Opening and switching sessions stays smoother when the MCP connector is also enabled.
+- Expert team tools follow the current language and still update immediately when switching between Chinese and English.
 
 ## 1.0.7 - 2026-09-30
 
