@@ -1,7 +1,7 @@
 import type { ToolDefinition } from '@deepseek-ai/dsh-tools'
 import { teamText, type TeamLocale } from './team-i18n.js'
 
-/** 每次生成模型工具说明时读取当前语言；真实宿主注册及组装契约由 team-tool-host.test.ts 验证。 */
+/** 每次生成模型工具说明时读取语言快照；locale 不应调用全局配置投影。 */
 export function localizeTeamTool(tool: ToolDefinition, locale: () => TeamLocale): ToolDefinition {
   const { description, parameters } = tool
   return {

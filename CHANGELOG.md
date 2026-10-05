@@ -4,6 +4,10 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## Unreleased
+
+- Read a locale snapshot for team tool schemas instead of repeatedly describing global settings. Coalesce locale-change refreshes while preserving live Chinese/English switching and direct reads on older hosts.
+
 ## 1.0.7 - 2026-09-30
 
 ### Improvements

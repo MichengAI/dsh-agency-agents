@@ -43,7 +43,7 @@ import { fileURLToPath } from 'node:url'
 import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
-import { formatHost, localizedExpertDescription, localizedExpertName, matchDivision, readHostLocale, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
+import { createHostLocaleReader, formatHost, localizedExpertDescription, localizedExpertName, matchDivision, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
 import { hasLegacySettingsInstall, installSettingsSectionCompat, isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
 import { registerPluginUpdater } from './plugin-updater.js'
 import { AGENCY_LIBRARY_SERVICE, agencySettingsSchema, createExpertLibrary, validateAgencySettings, type AgencySettings } from './expert-library.js'
@@ -551,7 +551,7 @@ export function apply(ctx: Context, config: Config): void {
   const settingsNamespace = settingsNamespaceCompat('agency-agents')
   let settingsSource: () => AgencySettings = () => ({ enabled: [], customExperts: [] })
   const enabledSet = (): ReadonlySet<string> => new Set(settingsSource().enabled)
-  const activeLocale = (): LocaleId => readHostLocale(ctx)
+  const activeLocale = createHostLocaleReader(ctx)
   const teamTx = (key: string, values?: readonly unknown[]) => teamText(activeLocale(), key, values)
   const catalogRoot = resolveCatalogRoot(config.root)
   const basePersonaSource = createAgencyPersonaSource(catalogRoot, config.divisions, async () => { await ensureReady(); return experts; })
@@ -613,13 +613,13 @@ export function apply(ctx: Context, config: Config): void {
           retryCleanup()
         },
         onChange: () => {},
-        validate: (value) => validateAgencySettings(value, readHostLocale(ctx)),
+        validate: (value) => validateAgencySettings(value, activeLocale()),
       },
       undefined,
-      readHostLocale(ctx),
+      activeLocale(),
     )
   } else if (isLiveValue((config as { enabled?: unknown }).enabled)) {
-    settingsSource = () => readAgencySettings(config, readHostLocale(ctx))
+    settingsSource = () => readAgencySettings(config, activeLocale())
     retryCleanup()
     const settingsApi = ctx.settings as { configure?: (policy: { auto?: boolean }, owner?: unknown) => () => void }
     const fiber = (ctx as { fiber?: object }).fiber
@@ -629,14 +629,14 @@ export function apply(ctx: Context, config: Config): void {
     if (typeof ctx.effect === 'function') {
       ctx.effect(() => {
         let cancelled = false
-        void recoverImportedAgencySettings(ctx, settingsNamespace, () => settingsSource(), () => cancelled, undefined, readHostLocale(ctx)).catch((error: unknown) => {
+        void recoverImportedAgencySettings(ctx, settingsNamespace, () => settingsSource(), () => cancelled, undefined, activeLocale()).catch((error: unknown) => {
           console.warn('[agency-agents] 旧设置导入失败，数据仍保留在 settings.yaml.imported：', error)
         })
         return () => { cancelled = true }
       }, 'agency-agents: import legacy settings')
     }
   } else {
-    throw new Error(formatHost(readHostLocale(ctx), 'error.settingsLiveUnsupported'))
+    throw new Error(formatHost(activeLocale(), 'error.settingsLiveUnsupported'))
   }
   // 闭包读取当前 source，避免 settings 服务替换时继续持有旧快照。
   const personaSource: AgencyPersonaSource = {

@@ -3,6 +3,7 @@
  * 模板占位符使用 {word}，与客户端 locale 服务约定一致。
  */
 import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
+import type { Context } from '@deepseek-ai/cordis'
 import { EN_DIVISION, ZH_DIVISION } from './names.js'
 import { settingsNamespaceCompat } from './settings-compat.js'
 
@@ -125,6 +126,39 @@ export function readHostLocale(ctx: {
     return resolveHostLocale(preference)
   } catch {
     return 'zh'
+  }
+}
+
+/** 工具 schema 只读语言快照；昂贵的 describe 仅在初始化和语言变更后调用。 */
+export function createHostLocaleReader(ctx: Context): () => LocaleId {
+  let current = readHostLocale(ctx)
+  let scheduled = false
+  let refreshing = false
+  let disposed = false
+
+  ctx.on?.('settings/document-updated', (ns) => {
+    if (ns !== LOCALE_SETTINGS_NAMESPACE || disposed || refreshing || scheduled) return
+    scheduled = true
+    // describe 本身也会发设置事件，不能在其调用栈里再读 describe。
+    queueMicrotask(() => {
+      scheduled = false
+      if (disposed) return
+      refreshing = true
+      try { current = readHostLocale(ctx) } finally { refreshing = false }
+    })
+  })
+  ctx.effect?.(() => () => { disposed = true })
+
+  return () => {
+    // 旧宿主有便宜的 get 路径，继续读取实时值，不要求它支持新设置事件。
+    try {
+      const settings = ctx.settings as Parameters<typeof readHostLocale>[0]['settings']
+      const section = settings?.get?.(LOCALE_SETTINGS_NAMESPACE) as { preference?: unknown } | undefined
+      if (section !== undefined) current = resolveHostLocale(section.preference)
+    } catch {
+      // 服务卸载或读取异常时保留最后一次有效语言。
+    }
+    return current
   }
 }
 
