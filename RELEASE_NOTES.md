@@ -1,15 +1,11 @@
 ## 中文说明
 
-### 体验优化
-
-- 同时启用 MCP 连接器时，打开和切换会话更顺畅。
-- 专家团工具会跟随当前语言，切换中英文后仍然即时更新。
+- 已安装插件列表显示「Agency Agents」和中文简介，不再只用包名。远程入口显示「Agency Agents 接口」。显示名来自 `locale/zh.json`、`locale/en.json` 和 `locale/remote/` 的 `meta.title`、`meta.description`。
+- 从 GitHub 安装时已包含运行文件，不必再手动构建。
 
 ---
 
 ## English
 
-### Improvements
-
-- Opening and switching sessions stays smoother when the MCP connector is also enabled.
-- Expert team tools follow the current language and still update immediately when switching between Chinese and English.
+- The installed-plugin list shows “Agency Agents” and a localized description instead of the package name. The remote entry shows “Agency Agents remote”. Titles and descriptions come from `meta.title` and `meta.description` in `locale/zh.json`, `locale/en.json`, and `locale/remote/`.
+- Installing from GitHub now includes the compiled runtime, so no manual build is required.

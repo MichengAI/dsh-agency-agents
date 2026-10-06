@@ -22,7 +22,7 @@ for (const [file, text] of [['README.md', `This README describes version ${packa
 check('DSH bundle 指向 Cordis patch', packageJson.dsh?.bundle?.patch === './cordis.patch.yml')
 check(
   '发布文件包含运行代码、智能体资产、patch、双语说明和授权文件',
-  ['lib', 'assets/agency-agents', 'assets/agency-agents-zh', 'cordis.patch.yml', 'README.md', 'README.zh-CN.md', 'LICENSE', 'NOTICE']
+  ['locale', 'lib', 'assets/agency-agents', 'assets/agency-agents-zh', 'cordis.patch.yml', 'README.md', 'README.zh-CN.md', 'LICENSE', 'NOTICE']
     .every((entry) => packageJson.files?.includes(entry)),
 )
 check('包许可证为 Apache-2.0', packageJson.license === 'Apache-2.0')
