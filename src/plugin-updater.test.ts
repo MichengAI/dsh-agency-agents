@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { describe, expect, it, vi } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
 import { handlePluginUpdateEscape, manualPluginUpdateCommand } from './client/plugin-update-ui.js'
-import { registerPluginUpdater, isDshCliEntry, isNewerVersion, isTrustedUpdateRequest, PLUGIN_UPDATE_HEADER } from './plugin-updater.js'
+import { registerPluginUpdater, isDshCliEntry, isNewerVersion, isTrustedUpdateRequest, PLUGIN_UPDATE_HEADER, resolveUpdateRuntime, shouldNotifyParent } from './plugin-updater.js'
 
 describe('独立插件更新', () => {
   it('英文宿主中的配置错误和请求拒绝不会泄漏中文', async () => {
@@ -35,7 +35,8 @@ describe('独立插件更新', () => {
     expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', origin: 'http://127.0.0.1:3000', host: '127.0.0.1:3000' }, socket: { remoteAddress: '127.0.0.1' } })).toBe(true)
     expect(isTrustedUpdateRequest({ headers: { origin: 'http://127.0.0.1:3000', host: '127.0.0.1:3000' } })).toBe(false)
     expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', 'sec-fetch-site': 'cross-site' } })).toBe(false)
-    expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', host: '127.0.0.1:3000' }, socket: { remoteAddress: '127.0.0.1' } })).toBe(false)
+    expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', host: '127.0.0.1:19387' }, socket: { remoteAddress: '127.0.0.1' } })).toBe(true)
+    expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', host: 'example.com' }, socket: { remoteAddress: '127.0.0.1' } })).toBe(false)
     expect(isTrustedUpdateRequest({ headers: { [PLUGIN_UPDATE_HEADER]: '1', origin: 'http://127.0.0.1:3000', host: '127.0.0.1:3000' }, socket: { remoteAddress: '192.168.1.8' } })).toBe(false)
   })
 
@@ -83,9 +84,33 @@ describe('独立插件更新', () => {
     expect(updateUi).toContain("className: 'mpi-dialog'")
     expect(updateUi).toContain('if (version.textContent !== versionLabel)')
     expect(updateUi).toContain('value.latestCheckFailed')
+    expect(updateUi).toContain("color: '#e8b15a'")
+    expect(updateUi).toContain('manualHintDesktop')
     expect(host).toMatch(/endpoint:\s*["']\/api\/michengai\/dsh-agency-agents\/update["']/)
-    expect(await readFile(new URL('./plugin-updater.ts', import.meta.url), 'utf8')).toContain("const notifyParent = target.desktopPnpm === undefined && typeof process.send === 'function'")
+    expect(await readFile(new URL('./plugin-updater.ts', import.meta.url), 'utf8')).toContain('const notifyParent = shouldNotifyParent(target)')
     expect(await readFile(new URL('./plugin-updater.ts', import.meta.url), 'utf8')).toContain('isDshCliEntry')
+  })
+
+  it('官方 Desktop 在线更新指向 desktop profile，且不通知父进程', () => {
+    const runtime = resolveUpdateRuntime({
+      get(name: string) {
+        if (name === 'profileContext') return {
+          name: 'desktop',
+          dir: 'D:\\profile\\desktop',
+          packageManager: { command: 'D:/Tools/DeepSeek Harness/DeepSeek Harness.exe', args: ['--expose-internals', 'D:/runtime/pnpm.mjs'], env: { ELECTRON_RUN_AS_NODE: '1' } },
+        }
+        return undefined
+      },
+    }, {
+      argv: ['node', 'D:/app/dsh/node_modules/@deepseek-ai/dsh-desktop-host/lib/index.js', 'D:/runtime', 'D:/profile/desktop'],
+      env: {},
+      cwd: 'D:\\profile\\desktop',
+      homeDir: 'C:\\Users\\YUJIYU',
+    })
+    expect(runtime.profileName).toBe('desktop')
+    expect(runtime.officialDesktop).toBe(true)
+    expect(runtime.canAutoUpdate).toBe(true)
+    expect(shouldNotifyParent(runtime, () => {})).toBe(false)
   })
 })
 

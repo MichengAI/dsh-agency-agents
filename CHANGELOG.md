@@ -6,6 +6,12 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## Unreleased
 
+## 1.0.10 - 2026-10-07
+
+- Official Desktop can update this plugin in place. It no longer targets the web profile by mistake.
+- A new version is marked with a warning color. Version numbers keep their normal color.
+- After updating, fully quit and reopen DSH Desktop.
+
 ## 1.0.9 - 2026-10-06
 
 - The installed-plugin list shows “Agency Agents” and a localized description instead of the package name. The remote entry shows “Agency Agents remote”. Titles and descriptions come from `meta.title` and `meta.description` in `locale/zh.json`, `locale/en.json`, and `locale/remote/`.

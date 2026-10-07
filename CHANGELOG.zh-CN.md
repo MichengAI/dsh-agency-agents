@@ -6,6 +6,12 @@
 
 ## 未发布
 
+## 1.0.10 - 2026-10-07
+
+- 官方桌面版可以在线更新这个插件，不再误装到 web profile。
+- 发现新版本时，提示文字会标成提醒色；版本号颜色不变。
+- 更新完成后需要完全退出并重新打开 DSH Desktop。
+
 ## 1.0.9 - 2026-10-06
 
 - 已安装插件列表显示「Agency Agents」和中文简介，不再只用包名。远程入口显示「Agency Agents 接口」。显示名来自 `locale/zh.json`、`locale/en.json` 和 `locale/remote/` 的 `meta.title`、`meta.description`。
