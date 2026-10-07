@@ -6,7 +6,7 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## Unreleased
 
-## 1.0.10 - 2026-10-07
+## 1.0.11 - 2026-10-07
 
 - Official Desktop can update this plugin in place. It no longer targets the web profile by mistake.
 - A new version is marked with a warning color. Version numbers keep their normal color.
