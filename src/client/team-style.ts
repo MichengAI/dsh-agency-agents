@@ -58,7 +58,8 @@ export const TEAM_CSS = `
 .agt-editor .aag-custom-footer{flex-shrink:0}
 .agt-editor .aag-custom-footer>span{display:block;font-size:12px;color:var(--dsw-alias-label-secondary);margin-bottom:8px}
 .agt-picker-tools{flex:none;margin:0}
-.agt-dialog.agt-picker .agt-picker-list{flex:none;height:min(520px,calc(100vh - 280px));min-height:240px;max-height:none;overflow:auto;padding:8px 0 0}
+.agt-picker-note{margin:8px 0 0}
+.agt-dialog.agt-picker .agt-picker-list{flex:none;height:min(480px,calc(100vh - 328px));min-height:240px;max-height:none;overflow:auto;padding:8px 0 0}
 .agt-dialog.agt-picker .agt-picker-list button{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;min-height:0;margin:0;padding:8px 4px;border:0;border-bottom:1px solid var(--dsw-alias-border-l2);border-radius:0;background:transparent;color:inherit;text-align:left;box-shadow:none}
 .agt-dialog.agt-picker .agt-picker-list button:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
 .agt-dialog.agt-picker .agt-picker-list span{display:flex;min-width:0;flex-direction:column}

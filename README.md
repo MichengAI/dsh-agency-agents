@@ -44,7 +44,7 @@ Manage teams in **Settings → Experts → Expert teams**, sharing the header, s
 ### Configure and use
 
 1. Use a built-in team, copy it to customize, or create a team of 2–8 distinct experts. Up to 100 custom teams can be saved.
-2. Set the name, description, tags, member duties, shared goal, constraints, delivery requirements, and 1–3 examples. Use, customize, or restore the coordinator template.
+2. Set the name, description, tags, member duties, shared goal, constraints, delivery requirements, and 1–3 examples. Add member starts with enabled experts; disabled experts can still join if you switch status to All or Disabled. Use, customize, or restore the coordinator template.
 3. Confirm enabling required experts when enabling a team. Switch to Expert teams in the composer picker or select through `@`, then write the task. Selecting or adding an example never sends the message.
 4. The current main conversation delegates, verifies evidence, handles disagreements, and delivers one result; no additional leader subagent is created. Ordinary mode runs up to four experts concurrently and preserves completed results if others fail.
 
@@ -69,7 +69,7 @@ Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_t
 - Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
 - Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
 
-> This README describes version 1.0.12; npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full changes and [release notes](RELEASE_NOTES.md) for the bilingual release description. Upgrades retain expert settings. Back up settings before downgrading because older versions do not support teams.
+> This README describes version 1.0.13; npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full changes and [release notes](RELEASE_NOTES.md) for the bilingual release description. Upgrades retain expert settings. Back up settings before downgrading because older versions do not support teams.
 ## Screenshots
 
 The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.

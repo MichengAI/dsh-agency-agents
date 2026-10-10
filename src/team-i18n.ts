@@ -115,6 +115,7 @@ export const TEAM_EN = {
   '只恢复主理人规则，不修改成员分工、目标或交付要求。': 'Only coordinator rules will be restored. Assignments, goals and deliverables will stay unchanged.',
   '未保存的表单改动将丢弃。': 'Unsaved form changes will be discarded.', '选择团队成员': 'Choose team members', '搜索团队成员': 'Search team members',
   '分类': 'Category', '全部分类': 'All categories', '搜索专家、职责或领域': 'Search experts, roles, or domains', '没有匹配的专家': 'No matching experts',
+ '停用的专家也可以加入专家团。不想单独使用专家、只想用专家团时，把状态改为「全部」或「已停用」。': 'Disabled experts can still join a team. If you do not want to use an expert on its own, switch status to All or Disabled.',
   '搜索专家名称或领域': 'Search expert names or fields', '提供本专业分析': 'Provide analysis in your field',
   '从自身专业角度分析任务，给出结论、依据和建议。': 'Analyze the task from your expertise and provide conclusions, evidence and recommendations.',
   '专家团加载失败': 'Could not load teams', '无法插入团队，请确认当前聊天草稿后重试。': 'Could not insert the team. Check the current draft and retry.',

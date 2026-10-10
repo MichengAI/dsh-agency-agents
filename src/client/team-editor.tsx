@@ -8,6 +8,7 @@ import { CategorySelect } from './category-select.js';
 import { EN_DIVISION, ZH_DIVISION } from '../names.js';
 import { TeamDialog, TeamConfirm, Avatar, IconPlus, IconTrash, IconRefresh, IconSearch, } from './team-shared.js';
 import { TeamDetails } from './team-ui.js';
+import { filterTeamMemberCandidates, type TeamMemberPickerStatus } from './team-member-picker.js';
 
 const PICKER_ROW = 72
 
@@ -18,12 +19,15 @@ function MemberPicker(props: {
     query: string
     source: 'all' | 'base' | 'custom'
     division: string
+    status: TeamMemberPickerStatus
+    enabled: readonly string[]
     taken: readonly { expertSlug: string }[]
     replacing: number
     tx(key: string): string
     onQuery(value: string): void
     onSource(value: 'all' | 'base' | 'custom'): void
     onDivision(value: string): void
+    onStatus(value: TeamMemberPickerStatus): void
     onPick(expert: ExpertSummary): void
     close(): void
 }) {
@@ -33,12 +37,15 @@ function MemberPicker(props: {
         values.sort((left, right) => (names[left] ?? left).localeCompare(names[right] ?? right, props.locale))
         return [{ value: '', label: props.tx("全部分类") }, ...values.map((value) => ({ value, label: names[value] ?? value }))]
     }, [props.experts, props.locale, names, props.tx])
-    const needle = props.query.trim().toLowerCase()
-    const matches = props.experts.filter((expert) => !expert.conflict
-        && !props.taken.some((member, index) => member.expertSlug === expert.slug && index !== props.replacing)
-        && (props.source === 'all' || expert.custom === (props.source === 'custom'))
-        && (props.division === '' || expert.division === props.division)
-        && (needle === '' || `${expert.name} ${expert.nameEn} ${expert.description}`.toLowerCase().includes(needle)))
+    const matches = filterTeamMemberCandidates(props.experts, {
+        source: props.source,
+        division: props.division,
+        status: props.status,
+        enabled: props.enabled,
+        taken: props.taken,
+        replacing: props.replacing,
+        query: props.query,
+    })
     const scroller = React.useRef<HTMLDivElement>(null)
     const [top, setTop] = React.useState(0)
     const [height, setHeight] = React.useState(360)
@@ -54,7 +61,7 @@ function MemberPicker(props: {
     React.useEffect(() => {
         scroller.current?.scrollTo({ top: 0 })
         setTop(0)
-    }, [props.query, props.source, props.division])
+    }, [props.query, props.source, props.division, props.status])
     const start = Math.max(0, Math.floor(top / PICKER_ROW) - 4)
     const count = Math.ceil(height / PICKER_ROW) + 8
     const slice = matches.slice(start, start + count)
@@ -70,12 +77,20 @@ function MemberPicker(props: {
         <div className="aag-field aag-field-category">
           <CategorySelect id="agt-picker-category" value={props.division} label={props.tx("分类")} onChange={props.onDivision} options={options}/>
         </div>
+        <div className="aag-field aag-field-status">
+          <CategorySelect id="agt-picker-status" value={props.status} label={props.tx("状态")} onChange={(value) => props.onStatus(value === 'enabled' || value === 'disabled' ? value : '')} options={[
+            { value: 'enabled', label: props.tx("已启用") },
+            { value: '', label: props.tx("全部状态") },
+            { value: 'disabled', label: props.tx("已停用") },
+          ]}/>
+        </div>
         <div className="aag-field aag-field-search">
           <div className="aag-search-wrap">
             <Input className="aag-search" aria-label={props.tx("搜索团队成员")} autoFocus autoComplete="off" spellCheck={false} allowClear={{ clearIcon: <span aria-label={props.tx("清除搜索")}/> }} placeholder={props.tx("搜索专家、职责或领域")} prefix={<IconSearch size={16}/>} value={props.query} onChange={(event) => props.onQuery(event.target.value)}/>
           </div>
         </div>
       </div>
+      <p className="agt-help agt-picker-note" role="note">{props.tx("停用的专家也可以加入专家团。不想单独使用专家、只想用专家团时，把状态改为「全部」或「已停用」。")}</p>
       <div className="agt-picker-list" ref={scroller} onScroll={(event) => setTop(event.currentTarget.scrollTop)}>
         {matches.length === 0 ? <p className="agt-help">{props.tx("没有匹配的专家")}</p> : <div style={{ height: matches.length * PICKER_ROW, position: 'relative' }}>
           {slice.map((expert, index) => (<button type="button" key={expert.slug} style={{ position: 'absolute', top: (start + index) * PICKER_ROW, left: 0, right: 0, height: PICKER_ROW }} onClick={() => props.onPick(expert)}>
@@ -132,6 +147,7 @@ export function TeamEditor(props: {
     const [query, setQuery] = React.useState('');
     const [pickerSource, setPickerSource] = React.useState<'all' | 'base' | 'custom'>('all');
     const [pickerDivision, setPickerDivision] = React.useState('');
+    const [pickerStatus, setPickerStatus] = React.useState<TeamMemberPickerStatus>('enabled');
     const [confirm, setConfirm] = React.useState<'discard' | 'restore' | 'enable' | null>(null);
     const [preview, setPreview] = React.useState(false);
     const patch = (next: Partial<TeamInput>) => setDraft((value) => ({ ...value, ...next }));
@@ -243,6 +259,7 @@ export function TeamEditor(props: {
                 setQuery('');
                 setPickerSource('all');
                 setPickerDivision('');
+                setPickerStatus('enabled');
                 setPicker(-1);
             }}>
                       <IconPlus />{tx("添加成员")}</Button>
@@ -258,6 +275,7 @@ export function TeamEditor(props: {
                     setQuery('');
                     setPickerSource('all');
                     setPickerDivision('');
+                    setPickerStatus('enabled');
                     setPicker(i);
                 }}>
                           <IconRefresh />{tx("替换")}</Button>
@@ -405,7 +423,7 @@ export function TeamEditor(props: {
                 ? tx("只恢复主理人规则，不修改成员分工、目标或交付要求。") : tx("未保存的表单改动将丢弃。")}
           </p>
         </TeamConfirm>)}
-      {picker !== null && (<MemberPicker experts={props.experts} locale={locale} query={query} source={pickerSource} division={pickerDivision} taken={draft.members} replacing={picker} tx={tx} onQuery={setQuery} onSource={setPickerSource} onDivision={setPickerDivision} close={() => setPicker(null)} onPick={(expert) => {
+      {picker !== null && (<MemberPicker experts={props.experts} locale={locale} query={query} source={pickerSource} division={pickerDivision} status={pickerStatus} enabled={props.enabledExperts} taken={draft.members} replacing={picker} tx={tx} onQuery={setQuery} onSource={setPickerSource} onDivision={setPickerDivision} onStatus={setPickerStatus} close={() => setPicker(null)} onPick={(expert) => {
             const member = {
                 expertSlug: expert.slug,
                 duty: expert.description.slice(0, 100) || tx("提供本专业分析"),

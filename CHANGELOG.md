@@ -6,6 +6,11 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## Unreleased
 
+## 1.0.13 - 2026-10-10
+
+- When building a team, Add member starts with enabled experts so you can pick from the ones you already use.
+- Disabled experts can still join a team. If you do not want to use an expert on its own, switch status to All or Disabled.
+
 ## 1.0.12 - 2026-10-10
 
 - After saving an expert team, you can keep editing an enabled custom expert. You no longer need to disable it first.
