@@ -6,6 +6,11 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## Unreleased
 
+## 1.0.12 - 2026-10-10
+
+- After saving an expert team, you can keep editing an enabled custom expert. You no longer need to disable it first.
+- A save in the same window is no longer mistaken for a change from another window.
+
 ## 1.0.11 - 2026-10-07
 
 - Official Desktop can update this plugin in place. It no longer targets the web profile by mistake.

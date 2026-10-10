@@ -1,4 +1,4 @@
-import { catalogState } from './catalog.js';
+import { adoptSharedRevision, catalogState } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import React from 'react';
@@ -83,6 +83,7 @@ export function TeamMenu(props: {
                 if (!alive.current)
                     return;
                 acceptTeams(props.remote, next);
+                adoptSharedRevision(props.remote, next.revision, next.enabledExperts);
                 setSnapshot(next);
                 props.onExpertsChanged?.();
             }

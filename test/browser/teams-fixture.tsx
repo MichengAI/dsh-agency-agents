@@ -45,8 +45,29 @@ let snapshot: TeamSnapshot = {
     : [],
   revision: 0,
 }
+const sharedSettings = params.has('sharedSettings')
+const customSlug = 'custom-00000000-0000-4000-8000-000000000012'
+let customExpert = {
+  slug: customSlug,
+  name: '租赁业务顾问',
+  description: '处理租赁咨询',
+  division: 'specialized',
+  emoji: '🧩',
+  avatar: 0,
+  prompt: '按租赁业务规则回答。',
+}
+if (sharedSettings) snapshot = { ...snapshot, enabledExperts: [...snapshot.enabledExperts, customSlug] }
+const catalogExperts = () => sharedSettings ? [...experts, {
+  slug: customExpert.slug, name: customExpert.name, nameEn: customExpert.name,
+  description: customExpert.description, descriptionEn: '', emoji: customExpert.emoji,
+  division: customExpert.division, divisionZh: ZH_DIVISION[customExpert.division] ?? customExpert.division,
+  custom: true, avatar: customExpert.avatar,
+}] : experts
 const unsupported = async (): Promise<never> => {
   throw new Error('此夹具不操作个人专家')
+}
+const rejectStale = async (): Promise<never> => {
+  throw new Error('专家配置已被其他窗口修改，请刷新后重试。')
 }
 const check = (revision: number) => {
   if (revision !== snapshot.revision) throw new Error('配置已更新，请刷新。')
@@ -56,13 +77,22 @@ const remote: TeamRemote = {
   getCatalog: async () => ({
     ok: true,
     value: {
-      experts,
+      experts: catalogExperts(),
       enabled: [...snapshot.enabledExperts],
       revision: snapshot.revision,
     },
   }),
-  getCustomExpert: unsupported,
-  saveCustomExpert: unsupported,
+  getCustomExpert: sharedSettings ? async () => ({ ok: true, value: { ...customExpert } }) : unsupported,
+  saveCustomExpert: sharedSettings ? async (input, enabled, revision) => {
+    if (revision !== snapshot.revision) return rejectStale()
+    customExpert = { ...customExpert, ...input, slug: customSlug }
+    snapshot = {
+      ...snapshot,
+      enabledExperts: [...snapshot.enabledExperts.filter((item) => item !== customSlug), ...(enabled ? [customSlug] : [])],
+      revision: revision + 1,
+    }
+    return { ok: true, value: { experts: catalogExperts(), enabled: [...snapshot.enabledExperts], revision: snapshot.revision } }
+  } : unsupported,
   deleteCustomExpert: unsupported,
   saveTeam: async (input, enabled, revision) => {
     check(revision)
@@ -148,7 +178,11 @@ export function TeamsFixture() {
     <style>{CSS + CUSTOM_EDITOR_CSS + `body{margin:0;background:#101010;font:14px 'Segoe UI','Microsoft YaHei',sans-serif;--dsw-alias-label-primary:#eee;--dsw-alias-label-secondary:#c2c4c7;--dsw-alias-label-tertiary:#999;--dsw-alias-border-l2:#444;--dsw-alias-border-l3:#555;--dsw-alias-bg-layer-2:#2b2b2d;--dsw-alias-bg-layer-3:#38383b;--dsw-alias-button-primary-fill:#6688fa;--dsw-alias-label-primary-foreground:#111;--dsw-alias-state-success-primary:#25cf69;--dsw-alias-interactive-bg-hover:#424248}.settings-window{box-sizing:border-box;margin:56px auto;width:min(800px,calc(100vw - 32px));height:800px;background:#2b2b2d;border-radius:32px;padding:24px;overflow:auto;color:#eee}.settings-layout{display:grid;grid-template-columns:164px minmax(0,1fr);gap:36px;margin-top:24px}.settings-sidebar{padding-top:16px}.settings-sidebar button{display:block;width:100%;text-align:left;margin:12px 0;padding:12px;border:0;font:inherit;color:inherit;background:transparent;border-radius:10px;cursor:pointer}.settings-sidebar button[aria-current=page]{background:#44464b}@media(max-width:600px){.settings-layout{grid-template-columns:1fr;gap:0}.settings-sidebar{display:none}.settings-window{padding:16px;margin:16px auto}}`}</style>
     <style>{'body{--dsw-alias-border-l4:#555;--dsw-alias-label-dimmed:#999;--dsw-alias-brand-primary:#6688fa;--dsw-alias-button-primary-hover:#5577e9;--dsw-alias-bg-layer-1:#202022;--dsw-specific-menu:#363638;--dsw-alias-bg-mask-1:#0008;--dsw-mask-blur:blur(2px);--dsw-elevation-prominent:0 6px 20px #0003}' + (params.get('theme') === 'light' ? 'body{--dsw-alias-border-l4:#bbb;--dsw-alias-label-dimmed:#777;--dsw-alias-label-primary:#202020;--dsw-alias-label-secondary:#555;--dsw-alias-label-tertiary:#777;--dsw-alias-label-primary-foreground:#fff;--dsw-alias-bg-layer-1:#f5f5f5;--dsw-alias-bg-layer-2:#fff;--dsw-alias-bg-layer-3:#eee;--dsw-specific-menu:#fff;--dsw-alias-border-l2:#ddd;--dsw-alias-border-l3:#bbb;--dsw-alias-interactive-bg-hover:#e8e8e8;--dsw-alias-bg-mask-1:#0004}.settings-window{background:#fff;color:#202020}' : '')}</style>
     <div className="settings-window">设置<div className="settings-layout"><aside className="settings-sidebar">通用设置<button aria-current="page">专家</button>技能</aside><main>
-      <AgencySettingsPanel remote={{ ...remote, getEnabled: async () => ({ ok: true, value: { enabled: snapshot.enabledExperts, revision: snapshot.revision } }), setEnabled: unsupported, getPrompt: unsupported }} getActive={activeLocale} t={translate} prepareTeamSelection={() => () => true} />
+      <AgencySettingsPanel remote={{ ...remote, getEnabled: async () => ({ ok: true, value: { enabled: snapshot.enabledExperts, revision: snapshot.revision } }), setEnabled: sharedSettings ? async (enabled, revision) => {
+        if (revision !== snapshot.revision) return rejectStale()
+        snapshot = { ...snapshot, enabledExperts: [...enabled], revision: revision + 1 }
+        return { ok: true, value: { enabled: [...snapshot.enabledExperts], revision: snapshot.revision } }
+      } : unsupported, getPrompt: sharedSettings ? async () => ({ ok: true, value: { prompt: customExpert.prompt } }) : unsupported }} getActive={activeLocale} t={translate} prepareTeamSelection={() => () => true} />
     </main></div></div>
   </>
   if (params.has('menu'))

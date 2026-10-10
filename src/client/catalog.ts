@@ -51,7 +51,17 @@ function publishCatalog(remote: AgencyCatalogRemote, value: CatalogSnapshot): Ca
   for (const listener of entry.listeners) listener()
   return entry.value
 }
-/** 启停写入回执先进入缓存，并隔离写入之前的在途查询。 */
+/** 专家团写入推进了同一份设置修订号。立刻通知已打开的专家页，避免它仍拿旧号保存。 */
+export function adoptSharedRevision(remote: AgencyCatalogRemote, revision: number, enabled: readonly string[]): CatalogState {
+  const current = catalogState(remote)
+  if (current.revision < 0 || revision < current.revision) return current
+  return acceptCatalog(remote, {
+    experts: current.experts.map(({ divisionEn: _divisionEn, ...expert }) => expert),
+    enabled: [...enabled],
+    revision,
+  })
+}
+
 export function acceptEnabled(remote: AgencyCatalogRemote, value: { enabled: string[]; revision: number }): CatalogState {
   const entry = cache(remote)
   if (value.revision < entry.value.revision) return entry.value

@@ -1098,15 +1098,22 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     props.onEnabledChange?.(current.enabled)
     setError(null)
   }
+  const fresh = (): EnabledState | null => {
+    if (state === null) return null
+    const latest = catalogState(props.remote)
+    return latest.revision >= state.revision ? latest : state
+  }
   const openEditor = (expert?: ExpertView): void => {
-    if (state === null || isSaving || promptLock.current) return
-    if (expert === undefined) { setEditor({ enabled: false, revision: state.revision }); return }
-    const revision = state.revision
+    const current = fresh()
+    if (current === null || isSaving || promptLock.current) return
+    if (expert === undefined) { setEditor({ enabled: false, revision: current.revision }); return }
+    const revision = current.revision
+    const enabled = current.enabled.has(expert.slug)
     if (expert.custom) {
       promptLock.current = true
       void props.remote.getCustomExpert(expert.slug).then(result => {
         if (!result.ok) throw new Error(result.error.message)
-        setEditor({ expert: result.value, enabled: state.enabled.has(expert.slug), revision })
+        setEditor({ expert: result.value, enabled, revision })
       }).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
         .finally(() => { promptLock.current = false })
     } else {
@@ -1114,18 +1121,19 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
         const original = displayName(expert, props.getActive())
         let name = `${original.slice(0, 33)} ${props.getActive() === 'zh' ? '副本' : 'copy'}`
         let index = 2
-        while (state.experts.some(item => [item.name, item.nameEn].includes(name))) name = `${original.slice(0, 28)} ${props.getActive() === 'zh' ? '副本' : 'copy'} ${index++}`
+        while (current.experts.some(item => [item.name, item.nameEn].includes(name))) name = `${original.slice(0, 28)} ${props.getActive() === 'zh' ? '副本' : 'copy'} ${index++}`
         setEditor({ expert: { name, description: displayDescription(expert, props.getActive()).slice(0, 160), division: expert.division,
           emoji: expert.emoji || DEFAULT_EXPERT_EMOJI, avatar: expertAvatarIndexForDivision(expert.slug, expert.division), prompt }, enabled: false, revision })
       })
     }
   }
   const removeExpert = (slug: string): void => {
-    if (state === null || saving.current) return
+    const current = fresh()
+    if (current === null || saving.current) return
     saving.current = true
     setIsSaving(true)
     setDeleteError(null)
-    void props.remote.deleteCustomExpert(slug, state.revision)
+    void props.remote.deleteCustomExpert(slug, current.revision)
       .then(result => {
         if (!result.ok) throw new Error(result.error.message)
         accept(result.value)
@@ -1158,21 +1166,30 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     return () => { alive = false }
   }, [props.onEnabledChange, props.remote])
 
+  React.useEffect(() => subscribeCatalog(props.remote, () => {
+    const current = catalogState(props.remote)
+    if (current.revision < 0) return
+    setState(current)
+    setInitialOrder((order) => order ?? sortExpertsByEnabled(current.experts, current.enabled).map((expert) => expert.slug))
+    props.onEnabledChange?.(current.enabled)
+  }), [props.onEnabledChange, props.remote])
+
   React.useEffect(() => () => {
     if (copiedResetTimer.current !== undefined) clearTimeout(copiedResetTimer.current)
   }, [])
 
   const toggle = (slug: string): void => {
-    if (state === null || saving.current) return
-    const previous = state
-    const next = new Set(state.enabled)
+    const current = fresh()
+    if (current === null || saving.current) return
+    const previous = current
+    const next = new Set(current.enabled)
     if (next.has(slug)) next.delete(slug)
     else next.add(slug)
     saving.current = true
     setIsSaving(true)
-    setState({ ...state, enabled: next })
+    setState({ ...current, enabled: next })
     props.onEnabledChange?.(next)
-    void writeEnabled(props.remote, next, state.revision)
+    void writeEnabled(props.remote, next, current.revision)
       .then((current) => {
         setState(current)
         setError(null)

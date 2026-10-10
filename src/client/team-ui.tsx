@@ -1,4 +1,4 @@
-import { catalogState } from './catalog.js';
+import { adoptSharedRevision, catalogState } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
@@ -195,6 +195,7 @@ export function TeamsPanel(props: {
         sequence.current++;
         const next = { ...value, engine: value.engine ?? snapshot?.engine };
         acceptTeams(props.remote, next);
+        adoptSharedRevision(props.remote, next.revision, next.enabledExperts);
         setSnapshot(next);
         props.onExpertsChanged?.();
     };
