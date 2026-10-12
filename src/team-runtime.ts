@@ -10,7 +10,7 @@ export interface TeamMemberRun {
     prompt: string;
     persona: string;
 }
-/** 团队任务的 Unicode 码点上限。过长任务容易在工具 JSON 里带上未转义引号，宿主会在专家启动前直接结束回合。 */
+/** 团队任务的 Unicode 码点上限。团队简报要放下多名成员的目标和路径，所以大于单专家的 2000。长度同样挡不住未转义引号。 */
 export const TEAM_TASK_MAX_CHARS = 20000;
 /** 在任何异步执行前冻结配置；排队任务取消后不再启动。 */
 export async function executeTeam(args: {

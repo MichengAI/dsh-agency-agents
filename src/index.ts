@@ -83,7 +83,7 @@ const DESCRIPTION_LIMIT = 120
 export const SUMMON_EXPERTS_MAX = 8
 /** 批量召唤的并发上限。 */
 export const SUMMON_EXPERTS_CONCURRENCY = 4
-/** 单条任务的 Unicode 码点上限。过长简报容易在工具 JSON 里带上未转义引号，宿主会在专家启动前直接结束回合。 */
+/** 单条任务的 Unicode 码点上限。本机实测单条约 3200 字时工具 JSON 仍合法，约 7200 字时未转义引号会让宿主在专家启动前结束回合。2000 是给目标、约束和路径留的余量，不是算出的安全边界。 */
 export const SUMMON_TASK_MAX_CHARS = 2000
 
 /** 召唤参数说明。模型把带引号的源码写进工具 JSON 时，宿主会在执行前拒绝整轮。 */

@@ -8,5 +8,6 @@ export function localizedExperts(experts: readonly ExpertSummary[], locale: Team
 export const TeamLocaleContext = React.createContext<TeamLocale>('zh')
 export function useTeamLocale() {
   const locale = React.useContext(TeamLocaleContext)
+  // 含 {0} 的词条必须传入 values。缺值时 teamText 会原样留下占位符。
   return { locale, tx: (key: string, values?: readonly unknown[]) => teamText(locale, key, values) }
 }
