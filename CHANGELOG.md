@@ -6,6 +6,8 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## Unreleased
 
+## 1.0.14 - 2026-10-12
+
 - When you name an expert, the assistant calls that expert immediately instead of analyzing the task first.
 - Expert and team requests should be a short brief: the goal, constraints, and file paths. Do not paste source code into the request.
 - A single expert task can be up to 2,000 characters. A team task can be up to 20,000 characters. Longer text is rejected with a prompt to summarize and retry.
