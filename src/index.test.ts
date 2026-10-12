@@ -536,7 +536,7 @@ describe('summon_expert', () => {
     }
 
     await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).resolves.toEqual({ expert: 'Reviewer', answer: 'done' })
-    expect(startOptions).toMatchObject({ toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'] } })
+    expect(startOptions).toMatchObject({ label: 'Reviewer', toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'] } })
     expect(startOptions).not.toHaveProperty('maxDepth')
   })
 
@@ -602,6 +602,42 @@ describe('summon_expert', () => {
     expect(text({ agent: { session: { header: {} } } })).toContain('parent session')
     expect(text({ agent: { session: { header: {} } } })).toContain('summon_experts')
     expect(text({ agent: { session: { header: { parentSession: 'parent' } } } })).toBe('')
+  })
+
+  it('父会话被要求只传简报和路径，不要把带引号的源码写进召唤参数', () => {
+    const sections: Array<{ name: string; text: string | ((context: unknown) => string) }> = []
+    const tools: Array<{ name?: string; parameters?: unknown }> = []
+    const ctx = {
+      tools: { register: (tool: { name?: string; parameters?: unknown }) => tools.push(tool) },
+      subagents: { getProvider: () => undefined },
+      systemPrompt: { section: (section: { name: string; text: string | ((context: unknown) => string) }) => sections.push(section) },
+      settings: alphaSettings(['reviewer']),
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const text = sections.find((section) => section.name === 'agency:experts')?.text
+    if (typeof text !== 'function') throw new Error('agency:experts must be dynamic')
+    const prompt = text({ agent: { session: { header: {} } } })
+    expect(prompt).toContain('Do not paste source, CSS, HTML, or quoted code')
+    expect(prompt).toContain('call summon_expert or summon_experts immediately')
+    expect(prompt).toContain('Do not call list_experts, read the project, or do the analysis yourself')
+    expect(prompt).toContain(String(SUMMON_TASK_MAX_CHARS))
+    expect(SUMMON_TASK_MAX_CHARS).toBe(2000)
+
+    const descriptions = ['summon_expert', 'summon_experts'].map((name) => {
+      const tool = tools.find((item) => item.name === name)
+      return JSON.stringify(tool?.parameters ?? {})
+    })
+    for (const description of descriptions) {
+      expect(description).toContain('Do not paste source, CSS, HTML, or quoted code')
+      expect(description).toContain(String(SUMMON_TASK_MAX_CHARS))
+      expect(description).not.toContain('Include all necessary context')
+      expect(description).not.toContain('complete, self-contained')
+    }
   })
 
   it('在注册阶段拒绝零 maxDepth，避免第一次委派才失败', () => {
@@ -693,6 +729,8 @@ describe('summon_expert', () => {
     await expect(summon.execute({ expert: 'reviewer', task: '   ' }, { agent: {} })).rejects.toThrow(formatHost('zh', 'error.taskRequired'))
     const longTask = '汉'.repeat(SUMMON_TASK_MAX_CHARS + 1)
     await expect(summon.execute({ expert: 'reviewer', task: longTask }, { agent: {} })).rejects.toThrow(formatHost('zh', 'error.taskLimit', { length: SUMMON_TASK_MAX_CHARS + 1, max: SUMMON_TASK_MAX_CHARS }))
+    await expect(summon.execute({ expert: 'reviewer', task: longTask }, { agent: {} })).rejects.toThrow('文件路径')
+    await expect(summon.execute({ expert: 'reviewer', task: '汉'.repeat(SUMMON_TASK_MAX_CHARS) }, { agent: {} })).rejects.toThrow('must not start')
   })
 
   it('非 completed 的专家运行会返回部分输出以便排障', async () => {
@@ -1555,6 +1593,28 @@ describe('list_experts 语言切换', () => {
     for (const tool of teams) expect(tool.description).toMatch(/[\u3400-\u9fff]/u)
   })
 
+  it('专家团任务参数同样禁止把带引号的源码写进工具 JSON', () => {
+    let locale = 'en'
+    const tools: Array<{ name: string; description: string; parameters: unknown }> = []
+    const sections: Array<{ name: string; text: (context: unknown) => string }> = []
+    const ctx = {
+      tools: { register: (tool: typeof tools[number]) => tools.push(tool) },
+      subagents: { getProvider: () => undefined },
+      systemPrompt: { section: (section: { name: string; text: (context: unknown) => string }) => sections.push(section) },
+      settings: { ...alphaSettings([]), get: () => ({ preference: locale }) },
+      inject: () => undefined,
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const team = tools.find(tool => tool.name === 'summon_expert_team')
+    const english = JSON.stringify(team?.parameters ?? {})
+    expect(english).toContain('Do not paste source, CSS, HTML, or quoted code')
+    expect(english).not.toContain('self-contained')
+    locale = 'zh'
+    const prompt = sections.find(section => section.name === 'agency:teams')?.text({ agent: { session: { header: {} } } }) ?? ''
+    expect(prompt).toContain('不要把源码、CSS、HTML 或带引号的代码写进工具参数')
+  })
+
   it('默认中文：可用中文分区名筛选，并返回中文名和简介', async () => {
     const { list } = install()
     const result = await list.execute({ division: '工程' })
@@ -1651,7 +1711,7 @@ describe('summon_experts', () => {
       subagents: {
         getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
         start: async (_provider: string, options: { label?: string }) => {
-          if (options.label === 'expert:historian') {
+          if (options.label === 'Historian') {
             return {
               result: Promise.resolve({ output: [{ type: 'text', text: 'partial' }], stopReason: 'cancelled' }),
               dispose: async () => undefined,

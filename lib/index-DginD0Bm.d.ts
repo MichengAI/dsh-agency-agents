@@ -17,8 +17,8 @@ declare const DEFAULT_DIVISIONS: string[];
 declare const SUMMON_EXPERTS_MAX = 8;
 /** 批量召唤的并发上限。 */
 declare const SUMMON_EXPERTS_CONCURRENCY = 4;
-/** 单条任务的 Unicode 码点上限。 */
-declare const SUMMON_TASK_MAX_CHARS = 8000;
+/** 单条任务的 Unicode 码点上限。过长简报容易在工具 JSON 里带上未转义引号，宿主会在专家启动前直接结束回合。 */
+declare const SUMMON_TASK_MAX_CHARS = 2000;
 /** 已校验的批量召唤条目。 */
 interface SummonExpertSpec {
   readonly expert: unknown;

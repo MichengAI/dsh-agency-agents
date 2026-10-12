@@ -216,6 +216,19 @@ describe('专家团配置与执行', () => {
     ).rejects.toThrow()
     expect(run).not.toHaveBeenCalled()
   })
+  it('团队任务恰好 20000 字仍进入成员校验，多一个字则要求改传路径', async () => {
+    const args = {
+      team: BUILTIN_TEAMS[0],
+      experts,
+      enabled: [] as string[],
+      revision: 0,
+      readPersona: async () => '提示词',
+      run: async () => '结果',
+    }
+    await expect(executeTeam({ ...args, task: '字'.repeat(20000) })).rejects.toThrow('成员')
+    await expect(executeTeam({ ...args, task: '字'.repeat(20001) })).rejects.toThrow('20000')
+    await expect(executeTeam({ ...args, task: '字'.repeat(20001) })).rejects.toThrow('文件路径')
+  })
   it('八人团队最多四人同时执行，取消后不启动排队成员', async () => {
     const team = {
       ...structuredClone(BUILTIN_TEAMS[0]),

@@ -344,7 +344,7 @@ describe("真实 Host 与 Remote 集成", () => {
     expect(starts).toHaveLength(1);
     expect(starts[0]).toMatchObject({
       persona: input.prompt,
-      label: `expert:${slug}`,
+      label: input.name,
       toolFilter: { deny: ["summon_expert", "summon_experts", "list_experts", "list_expert_teams", "get_expert_team", "summon_expert_team"] },
     });
     const disabled = await remote.setEnabled([], saved.revision);

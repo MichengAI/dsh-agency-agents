@@ -11,6 +11,7 @@ export interface TeamMemberRun {
     persona: string;
 }
 /** 在任何异步执行前冻结配置；排队任务取消后不再启动。 */
+export const TEAM_TASK_MAX_CHARS = 20000
 export async function executeTeam(args: {
     team: ExpertTeam;
     experts: readonly ExpertSummary[];
@@ -27,8 +28,8 @@ export async function executeTeam(args: {
     const team = structuredClone(teamSchema.parse(localizeTeam(args.team, args.locale ?? 'zh')));
     const experts = structuredClone(args.experts).map(expert => ({ ...expert, name: localizedExpertName(expert, args.locale ?? 'zh') }));
     const task = args.task.trim();
-    if (!task || Array.from(task).length > 24000)
-        throw new Error(tx("团队任务必须为 1～24000 字。"));
+    if (!task || Array.from(task).length > TEAM_TASK_MAX_CHARS)
+        throw new Error(tx("团队任务必须为 1～{0} 字。请改为目标、约束和文件路径，不要粘贴源码。", [TEAM_TASK_MAX_CHARS]));
     args.signal?.throwIfAborted();
     const selected = team.members.map((member) => {
         const expert = experts.find((e) => e.slug === member.expertSlug && !e.conflict);
