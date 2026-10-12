@@ -6,6 +6,10 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## Unreleased
 
+## 1.0.16 - 2026-10-12
+
+- Scrolling the expert list in Settings no longer jumps. Every card keeps the same height, including titles that fit on one line.
+
 ## 1.0.15 - 2026-10-12
 
 - Support DSH `0.2.1-alpha.2` while retaining all existing supported versions.

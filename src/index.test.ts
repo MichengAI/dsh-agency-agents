@@ -1193,6 +1193,13 @@ describe('专家库目标稿样式契约', () => {
     expect(CARD_SETTINGS_CSS).toContain('.aag-section{container-type:inline-size}')
   })
 
+  it('专家卡片固定高度，短标题也预留两行', () => {
+    expect(CARD_SETTINGS_CSS).toContain('.aag-expert-card{display:grid;box-sizing:border-box;')
+    expect(CARD_SETTINGS_CSS).toContain('height:207px;min-height:207px')
+    expect(CARD_SETTINGS_CSS).toContain('.aag-card-name{display:-webkit-box;overflow:hidden;height:44px;min-height:44px;')
+    expect(CARD_SETTINGS_CSS).not.toContain('min-height:190px')
+  })
+
   it('圆形小头像释放正文宽度，简介独占整行并展示三行', () => {
     expect(CARD_SETTINGS_CSS).toContain('.aag-expert-avatar{display:block;width:44px;height:44px')
     expect(CARD_SETTINGS_CSS).toContain('border-radius:50%')

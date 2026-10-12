@@ -484,6 +484,12 @@ export const SETTINGS_CSS = `
 .aag-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 16px;border:1px dashed var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;text-align:center}
 @media (max-width:560px){.aag-toolbar,.aag-title-row{flex-wrap:wrap}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}}
 `
+// 标题固定占两行。卡片高度必须和这个占位一致，虚拟列表不能再测量视口里的第一张卡。
+const EXPERT_CARD_GAP = 10
+const EXPERT_CARD_NAME_HEIGHT = 44
+const EXPERT_CARD_HEIGHT = 207
+const EXPERT_CARD_ROW = EXPERT_CARD_HEIGHT + EXPERT_CARD_GAP
+
 export const CARD_SETTINGS_CSS = `
 .aag-section{container-type:inline-size}
 .aag-toolbar{display:flex;align-items:flex-start;gap:12px;min-height:36px;padding:0}
@@ -503,12 +509,12 @@ export const CARD_SETTINGS_CSS = `
 .aag-search-wrap>.aag-search input::placeholder{color:var(--dsw-alias-label-dimmed)}
 .aag-expert-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;margin-top:2px}
 .aag-expert-window{position:relative;margin-top:2px;overflow-anchor:none}.aag-expert-window>.aag-expert-grid{position:absolute;right:0;left:0;margin-top:0}
-.aag-expert-card{display:grid;min-width:0;min-height:190px;overflow:hidden;grid-template-rows:minmax(141px,1fr) 48px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:var(--dsw-alias-bg-layer-2)}
+.aag-expert-card{display:grid;box-sizing:border-box;min-width:0;height:${EXPERT_CARD_HEIGHT}px;min-height:${EXPERT_CARD_HEIGHT}px;overflow:hidden;grid-template-rows:minmax(141px,1fr) 48px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:var(--dsw-alias-bg-layer-2)}
 .aag-expert-card:hover{border-color:var(--dsw-alias-border-l3)}
 .aag-card-body{position:relative;display:grid;min-width:0;grid-template-columns:44px minmax(0,1fr);column-gap:10px;row-gap:9px;padding:12px}
 .aag-expert-avatar{display:block;width:44px;height:44px;border:0;border-radius:50%;background:var(--dsw-alias-bg-layer-3);object-fit:cover;object-position:center 20%}
 .aag-card-identity{display:flex;min-width:0;flex-direction:column;padding-right:48px}
-.aag-card-name{display:-webkit-box;overflow:hidden;font-size:16px;font-weight:650;line-height:22px;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.aag-card-name{display:-webkit-box;overflow:hidden;height:${EXPERT_CARD_NAME_HEIGHT}px;min-height:${EXPERT_CARD_NAME_HEIGHT}px;font-size:16px;font-weight:650;line-height:22px;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .aag-card-division{margin-top:2px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:18px}
 .aag-card-description{grid-column:1/-1;display:-webkit-box;min-height:60px;margin:0;overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:20px;-webkit-box-orient:vertical;-webkit-line-clamp:3}
 .aag-card-actions{display:flex;align-items:stretch;min-height:48px;border-top:1px solid var(--dsw-alias-border-l2)}
@@ -967,9 +973,6 @@ interface OpenPrompt {
   readonly returnFocus: HTMLButtonElement
 }
 
-const EXPERT_CARD_GAP = 10
-const EXPERT_CARD_ROW = 200
-
 function scrollParent(node: HTMLElement): HTMLElement | Window {
   let current = node.parentElement
   while (current !== null && current !== document.body && current !== document.documentElement) {
@@ -1008,8 +1011,7 @@ function ExpertCardWindow(props: {
     const scroller = scrollParent(node)
     let frame = 0
     const measure = (): void => {
-      const card = node.querySelector('.aag-expert-card')
-      const row = card instanceof HTMLElement && card.offsetHeight > 0 ? card.offsetHeight + EXPERT_CARD_GAP : EXPERT_CARD_ROW
+      const row = EXPERT_CARD_ROW
       const section = node.closest('.aag-section')
       const width = section instanceof HTMLElement ? section.clientWidth : node.clientWidth
       const columns = width > 0 && width <= 519 ? 1 : 2
