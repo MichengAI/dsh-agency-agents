@@ -5,7 +5,7 @@ import {
   effectiveCoordinator,
 } from './team-contract.js'
 import { createTeamLibrary } from './team-library.js'
-import { executeTeam } from './team-runtime.js'
+import { executeTeam, TEAM_TASK_MAX_CHARS } from './team-runtime.js'
 import {
   validateAgencySettings,
   type AgencySettings,
@@ -216,7 +216,7 @@ describe('专家团配置与执行', () => {
     ).rejects.toThrow()
     expect(run).not.toHaveBeenCalled()
   })
-  it('团队任务恰好 20000 字仍进入成员校验，多一个字则要求改传路径', async () => {
+  it('团队任务恰好达到上限仍进入成员校验，多一个字则要求压缩后重试', async () => {
     const args = {
       team: BUILTIN_TEAMS[0],
       experts,
@@ -225,9 +225,9 @@ describe('专家团配置与执行', () => {
       readPersona: async () => '提示词',
       run: async () => '结果',
     }
-    await expect(executeTeam({ ...args, task: '字'.repeat(20000) })).rejects.toThrow('成员')
-    await expect(executeTeam({ ...args, task: '字'.repeat(20001) })).rejects.toThrow('20000')
-    await expect(executeTeam({ ...args, task: '字'.repeat(20001) })).rejects.toThrow('文件路径')
+    await expect(executeTeam({ ...args, task: '字'.repeat(TEAM_TASK_MAX_CHARS) })).rejects.toThrow('成员')
+    await expect(executeTeam({ ...args, task: '字'.repeat(TEAM_TASK_MAX_CHARS + 1) })).rejects.toThrow(String(TEAM_TASK_MAX_CHARS))
+    await expect(executeTeam({ ...args, task: '字'.repeat(TEAM_TASK_MAX_CHARS + 1) })).rejects.toThrow('压缩为摘要')
   })
   it('八人团队最多四人同时执行，取消后不启动排队成员', async () => {
     const team = {

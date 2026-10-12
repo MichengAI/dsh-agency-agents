@@ -4,7 +4,7 @@ import { teamText } from './team-i18n.js'
 import { teamCollaboration } from './team-collaboration.js'
 import { createTeamLibrary, AGENCY_TEAM_SERVICE } from './team-library.js'
 import { effectiveCoordinator } from './team-contract.js'
-import { executeTeam, type TeamMemberRun } from './team-runtime.js'
+import { executeTeam, TEAM_TASK_MAX_CHARS, type TeamMemberRun } from './team-runtime.js'
 import { localizeTeam } from './team-content-en.js'
 /**
  * Agency Experts — a summonable specialist roster for DSH.
@@ -842,7 +842,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'get_expert_team', descri
     },
 }), activeLocale));
 ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', description: teamTx("按专家团配置并行委派。先读取 get_expert_team 的主理人规则；提供完整任务及资料。返回成员结果和冻结的汇总规则，由当前主会话完成最终交付，不额外启动团长。"),
-    parameters: { team: { type: 'string', required: true, description: teamTx("专家团稳定标识或完整名称。") }, task: { type: 'string', required: true, description: teamTx("目标、约束和文件路径。不要粘贴源码、CSS、HTML 或带引号的代码，否则工具参数会变成非法 JSON。最多20000字。") } }, output: teamOutput,
+    parameters: { team: { type: 'string', required: true, description: teamTx("专家团稳定标识或完整名称。") }, task: { type: 'string', required: true, description: teamTx("目标、约束和文件路径。不要粘贴源码、CSS、HTML 或带引号的代码，否则工具参数会变成非法 JSON。最多{0}字。") } }, output: teamOutput,
     async execute(args, exec) {
         requireParent(exec);
         const [snapshot, catalog] = await Promise.all([teamLibrary.snapshot(), library.catalog()]);
@@ -883,7 +883,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         });
         return { report: JSON.stringify({ ...result, engine: engine.status }) };
     },
-}), activeLocale));
+}), activeLocale, [TEAM_TASK_MAX_CHARS]));
 ctx.systemPrompt.section({ name: 'agency:teams', order: 118, text: context => {
         const agent = (context as {
             agent?: {
@@ -902,7 +902,7 @@ ctx.systemPrompt.section({ name: 'agency:teams', order: 118, text: context => {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately with that text as the brief. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.'
     },
   })
 }

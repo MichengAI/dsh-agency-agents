@@ -711,7 +711,7 @@ describe('summon_expert', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
         getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
-        start: async () => { throw new Error('must not start') },
+        start: async () => { throw new Error('provider start reached') },
       },
       systemPrompt: { section: () => undefined },
       settings: alphaSettings(['reviewer']),
@@ -729,8 +729,7 @@ describe('summon_expert', () => {
     await expect(summon.execute({ expert: 'reviewer', task: '   ' }, { agent: {} })).rejects.toThrow(formatHost('zh', 'error.taskRequired'))
     const longTask = '汉'.repeat(SUMMON_TASK_MAX_CHARS + 1)
     await expect(summon.execute({ expert: 'reviewer', task: longTask }, { agent: {} })).rejects.toThrow(formatHost('zh', 'error.taskLimit', { length: SUMMON_TASK_MAX_CHARS + 1, max: SUMMON_TASK_MAX_CHARS }))
-    await expect(summon.execute({ expert: 'reviewer', task: longTask }, { agent: {} })).rejects.toThrow('文件路径')
-    await expect(summon.execute({ expert: 'reviewer', task: '汉'.repeat(SUMMON_TASK_MAX_CHARS) }, { agent: {} })).rejects.toThrow('must not start')
+    await expect(summon.execute({ expert: 'reviewer', task: '汉'.repeat(SUMMON_TASK_MAX_CHARS) }, { agent: {} })).rejects.toThrow('provider start reached')
   })
 
   it('非 completed 的专家运行会返回部分输出以便排障', async () => {
@@ -1609,7 +1608,8 @@ describe('list_experts 语言切换', () => {
     const team = tools.find(tool => tool.name === 'summon_expert_team')
     const english = JSON.stringify(team?.parameters ?? {})
     expect(english).toContain('Do not paste source, CSS, HTML, or quoted code')
-    expect(english).not.toContain('self-contained')
+    expect(english).toContain('20000')
+    expect(english).not.toContain('{0}')
     locale = 'zh'
     const prompt = sections.find(section => section.name === 'agency:teams')?.text({ agent: { session: { header: {} } } }) ?? ''
     expect(prompt).toContain('不要把源码、CSS、HTML 或带引号的代码写进工具参数')

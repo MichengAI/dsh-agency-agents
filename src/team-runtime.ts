@@ -10,8 +10,9 @@ export interface TeamMemberRun {
     prompt: string;
     persona: string;
 }
+/** 团队任务的 Unicode 码点上限。过长任务容易在工具 JSON 里带上未转义引号，宿主会在专家启动前直接结束回合。 */
+export const TEAM_TASK_MAX_CHARS = 20000;
 /** 在任何异步执行前冻结配置；排队任务取消后不再启动。 */
-export const TEAM_TASK_MAX_CHARS = 20000
 export async function executeTeam(args: {
     team: ExpertTeam;
     experts: readonly ExpertSummary[];
@@ -29,7 +30,7 @@ export async function executeTeam(args: {
     const experts = structuredClone(args.experts).map(expert => ({ ...expert, name: localizedExpertName(expert, args.locale ?? 'zh') }));
     const task = args.task.trim();
     if (!task || Array.from(task).length > TEAM_TASK_MAX_CHARS)
-        throw new Error(tx("团队任务必须为 1～{0} 字。请改为目标、约束和文件路径，不要粘贴源码。", [TEAM_TASK_MAX_CHARS]));
+        throw new Error(tx("团队任务必须为 1～{0} 字。请压缩为摘要（目标、约束和文件路径）后重试，不要粘贴源码。", [TEAM_TASK_MAX_CHARS]));
     args.signal?.throwIfAborted();
     const selected = team.members.map((member) => {
         const expert = experts.find((e) => e.slug === member.expertSlug && !e.conflict);
