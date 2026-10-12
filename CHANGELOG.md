@@ -6,6 +6,10 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## Unreleased
 
+## 1.0.15 - 2026-10-12
+
+- Support DSH `0.2.1-alpha.2` while retaining all existing supported versions.
+
 ## 1.0.14 - 2026-10-12
 
 - When you name an expert, the assistant calls that expert immediately instead of analyzing the task first.
