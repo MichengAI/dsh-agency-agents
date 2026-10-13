@@ -35,7 +35,7 @@ import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import type { SubagentRun } from '@deepseek-ai/dsh-subagent'
+import type { SubagentRun, SubagentStartRequest } from '@deepseek-ai/dsh-subagent'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import { open, readdir, readFile, stat } from 'node:fs/promises'
 import { join, relative, resolve } from 'node:path'
@@ -711,6 +711,46 @@ export function apply(ctx: Context, config: Config): void {
     },
   }))
 
+  /** 兼容新旧版本 subagents 服务的子代理启动辅助方法。 */
+  async function startSubagentRun(providerName: string, options: SubagentStartRequest): Promise<SubagentRun> {
+    const subagentsService = ctx.subagents as unknown as {
+      start?: (provider: string, request: SubagentStartRequest) => Promise<SubagentRun>
+      startActivation?: (spec: {
+        provider: string
+        label: string
+        request: Omit<SubagentStartRequest, 'label' | 'signal'>
+        signal?: AbortSignal
+        delivery: 'parent' | 'caller'
+      }) => Promise<{ result: Promise<unknown>; dispose: () => Promise<void> }>
+      expectProvider?: (name: string) => { start?: (request: SubagentStartRequest) => Promise<SubagentRun> }
+      getProvider?: (name: string) => { start?: (request: SubagentStartRequest) => Promise<SubagentRun> }
+    }
+    if (typeof subagentsService.start === 'function') {
+      return subagentsService.start(providerName, options)
+    }
+    if (typeof subagentsService.startActivation === 'function') {
+      const { label, signal, ...restRequest } = options
+      const activation = await subagentsService.startActivation({
+        provider: providerName,
+        label: label ?? '',
+        request: restRequest,
+        signal: signal ?? new AbortController().signal,
+        delivery: 'caller',
+      })
+      return {
+        id: '' as unknown as any,
+        localAgent: undefined,
+        result: activation.result as Promise<any>,
+        dispose: () => activation.dispose(),
+      } as unknown as SubagentRun
+    }
+    const provider = subagentsService.getProvider?.(providerName) ?? subagentsService.expectProvider?.(providerName)
+    if (provider && typeof provider.start === 'function') {
+      return provider.start(options)
+    }
+    throw new Error(formatHost(activeLocale(), 'error.subagentsUnavailable'))
+  }
+
   async function runExpert(query: unknown, task: unknown, exec: ToolRunContext): Promise<{ expert: string; answer: string }> {
     const locale = activeLocale()
     // 单条与批量召唤共用同一套任务校验，避免单条路径绕过码点上限
@@ -724,7 +764,7 @@ export function apply(ctx: Context, config: Config): void {
     const expert = resolveExpert((await library.catalog()).experts.filter(expert => !expert.conflict), query, locale)
     if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
     const { prompt: persona } = await personaSource.getPrompt(expert.slug, expert.division, locale)
-    const run: SubagentRun = await ctx.subagents.start(config.provider, {
+    const run: SubagentRun = await startSubagentRun(config.provider, {
       label: localizedExpertName(expert, locale),
       prompt: [{ type: 'text', text: taskText }],
       parent: exec.agent,
@@ -866,7 +906,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
             readPersona: async (expert) => (await personaSource.getPrompt(expert.slug, expert.division, locale)).prompt,
             run: async (member: TeamMemberRun) => {
                 exec.signal?.throwIfAborted();
-                const run = await ctx.subagents.start(config.provider, { label: member.name, parent: exec.agent!,
+                const run = await startSubagentRun(config.provider, { label: member.name, parent: exec.agent!,
                     prompt: [{ type: 'text', text: member.prompt }], persona: sanitize(member.persona),
                     toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'] },
                     ...(maxDepth === undefined ? {} : { maxDepth }), signal: exec.signal });
