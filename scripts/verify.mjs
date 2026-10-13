@@ -95,7 +95,7 @@ check('编译入口导出 DSH 插件约定', ['name', 'Config', 'apply'].every((
 
 const defaultConfig = z.resolve({}, plugin.Config)[0]
 const bundledExperts = await plugin.loadCatalog(plugin.resolveCatalogRoot(''), defaultConfig.divisions)
-check('内置智能体总数为 321', bundledExperts.size === 321, `实际为 ${bundledExperts.size}`)
+check('内置智能体总数为 331', bundledExperts.size === 331, `实际为 ${bundledExperts.size}`)
 const bundledDivisions = new Set([...bundledExperts.values()].map((expert) => expert.division))
 check('22 个标准分区均包含内置智能体', defaultConfig.divisions.length === 22 && defaultConfig.divisions.every((division) => bundledDivisions.has(division)))
 const missingZh = [...bundledExperts.keys()].filter((slug) => plugin.ZH_NAME?.[slug] === undefined)
