@@ -507,6 +507,51 @@ describe('summon_expert', () => {
     await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow('dispose failed')
   })
 
+  it('新版宿主通过 startActivation 按 caller 模式运行并转发取消信号', async () => {
+    const tools: unknown[] = []
+    const controller = new AbortController()
+    let activationSpec: Record<string, any> | undefined
+    let disposed = false
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        startActivation: async (spec: Record<string, any>) => {
+          activationSpec = spec
+          return {
+            childId: 'child-1',
+            result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
+            dispose: async () => { disposed = true },
+          }
+        },
+      },
+      systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['reviewer']),
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
+      execute: (args: unknown, exec: unknown) => Promise<unknown>
+    }
+
+    await expect(summon.execute(
+      { expert: 'reviewer', task: 'review' },
+      { agent: {}, signal: controller.signal },
+    )).resolves.toEqual({ expert: 'Reviewer', answer: 'done' })
+    expect(activationSpec).toMatchObject({
+      provider: 'spawn',
+      label: 'Reviewer',
+      signal: controller.signal,
+      delivery: 'caller',
+      request: { prompt: [{ type: 'text', text: 'review' }] },
+    })
+    expect(disposed).toBe(true)
+  })
+
   it('空 maxDepth 不透传给 provider，且子代理不能浏览或递归召唤花名册', async () => {
     const tools: unknown[] = []
     let startOptions: Record<string, unknown> | undefined

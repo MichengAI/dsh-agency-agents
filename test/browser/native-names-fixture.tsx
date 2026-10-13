@@ -18,7 +18,23 @@ export function NativeNamesFixture() {
     <button onClick={() => setRevision(revision + 1)}>宿主刷新</button>
     <button onClick={() => setEnabled(false)}>卸载适配</button>
     <div className="host_roster" key={revision}>
-      {[identity, 'lead', 'agency-unknown-0123456789', 'agency-custom-reviewer-1234567890'].map(name => <button key={name} onClick={() => setClicked(name)}><span className="host_memberText"><span>{name}</span><small>运行中</small></span></button>)}
+      {[identity, 'lead', 'agency-unknown-0123456789', 'agency-custom-reviewer-1234567890'].map(name => (
+        <button key={name} onClick={() => setClicked(name)}>
+          <span className="host_memberText">
+            {name === 'agency-custom-reviewer-1234567890'
+              ? <span className="host_memberName"><span className="host_memberNameText">{name}</span></span>
+              : <span>{name}</span>}
+            <small>运行中</small>
+          </span>
+        </button>
+      ))}
+      <div className="host_nested">
+        <button><span className="host_memberText"><span>{identity}</span></span></button>
+      </div>
+    </div>
+    <div className="host_tasks">
+      <div className="host_taskTitle"><strong>修复：登录失败</strong></div>
+      <div className="host_meta"><span>task-1</span><span data-testid="任务Owner">Owner: agency-security-appsec-engineer-f29ea176a0</span></div>
     </div>
     <p data-testid="正文">{identity}</p><output>{clicked}</output>
   </>

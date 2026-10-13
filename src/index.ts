@@ -711,42 +711,28 @@ export function apply(ctx: Context, config: Config): void {
     },
   }))
 
-  /** 兼容新旧版本 subagents 服务的子代理启动辅助方法。 */
-  async function startSubagentRun(providerName: string, options: SubagentStartRequest): Promise<SubagentRun> {
-    const subagentsService = ctx.subagents as unknown as {
-      start?: (provider: string, request: SubagentStartRequest) => Promise<SubagentRun>
+  type SubagentRunHandle = Pick<SubagentRun, 'result' | 'dispose'>
+  async function startSubagentRun(providerName: string, options: SubagentStartRequest): Promise<SubagentRunHandle> {
+    const service = ctx.subagents as unknown as {
+      start?: (name: string, request: SubagentStartRequest) => Promise<SubagentRun>
       startActivation?: (spec: {
         provider: string
         label: string
         request: Omit<SubagentStartRequest, 'label' | 'signal'>
-        signal?: AbortSignal
+        signal: AbortSignal
         delivery: 'parent' | 'caller'
-      }) => Promise<{ result: Promise<unknown>; dispose: () => Promise<void> }>
-      expectProvider?: (name: string) => { start?: (request: SubagentStartRequest) => Promise<SubagentRun> }
-      getProvider?: (name: string) => { start?: (request: SubagentStartRequest) => Promise<SubagentRun> }
+      }) => Promise<SubagentRunHandle>
     }
-    if (typeof subagentsService.start === 'function') {
-      return subagentsService.start(providerName, options)
-    }
-    if (typeof subagentsService.startActivation === 'function') {
-      const { label, signal, ...restRequest } = options
-      const activation = await subagentsService.startActivation({
+    if (typeof service.start === 'function') return service.start(providerName, options)
+    if (typeof service.startActivation === 'function') {
+      const { label, signal, ...request } = options
+      return service.startActivation({
         provider: providerName,
-        label: label ?? '',
-        request: restRequest,
+        label: label ?? providerName,
+        request,
         signal: signal ?? new AbortController().signal,
         delivery: 'caller',
       })
-      return {
-        id: '' as unknown as any,
-        localAgent: undefined,
-        result: activation.result as Promise<any>,
-        dispose: () => activation.dispose(),
-      } as unknown as SubagentRun
-    }
-    const provider = subagentsService.getProvider?.(providerName) ?? subagentsService.expectProvider?.(providerName)
-    if (provider && typeof provider.start === 'function') {
-      return provider.start(options)
     }
     throw new Error(formatHost(activeLocale(), 'error.subagentsUnavailable'))
   }
@@ -764,7 +750,7 @@ export function apply(ctx: Context, config: Config): void {
     const expert = resolveExpert((await library.catalog()).experts.filter(expert => !expert.conflict), query, locale)
     if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
     const { prompt: persona } = await personaSource.getPrompt(expert.slug, expert.division, locale)
-    const run: SubagentRun = await startSubagentRun(config.provider, {
+    const run = await startSubagentRun(config.provider, {
       label: localizedExpertName(expert, locale),
       prompt: [{ type: 'text', text: taskText }],
       parent: exec.agent,

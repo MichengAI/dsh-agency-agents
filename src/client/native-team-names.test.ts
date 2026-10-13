@@ -12,6 +12,7 @@ class MockElement {
   isConnected = true
   childNodes: any[] = []
   className = ''
+  parent: MockElement | null = null
   constructor(public tagName: string, public classes: string[] = []) {
     this.className = classes.join(' ')
   }
@@ -21,23 +22,25 @@ class MockElement {
   }
 
   appendChild(child: any) {
+    if (child instanceof MockElement) child.parent = this
     this.childNodes.push(child)
     return child
   }
 
   matches(selector: string): boolean {
-    const parts = selector.split(/\s+/).filter(Boolean)
-    const last = parts[parts.length - 1]
-    if (last?.startsWith('[class*="') && last.endsWith('"]')) {
-      const targetClass = last.slice(9, -2)
-      return this.classes.some(c => c.includes(targetClass))
+    const parts = selector.split('>').map(part => part.trim())
+    let element: MockElement | null = this
+    for (let index = parts.length - 1; index >= 0; index--) {
+      const part = parts[index]!
+      const tag = part.match(/^[a-z]+/i)?.[0]
+      const classSuffix = part.match(/\[class\$="([^"]+)"\]/)?.[1]
+      if (tag && element?.tagName.toLowerCase() !== tag.toLowerCase()) return false
+      if (classSuffix && !element?.classes.some(name => name.endsWith(classSuffix))) return false
+      if (part.includes(':first-child') && element?.parent?.childNodes.filter(child => child instanceof MockElement)[0] !== element) return false
+      if (index > 0) element = element?.parent ?? null
+      if (element === null) return false
     }
-    if (last === 'button') return this.tagName.toLowerCase() === 'button'
-    if (last === 'span') return this.tagName.toLowerCase() === 'span'
-    if (last === 'strong') return this.tagName.toLowerCase() === 'strong'
-    if (last === '> span') return this.tagName.toLowerCase() === 'span'
-    if (last === '> strong') return this.tagName.toLowerCase() === 'strong'
-    return false
+    return true
   }
 
   querySelectorAll(selector: string): MockElement[] {
@@ -80,7 +83,7 @@ describe('installNativeTeamNames', () => {
     ;(globalThis as any).Text = originalText
   })
 
-  it('替换成员列表中的机器标识为专家本地化名称，并替换 lead 为专家团名称', async () => {
+  it('只本地化已知成员名称，保留 lead，并在宿主替换文本后安全卸载', async () => {
     const root = new MockElement('div')
     const roster = new MockElement('div', ['VoX2oq_roster'])
     root.appendChild(roster)
@@ -109,21 +112,6 @@ describe('installNativeTeamNames', () => {
     buttonTeammate.appendChild(memberTextTeammate)
     roster.appendChild(buttonTeammate)
 
-    console.log('textNodeLead === textNodeTeammate?', textNodeLead === textNodeTeammate)
-
-    // 共享任务卡片（包含专家团名称，供 lead 识别）
-    const tasks = new MockElement('div', ['VoX2oq_tasks'])
-    const task = new MockElement('div', ['VoX2oq_task'])
-    const taskTitle = new MockElement('div', ['VoX2oq_taskTitle'])
-    const strongTitle = new MockElement('strong')
-    strongTitle.appendChild(new MockTextNode('技术方案评审团：软件架构师'))
-    taskTitle.appendChild(strongTitle)
-    task.appendChild(taskTitle)
-    tasks.appendChild(task)
-
-    root.appendChild(roster)
-    root.appendChild(tasks)
-
     ;(globalThis as any).document = {
       body: root,
       querySelectorAll: (sel: string) => root.querySelectorAll(sel),
@@ -132,22 +120,22 @@ describe('installNativeTeamNames', () => {
     const labels = new Map([
       ['agency-engineering-software-architect-8a70fbbcd3', '软件架构师'],
     ])
-    const loader = vi.fn(async () => ({ members: labels, teams: ['技术方案评审团'] }))
+    const loader = vi.fn(async () => labels)
     const onError = vi.fn()
 
     const handle = installNativeTeamNames(loader, onError)
     await handle.refresh()
 
     expect(textNodeTeammate.data).toBe('软件架构师')
-    expect(textNodeLead.data).toBe('技术方案评审团')
+    expect(textNodeLead.data).toBe('lead')
 
-    console.log('before dispose, tracked entries:', [...(handle as any).tracked.entries()].map(([k, v]: any) => [k.data, v]))
+    textNodeTeammate.data = '产品经理'
     handle.dispose()
-    expect(textNodeTeammate.data).toBe('agency-engineering-software-architect-8a70fbbcd3')
+    expect(textNodeTeammate.data).toBe('产品经理')
     expect(textNodeLead.data).toBe('lead')
   })
 
-  it('替换共享任务卡片中的 Owner 标识', async () => {
+  it('不改写任务卡片中的路由 Owner 标识', async () => {
     const root = new MockElement('div')
     const tasks = new MockElement('div', ['VoX2oq_tasks'])
     const task = new MockElement('div', ['VoX2oq_task'])
@@ -178,7 +166,7 @@ describe('installNativeTeamNames', () => {
     const handle = installNativeTeamNames(loader, onError)
     await handle.refresh()
 
-    expect(textNode.data).toBe('Owner: 应用安全工程师')
+    expect(textNode.data).toBe('Owner: agency-security-appsec-engineer-f29ea176a0')
 
     handle.dispose()
     expect(textNode.data).toBe('Owner: agency-security-appsec-engineer-f29ea176a0')

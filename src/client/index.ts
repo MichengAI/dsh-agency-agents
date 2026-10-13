@@ -1443,7 +1443,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   await readEnabled(remote).catch((error: unknown) => console.warn('[agency-agents] 初始名册读取失败，设置页可重试：', error))
   ctx.effect(() => {
     const names = installNativeTeamNames(async () => {
-      if (!remote.getTeams) return { members: new Map<string, string>() }
+      if (!remote.getTeams) return new Map<string, string>()
       const teamsRemote = remote as TeamRemote
       const snapshot = teamState(teamsRemote) ?? await refreshTeams(teamsRemote)
       const experts = catalogState(remote).experts
@@ -1452,8 +1452,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
         const expert = experts.find(item => item.slug === slug && !item.conflict)
         return expert ? [[identity, displayName(expert, active)] as const] : []
       }))
-      const teams = (snapshot.teams ?? []).map(t => localizeTeam(t, active).name)
-      return { members, teams }
+      return members
     }, error => console.warn('[agency-agents] 原生成员显示名读取失败：', error))
     const localeDispose = ctx.locale.subscribe(() => { void names.refresh() })
     const catalogDispose = subscribeCatalog(remote, () => { void names.refresh() })
@@ -1511,7 +1510,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   ctx.slots.inject('settings.section', () => ctx.slots.register(
     // label 是 thunk：nav 行每渲染读一次，locale 切换后自动跟随。
     {
-      name: 'settings.section', id: 'agency-agents', order: 20, label: () => t('settings.nav'), locale: NS,
+      name: 'settings.section', id: 'agency-agents', order: 16, label: () => t('settings.nav'), locale: NS,
       ...({ icon: 'expert' } as Record<string, unknown>),
     },
     (props) => React.createElement(AgencySettingsPanel, { ...props, remote, getActive, onEnabledChange: updateEnabledForMentions, prepareTeamSelection: bindExpertInsertion().prepareTeamSelection }),
