@@ -1,20 +1,42 @@
+type NativeTeamLabels = {
+  readonly members: ReadonlyMap<string, string>
+  readonly teams: ReadonlyArray<{ readonly names: ReadonlyArray<string>; readonly label: string }>
+}
+
 /** 仅替换原生成员卡片的名称叶子文本，不修改任务正文或路由字段。 */
 export function installNativeTeamNames(
-  loadLabels: () => Promise<ReadonlyMap<string, string>>,
+  loadLabels: () => Promise<NativeTeamLabels | ReadonlyMap<string, string>>,
   onError: (error: unknown) => void,
 ) {
   const memberSelectors = [
     '[class$="_roster"] > button > [class$="_memberText"] > span:first-child',
     '[class$="_roster"] > button > [class$="_memberText"] > [class$="_memberName"] > [class$="_memberNameText"]',
   ]
+  const taskTitleSelector = '[class$="_taskTitle"] > strong'
   const tracked = new Map<Text, { original: string; shown: string }>()
   const seen = new WeakMap<Text, string>()
   let labels: ReadonlyMap<string, string> = new Map()
+  let teams: NativeTeamLabels['teams'] = []
   let disposed = false
   let generation = 0
 
+  const resolveTeamName = (): string | undefined => {
+    const matches = new Set<string>()
+    for (const title of document.querySelectorAll(taskTitleSelector)) {
+      const text = title.textContent?.trim()
+      if (!text) continue
+      for (const team of teams) {
+        if (team.names.some(name => text.startsWith(name) && /^\s*[：:]/u.test(text.slice(name.length)))) {
+          matches.add(team.label)
+        }
+      }
+    }
+    return matches.size === 1 ? matches.values().next().value : undefined
+  }
+
   const scan = (): boolean => {
     let added = false
+    const teamName = resolveTeamName()
     for (const [node] of tracked) if (!node.isConnected) tracked.delete(node)
 
     const visited = new Set<Element>()
@@ -26,6 +48,19 @@ export function installNativeTeamNames(
           if (!(node instanceof Text)) continue
           const old = tracked.get(node)
           const text = old && node.data === old.shown ? old.original : node.data
+          if (text.trim() === 'lead' || old?.original.trim() === 'lead') {
+            const original = old?.original.trim() === 'lead' ? old.original : text
+            if (seen.get(node) !== original) {
+              seen.set(node, original)
+              added = true
+            }
+            const shown = teamName
+              ? original.replace(/^(\s*)lead(\s*)$/u, (_match, prefix: string, suffix: string) => `${prefix}${teamName}${suffix}`)
+              : original
+            tracked.set(node, { original, shown })
+            if (node.data !== shown) node.data = shown
+            continue
+          }
           const match = text.match(/(agency-[a-z0-9-]+-[0-9a-f]{10})/u)
           if (!match) {
             if (old) tracked.delete(node)
@@ -52,7 +87,13 @@ export function installNativeTeamNames(
     try {
       const next = await loadLabels()
       if (disposed || current !== generation) return
-      labels = next
+      if ('members' in next) {
+        labels = next.members
+        teams = next.teams
+      } else {
+        labels = next
+        teams = []
+      }
       scan()
     } catch (error) {
       if (!disposed && current === generation) onError(error)

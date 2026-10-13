@@ -9,7 +9,10 @@ export function NativeNamesFixture() {
   const [clicked, setClicked] = React.useState('')
   React.useEffect(() => {
     if (!enabled) return
-    const adapter = installNativeTeamNames(async () => new Map([[identity, locale === 'zh' ? '软件架构师' : 'Software Architect'], ['agency-custom-reviewer-1234567890', '我的评审专家']]), error => { throw error })
+    const adapter = installNativeTeamNames(async () => ({
+      members: new Map([[identity, locale === 'zh' ? '软件架构师' : 'Software Architect'], ['agency-custom-reviewer-1234567890', '我的评审专家']]),
+      teams: [{ names: ['技术方案评审团', 'Technical Review Team'], label: locale === 'zh' ? '技术方案评审团' : 'Technical Review Team' }],
+    }), error => { throw error })
     void adapter.refresh()
     return () => adapter.dispose()
   }, [locale, enabled])
@@ -33,7 +36,7 @@ export function NativeNamesFixture() {
       </div>
     </div>
     <div className="host_tasks">
-      <div className="host_taskTitle"><strong>修复：登录失败</strong></div>
+      <div className="host_taskTitle"><strong>技术方案评审团: 软件架构师</strong></div>
       <div className="host_meta"><span>task-1</span><span data-testid="任务Owner">Owner: agency-security-appsec-engineer-f29ea176a0</span></div>
     </div>
     <p data-testid="正文">{identity}</p><output>{clicked}</output>

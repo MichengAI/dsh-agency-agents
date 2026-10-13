@@ -21,6 +21,10 @@ class MockElement {
     return this.childNodes[0] ?? null
   }
 
+  get textContent(): string {
+    return this.childNodes.map(child => child instanceof MockElement ? child.textContent : child.data).join('')
+  }
+
   appendChild(child: any) {
     if (child instanceof MockElement) child.parent = this
     this.childNodes.push(child)
@@ -133,6 +137,41 @@ describe('installNativeTeamNames', () => {
     handle.dispose()
     expect(textNodeTeammate.data).toBe('产品经理')
     expect(textNodeLead.data).toBe('lead')
+  })
+
+  it('仅在任务标题精确匹配已启用团队时将 lead 显示为团队名称', async () => {
+    const root = new MockElement('div')
+    const roster = new MockElement('div', ['VoX2oq_roster'])
+    const button = new MockElement('button')
+    const memberText = new MockElement('span', ['VoX2oq_memberText'])
+    const memberName = new MockElement('span', ['VoX2oq_memberName'])
+    const memberNameText = new MockElement('span', ['VoX2oq_memberNameText'])
+    const lead = new MockTextNode('lead')
+    memberNameText.appendChild(lead)
+    memberName.appendChild(memberNameText)
+    memberText.appendChild(memberName)
+    button.appendChild(memberText)
+    roster.appendChild(button)
+    root.appendChild(roster)
+
+    const taskTitle = new MockElement('div', ['VoX2oq_taskTitle'])
+    const title = new MockElement('strong')
+    title.appendChild(new MockTextNode('技术方案评审团: 软件架构师'))
+    taskTitle.appendChild(title)
+    root.appendChild(taskTitle)
+
+    ;(globalThis as any).document = {
+      body: root,
+      querySelectorAll: (sel: string) => root.querySelectorAll(sel),
+    }
+
+    const loader = vi.fn(async () => ({ members: new Map<string, string>(), teams: [{ names: ['技术方案评审团'], label: '技术方案评审团' }] }))
+    const handle = installNativeTeamNames(loader, vi.fn())
+    await handle.refresh()
+
+    expect(lead.data).toBe('技术方案评审团')
+    handle.dispose()
+    expect(lead.data).toBe('lead')
   })
 
   it('不改写任务卡片中的路由 Owner 标识', async () => {

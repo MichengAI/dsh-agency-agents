@@ -1452,7 +1452,11 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
         const expert = experts.find(item => item.slug === slug && !item.conflict)
         return expert ? [[identity, displayName(expert, active)] as const] : []
       }))
-      return members
+      const teams = snapshot.teams.map(team => ({
+        names: [...new Set([team.name, localizeTeam(team, active).name])],
+        label: localizeTeam(team, active).name,
+      }))
+      return { members, teams }
     }, error => console.warn('[agency-agents] 原生成员显示名读取失败：', error))
     const localeDispose = ctx.locale.subscribe(() => { void names.refresh() })
     const catalogDispose = subscribeCatalog(remote, () => { void names.refresh() })
