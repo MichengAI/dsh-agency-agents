@@ -712,6 +712,47 @@ export function apply(ctx: Context, config: Config): void {
   }))
 
   type SubagentRunHandle = Pick<SubagentRun, 'result' | 'dispose'>
+  type SubagentRunResult = Awaited<SubagentRunHandle['result']>
+
+  async function awaitSubagentRun(run: SubagentRunHandle, signal?: AbortSignal): Promise<SubagentRunResult> {
+    let disposal: Promise<void> | undefined
+    const dispose = (): Promise<void> => {
+      if (disposal === undefined) {
+        try {
+          disposal = run.dispose()
+        } catch (error) {
+          disposal = Promise.reject(error)
+        }
+      }
+      return disposal
+    }
+    if (signal === undefined) {
+      try {
+        return await run.result
+      } finally {
+        await dispose()
+      }
+    }
+    let rejectAborted!: (reason: unknown) => void
+    const aborted = new Promise<never>((_resolve, reject) => { rejectAborted = reject })
+    const onAbort = (): void => {
+      void dispose().catch(() => undefined)
+      rejectAborted(signal.reason ?? new Error())
+    }
+    signal.addEventListener('abort', onAbort, { once: true })
+    try {
+      if (signal.aborted) {
+        onAbort()
+        await dispose()
+        throw signal.reason ?? new Error()
+      }
+      return await Promise.race([run.result, aborted])
+    } finally {
+      signal.removeEventListener('abort', onAbort)
+      await dispose()
+    }
+  }
+
   async function startSubagentRun(providerName: string, options: SubagentStartRequest): Promise<SubagentRunHandle> {
     const service = ctx.subagents as unknown as {
       start?: (name: string, request: SubagentStartRequest) => Promise<SubagentRun>
@@ -730,7 +771,7 @@ export function apply(ctx: Context, config: Config): void {
         provider: providerName,
         label: label ?? providerName,
         request,
-        signal: signal ?? new AbortController().signal,
+        signal,
         delivery: 'caller',
       })
     }
@@ -759,17 +800,13 @@ export function apply(ctx: Context, config: Config): void {
       ...(maxDepth === undefined ? {} : { maxDepth }),
       signal: exec.signal,
     })
-    try {
-      const result = await run.result
-      const text = textBlocks(result.output)
-      if (result.stopReason !== 'completed') {
-        const detail = text.length > 0 ? formatHost(locale, 'error.partialOutput', { text }) : ''
-        throw new Error(formatHost(locale, 'error.expertRun', { reason: result.stopReason, detail }))
-      }
-      return { expert: localizedExpertName(expert, locale), answer: text }
-    } finally {
-      await run.dispose()
+    const result = await awaitSubagentRun(run, exec.signal)
+    const text = textBlocks(result.output)
+    if (result.stopReason !== 'completed') {
+      const detail = text.length > 0 ? formatHost(locale, 'error.partialOutput', { text }) : ''
+      throw new Error(formatHost(locale, 'error.expertRun', { reason: result.stopReason, detail }))
     }
+    return { expert: localizedExpertName(expert, locale), answer: text }
   }
 
   ctx.tools.register(defineTool({
@@ -881,7 +918,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         const locale = activeLocale();
         if (engine.status.mode === 'native' && engine.service) {
             const result = await dispatchNativeTeam({ team, locale, experts: catalog.experts, enabled: catalog.enabled, task: String(args.task ?? ''), revision: snapshot.revision,
-                signal: exec.signal ?? new AbortController().signal, agent: exec.agent!, service: engine.service, provider: config.provider,
+                signal: exec.signal, agent: exec.agent!, service: engine.service, provider: config.provider,
                 readPersona: async (expert) => (await personaSource.getPrompt(expert.slug, expert.division, locale)).prompt });
             return { report: JSON.stringify({ ...result, engine: engine.status }) };
         }
@@ -896,15 +933,10 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
                     prompt: [{ type: 'text', text: member.prompt }], persona: sanitize(member.persona),
                     toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'] },
                     ...(maxDepth === undefined ? {} : { maxDepth }), signal: exec.signal });
-                try {
-                    const value = await run.result;
-                    if (value.stopReason !== 'completed')
-                        throw new Error(teamTx("成员未完成：{0}。{1}", [value.stopReason, textBlocks(value.output)]));
-                    return textBlocks(value.output);
-                }
-                finally {
-                    await run.dispose();
-                }
+                const value = await awaitSubagentRun(run, exec.signal);
+                if (value.stopReason !== 'completed')
+                    throw new Error(teamTx("成员未完成：{0}。{1}", [value.stopReason, textBlocks(value.output)]));
+                return textBlocks(value.output);
             },
         });
         return { report: JSON.stringify({ ...result, engine: engine.status }) };

@@ -552,6 +552,64 @@ describe('summon_expert', () => {
     expect(disposed).toBe(true)
   })
 
+  it('新版宿主在发布后收到父取消时立即 dispose 子代理', async () => {
+    const tools: unknown[] = []
+    const controller = new AbortController()
+    const stopReason = new Error('parent stopped')
+    let markPublished!: () => void
+    let markWaiting!: () => void
+    let finishResult!: (result: { output: unknown[]; stopReason: string }) => void
+    let disposeCalls = 0
+    const published = new Promise<void>(resolve => { markPublished = resolve })
+    const waiting = new Promise<void>(resolve => { markWaiting = resolve })
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        startActivation: async () => {
+          markPublished()
+          return {
+            childId: 'child-1',
+            get result() {
+              markWaiting()
+              return new Promise<{ output: unknown[]; stopReason: string }>(resolve => { finishResult = resolve })
+            },
+            dispose: async () => { disposeCalls += 1 },
+          }
+        },
+      },
+      systemPrompt: { section: () => undefined },
+      settings: alphaSettings(['reviewer']),
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
+      execute: (args: unknown, exec: unknown) => Promise<unknown>
+    }
+    const execution = summon.execute(
+      { expert: 'reviewer', task: 'review' },
+      { agent: {}, signal: controller.signal },
+    ).then(value => ({ value }), error => ({ error }))
+
+    await published
+    await waiting
+    controller.abort(stopReason)
+    const disposeCallsAtAbort = disposeCalls
+    const outcome = await Promise.race([
+      execution,
+      new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 50)),
+    ])
+    finishResult({ output: [], stopReason: 'aborted' })
+
+    expect(disposeCallsAtAbort).toBe(1)
+    expect(disposeCalls).toBe(1)
+    expect(outcome).toEqual({ error: stopReason })
+  })
+
   it('空 maxDepth 不透传给 provider，且子代理不能浏览或递归召唤花名册', async () => {
     const tools: unknown[] = []
     let startOptions: Record<string, unknown> | undefined
