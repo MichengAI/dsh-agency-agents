@@ -6,6 +6,13 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## Unreleased
 
+## 1.0.18 - 2026-10-13
+
+- Native team member cards show each expert's localized name on both the current and previous host card layouts. Task titles and owner identifiers stay unchanged.
+- The lead card shows the expert team name when a task title exactly matches that team. If the match is missing or ambiguous, the card stays `lead`.
+- Stopping the parent session now stops subagents started by this plugin instead of waiting for them to finish.
+- The plugin supports the host's newer subagent start API and still works with the previous API.
+
 ## 1.0.17 - 2026-10-12
 
 - Synchronized the latest experts from upstream `agency-agents` and `agency-agents-zh`, expanding the bundled roster to 331 specialists.
