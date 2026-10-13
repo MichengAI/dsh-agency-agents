@@ -6,6 +6,12 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## Unreleased
 
+## 1.0.17 - 2026-10-12
+
+- Synchronized the latest experts from upstream `agency-agents` and `agency-agents-zh`, expanding the bundled roster to 331 specialists.
+- Added 9 upstream experts with complete Chinese translations: ATS Validator Architect, China Network Engineer, PDF Engine Architect, Platform Engineer, ServiceNow Developer & Mentor, Universal Document Compiler, Developer Community Builder, DX Engineer, and Focus Music Architect.
+- Added 1 Chinese edition specialist with complete English persona: Search Growth Orchestrator.
+
 ## 1.0.16 - 2026-10-12
 
 - Scrolling the expert list in Settings no longer jumps. Every card keeps the same height, including titles that fit on one line.

@@ -6,12 +6,12 @@
 
   # DSH Agency Agents
 
-  **321 specialists · 5 built-in teams · Custom collaboration**
+  **331 specialists · 5 built-in teams · Custom collaboration**
 
   [简体中文](README.zh-CN.md) · [Expert roster](#expert-roster) · [Installation](#installation) · [Changelog](CHANGELOG.md) · [Release notes](RELEASE_NOTES.md) · [Apache-2.0](LICENSE)
 
   [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-  [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-321-0f766e.svg)](#expert-roster)
+  [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-331-0f766e.svg)](#expert-roster)
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm downloads](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20downloads)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
@@ -22,7 +22,7 @@
 
 ## Features
 
-Choose a specialist in DSH for code review, design, operations, or research. All 321 experts are bundled and ready to use after installation.
+Choose a specialist in DSH for code review, design, operations, or research. All 331 experts are bundled and ready to use after installation.
 
 - **Find the right expert**: filter by category or search in **Settings → Experts**.
 - **Enable the roles you need**: keep the picker focused by enabling or disabling experts.
@@ -173,7 +173,7 @@ The parent session can also call `list_experts(division?)`, then delegate with `
 
 ## 🎨 Expert roster
 
-Browse **321 bundled experts across 22 divisions**. Select an expert name to read its English persona.
+Browse **331 bundled experts across 22 divisions**. Select an expert name to read its English persona.
 
 ### Division index
 
@@ -296,6 +296,12 @@ Building the future, one commit at a time.
 | 🖥️ [Industrial Desktop Application Engineer](assets/agency-agents/engineering/engineering-pc-host-engineer.md) | Qt/QML, serial/Modbus/CAN, real-time visualization | Industrial desktop software, test equipment, HMIs |
 | 🔒 [Security Engineering Consultant](assets/agency-agents/engineering/engineering-security-engineer.md) | Threat modeling, secure code review, security architecture | Application security reviews and vulnerability assessment |
 | 🛡️ [Security Operations Detection Engineer](assets/agency-agents/engineering/engineering-threat-detection-engineer.md) | SIEM rules, MITRE ATT&amp;CK, threat hunting | Detection engineering and security monitoring |
+| 🎯 [ATS Validator Architect](assets/agency-agents/engineering/engineering-ats-validator-architect.md) | ATS resume parsing, layout linearization, sub-5ms client validation | Applicant tracking systems, resume linters, deterministic recruitment parsers |
+| 🌏 [China Network Engineer](assets/agency-agents/engineering/engineering-china-network-engineer.md) | Huawei VRP, H3C Comware, Ruijie RGOS, Hillstone StoneOS | Mainland China enterprise network deployments, domestic routing/switching, MLPS 2.0 hardening |
+| 📑 [PDF Engine Architect](assets/agency-agents/engineering/engineering-pdf-engine-architect.md) | Deterministic HTML-to-PDF compilation, Playwright context pools, PDF/UA-1 &amp; PDF/A-2b | High-throughput document compilation, print-accurate layouts, archival PDF generation |
+| 🛤️ [Platform Engineer](assets/agency-agents/engineering/engineering-platform-engineer.md) | Internal developer platforms (IDP), golden paths, self-serve infrastructure | Scaling engineering velocity, standardizing cloud infrastructure, developer portals |
+| 🛠️ [ServiceNow Developer &amp; Mentor](assets/agency-agents/engineering/engineering-servicenow-developer-mentor.md) | ServiceNow Business Rules, Script Includes, Flow Designer, ACLs, OOTB vs custom isolation | Enterprise ServiceNow platform development, script optimization, incident troubleshooting |
+| 📑 [Universal Document Compiler](assets/agency-agents/engineering/engineering-universal-document-compiler.md) | Schema-agnostic document ASTs, algorithmic layout inference, bidirectional CST-to-canvas sync | Dynamic multi-format document authoring, universal paged publishing, visual canvas synchronization |
 
 <a id="experts-design"></a>
 
@@ -368,6 +374,8 @@ Connecting content, channels, and audiences to drive growth.
 | 💬 [WeChat Official Account Operator](assets/agency-agents/marketing/marketing-wechat-operator.md) | Official Accounts, editorial planning, private-domain growth | WeChat content operations and customer conversion |
 | 📹 [Weixin Channels Growth Strategist](assets/agency-agents/marketing/marketing-weixin-channels-strategist.md) | Social recommendation, short video, livestream commerce | Weixin Channels growth and WeChat ecosystem coordination |
 | 📕 [Xiaohongshu Growth Operator](assets/agency-agents/marketing/marketing-xiaohongshu-operator.md) | Discovery-led posts, search visibility, creator partnerships | Xiaohongshu content testing and customer acquisition |
+| 🌱 [Developer Community Builder](assets/agency-agents/marketing/marketing-developer-community-builder.md) | Discord/GitHub discussions, technical community growth, contributor onboarding | Open-source community building, turning developers into brand advocates, contributor programs |
+| 🧭 [Search Growth Orchestrator](assets/agency-agents/marketing/marketing-search-growth-orchestrator.md) | Unified search orchestration across AEO, SEO, GEO, and Agentic Search | Cross-functional search visibility programs, deduplicating search tasks, revenue attribution |
 
 <a id="experts-paid-media"></a>
 
@@ -484,6 +492,7 @@ Finding product opportunities and setting priorities around user needs.
 | 💬 [Feedback Synthesizer](assets/agency-agents/product/product-feedback-synthesizer.md) | User feedback analysis, insights extraction | Feedback analysis, user insights, product priorities |
 | 🧠 [Behavioral Nudge Engine](assets/agency-agents/product/product-behavioral-nudge-engine.md) | Behavioral psychology, nudge design, engagement | Maximizing user motivation through behavioral science |
 | 🧭 [Product Manager](assets/agency-agents/product/product-manager.md) | Full lifecycle product ownership | Discovery, PRDs, roadmap planning, GTM, outcome measurement |
+| 🔬 [DX Engineer](assets/agency-agents/product/product-dx-engineer.md) | Time-to-hello-world optimization, runnable SDK snippets, actionable error messages | Developer onboarding friction audits, API/SDK usability redesign, developer journey streamlining |
 
 <a id="experts-project-management"></a>
 
@@ -633,6 +642,7 @@ Bringing domain expertise to industry-specific and complex work.
 | ⚖️ [Enterprise Risk Assessor](assets/agency-agents/specialized/specialized-risk-assessor.md) | Risk identification, control design, audit remediation | Enterprise risk reviews and organizational resilience |
 | 🌐 [Technical Translator](assets/agency-agents/specialized/technical-translator-agent.md) | Chinese-English translation, software/AI/cloud terminology | Translating developer documentation and technical materials |
 | 🧳 [Travel Planner](assets/agency-agents/specialized/travel-planner.md) | Itineraries, transport, lodging, visas, budgets | Practical domestic and international travel plans for Chinese travelers |
+| 🎧 [Focus Music Architect](assets/agency-agents/specialized/specialized-focus-music-architect.md) | Neuroacoustic prompt engineering, binaural beats, soundscape architecture, BPM curves | Designing cognitive flow audio, tailored generative audio prompts, focus soundscapes |
 
 <a id="experts-spatial-computing"></a>
 

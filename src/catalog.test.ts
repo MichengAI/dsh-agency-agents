@@ -21,9 +21,9 @@ async function readPersona(locale: 'en' | 'zh', division: string, slug: string):
 }
 
 describe('内置专家名册', () => {
-  it('融合参考库中的 321 位正式专家，且不包含文档与流程模板', () => {
+  it('融合参考库中的 331 位正式专家，且不包含文档与流程模板', () => {
     const slugs = new Set(ROSTER.map((expert) => expert.slug))
-    expect(ROSTER).toHaveLength(321)
+    expect(ROSTER).toHaveLength(331)
     expect(slugs.has('engineering-knowledge-graph-engineer')).toBe(true)
     expect(slugs.has('specialized-master-plan-architect')).toBe(true)
     expect(slugs.has('research-synthesist')).toBe(true)
@@ -46,7 +46,7 @@ describe('内置专家名册', () => {
     expect(new Set(englishNames).size).toBe(englishNames.length)
   })
 
-  it('321 位专家均有纯英文名称、简介和 persona', async () => {
+  it('331 位专家均有纯英文名称、简介和 persona', async () => {
     const invalidNames = ROSTER.filter((expert) => HAN_PATTERN.test(expert.nameEn)).map((expert) => expert.slug)
     const invalidDescriptions = ROSTER
       .filter((expert) => HAN_PATTERN.test(expert.descriptionEn || expert.description))
@@ -61,7 +61,7 @@ describe('内置专家名册', () => {
     expect(invalidPersonas).toEqual([])
   })
 
-  it('321 位专家均有中文显示名和中文主导 persona', async () => {
+  it('331 位专家均有中文显示名和中文主导 persona', async () => {
     const invalidNames = ROSTER
       .filter((expert) => !HAN_PATTERN.test(ZH_NAME[expert.slug] ?? ''))
       .map((expert) => expert.slug)

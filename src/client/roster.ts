@@ -346,6 +346,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Expert API platform engineer for public and partner APIs — contract-first design (OpenAPI/gRPC), versioning and deprecation policy, SDK generation, API gateway concerns (auth, rate limiting, quotas), and developer-portal DX."
   },
   {
+    "slug": "engineering-ats-validator-architect",
+    "nameEn": "ATS Validator Architect",
+    "emoji": "🎯",
+    "division": "engineering",
+    "description": "专精招聘追踪系统（ATS）与简历解析引擎架构，结合确定性检索、Google/IBM X-Y-Z 叙事启发式校准、排版线性化与 PDF 文本层完整性审计，交付亚 5ms 客户端校验与合规保障。",
+    "descriptionEn": "Architect and validator for Applicant Tracking Systems (ATS) and resume parsers. Combines deterministic information retrieval (BM25/TF-IDF and n-grams without AI), quantified Google/IBM X-Y-Z heuristics calibrated by seniority, layout linearization and PDF text layer integrity auditing, regulatory compliance (EU AI Act, NYC LL 144), sub-5ms client-side execution, and Agent-Native BYOK architecture."
+  },
+  {
     "slug": "engineering-autonomous-optimization-architect",
     "nameEn": "Autonomous Optimization Architect",
     "emoji": "⚡",
@@ -360,6 +368,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "engineering",
     "description": "负责后端系统架构设计与技术选型，规划数据库、API 与云资源，保证服务稳定、安全、可扩展。",
     "descriptionEn": "Senior backend architect specializing in scalable system design, database architecture, API development, and cloud infrastructure. Builds robust, secure, performant server-side applications and microservices"
+  },
+  {
+    "slug": "engineering-china-network-engineer",
+    "nameEn": "China Network Engineer",
+    "emoji": "🌏",
+    "division": "engineering",
+    "description": "面向国内主流企业网技术栈（华为 VRP、华三 Comware、锐捷 RGOS、山石网科 StoneOS），精通路由交换、防火墙安全策略、NAT 与等保 2.0 合规边界设计与割接演练。",
+    "descriptionEn": "Expert in mainland China's mainstream enterprise networking stacks — Huawei VRP, H3C Comware, Ruijie RGOS, and Hillstone StoneOS — covering routing, switching, firewalling, NAT, and MLPS 2.0 compliant border design for domestic deployments."
   },
   {
     "slug": "engineering-cms-developer",
@@ -690,6 +706,22 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Qt and QML desktop application engineer specializing in serial, Modbus, CAN and TCP communications, real-time visualization, embedded-device integration, and cross-platform packaging."
   },
   {
+    "slug": "engineering-pdf-engine-architect",
+    "nameEn": "PDF Engine Architect",
+    "emoji": "📑",
+    "division": "engineering",
+    "description": "专精确定性 HTML 转 PDF 文档编译、Playwright 上下文池管理、动态欧几里得页面尺寸计算、LayoutNG 亚像素预算、PDF/UA-1 无障碍合规与 1:1 画布编辑器。",
+    "descriptionEn": "Architect and specialist in deterministic HTML-to-PDF document compilation, Playwright browser context pools, dynamic Euclidean page sizing, LayoutNG subpixel budgeting, tagged PDF (PDF/UA-1 & PDF/A-2b), and 1:1 sheet canvas editors."
+  },
+  {
+    "slug": "engineering-platform-engineer",
+    "nameEn": "Platform Engineer",
+    "emoji": "🛤️",
+    "division": "engineering",
+    "description": "专精内部开发者平台（IDP）建设、黄金路径（Golden Paths）与基础设施自助化服务，成倍提升研发交付效能与工程标准化。",
+    "descriptionEn": "Expert internal developer platform (IDP) engineer specializing in golden paths, paved roads, and self-serve infrastructure that multiplies engineering velocity."
+  },
+  {
     "slug": "engineering-privacy-engineer",
     "nameEn": "Privacy Engineer",
     "emoji": "🕵️",
@@ -770,6 +802,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Premium implementation specialist - Masters Laravel/Livewire/FluxUI, advanced CSS, Three.js integration"
   },
   {
+    "slug": "engineering-servicenow-developer-mentor",
+    "nameEn": "ServiceNow Developer & Mentor",
+    "emoji": "🛠️",
+    "division": "engineering",
+    "description": "ServiceNow 平台开发与逐步排障专家，深入 Business Rules、Script Includes、GlideRecord/GlideAggregate、Flow Designer、ACL 权限体系与开箱原生/定制隔离诊断。",
+    "descriptionEn": "ServiceNow platform developer and step-by-step troubleshooter — Business Rules, Script Includes, GlideRecord/GlideAggregate, Flow Designer, ACLs, and \"is this OOTB or did custom break it?\" isolation"
+  },
+  {
     "slug": "engineering-software-architect",
     "nameEn": "Software Architect",
     "emoji": "🏛️",
@@ -808,6 +848,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "engineering",
     "description": "专精于 SIEM 规则开发、MITRE ATT&CK 覆盖度映射、威胁狩猎、告警调优和检测即代码流水线的安全运营检测工程专家。",
     "descriptionEn": "Security detection engineer specializing in SIEM rule development, MITRE ATT&CK coverage, threat hunting, alert tuning, telemetry validation, and detection-as-code delivery pipelines."
+  },
+  {
+    "slug": "engineering-universal-document-compiler",
+    "nameEn": "Universal Document Compiler",
+    "emoji": "📑",
+    "division": "engineering",
+    "description": "专精通用文档 AST 架构、数据形状算法布局推断、CST 与画布双向同步及通用分页文档排版出版。",
+    "descriptionEn": "Architect of schema-agnostic document ASTs, algorithmic data-shape layout inference, bidirectional CST-to-canvas synchronization, and universal paged document publishing."
   },
   {
     "slug": "engineering-uswds-developer",
@@ -1410,6 +1458,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "descriptionEn": "Multi-source news intelligence specialist who gathers, verifies, prioritizes, and structures domestic and international developments into concise, traceable briefs for downstream content teams."
   },
   {
+    "slug": "marketing-developer-community-builder",
+    "nameEn": "Developer Community Builder",
+    "emoji": "🌱",
+    "division": "marketing",
+    "description": "负责开发者社区的搭建与长效运营（Discord、GitHub Discussions、技术论坛与贡献者计划），将普通用户转化为技术倡导者与核心贡献者。",
+    "descriptionEn": "Grows and sustains developer communities — Discord servers, GitHub discussions, forums, and contributor programs — turning users into advocates and advocates into contributors."
+  },
+  {
     "slug": "marketing-douyin-strategist",
     "nameEn": "Douyin Strategist",
     "emoji": "🎵",
@@ -1528,6 +1584,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "marketing",
     "description": "以真实身份参与 Reddit 相关版块讨论，发布有价值的内容而非硬广，经营社区关系，沉淀口碑。",
     "descriptionEn": "Expert Reddit marketing specialist focused on authentic community engagement, value-driven content creation, and long-term relationship building. Masters Reddit culture navigation."
+  },
+  {
+    "slug": "marketing-search-growth-orchestrator",
+    "nameEn": "Search Growth Orchestrator",
+    "emoji": "🧭",
+    "division": "marketing",
+    "description": "编排 AEO 基础架构师、SEO 与自然搜索增长专家、AI 搜索可见性与 GEO 策略师，并在需要时移交智能搜索优化师，统一证据、任务边界、优先级、实施路线图与业务归因。",
+    "descriptionEn": "Orchestrates AEO architects, SEO specialists, and GEO strategists to unify crawl evidence, task boundaries, implementation roadmaps, and search revenue attribution."
   },
   {
     "slug": "marketing-seo-specialist",
@@ -1744,6 +1808,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "product",
     "description": "研究用户心理与行为规律，调整产品交互节奏和引导方式，提升用户使用动机与完成率，负责增长相关实验的设计与落地。",
     "descriptionEn": "Behavioral psychology specialist that adapts software interaction cadences and styles to maximize user motivation and success."
+  },
+  {
+    "slug": "product-dx-engineer",
+    "nameEn": "DX Engineer",
+    "emoji": "🔬",
+    "division": "product",
+    "description": "消除开发者从接入到首次跑通之间的所有摩擦点，优化 SDK 示例、新手引导旅程、错误信息诊断与开发者反馈闭环。",
+    "descriptionEn": "Removes every unnecessary step between a developer and their first success — SDK samples, onboarding flows, error messages, and the feedback loops that make products feel like they were built by someone who's used them."
   },
   {
     "slug": "product-feedback-synthesizer",
@@ -2160,6 +2232,14 @@ export const ROSTER: ReadonlyArray<RosterEntry> = [
     "division": "specialized",
     "description": "负责云产品通过 FedRAMP 授权，编写系统安全计划，配合第三方评估，维护持续监控与整改清单。",
     "descriptionEn": "Expert FedRAMP and NIST Risk Management Framework compliance engineer specializing in both FedRAMP authorization pathways — the traditional Rev5 path (NIST 800-53 Rev 5 control implementation, System Security Plans, 3PAO assessment, agency authorization) and the modernized FedRAMP 20x path (Key Security Indicators, automated machine-readable validation, compliance-as-code) — plus the ATO process, continuous monitoring (ConMon), POA&M management, FIPS 199 categorization, authorization boundary diagrams, OSCAL machine-readable packages, and cloud security compliance for government and regulated industries"
+  },
+  {
+    "slug": "specialized-focus-music-architect",
+    "nameEn": "Focus Music Architect",
+    "emoji": "🎧",
+    "division": "specialized",
+    "description": "器乐专注音乐专家与神经声学提示词工程师，设计高收益提示词、声景架构、BPM 曲线与双耳节律分层，通过声学工程与生成式音频诱导深度心流。",
+    "descriptionEn": "Instrumental focus music specialist and neuroacoustic prompt engineer — crafts high-yield prompts, soundscape architectures, BPM curves, and binaural layers for deep cognitive flow and generative audio models."
   },
   {
     "slug": "specialized-french-consulting-market",

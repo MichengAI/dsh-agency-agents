@@ -6,12 +6,12 @@
 
   # DSH Agency Agents
 
-  **321 位专业智能体 · 5 个内置专家团 · 自定义协作**
+  **331 位专业智能体 · 5 个内置专家团 · 自定义协作**
 
   [English](README.md) · [专家列表](#专家列表) · [安装](#安装) · [更新日志](CHANGELOG.zh-CN.md) · [发行说明](RELEASE_NOTES.md) · [Apache-2.0](LICENSE)
 
   [![许可证：Apache-2.0](https://img.shields.io/badge/许可证-Apache--2.0-blue.svg)](LICENSE)
-  [![内置智能体](https://img.shields.io/badge/内置智能体-321-0f766e.svg)](#专家列表)
+  [![内置智能体](https://img.shields.io/badge/内置智能体-331-0f766e.svg)](#专家列表)
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm 下载量](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
@@ -22,7 +22,7 @@
 
 ## 功能概览
 
-遇到代码审查、设计、运营或研究任务时，在 DSH 中选一位合适的专家，让它从专业角度协助你完成工作。内置 321 名专家，安装后即可选择使用。
+遇到代码审查、设计、运营或研究任务时，在 DSH 中选一位合适的专家，让它从专业角度协助你完成工作。内置 331 名专家，安装后即可选择使用。
 
 - **找到合适的专家**：在「设置 → 专家」按分类筛选或搜索。
 - **只启用需要的角色**：随时启用或停用专家，让选择列表更简洁。
@@ -173,7 +173,7 @@ dsh --profile web --dump-config
 
 ## 🎨 专家列表
 
-内置 **321 名专家，覆盖 22 个分类**。点击专家名称查看中文角色定义。
+内置 **331 名专家，覆盖 22 个分类**。点击专家名称查看中文角色定义。
 
 ### 分类导航
 
@@ -296,6 +296,12 @@ dsh --profile web --dump-config
 | 🖥️ [上位机工程师](assets/agency-agents-zh/engineering/engineering-pc-host-engineer.md) | Qt/QML、QSerialPort、Modbus/CAN、QChart 实时可视化 | 工业上位机、检测设备、HMI |
 | 🔒 [安全工程师](assets/agency-agents-zh/engineering/engineering-security-engineer.md) | 威胁建模、代码审计、安全架构 | 应用安全、漏洞评估 |
 | 🛡️ [威胁检测工程师（工程侧）](assets/agency-agents-zh/engineering/engineering-threat-detection-engineer.md) | SIEM、威胁狩猎、检测规则 | 安全运营、威胁检测 |
+| 🎯 [ATS 简历校验架构师](assets/agency-agents-zh/engineering/engineering-ats-validator-architect.md) | ATS 简历解析、排版线性化、亚 5ms 客户端校验 | 招聘管理系统接入、简历可解析性审计、无 AI 幻觉确定性检索 |
+| 🌏 [国内网络架构工程师](assets/agency-agents-zh/engineering/engineering-china-network-engineer.md) | 华为 VRP、华三 Comware、锐捷 RGOS、山石网科 StoneOS | 国内企业网规划、主流国产网络设备割接与排障、等保 2.0 边界加固 |
+| 📑 [PDF 引擎架构师](assets/agency-agents-zh/engineering/engineering-pdf-engine-architect.md) | 确定性 HTML 转 PDF、Playwright 渲染池、PDF/UA-1 与 PDF/A-2b | 高并发电子凭证与研报生成、打印级像素精确排版、电子档案归档 |
+| 🛤️ [平台工程师](assets/agency-agents-zh/engineering/engineering-platform-engineer.md) | 内部开发者平台（IDP）、黄金路径、基础设施自助化 | 工程交付效能跃升、云原生基础设施自助化、研发标准规范化 |
+| 🛠️ [ServiceNow 平台导师](assets/agency-agents-zh/engineering/engineering-servicenow-developer-mentor.md) | ServiceNow Business Rules、Script Includes、Flow Designer、ACL 权限、开箱/客制化隔离 | ServiceNow 平台开发、复杂业务流排障、大规模工单系统性能优化 |
+| 📑 [通用文档编译器架构师](assets/agency-agents-zh/engineering/engineering-universal-document-compiler.md) | 通用文档 AST、算法化排版推断、CST 与画布双向同步 | 复杂数据排版推断、多渠道自适应出版、可视化画布与底层代码双向协同 |
 
 <a id="experts-design"></a>
 
@@ -368,6 +374,8 @@ dsh --profile web --dump-config
 | 💬 [微信公众号运营](assets/agency-agents-zh/marketing/marketing-wechat-operator.md) | 公众号内容、社群运营、裂变增长 | 微信生态营销 |
 | 📹 [微信视频号运营策略师](assets/agency-agents-zh/marketing/marketing-weixin-channels-strategist.md) | 视频号直播、社交裂变、私域闭环 | 视频号运营与变现 |
 | 📕 [小红书增长运营专家](assets/agency-agents-zh/marketing/marketing-xiaohongshu-operator.md) | 种草笔记、达人合作、爆款内容 | 小红书获客、品牌种草 |
+| 🌱 [开发者社区建设专家](assets/agency-agents-zh/marketing/marketing-developer-community-builder.md) | Discord 与 GitHub Discussions、技术社区增长、贡献者梯队建设 | 开源生态建设、开发者关系维护、技术分享与贡献者成长路径运营 |
+| 🧭 [搜索增长编排器](assets/agency-agents-zh/marketing/marketing-search-growth-orchestrator.md) | 统筹编排 AEO、SEO、GEO 与智能体搜索（Agentic Search） | 全域搜索增长战略规划、多搜索形态任务去重与依赖编排、业务归因分析 |
 
 <a id="experts-paid-media"></a>
 
@@ -484,6 +492,7 @@ dsh --profile web --dump-config
 | 💬 [用户反馈研究员](assets/agency-agents-zh/product/product-feedback-synthesizer.md) | 用户反馈分析、洞察提取 | 反馈分析、产品优先级 |
 | 🧠 [增长产品经理](assets/agency-agents-zh/product/product-behavioral-nudge-engine.md) | 行为心理学、用户引导 | 用户行为设计、转化提升 |
 | 🧭 [产品经理](assets/agency-agents-zh/product/product-manager.md) | 产品全生命周期、PRD、路线图 | 产品策略与交付管理 |
+| 🔬 [开发者体验工程师](assets/agency-agents-zh/product/product-dx-engineer.md) | 快速跑通优化、可运行 SDK 示例设计、诊断级友好错误信息 | 开发者接入摩擦走查、API 与 SDK 可用性优化、减少开发者猜测试错 |
 
 <a id="experts-project-management"></a>
 
@@ -633,6 +642,7 @@ dsh --profile web --dump-config
 | ⚖️ [企业风险评估师](assets/agency-agents-zh/specialized/specialized-risk-assessor.md) | COSO本土化、国企风控、ESG | 企业风险管理与审计 |
 | 🌐 [技术翻译专家](assets/agency-agents-zh/specialized/technical-translator-agent.md) | 中英文双向翻译、编程/AI/云计算术语 | 技术文档翻译 |
 | 🧳 [旅行规划师](assets/agency-agents-zh/specialized/travel-planner.md) | 路线、交通住宿、签证、预算、季节约束 | 中国旅行者国内外行程规划、逐日安排 |
+| 🎧 [专注音乐架构师](assets/agency-agents-zh/specialized/specialized-focus-music-architect.md) | 神经声学提示词工程、双耳节律分层、声景架构、BPM 心流曲线 | 深度工作心流音乐生成、针对生成式音频模型的精准提示词、认知减疲声学设计 |
 
 <a id="experts-spatial-computing"></a>
 
