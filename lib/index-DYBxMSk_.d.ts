@@ -55,7 +55,7 @@ interface Expert {
 interface Config {
   /** Directory holding the `division/*.md` persona files. */
   root: string;
-  /** `ctx.subagents` provider name (default `spawn`; `fork` also supports `persona`). */
+  /** `ctx.subagents` provider name (default `spawn`). */
   provider: string;
   /** Division directory names to scan under `root`. */
   divisions: string[];

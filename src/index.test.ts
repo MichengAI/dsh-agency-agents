@@ -174,6 +174,7 @@ describe('DSH settings 兼容层', () => {
         tools: { register: () => undefined },
         subagents: { getProvider: () => undefined },
         systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
         get: () => undefined,
       } as unknown as Context
       apply(ctx, {
@@ -492,6 +493,7 @@ describe('summon_expert', () => {
         }),
       },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -526,6 +528,7 @@ describe('summon_expert', () => {
         },
       },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -579,6 +582,7 @@ describe('summon_expert', () => {
         },
       },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -626,6 +630,7 @@ describe('summon_expert', () => {
         },
       },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -660,6 +665,7 @@ describe('summon_expert', () => {
         },
       },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['chief-executive-officer'], 'zh'),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['chief-executive-officer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -748,6 +754,7 @@ describe('summon_expert', () => {
       tools: { register: () => undefined },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -764,6 +771,7 @@ describe('summon_expert', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -793,6 +801,7 @@ describe('summon_expert', () => {
         start: async () => { throw new Error('must not start') },
       },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -817,6 +826,7 @@ describe('summon_expert', () => {
         start: async () => { throw new Error('provider start reached') },
       },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -847,6 +857,7 @@ describe('summon_expert', () => {
         }),
       },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -973,6 +984,7 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
         tools: { register: () => undefined },
         subagents: { getProvider: () => undefined },
         systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
         settings: alphaSettings([], 'zh'),
         inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
           cb({ settings: { register: () => ({ get: () => ({ enabled: [] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -1338,7 +1350,7 @@ describe('专家库目标稿样式契约', () => {
 
 describe('@ 菜单分组标题本地化', () => {
   it("DSH peer 只枚举已验证的 RC，并覆盖最新 RC", () => {
-    const range = "0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.5-rc.3 || 0.1.7-rc.1 || 0.1.7-rc.2 || 0.2.0-rc.1 || 0.2.0-rc.2 || 0.2.1-alpha.2";
+    const range = "0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.5-rc.3 || 0.1.7-rc.1 || 0.1.7-rc.2 || 0.2.0-rc.1 || 0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3";
     const peers = PACKAGE_MANIFEST.peerDependencies;
     expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
     expect(PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh"]?.optional).toBe(true);
@@ -1365,11 +1377,10 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 0.2.0-rc.2', () => {
+  it('DSH 开发依赖固定为 0.2.1-alpha.3', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.2.0-rc.2')
-        expect(version).not.toMatch(/alpha/u)
+        expect(version).toBe('0.2.1-alpha.3')
       }
     }
   })
@@ -1640,6 +1651,7 @@ describe('list_experts 语言切换', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['engineering-code-reviewer'], locale),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['engineering-code-reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -1664,6 +1676,7 @@ describe('list_experts 语言切换', () => {
       tools: { register: (tool: typeof tools[number]) => tools.push(tool) },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: { ...alphaSettings([]), describe: describeSettings },
       inject: () => undefined,
       reflect: { provide: () => undefined },
@@ -1688,6 +1701,7 @@ describe('list_experts 语言切换', () => {
       tools: { register: (tool: typeof tools[number]) => tools.push(tool) },
       subagents: { getProvider: () => undefined },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: { ...alphaSettings([]), get: () => ({ preference: locale }) },
       inject: () => undefined,
       reflect: { provide: () => undefined },
@@ -1834,6 +1848,7 @@ describe('summon_experts', () => {
         },
       },
       systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
       settings: alphaSettings(['reviewer', 'historian']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer', 'historian'] }), watch: () => () => {} }) }, effect: () => () => {} })

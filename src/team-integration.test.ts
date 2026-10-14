@@ -39,6 +39,7 @@ describe('专家团宿主与远端集成', () => {
         }) => tools.set(tool.name, tool),
       },
       systemPrompt: { section: () => {} },
+      on: () => () => undefined,
       subagents: {
         getProvider: () => ({
           capabilities: { persona: true, toolFilter: true },

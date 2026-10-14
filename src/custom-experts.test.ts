@@ -307,6 +307,7 @@ describe("真实 Host 与 Remote 集成", () => {
         }) => tools.set(tool.name, tool),
       },
       systemPrompt: { section: () => {} },
+      on: () => () => undefined,
       subagents: {
         getProvider: () => ({
           capabilities: { persona: true, toolFilter: true },

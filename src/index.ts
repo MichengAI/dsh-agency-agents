@@ -16,10 +16,10 @@ import { localizeTeam } from './team-content-en.js'
  *   - `summon_expert(expert, task)` delegate a task to a subagent whose
  *     persona is that expert's, through the `ctx.subagents` spawn provider.
  *
- * A summoned expert does NOT replace the parent's persona: the child shadows
- * only its own `deployment:persona` section (the `persona` capability on the
- * in-process spawn/fork providers), so it runs with the expert's identity plus
- * the ordinary DSH tool set.
+ * A summoned expert does NOT replace the parent's persona: on DSH 0.2.1-alpha.3+
+ * the child gets a scoped `deployment:persona-prefix` (and a tool denylist) on
+ * `agent/created` after `startActivation`; older hosts still pass start-time
+ * `persona` / `toolFilter` when `ctx.subagents.start` exists.
  *
  * Strict `{{...}}` interpolation runs over every system-prompt section, so any
  * complete brace group inside expert prose would throw at assembly. A
@@ -36,7 +36,9 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { SubagentRun, SubagentStartRequest } from '@deepseek-ai/dsh-subagent'
-import type {} from '@deepseek-ai/dsh-system-prompt'
+import { SessionId } from '@deepseek-ai/dsh-session'
+import { PERSONA_PREFIX_SECTION } from '@deepseek-ai/dsh-system-prompt'
+import { randomUUID } from 'node:crypto'
 import { open, readdir, readFile, stat } from 'node:fs/promises'
 import { join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -193,7 +195,7 @@ interface Expert {
 export interface Config {
   /** Directory holding the `division/*.md` persona files. */
   root: string
-  /** `ctx.subagents` provider name (default `spawn`; `fork` also supports `persona`). */
+  /** `ctx.subagents` provider name (default `spawn`). */
   provider: string
   /** Division directory names to scan under `root`. */
   divisions: string[]
@@ -753,27 +755,75 @@ export function apply(ctx: Context, config: Config): void {
     }
   }
 
-  async function startSubagentRun(providerName: string, options: SubagentStartRequest): Promise<SubagentRunHandle> {
+  type ExpertSubagentStart = {
+    label?: string
+    prompt: SubagentStartRequest['prompt']
+    parent: SubagentStartRequest['parent']
+    signal?: AbortSignal
+    maxDepth?: number
+    persona: string
+    toolFilter: { deny: string[] }
+  }
+
+  async function startSubagentRun(providerName: string, options: ExpertSubagentStart): Promise<SubagentRunHandle> {
+    const { persona, toolFilter, label, signal, prompt, parent, maxDepth } = options
     const service = ctx.subagents as unknown as {
-      start?: (name: string, request: SubagentStartRequest) => Promise<SubagentRun>
+      start?: (name: string, request: SubagentStartRequest & { persona?: string; toolFilter?: { deny: string[] } }) => Promise<SubagentRun>
       startActivation?: (spec: {
         provider: string
         label: string
+        childId?: ReturnType<typeof SessionId>
         request: Omit<SubagentStartRequest, 'label' | 'signal'>
         signal: AbortSignal
         delivery: 'parent' | 'caller'
       }) => Promise<SubagentRunHandle>
+      on?: Context['on']
     }
-    if (typeof service.start === 'function') return service.start(providerName, options)
-    if (typeof service.startActivation === 'function') {
-      const { label, signal, ...request } = options
-      return service.startActivation({
-        provider: providerName,
-        label: label ?? providerName,
-        request,
-        signal,
-        delivery: 'caller',
+    // Older hosts: start-time persona / toolFilter on ctx.subagents.start.
+    const runSignal = signal ?? new AbortController().signal
+    if (typeof service.start === 'function') {
+      return service.start(providerName, {
+        label,
+        prompt,
+        parent,
+        signal: runSignal,
+        ...(maxDepth === undefined ? {} : { maxDepth }),
+        persona,
+        toolFilter,
       })
+    }
+    // DSH 0.2.1-alpha.3+: startActivation + scoped persona / tools.restrict on agent/created.
+    if (typeof service.startActivation === 'function') {
+      const childId = SessionId(randomUUID())
+      const stopCreated = ctx.on('agent/created', (event: { agent: { id: string; ctx: Context } }) => {
+        if (event.agent.id !== childId) return undefined
+        const childCtx = event.agent.ctx
+        if (childCtx.systemPrompt) {
+          childCtx.systemPrompt.section({
+            name: PERSONA_PREFIX_SECTION,
+            order: childCtx.systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA_PREFIX'),
+            text: persona,
+          })
+        }
+        if (childCtx.tools) childCtx.tools.restrict(toolFilter)
+        return undefined
+      })
+      try {
+        return await service.startActivation({
+          provider: providerName,
+          label: label ?? providerName,
+          childId,
+          request: {
+            parent,
+            prompt,
+            ...(maxDepth === undefined ? {} : { maxDepth }),
+          },
+          signal: runSignal,
+          delivery: 'caller',
+        })
+      } finally {
+        stopCreated()
+      }
     }
     throw new Error(formatHost(activeLocale(), 'error.subagentsUnavailable'))
   }
@@ -785,9 +835,13 @@ export function apply(ctx: Context, config: Config): void {
     if (exec.agent === undefined) throw new Error(formatHost(locale, 'error.summonRequiresAgent'))
     const provider = ctx.subagents.getProvider(config.provider)
     if (provider === undefined) throw new Error(formatHost(locale, 'error.providerMissing', { provider: config.provider }))
-    if (!provider.capabilities.persona) throw new Error(formatHost(locale, 'error.providerNoPersona', { provider: config.provider }))
-    if (!provider.capabilities.toolFilter) throw new Error(formatHost(locale, 'error.providerNoToolFilter', { provider: config.provider }))
-    if (maxDepth !== undefined && !provider.capabilities.depthLimit) throw new Error(formatHost(locale, 'error.providerNoMaxDepth', { provider: config.provider }))
+    const caps = provider.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean }
+    // Legacy hosts still advertise persona/toolFilter; alpha.3+ drops them (applied on agent/created).
+    if (caps.persona !== undefined || caps.toolFilter !== undefined) {
+      if (!caps.persona) throw new Error(formatHost(locale, 'error.providerNoPersona', { provider: config.provider }))
+      if (!caps.toolFilter) throw new Error(formatHost(locale, 'error.providerNoToolFilter', { provider: config.provider }))
+    }
+    if (maxDepth !== undefined && !caps.depthLimit) throw new Error(formatHost(locale, 'error.providerNoMaxDepth', { provider: config.provider }))
     const expert = resolveExpert((await library.catalog()).experts.filter(expert => !expert.conflict), query, locale)
     if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
     const { prompt: persona } = await personaSource.getPrompt(expert.slug, expert.division, locale)
@@ -923,7 +977,9 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
             return { report: JSON.stringify({ ...result, engine: engine.status }) };
         }
         const provider = ctx.subagents.getProvider(config.provider);
-        if (!provider?.capabilities.persona || !provider.capabilities.toolFilter || (maxDepth !== undefined && !provider.capabilities.depthLimit))
+        const teamCaps = provider?.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean } | undefined
+        const legacyTeamCaps = teamCaps !== undefined && (teamCaps.persona !== undefined || teamCaps.toolFilter !== undefined)
+        if (!provider || (legacyTeamCaps && (!teamCaps?.persona || !teamCaps.toolFilter)) || (maxDepth !== undefined && !teamCaps?.depthLimit))
             throw new Error(teamTx("当前子代理服务不支持专家团所需的身份、工具过滤或深度限制。"));
         const result = await executeTeam({ team, locale, experts: catalog.experts, enabled: catalog.enabled, task: String(args.task ?? ''), revision: snapshot.revision, signal: exec.signal,
             readPersona: async (expert) => (await personaSource.getPrompt(expert.slug, expert.division, locale)).prompt,
