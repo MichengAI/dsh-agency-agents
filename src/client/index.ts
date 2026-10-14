@@ -1514,7 +1514,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   ctx.slots.inject('settings.section', () => ctx.slots.register(
     // label 是 thunk：nav 行每渲染读一次，locale 切换后自动跟随。
     {
-      name: 'settings.section', id: 'agency-agents', order: 16, label: () => t('settings.nav'), locale: NS,
+      name: 'settings.section', id: 'agency-agents', order: 20, label: () => t('settings.nav'), locale: NS,
       ...({ icon: 'expert' } as Record<string, unknown>),
     },
     (props) => React.createElement(AgencySettingsPanel, { ...props, remote, getActive, onEnabledChange: updateEnabledForMentions, prepareTeamSelection: bindExpertInsertion().prepareTeamSelection }),
