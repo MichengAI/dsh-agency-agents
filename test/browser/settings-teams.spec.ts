@@ -88,6 +88,10 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
   await expect(
     page.getByRole('dialog', { name: '放弃未保存修改？' }),
   ).toBeVisible()
+  const discardBtn = page.getByRole('button', { name: '放弃修改' })
+  await expect(discardBtn).toBeVisible()
+  const discardColor = await discardBtn.evaluate((el) => getComputedStyle(el).color)
+  expect(discardColor).toBe('rgb(239, 68, 68)')
   await page.getByRole('button', { name: '继续编辑' }).click()
   await expect(page.getByLabel('团队名称', { exact: true })).toHaveValue(
     '统一交互测试',

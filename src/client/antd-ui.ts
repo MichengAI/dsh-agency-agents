@@ -49,7 +49,8 @@ export interface UnifiedButtonProps extends React.ButtonHTMLAttributes<HTMLButto
 /** 桥接官方宿主原语 Button，自动映射 Antd 常用属性（type="primary", danger, block, etc.） */
 export function Button({ variant, type, danger, loading, block, size, shape, className, children, ...props }: UnifiedButtonProps): React.ReactElement {
   let mappedVariant: ButtonVariant = variant ?? 'outline'
-  if (type === 'primary') mappedVariant = 'primary'
+  if (danger) mappedVariant = 'outline'
+  else if (type === 'primary') mappedVariant = 'primary'
   else if (type === 'text' || type === 'link') mappedVariant = 'ghost'
 
   const classes = [
