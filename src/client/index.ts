@@ -1122,8 +1122,6 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   const [status, setStatus] = React.useState('')
   const [openPrompt, setOpenPrompt] = React.useState<OpenPrompt | null>(null)
   const promptLock = React.useRef(false)
-  const [copiedSlug, setCopiedSlug] = React.useState<string | null>(null)
-  const copiedResetTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const saving = React.useRef(false)
   const [isSaving, setIsSaving] = React.useState(false)
   const [source, setSource] = React.useState<'all' | 'base' | 'custom'>('all')
@@ -1214,10 +1212,6 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     props.onEnabledChange?.(current.enabled)
   }), [props.onEnabledChange, props.remote])
 
-  React.useEffect(() => () => {
-    if (copiedResetTimer.current !== undefined) clearTimeout(copiedResetTimer.current)
-  }, [])
-
   const toggle = (slug: string): void => {
     const current = fresh()
     if (current === null || saving.current) return
@@ -1265,19 +1259,6 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
 
   const viewPrompt = (expert: ExpertView, returnFocus: HTMLButtonElement): void => {
     withPrompt(expert, (prompt) => { setOpenPrompt({ name: displayName(expert, props.getActive()), prompt, returnFocus }) })
-  }
-
-  const copyPrompt = (expert: ExpertView): void => {
-    withPrompt(expert, async (prompt) => {
-      if (navigator.clipboard === undefined) throw new Error(props.t('error.promptCopy'))
-      await navigator.clipboard.writeText(prompt)
-      if (copiedResetTimer.current !== undefined) clearTimeout(copiedResetTimer.current)
-      setCopiedSlug(expert.slug)
-      copiedResetTimer.current = setTimeout(() => {
-        copiedResetTimer.current = undefined
-        setCopiedSlug(null)
-      }, COPY_PROMPT_FEEDBACK_MS)
-    })
   }
 
   const nodes: React.ReactNode[] = []
@@ -1389,9 +1370,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           ],
           actions: React.createElement(React.Fragment, null,
             React.createElement('button', { type: 'button', className: 'aag-card-action', title: props.t('settings.viewPromptTitle'), 'aria-label': props.t('settings.viewPromptTitle'), 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
-              React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), React.createElement('span', { className: 'aag-card-action-text' }, props.t('settings.viewPrompt'))),
-            React.createElement('button', { type: 'button', className: 'aag-card-action aag-card-action-primary', title: copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPromptTitle'), 'aria-label': copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPromptTitle'), onClick: () => copyPrompt(expert) },
-              React.createElement(Copy, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), React.createElement('span', { className: 'aag-card-action-text' }, copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPrompt')))),
+              React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), React.createElement('span', { className: 'aag-card-action-text' }, props.t('settings.viewPrompt')))),
         })
       } }))
     }
