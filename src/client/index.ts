@@ -513,7 +513,6 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-filters{align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:8px 12px;min-width:0}
 .aag-filter-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}
 .aag-icon-btn{width:28px;min-width:28px;height:28px;padding:0;color:var(--dsw-alias-label-secondary);border-radius:var(--dsw-radius-sm,8px);display:inline-flex;align-items:center;justify-content:center}
-.aag-icon-btn.ant-btn{width:28px;min-width:28px;height:28px;padding:0}
 .aag-icon-btn svg{display:block;width:16px;height:16px}
 .aag-icon-btn:hover:not(:disabled){color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}
 .aag-card-filters .aag-field-source,.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-status{flex:0 0 auto;width:auto;max-width:none}

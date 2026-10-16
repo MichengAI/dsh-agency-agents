@@ -402,7 +402,7 @@ export function TeamEditor(props: {
         </div>
         <LibraryEditorFooter editing={!!draft.id} busy={busy} blocked={needsReview} help={tx("保存配置不会发送任务。")} cancelLabel={tx("取消")} saveLabel={tx("保存")} primaryLabel={busy ? tx("正在保存…") : draft.id ? tx("保存修改") : tx("保存并启用")} close={close} save={() => void submit(false)} primary={() => void submit(draft.id ? currentEnabled : true)}/>{' '}
       </form>
-      {confirm && (<TeamConfirm busy={busy} error={error} cancelLabel={confirm === 'discard' ? tx("继续编辑") : tx("取消")} title={confirm === 'discard'
+      {confirm && (<TeamConfirm danger={confirm === 'discard' || confirm === 'restore'} busy={busy} error={error} cancelLabel={confirm === 'discard' ? tx("继续编辑") : tx("取消")} title={confirm === 'discard'
                 ? tx("放弃未保存修改？") : confirm === 'restore'
                 ? tx("恢复团队模板？") : tx("启用团队成员")} label={confirm === 'discard'
                 ? tx("放弃修改") : confirm === 'restore'

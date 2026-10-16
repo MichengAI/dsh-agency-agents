@@ -370,7 +370,7 @@ export function TeamsPanel(props: {
                 setEditor(null);
                 setNotice(tx("专家团配置已保存。"));
             }}/>)}
-      {confirm && (<TeamConfirm title={confirm.action === 'delete' ? tx("删除专家团？") : tx("启用团队成员")} label={confirm.action === 'delete' ? tx("确认删除") : tx("启用团队及所需成员")} busy={busy} error={error} onCancel={() => setConfirm(null)} onConfirm={() => {
+      {confirm && (<TeamConfirm danger={confirm.action === 'delete'} title={confirm.action === 'delete' ? tx("删除专家团？") : tx("启用团队成员")} label={confirm.action === 'delete' ? tx("确认删除") : tx("启用团队及所需成员")} busy={busy} error={error} onCancel={() => setConfirm(null)} onConfirm={() => {
                 const current = confirm;
                 void change(current.team, current.action, current.example, true);
             }}>

@@ -92,6 +92,10 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
   await expect(discardBtn).toBeVisible()
   const discardColor = await discardBtn.evaluate((el) => getComputedStyle(el).color)
   expect(discardColor).toBe('rgb(239, 68, 68)')
+  const discardBg = await discardBtn.evaluate((el) => getComputedStyle(el).backgroundColor)
+  expect(['rgba(0, 0, 0, 0)', 'transparent'].includes(discardBg)).toBe(true)
+  const discardBorder = await discardBtn.evaluate((el) => getComputedStyle(el).borderColor)
+  expect(discardBorder).toBe('rgb(239, 68, 68)')
   await page.getByRole('button', { name: '继续编辑' }).click()
   await expect(page.getByLabel('团队名称', { exact: true })).toHaveValue(
     '统一交互测试',
@@ -164,7 +168,7 @@ test('专家保留原标题工具栏与来源筛选，专家团采用同一结�
 
 test('切换专家团后保留专家搜索和来源筛选', async ({ page }) => {
   await page.goto('/?teams&settings')
-  const sourceSelect = page.locator('.aag-field-source:visible .ant-select')
+  const sourceSelect = page.locator('.aag-field-source:visible .aag-menu-select-trigger')
   await sourceSelect.click()
   await page.getByRole('option', { name: '内置', exact: true }).click()
   await page.locator('#aag-filter-search').fill('人类学')
@@ -213,8 +217,8 @@ test('数量写在对应页签上，来源选项与新建同行', async ({ page 
     await tab.click()
     await expect(tab).toContainText(total)
     await expect(tab).toContainText('已启用')
-    const source = page.locator('.aag-field-source:visible .ant-select')
-    const status = page.locator('.aag-field-status:visible .ant-select')
+    const source = page.locator('.aag-field-source:visible .aag-menu-select-trigger')
+    const status = page.locator('.aag-field-status:visible .aag-menu-select-trigger')
     await expect(source).toContainText('全部')
     const sourceBox = await source.boundingBox()
     const statusBox = await status.boundingBox()
@@ -258,7 +262,7 @@ test('添加成员默认只看已启用，停用专家仍可加入专家团', as
   await expect(picker.getByRole('button', { name: '产品经理' })).toBeVisible()
   await picker.getByLabel('搜索团队成员').fill('前端开发者')
   await expect(picker.getByText('没有匹配的专家')).toBeVisible()
-  await picker.locator('.aag-field-status .ant-select').click()
+  await picker.locator('.aag-field-status .aag-menu-select-trigger').click()
   await page.getByRole('option', { name: '全部状态', exact: true }).click()
   await expect(picker.getByRole('button', { name: '前端开发者' })).toBeVisible()
   await picker.getByRole('button', { name: '前端开发者' }).click()

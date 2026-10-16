@@ -33,7 +33,7 @@ export function CategorySelect(props: {
     }))
   }, [props.options])
 
-  return React.createElement('div', { className: 'ant-select aag-select-wrap', style: { display: 'inline-block' } },
+  return React.createElement('div', { className: 'aag-select-wrap', style: { display: 'inline-block' } },
     React.createElement(Menu, {
       open,
       onClose: () => setOpen(false),
@@ -52,7 +52,7 @@ export function CategorySelect(props: {
         'aria-label': props.label,
         'aria-expanded': open,
         disabled: props.disabled,
-        className: `aag-menu-select-trigger ant-select-selector${open ? ' is-open' : ''}`,
+        className: `aag-menu-select-trigger${open ? ' is-open' : ''}`,
         onClick: () => {
           if (!props.disabled) setOpen((prev) => !prev)
         },

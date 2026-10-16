@@ -52,7 +52,7 @@ export function TeamDialog({ title, children, close, className = '', }: {
       {children}
     </Modal>);
 }
-export function TeamConfirm({ title, children, label, onCancel, onConfirm, busy = false, cancelLabel, error, }: {
+export function TeamConfirm({ title, children, label, onCancel, onConfirm, busy = false, cancelLabel, danger, error, }: {
     cancelLabel?: string;
     title: string;
     children: React.ReactNode;
@@ -60,11 +60,12 @@ export function TeamConfirm({ title, children, label, onCancel, onConfirm, busy 
     onCancel(): void;
     onConfirm(): void;
     busy?: boolean;
+    danger?: boolean;
     error?: string;
 }) {
     const { locale, tx } = useTeamLocale();
 
-    return (<LibraryConfirm title={title} busy={busy} error={error} cancelLabel={cancelLabel ?? tx("取消")} confirmLabel={busy ? tx("正在处理…") : label} close={onCancel} confirm={onConfirm}>
+    return (<LibraryConfirm title={title} danger={danger} busy={busy} error={error} cancelLabel={cancelLabel ?? tx("取消")} confirmLabel={busy ? tx("正在处理…") : label} close={onCancel} confirm={onConfirm}>
       {children}
     </LibraryConfirm>);
 }
