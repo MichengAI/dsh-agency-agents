@@ -140,8 +140,8 @@ export function LibraryConfirm(props: {
       maskClosable={!props.busy}
       closable={!props.busy}
       footer={[
-        <Button key="cancel" autoFocus disabled={props.busy} onClick={() => { if (!props.busy) props.close() }}>{props.cancelLabel}</Button>,
-        <Button key="confirm" type="primary" danger={isDanger} disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
+        <Button key="cancel" variant="outline" autoFocus disabled={props.busy} onClick={() => { if (!props.busy) props.close() }}>{props.cancelLabel}</Button>,
+        <Button key="confirm" variant={isDanger ? 'outline' : 'primary'} danger={isDanger} disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
       ]}
     >
       {props.children}
