@@ -65,9 +65,9 @@ export function LibraryCard(props: {
           {props.avatar}
           <div className="aag-card-identity">
             <div className="aag-card-name" title={props.name}>
-              {props.name}
+              <span className="aag-card-name-text">{props.name}</span>
+              <div className="aag-card-division">{props.metadata}</div>
             </div>
-            <div className="aag-card-division">{props.metadata}</div>
           </div>
           <div className="aag-switch">
             <button
