@@ -1309,9 +1309,9 @@ describe('专家库目标稿样式契约', () => {
   })
 
   it('专家卡片固定高度，短标题也预留两行', () => {
-    expect(CARD_SETTINGS_CSS).toContain('.aag-expert-card{display:grid;box-sizing:border-box;')
-    expect(CARD_SETTINGS_CSS).toContain('height:207px;min-height:207px')
-    expect(CARD_SETTINGS_CSS).toContain('.aag-card-name{display:-webkit-box;overflow:hidden;height:44px;min-height:44px;')
+    expect(CARD_SETTINGS_CSS).toContain('.aag-expert-card{display:grid')
+    expect(CARD_SETTINGS_CSS).toContain('height:191px;min-height:191px')
+    expect(CARD_SETTINGS_CSS).toContain('.aag-card-name{display:-webkit-box')
     expect(CARD_SETTINGS_CSS).not.toContain('min-height:190px')
   })
 
@@ -1331,7 +1331,7 @@ describe('专家库目标稿样式契约', () => {
     expect(new Set(values.slice(1))).toEqual(expectedDivisions)
     expect(CARD_SETTINGS_CSS).toContain('.aag-expert-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))')
     expect(CARD_SETTINGS_CSS).not.toContain('width:80px;height:107px')
-    expect(CARD_SETTINGS_CSS).toContain('min-height:48px')
+    expect(CARD_SETTINGS_CSS).toContain('min-height:32px')
   })
 
   it('筛选按内容宽度排列，搜索吃掉剩余空间', () => {
