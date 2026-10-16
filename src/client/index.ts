@@ -1384,7 +1384,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           enabledLabel: props.t('settings.enabled'), disabledLabel: props.t('settings.disabled'),
           toggle: () => toggle(expert.slug),
           moreItems: [
-            { id: 'edit', label: props.t(expert.custom ? 'custom.edit' : 'custom.copy'), icon: React.createElement(EditIcon, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }), disabled: isSaving, onSelect: () => openEditor(expert) },
+            { id: 'edit', label: props.t(expert.custom ? 'custom.edit' : 'custom.copy'), icon: React.createElement(expert.custom ? EditIcon : Copy, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }), disabled: isSaving, onSelect: () => openEditor(expert) },
             ...(expert.custom ? [{ id: 'delete', label: props.t('custom.delete'), icon: React.createElement(TrashIcon, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }), danger: true, disabled: isSaving, onSelect: () => { setDeleting(expert); setDeleteError(null) } }] : []),
           ],
           actions: React.createElement(React.Fragment, null,
