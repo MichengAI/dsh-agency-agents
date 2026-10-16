@@ -15,12 +15,12 @@ export const TEAM_CSS = `
 .agt-avatar{object-fit:cover;border-radius:50%;flex-shrink:0}
 .agt-dialog{font-family:inherit;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary)}.agt-dialog .ant-input,.agt-dialog .ant-input-affix-wrapper{line-height:1.5714285714285714}
 .agt-dialog *{box-sizing:border-box}
-.agt-dialog button:not(.aag-btn):not(.ant-modal-close){display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:0 12px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;cursor:pointer}
-.agt-dialog button:not(.aag-btn):not(.ant-modal-close):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
-.agt-dialog button:not(.aag-btn):not(.ant-modal-close):disabled{opacity:.5;cursor:default}
-.agt-dialog button:not(.aag-btn):not(.ant-modal-close):focus-visible,.agt-dialog summary:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
+.agt-dialog button:not(.aag-host-btn):not(.ant-modal-close){display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:0 12px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;cursor:pointer}
+.agt-dialog button:not(.aag-host-btn):not(.ant-modal-close):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
+.agt-dialog button:not(.aag-host-btn):not(.ant-modal-close):disabled{opacity:.5;cursor:default}
+.agt-dialog button:not(.aag-host-btn):not(.ant-modal-close):focus-visible,.agt-dialog summary:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
 .agt-dialog input:not(.ant-input):focus-visible,.agt-dialog textarea:not(.ant-input):focus-visible{outline:none;border-color:var(--dsw-alias-label-tertiary)}
-.agt-dialog h3 svg,.agt-dialog button:not(.aag-btn):not(.ant-modal-close) svg{width:18px;height:18px;flex:none;stroke-width:1.7}
+.agt-dialog h3 svg,.agt-dialog button:not(.aag-host-btn):not(.ant-modal-close) svg{width:18px;height:18px;flex:none;stroke-width:1.7}
 .agt-dialog h2{font-size:18px;line-height:26px;margin:0 0 8px}
 .agt-dialog h3{font-size:15px;line-height:22px;margin:0}
 .agt-dialog h4{font-size:14px;line-height:22px;margin:0 0 12px}

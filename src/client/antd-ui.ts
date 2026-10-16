@@ -20,8 +20,6 @@ import SegmentedImport from 'antd/es/segmented/index.js'
 import type { ListProps } from 'antd/es/list/index.js'
 import ListImport from 'antd/es/list/index.js'
 import type { ListItemMetaProps, ListItemProps } from 'antd/es/list/Item.js'
-import type { SwitchProps } from 'antd/es/switch/index.js'
-import SwitchImport from 'antd/es/switch/index.js'
 import { Button as PrimitiveButton, type ButtonVariant } from '@deepseek-ai/dsh-client-ui-primitives'
 import React from 'react'
 
@@ -55,14 +53,14 @@ export function Button({ variant, type, danger, loading, block, size, shape, cla
   const isPrimary = mappedVariant === 'primary'
 
   const classes = [
-    'ant-btn',
+    'aag-host-btn',
     'aag-theme',
     href ? 'aag-link-btn' : '',
     className,
-    isPrimary ? 'ant-btn-primary' : '',
-    danger ? (isPrimary ? 'ant-btn-dangerous ant-btn-primary is-danger' : 'ant-btn-dangerous is-danger') : '',
-    block ? 'ant-btn-block is-block' : '',
-    loading ? 'ant-btn-loading is-loading' : '',
+    isPrimary ? 'is-primary' : '',
+    danger ? 'is-danger' : '',
+    block ? 'is-block' : '',
+    loading ? 'is-loading' : '',
   ].filter(Boolean).join(' ')
 
   const mappedSize = (size === 'small' || size === 'sm') ? 'sm' : 'md'
@@ -70,7 +68,7 @@ export function Button({ variant, type, danger, loading, block, size, shape, cla
   const hasChildren = children !== undefined && children !== null && children !== false
   const iconElement = icon ? React.createElement('span', {
     key: 'icon',
-    className: 'ant-btn-icon',
+    className: 'aag-btn-icon',
     style: { display: 'inline-flex', alignItems: 'center', marginRight: (hasChildren && !href) ? 6 : undefined },
   }, icon) : null
 
@@ -105,7 +103,6 @@ type AntdList = (<T>(props: ListProps<T> & { ref?: React.Ref<HTMLDivElement> }) 
   Item: React.ComponentType<ListItemProps> & { Meta: React.ComponentType<ListItemMetaProps> }
 }
 export const List = unwrap<AntdList>(ListImport)
-export const Switch = unwrap<React.ComponentType<SwitchProps>>(SwitchImport)
 const darkAlgorithm = unwrap<NonNullable<ConfigProviderProps['theme']> extends { algorithm?: infer Algorithm } ? Algorithm : never>(darkAlgorithmImport)
 const defaultAlgorithm = unwrap<NonNullable<ConfigProviderProps['theme']> extends { algorithm?: infer Algorithm } ? Algorithm : never>(defaultAlgorithmImport)
 
@@ -121,7 +118,6 @@ export function AntdProvider(props: { locale?: Locale; children?: React.ReactNod
   const dark = useHostDark()
   return React.createElement(antdMounted.Provider, { value: true }, React.createElement(ConfigProvider, {
     locale: props.locale,
-    button: { autoInsertSpace: false },
     theme: {
       ...antdThemeConfig,
       algorithm: dark ? darkAlgorithm : defaultAlgorithm,

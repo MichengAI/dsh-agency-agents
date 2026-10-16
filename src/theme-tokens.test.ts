@@ -15,11 +15,12 @@ test('Ant Design 隔离命名空间与官方尺度配置', () => {
   )
 })
 
-test('危险按钮悬停保持红色，弹窗页脚保留键盘焦点环', () => {
+test('危险按钮悬停保持红色，弹窗页脚保留键盘焦点环且消除 ant-btn 假皮肤', () => {
+  assert.doesNotMatch(antdThemeCss, /\.aag-theme\.ant-btn/, '彻底消除假 ant-btn 模拟层')
   assert.match(
     antdThemeCss,
-    /\.aag-theme\.ant-btn:not\(\.ant-btn-primary\):not\(\.ant-btn-text\):not\(\.ant-btn-link\):not\(\.is-danger\):not\(\.ant-btn-dangerous\):hover/,
-    '通用悬停不得盖住 danger',
+    /\.aag-theme \.is-danger\{color:var\(--dsw-alias-state-error-primary,#ef4444\)!important/,
+    '危险态采用纯净的语义类名',
   )
   assert.doesNotMatch(antdThemeCss, /ant-modal-footer button:focus-visible\{outline:none/, '键盘焦点环不能被抹掉')
   assert.match(
