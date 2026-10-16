@@ -39,6 +39,9 @@ try {
   outDir: directory,
   platform: 'browser', format: 'esm', dts: false,
   plugins: [cssModulesPlugin()],
+  alias: {
+    '@deepseek-ai/dsh-client-ui-primitives': resolve('test/runtime-modules.ts'),
+  },
   deps: { alwaysBundle: () => true },
   define: { 'process.env.NODE_ENV': JSON.stringify('development') }
   })

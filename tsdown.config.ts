@@ -35,6 +35,7 @@ const PLATFORM_MODULES = [
   '@deepseek-ai/dsh-client-web-react',
   '@deepseek-ai/dsh-client-ui-attachment',
   '@deepseek-ai/dsh-client-schema-form',
+  '@deepseek-ai/dsh-client-ui-primitives',
 ] as const
 
 const CLIENT_EXTERNALS: readonly string[] = PLATFORM_MODULES

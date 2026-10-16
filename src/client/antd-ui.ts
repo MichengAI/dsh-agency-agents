@@ -22,8 +22,6 @@ import SegmentedImport from 'antd/es/segmented/index.js'
 import type { ListProps } from 'antd/es/list/index.js'
 import ListImport from 'antd/es/list/index.js'
 import type { ListItemMetaProps, ListItemProps } from 'antd/es/list/Item.js'
-import type { SelectProps } from 'antd/es/select/index.js'
-import SelectImport from 'antd/es/select/index.js'
 import type { SwitchProps } from 'antd/es/switch/index.js'
 import SwitchImport from 'antd/es/switch/index.js'
 import React from 'react'
@@ -49,7 +47,6 @@ type AntdList = (<T>(props: ListProps<T> & { ref?: React.Ref<HTMLDivElement> }) 
   Item: React.ComponentType<ListItemProps> & { Meta: React.ComponentType<ListItemMetaProps> }
 }
 export const List = unwrap<AntdList>(ListImport)
-export const Select = unwrap<React.ComponentType<SelectProps>>(SelectImport)
 export const Switch = unwrap<React.ComponentType<SwitchProps>>(SwitchImport)
 const darkAlgorithm = unwrap<NonNullable<ConfigProviderProps['theme']> extends { algorithm?: infer Algorithm } ? Algorithm : never>(darkAlgorithmImport)
 const defaultAlgorithm = unwrap<NonNullable<ConfigProviderProps['theme']> extends { algorithm?: infer Algorithm } ? Algorithm : never>(defaultAlgorithmImport)

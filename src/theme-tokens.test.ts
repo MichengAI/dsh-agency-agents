@@ -17,10 +17,9 @@ test('Ant Design 隔离命名空间与官方尺度配置', () => {
 
 test('Ant Design CSS 桥接层不认领第三方皮肤作用域并采用官方半透明浮层令牌', () => {
   assert.ok(!/data-dsh-glass|data-ds-dark-theme/.test(antdThemeCss), '适配层不认领第三方主题作用域，也不新增独立明暗配色')
-  assert.ok(antdThemeCss.includes('--dsw-menu-surface-fill') && antdThemeCss.includes('--dsw-elevation-panel'), '浮层材质归宿主主题所有')
-  assert.ok(antdThemeCss.includes('--dsw-menu-backdrop-filter'), '支持毛玻璃模糊滤镜')
+  assert.ok(antdThemeCss.includes('--dsw-alias-brand-primary'), '浮层材质归宿主主题所有')
+  assert.ok(antdThemeCss.includes('.aag-menu-select-trigger'), 'Select 触发器接入官方 outline 按钮')
   assert.ok(antdThemeCss.includes('.aag-theme.ant-modal'), 'Modal 桥接官方 Panel 圆角')
-  assert.ok(antdThemeCss.includes('.aag-theme.ant-select-dropdown'), 'Select 浮层桥接官方浮层令牌')
 })
 
 test('插件各组件全面接入 DSH 官方圆角体系', () => {

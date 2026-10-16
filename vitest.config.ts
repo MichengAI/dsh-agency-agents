@@ -39,6 +39,7 @@ export default defineConfig({
   resolve: {
     alias: {
       'react-dom/client': fileURLToPath(new URL('./test/runtime-modules.ts', import.meta.url)),
+      '@deepseek-ai/dsh-client-ui-primitives': fileURLToPath(new URL('./test/runtime-modules.ts', import.meta.url)),
     },
   },
   test: {
