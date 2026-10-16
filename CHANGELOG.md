@@ -4,9 +4,10 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
-## Unreleased
+## 1.0.20 - 2026-10-16
 
 - Adopt official host `@deepseek-ai/dsh-client-ui-primitives` `Menu` and `Button` primitives, completely eliminating custom select/dropdown logic and Ant Design Select dependencies.
+- Cards, dialogs, and controls use the host radius scale and semantic background tokens, so frosted-glass themes are no longer blocked by hardcoded solid fills.
 - Elevate dropdown visual fidelity with native frosted glass (`blur(16px)` / `blur(20px)`), prominent shadows, and fine hairline borders.
 - Streamline card action footer into compact 32px height with icon-only controls (View, Copy & Customize, Edit, Delete), eliminating visual clutter and redundant prompt copy actions.
 - Wrap card division categories in refined pill badges and eliminate vertical empty holes on single-line titles.

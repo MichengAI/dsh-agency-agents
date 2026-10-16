@@ -1,15 +1,21 @@
 ## 中文说明
 
-- 支持 DSH `0.2.1-alpha.3`，继续兼容既有已支持版本；开发依赖中的 `@deepseek-ai/dsh*` 对齐宿主 `0.2.1-alpha.3`，Cordis 对齐 `4.0.5-alpha.2`。
-- 从开发依赖中移除宿主已删除的 `@deepseek-ai/dsh-invariants`（自 alpha.1 起不再提供）。
-- 适配子 Agent 破坏性变更：DSH 0.2.1-alpha.3+ 已移除启动期 `persona` / `toolFilter`；改走 `startActivation`（`delivery: 'caller'`），并在子 Agent `agent/created` 时以 scoped persona 与 `tools.restrict` 恢复专家人格与委派工具黑名单。仍提供 `ctx.subagents.start` 的旧宿主保持原启动期字段。
-- Agent Team 仍通过 `sendMessage` 直投。
+- 全面接入宿主官方 `@deepseek-ai/dsh-client-ui-primitives` 原生 `Menu` 与 `Button` 原语，彻底移除 Ant Design Select 依赖及自绘下拉逻辑。
+- 卡片、弹窗和控件改用宿主圆角阶梯与语义背景变量，毛玻璃主题下不再被硬编码实心色挡住。
+- 下拉浮层全面采用原生半透明毛玻璃材质（`blur(16px)` / `blur(20px)`）、细腻发丝线边框与柔和投影，对齐插件市场官方质感。
+- 专家与专家团卡片底部操作栏收敛为 32px 紧凑高度，全面升级为纯矢量图标按钮（查看、复制并自定义、编辑、删除），并移除冗余的独立复制提示词按钮。
+- 卡片分类采用轻量微胶囊徽标（Badge Pill）承托，重构标题流式排版彻底消除单行短名称下方的空白断层。
+- 二次确认弹窗全面对齐轻量 Outline 红色发丝线描边规范，优化说明文案消除标题复读。
+- 确认弹窗按钮恢复可见的键盘焦点环；删除、放弃按钮悬停时保持红色，不再变成灰底。
 
 ---
 
 ## English
 
-- Support DSH `0.2.1-alpha.3` while retaining all existing supported versions; pin development `@deepseek-ai/dsh*` dependencies to host `0.2.1-alpha.3` and Cordis to `4.0.5-alpha.2`.
-- Drop removed host package `@deepseek-ai/dsh-invariants` from development dependencies (gone since alpha.1).
-- Adapt the subagent breaking change: start-time `persona` / `toolFilter` are gone on DSH 0.2.1-alpha.3+; use `startActivation` with `delivery: 'caller'`, and restore expert persona plus delegated-tool denylist on the child's `agent/created` via a scoped persona section and `tools.restrict`. Older hosts that still expose `ctx.subagents.start` keep the previous start-time fields.
-- Agent Team continues to use `sendMessage` direct delivery.
+- Adopt official host `@deepseek-ai/dsh-client-ui-primitives` `Menu` and `Button` primitives, completely eliminating custom select/dropdown logic and Ant Design Select dependencies.
+- Cards, dialogs, and controls use the host radius scale and semantic background tokens, so frosted-glass themes are no longer blocked by hardcoded solid fills.
+- Elevate dropdown visual fidelity with native frosted glass (`blur(16px)` / `blur(20px)`), prominent shadows, and fine hairline borders.
+- Streamline card action footer into compact 32px height with icon-only controls (View, Copy & Customize, Edit, Delete), eliminating visual clutter and redundant prompt copy actions.
+- Wrap card division categories in refined pill badges and eliminate vertical empty holes on single-line titles.
+- Unify confirmation modal button styling with lightweight hairline outline danger feedback and enhanced dialog copy.
+- Keep a visible keyboard focus ring on confirmation dialog buttons, and keep delete or discard buttons red on hover.
