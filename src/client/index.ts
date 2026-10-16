@@ -533,7 +533,8 @@ export const CARD_SETTINGS_CSS = `
 .aag-expert-avatar{display:block;width:44px;height:44px;border:0;border-radius:50%;corner-shape:round;background:var(--dsw-alias-bg-layer-3);object-fit:cover;object-position:center 20%}
 .aag-card-identity{display:flex;min-width:0;flex-direction:column;padding-right:48px}
 .aag-card-name{display:-webkit-box;overflow:hidden;height:${EXPERT_CARD_NAME_HEIGHT}px;min-height:${EXPERT_CARD_NAME_HEIGHT}px;font-size:16px;font-weight:650;line-height:22px;-webkit-box-orient:vertical;-webkit-line-clamp:2}
-.aag-card-division{margin-top:2px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:18px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.aag-card-division{margin-top:2px;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.aag-division-pill{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:var(--dsw-radius-xs,4px);background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.06));border:0.5px solid var(--dsw-alias-border-l1,rgba(255,255,255,0.1));color:var(--dsw-alias-label-secondary);font-size:11px;font-weight:500;letter-spacing:0.2px}
 .aag-card-description{flex:1;display:-webkit-box;margin:8px 0 0;overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:1.5;-webkit-box-orient:vertical;-webkit-line-clamp:3}
 .aag-card-actions{display:flex;align-items:stretch;height:32px;min-height:32px;max-height:32px;border-top:0.5px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2)}
 .aag-card-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1 1 0;min-width:0;height:32px;min-height:32px;padding:0 8px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;font-weight:500;line-height:18px;white-space:nowrap;cursor:pointer;transition:color 120ms ease,background 120ms ease}
@@ -1372,7 +1373,11 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           key: expert.slug,
           name: displayName(expert, props.getActive()),
           avatar: React.createElement('img', { className: 'aag-expert-avatar', src: avatar, width: 44, height: 44, loading: 'lazy', decoding: 'async', alt: '' }),
-          metadata: React.createElement(React.Fragment, null, inputTriggerSourceName(expert.division, props.getActive()), expert.conflict ? React.createElement('span', { className: 'aag-custom-badge', title: props.t('custom.nameConflictHint') }, props.t('custom.nameConflict')) : null, expert.custom ? React.createElement('span', { className: 'aag-custom-badge' }, props.t('custom.source')) : null),
+          metadata: React.createElement(React.Fragment, null,
+            React.createElement('span', { className: 'aag-division-pill' }, inputTriggerSourceName(expert.division, props.getActive())),
+            expert.conflict ? React.createElement('span', { className: 'aag-custom-badge', title: props.t('custom.nameConflictHint') }, props.t('custom.nameConflict')) : null,
+            expert.custom ? React.createElement('span', { className: 'aag-custom-badge' }, props.t('custom.source')) : null
+          ),
           description: displayDescription(expert, props.getActive()),
           enabled, disabled: isSaving || expert.conflict === true,
           enabledLabel: props.t('settings.enabled'), disabledLabel: props.t('settings.disabled'),
