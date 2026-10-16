@@ -23,6 +23,7 @@ export function CategorySelect(props: {
     value: props.value,
     options: props.options.map((option) => ({ value: option.value, label: option.label })),
     popupMatchSelectWidth: false,
+    popupClassName: 'aag-select-dropdown',
     listHeight: 320,
     onChange: (value: unknown) => props.onChange(String(value)),
   })
