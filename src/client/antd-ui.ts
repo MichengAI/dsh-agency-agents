@@ -65,6 +65,7 @@ export function Button({ variant, type, danger, loading, block, size, shape, cla
     ...props,
     variant: mappedVariant,
     size: mappedSize,
+    icon: props.icon,
     className: classes || undefined,
     disabled: props.disabled || loading,
   }, children)
