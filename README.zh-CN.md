@@ -8,7 +8,7 @@
 
   **331 位专业智能体 · 5 个内置专家团 · 自定义协作**
 
-  [English](README.md) · [专家列表](#专家列表) · [安装](#安装) · [更新日志](CHANGELOG.zh-CN.md) · [发行说明](RELEASE_NOTES.md) · [Apache-2.0](LICENSE)
+  [English](README.md) · [专家列表](#专家列表) · [安装](#安装) · [更新日志](CHANGELOG.zh-CN.md) · [Apache-2.0](LICENSE)
 
   [![许可证：Apache-2.0](https://img.shields.io/badge/许可证-Apache--2.0-blue.svg)](LICENSE)
   [![内置智能体](https://img.shields.io/badge/内置智能体-331-0f766e.svg)](#专家列表)
@@ -69,7 +69,7 @@
 - 团队配置保存在宿主 `agency-agents` 命名空间。编辑冲突保留草稿并提示核对最新配置；停用或删除团队不会停用专家，也不会删除历史会话。
 - 专家不得继续召唤专家或自动追加分析轮次。取消会停止未启动任务；已有结果和失败原因分别报告。
 
-> 本 README 描述 1.0.20，正式发行以 npm 和 GitHub Releases 为准。完整改动见[更新日志](CHANGELOG.zh-CN.md)，双语版本说明见[发行说明](RELEASE_NOTES.md)。升级保留已有专家配置；回退旧版前先备份设置，旧版不具备团队功能。
+> 本 README 描述 1.0.20，正式发行以 npm 和 GitHub Releases 为准。完整改动见[更新日志](CHANGELOG.zh-CN.md)。升级保留已有专家配置；回退旧版前先备份设置，旧版不具备团队功能。
 ## 界面预览
 
 以下为 1.0.0 中文界面截图，专家与专家团共用同一个设置页面。
