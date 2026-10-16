@@ -55,8 +55,12 @@ export const TEAM_CSS = `
 .agt-segment{display:flex;gap:8px;flex-wrap:wrap}
 .agt-segment button[aria-pressed=true]{border-color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-layer-3)}
 .agt-count{float:right;font-size:12px}
-.agt-edit-member{padding:12px 0;border-bottom:0.5px solid var(--dsw-alias-border-l2)}
-.agt-edit-member .agt-row strong{margin-right:auto}
+.agt-edit-member{padding:14px;margin-top:10px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md,12px);background:var(--dsw-alias-bg-layer-1)}
+.agt-edit-member:first-of-type{border-left:3px solid var(--dsw-alias-brand-primary)}
+.agt-edit-member .agt-row strong{margin-right:auto;font-size:14px}
+.agt-edit-member details{margin-top:8px}
+.agt-edit-member summary{cursor:pointer;color:var(--dsw-alias-label-secondary);font-size:12px;user-select:none}
+.agt-edit-member summary:hover{color:var(--dsw-alias-label-primary)}
 .agt-editor .aag-custom-footer{flex-shrink:0}
 .agt-editor .aag-custom-footer>span{display:block;font-size:12px;color:var(--dsw-alias-label-secondary);margin-bottom:8px}
 .agt-picker-tools{flex:none;margin:0}
