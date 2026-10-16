@@ -158,11 +158,11 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
     help: props.t('custom.enableHint'), cancelLabel: props.t('custom.cancel'), saveLabel: props.t('custom.save'),
     primaryLabel: props.t(busy ? 'custom.saving' : draft.slug ? 'custom.saveChanges' : 'custom.saveEnable'),
     close, save: () => submit(false), primary: () => submit(draft.slug ? enabled : true),
-  }),  discard ? h(LibraryConfirm, { title: props.t('custom.discardTitle'), cancelLabel: props.t('custom.keep'), confirmLabel: props.t('custom.discard'), close: () => setDiscard(false), confirm: props.onClose }, h('p', null, props.t('custom.discardTitle'))) : null)
+  }),  discard ? h(LibraryConfirm, { title: props.t('custom.discardTitle'), danger: true, cancelLabel: props.t('custom.keep'), confirmLabel: props.t('custom.discard'), close: () => setDiscard(false), confirm: props.onClose }, h('p', null, props.t('custom.discardTitle'))) : null)
 }
 
 export function CustomDeleteDialog(props: { name: string; busy: boolean; error: string | null; t: TranslateNS<'agency'>; close(): void; confirm(): void }): React.ReactElement {
-  return h(LibraryConfirm, { title: props.t('custom.deleteTitle'), busy: props.busy, error: props.error, cancelLabel: props.t('custom.cancel'), confirmLabel: props.t('custom.delete'), close: props.close, confirm: props.confirm },
+  return h(LibraryConfirm, { title: props.t('custom.deleteTitle'), danger: true, busy: props.busy, error: props.error, cancelLabel: props.t('custom.cancel'), confirmLabel: props.t('custom.delete'), close: props.close, confirm: props.confirm },
     h('p', null, props.name), h('p', { className: 'aag-note' }, props.t('custom.deleteHint')))
 }
 export const CUSTOM_EDITOR_CSS = `

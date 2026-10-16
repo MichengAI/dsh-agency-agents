@@ -6,7 +6,11 @@ const baseURL = `http://127.0.0.1:${port}`
 
 export default defineConfig({
   testDir: './test/browser',
-  use: { baseURL, browserName: 'chromium', channel: 'chrome' },
+  use: {
+    baseURL,
+    browserName: 'chromium',
+    channel: process.env.PW_CHANNEL || 'chrome',
+  },
   webServer: { command: 'node scripts/serve-browser-tests.mjs', url: baseURL, reuseExistingServer: false },
   reporter: 'list'
 })

@@ -122,11 +122,13 @@ export function LibraryConfirm(props: {
   confirmLabel: string
   cancelLabel: string
   busy?: boolean
+  danger?: boolean
   error?: string | null
   confirm(): void
   close(): void
 }) {
   useEscapeLayer(true, () => { if (!props.busy) props.close() })
+  const isDanger = props.danger ?? (props.title.includes('放弃') || props.title.includes('删除') || props.title.toLowerCase().includes('discard') || props.title.toLowerCase().includes('delete'))
   return (
     <MaybeAntdProvider locale={documentAntdLocale()}>
     <Modal
@@ -139,7 +141,7 @@ export function LibraryConfirm(props: {
       closable={!props.busy}
       footer={[
         <Button key="cancel" autoFocus disabled={props.busy} onClick={() => { if (!props.busy) props.close() }}>{props.cancelLabel}</Button>,
-        <Button key="confirm" type="primary" danger={props.title.includes('放弃') || props.title.includes('删除')} disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
+        <Button key="confirm" type="primary" danger={isDanger} disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
       ]}
     >
       {props.children}
