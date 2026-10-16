@@ -2,6 +2,7 @@ import { AntdProvider, Button, Input, Segmented } from './antd-ui.js'
 import { antdLocale } from './antd-locale.js'
 import { LibraryCard } from './library-ui.js'
 import { IconPlus } from './team-shared.js'
+import { Button as PrimitiveButton, type ButtonVariant } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { AgencyTeamsRemote } from './remote.js'
 import { TeamsPanel, unwrap, type TeamRemote } from './team-ui.js'
 import { TEAM_CSS } from './team-style.js'
@@ -488,10 +489,6 @@ export const SETTINGS_CSS = `
 .aag-title-row{display:flex;align-items:center;gap:8px 12px;min-width:0;flex-wrap:wrap}
 .aag-settings-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .aag-settings-links>span[data-mpi-check]{display:inline-flex;align-items:center}
-.aag-settings-links>a,.aag-settings-links button{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;height:28px!important;padding:0 10px!important;border:0.5px solid var(--dsw-alias-border-l2,#494949)!important;border-radius:var(--dsw-radius-sm,8px)!important;background:transparent!important;color:var(--dsw-alias-label-secondary,#b9b9b9)!important;font:inherit!important;font-size:12px!important;line-height:20px!important;text-decoration:none!important;cursor:pointer!important;user-select:none!important;box-sizing:border-box!important;transition:border-color 120ms ease,color 120ms ease,background 120ms ease!important}
-.aag-settings-links>a:hover,.aag-settings-links button:hover{border-color:var(--dsw-alias-border-l3,#555)!important;color:var(--dsw-alias-label-primary,#eee)!important;background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.12))!important}
-.aag-settings-links>a:focus-visible,.aag-settings-links button:focus-visible{outline:var(--dsw-focus-ring-width,1px) solid var(--dsw-focus-ring-color,var(--dsw-alias-brand-primary))!important;outline-offset:0!important}
-.aag-settings-links svg{display:block!important;width:14px!important;height:14px!important}
 .aag-title{margin:0;font-size:20px;line-height:28px;font-weight:650;letter-spacing:-.2px}
 .aag-note{overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;text-overflow:ellipsis;white-space:nowrap}
 .aag-error{color:var(--dsw-alias-state-error-primary);font-size:13px;line-height:20px}
@@ -645,15 +642,13 @@ function feedbackMark16(): React.ReactElement {
 }
 
 function settingsGithubLinks(t: TranslateNS<'agency'>): React.ReactElement {
-  return React.createElement('div', { className: 'aag-settings-links' }, SETTINGS_GITHUB_LINKS.map((link) => React.createElement(Button, {
+  return React.createElement('div', { className: 'aag-settings-links' }, SETTINGS_GITHUB_LINKS.map((link) => React.createElement(PrimitiveButton, {
     key: link.href,
-    size: 'small',
-    shape: 'default',
-    href: link.href,
-    target: '_blank',
-    rel: 'noreferrer',
+    variant: 'outline',
+    size: 'sm',
     'aria-label': t(link.labelKey),
     icon: link.icon === 'github' ? githubMark16() : feedbackMark16(),
+    onClick: () => window.open(link.href, '_blank', 'noreferrer'),
   }, t(link.labelKey))))
 }
 

@@ -1,5 +1,6 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
+import { Button as PrimitiveButton } from '@deepseek-ai/dsh-client-ui-primitives'
 import { AntdProvider, Button, Modal, Progress } from './antd-ui.js'
 import { useEscapeLayer } from './escape-layer.js'
 import { documentAntdLocale, documentUiLocale } from './antd-locale.js'
@@ -31,9 +32,6 @@ type UpdatePayload = {
 const UPDATE_HEADER = 'x-michengai-plugin-update'
 const STYLE_ID = 'michengai-plugin-update-ui'
 const CSS = `
-.mpi-check-host button,.mpi-check-host .ant-btn{height:28px!important;padding:0 8px!important;font-size:12px!important;border-radius:var(--dsw-radius-sm,8px)!important;background:transparent!important;border:0.5px solid var(--dsw-alias-border-l2)!important;color:var(--dsw-alias-label-secondary)!important}
-.mpi-check-host button:hover:not(:disabled),.mpi-check-host .ant-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)!important;color:var(--dsw-alias-label-primary)!important;border-color:var(--dsw-alias-border-l3,#555)!important}
-.mpi-check-host svg{width:14px;height:14px;flex-shrink:0}
 .mpi-intro{margin:0 0 16px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px}.mpi-meta{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 18px;margin:0 0 16px;font-size:12px;line-height:18px}.mpi-meta dt{color:var(--dsw-alias-label-secondary)}.mpi-meta dd{margin:0}.mpi-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.mpi-latest{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}.mpi-status{font-size:13px;font-weight:600;line-height:18px}.mpi-status[data-kind=error]{color:var(--dsw-alias-state-error-primary)}.mpi-status[data-kind=success]{color:var(--dsw-alias-state-success-primary)}.mpi-status[data-kind=update]{color:#e8b15a !important}.mpi-manual{border-top:1px solid var(--dsw-alias-border-l2);padding-top:16px}.mpi-manual h3{margin:0 0 6px;font-size:14px;line-height:20px}.mpi-manual p{margin:0 0 10px;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mpi-command{display:flex;align-items:flex-start;gap:8px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;padding:10px;background:var(--dsw-alias-bg-layer-3,var(--dsw-specific-menu-item-hover))}.mpi-command code{min-width:0;flex:1;overflow:visible;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:18px;white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:560px){.mpi-meta{grid-template-columns:1fr;gap:2px}.mpi-meta dd{margin-bottom:6px}}
 `
 
@@ -201,9 +199,9 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
     if (buttonRoot === undefined) return
     iconNode ??= options.createIcon('refresh')
     const icon = iconNode
-    buttonRoot.render(React.createElement(AntdProvider, { locale: documentAntdLocale() }, React.createElement(Button, {
-      size: 'small', shape: 'default', onClick: openDialog, icon: React.createElement(HostIcon, { node: icon }),
-    }, React.createElement('span', { 'data-mpi-label': '' }, strings().check))))
+    buttonRoot.render(React.createElement(PrimitiveButton, {
+      variant: 'outline', size: 'sm', onClick: openDialog, icon: React.createElement(HostIcon, { node: icon }),
+    }, React.createElement('span', { 'data-mpi-label': '' }, strings().check)))
   }
   const applyControls = (): void => {
     const row = document.querySelector<HTMLElement>(options.titleRowSelector)
