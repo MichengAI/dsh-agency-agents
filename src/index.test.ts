@@ -1318,7 +1318,7 @@ describe('专家库目标稿样式契约', () => {
   it('圆形小头像释放正文宽度，简介独占整行并展示三行', () => {
     expect(CARD_SETTINGS_CSS).toContain('.aag-expert-avatar{display:block;width:44px;height:44px')
     expect(CARD_SETTINGS_CSS).toContain('border-radius:50%')
-    expect(CARD_SETTINGS_CSS).toContain('.aag-card-description{grid-column:1/-1')
+    expect(CARD_SETTINGS_CSS).toContain('.aag-card-description{flex:1;display:-webkit-box')
     expect(CARD_SETTINGS_CSS).toContain('-webkit-line-clamp:3')
   })
 

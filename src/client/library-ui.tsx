@@ -60,35 +60,37 @@ export function LibraryCard(props: {
   return (
     <article className="aag-expert-card" data-testid={props.testId}>
       <div className="aag-card-body">
-        {props.avatar}
-        <div className="aag-card-identity">
-          <div className="aag-card-name" title={props.name}>
-            {props.name}
+        <div className="aag-card-header">
+          {props.avatar}
+          <div className="aag-card-identity">
+            <div className="aag-card-name" title={props.name}>
+              {props.name}
+            </div>
+            <div className="aag-card-division">{props.metadata}</div>
           </div>
-          <div className="aag-card-division">{props.metadata}</div>
+          <div className="aag-switch">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={props.enabled}
+              disabled={props.disabled}
+              aria-label={`${props.name}：${props.enabled ? props.enabledLabel : props.disabledLabel}`}
+              title={props.enabled ? props.enabledLabel : props.disabledLabel}
+              className="aag-enable-switch"
+              onClick={(event) => {
+                if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+                props.toggle()
+              }}
+            >
+              <span className="aag-enable-switch-thumb" aria-hidden="true" />
+            </button>
+            <span className="aag-switch-state">
+              {props.enabled ? props.enabledLabel : props.disabledLabel}
+            </span>
+          </div>
         </div>
         <div className="aag-card-description" title={props.description}>
           {props.description}
-        </div>
-        <div className="aag-switch">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={props.enabled}
-            disabled={props.disabled}
-            aria-label={`${props.name}：${props.enabled ? props.enabledLabel : props.disabledLabel}`}
-            title={props.enabled ? props.enabledLabel : props.disabledLabel}
-            className="aag-enable-switch"
-            onClick={(event) => {
-              if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
-              props.toggle()
-            }}
-          >
-            <span className="aag-enable-switch-thumb" aria-hidden="true" />
-          </button>
-          <span className="aag-switch-state">
-            {props.enabled ? props.enabledLabel : props.disabledLabel}
-          </span>
         </div>
       </div>
       <div className="aag-card-actions">
