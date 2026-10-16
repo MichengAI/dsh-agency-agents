@@ -894,7 +894,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     const onPointerDown = (ev: PointerEvent): void => {
       const target = ev.target
       if (target instanceof Node && rootRef.current?.contains(target)) return
-      if (target instanceof Element && target.closest('.ant-modal, .ant-drawer, .ant-select-dropdown, .ant-dropdown')) return
+      if (target instanceof Element && target.closest('.ant-modal, .ant-drawer, .dsh-primitives-menu, [role="menu"]')) return
       close()
     }
     document.addEventListener('pointerdown', onPointerDown)
@@ -995,7 +995,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
 
   return React.createElement(AntdProvider, { locale: antdLocale(props.getActive()) }, React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef, onBlur: (event: React.FocusEvent) => {
     const next = event.relatedTarget
-    if (next instanceof Element && (event.currentTarget.contains(next) || next.closest('.ant-modal, .ant-drawer, .ant-select-dropdown, .ant-dropdown'))) return
+    if (next instanceof Element && (event.currentTarget.contains(next) || next.closest('.ant-modal, .ant-drawer, .dsh-primitives-menu, [role="menu"]'))) return
     if (next instanceof Node && !event.currentTarget.contains(next)) close()
   } },
     React.createElement('span', { ref: triggerRef }, React.createElement('button', { type: 'button', className: 'aag-btn', title: props.t('button.title'), 'aria-expanded': open, 'aria-haspopup': 'dialog', 'aria-controls': open ? menuId : undefined, onMouseDown: keepComposerFocus, onClick }, expertIcon(), props.t('settings.nav'))),

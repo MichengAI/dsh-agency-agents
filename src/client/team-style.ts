@@ -13,14 +13,14 @@ export const TEAM_CSS = `
 .aag-team-avatar .agt-stack img:nth-child(2){left:17px;z-index:2}
 .aag-team-avatar .agt-stack img:nth-child(3){left:9px;top:18px;z-index:3}
 .agt-avatar{object-fit:cover;border-radius:50%;flex-shrink:0}
-.agt-dialog{font-family:inherit;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary)}.agt-dialog .ant-input,.agt-dialog .ant-input-affix-wrapper,.agt-dialog .ant-select,.agt-dialog .ant-select-selector{line-height:1.5714285714285714}
+.agt-dialog{font-family:inherit;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary)}.agt-dialog .ant-input,.agt-dialog .ant-input-affix-wrapper{line-height:1.5714285714285714}
 .agt-dialog *{box-sizing:border-box}
-.agt-dialog button:not(.ant-btn):not(.ant-modal-close){display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:0 12px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;cursor:pointer}
-.agt-dialog button:not(.ant-btn):not(.ant-modal-close):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
-.agt-dialog button:not(.ant-btn):not(.ant-modal-close):disabled{opacity:.5;cursor:default}
-.agt-dialog button:not(.ant-btn):not(.ant-modal-close):focus-visible,.agt-dialog summary:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
+.agt-dialog button:not(.aag-btn):not(.ant-modal-close){display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:0 12px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;cursor:pointer}
+.agt-dialog button:not(.aag-btn):not(.ant-modal-close):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
+.agt-dialog button:not(.aag-btn):not(.ant-modal-close):disabled{opacity:.5;cursor:default}
+.agt-dialog button:not(.aag-btn):not(.ant-modal-close):focus-visible,.agt-dialog summary:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
 .agt-dialog input:not(.ant-input):focus-visible,.agt-dialog textarea:not(.ant-input):focus-visible{outline:none;border-color:var(--dsw-alias-label-tertiary)}
-.agt-dialog h3 svg,.agt-dialog button:not(.ant-btn):not(.ant-modal-close) svg{width:18px;height:18px;flex:none;stroke-width:1.7}
+.agt-dialog h3 svg,.agt-dialog button:not(.aag-btn):not(.ant-modal-close) svg{width:18px;height:18px;flex:none;stroke-width:1.7}
 .agt-dialog h2{font-size:18px;line-height:26px;margin:0 0 8px}
 .agt-dialog h3{font-size:15px;line-height:22px;margin:0}
 .agt-dialog h4{font-size:14px;line-height:22px;margin:0 0 12px}
@@ -40,7 +40,6 @@ export const TEAM_CSS = `
 .agt-member-list .ant-list-item{align-items:center;min-width:0}
 .agt-member-list .ant-list-item-meta-title,.agt-member-list .ant-list-item-meta-description{overflow-wrap:anywhere}
 .agt-examples{display:grid;gap:8px}
-.agt-examples .ant-btn{display:flex;justify-content:space-between;align-items:center;width:100%;height:auto;min-height:32px;white-space:normal;text-align:left}
 .agt-read-prompt.ant-input{white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.65}
 .agt-danger{color:var(--dsw-alias-state-error-primary)!important;margin:0 16px 16px}
 .agt-editor form{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}

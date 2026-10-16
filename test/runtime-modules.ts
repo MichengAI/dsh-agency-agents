@@ -6,7 +6,9 @@ export function createRoot(): { render(node: React.ReactNode): void } {
 }
 
 export function Button(props: any) {
-  return React.createElement('button', { ...props, type: props.type || 'button' }, props.children)
+  const variantClass = props.variant ? `dsh-button-${props.variant}` : ''
+  const classes = [props.className, variantClass].filter(Boolean).join(' ')
+  return React.createElement('button', { ...props, className: classes || undefined, type: props.type || 'button' }, props.children)
 }
 
 export function Menu(props: any) {

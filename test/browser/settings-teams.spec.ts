@@ -26,7 +26,10 @@ test('团队编辑保留停用状态，配置冲突先核对再保存', async ({
       window as unknown as { teamFixtureConflict(): void }
     ).teamFixtureConflict(),
   )
-  await page.getByRole('button', { name: '保存修改', exact: true }).click()
+  const saveBtn = page.getByRole('button', { name: '保存修改', exact: true })
+  const saveBg = await saveBtn.evaluate((el) => getComputedStyle(el).backgroundColor)
+  expect(saveBg).toBe('rgb(102, 136, 250)')
+  await saveBtn.click()
   await expect(
     page.getByRole('button', { name: '保存修改', exact: true }),
   ).toBeDisabled()

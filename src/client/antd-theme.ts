@@ -15,7 +15,6 @@ export const antdThemeConfig: ThemeConfig = {
   },
   components: {
     Input: { controlHeight: 32 },
-    Button: { defaultShadow: 'none', primaryShadow: 'none', dangerShadow: 'none' },
     Modal: { headerBg: 'transparent', footerBg: 'transparent' },
   },
 }

@@ -54,6 +54,7 @@ export function Button({ variant, type, danger, loading, block, size, shape, cla
   else if (type === 'text' || type === 'link') mappedVariant = 'ghost'
 
   const classes = [
+    'aag-btn',
     className,
     danger ? 'is-danger' : '',
     block ? 'is-block' : '',
