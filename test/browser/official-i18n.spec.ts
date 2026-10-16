@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test('英文设置页与专家团详情、编辑表单没有中文界面残留', async ({ page }) => {
   await page.goto('/?teams&settings&lang=en')
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: 'Expert teams', exact: true }) }).click()
+  await page.getByRole('tab', { name: 'Expert teams', exact: true }).click()
   const cards = page.getByTestId('team-card')
   await expect(cards).toHaveCount(5)
   await expect(cards.first()).toContainText('Product Review Team')
@@ -35,7 +35,7 @@ for (const theme of ['dark', 'light']) test(`${theme}：分类菜单和启用开
 test('聊天团队入口和异步确认使用英文词条与主题弹窗', async ({ page }) => {
   await page.goto('/?teams&menu&lang=en')
   await page.locator('.aag-btn').click()
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: 'Expert teams', exact: true }) }).click()
+  await page.getByRole('tab', { name: 'Expert teams', exact: true }).click()
   await page.getByRole('textbox', { name: 'Search teams', exact: true }).fill('Product')
   await expect(page.locator('.agt-compact')).toContainText('Product Review Team')
   await expect(page.locator('.agt-compact')).not.toContainText(/[\u3400-\u9fff]/u)

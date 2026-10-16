@@ -1,9 +1,8 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { Button as PrimitiveButton } from '@deepseek-ai/dsh-client-ui-primitives'
-import { AntdProvider, Button, Modal, Progress } from './antd-ui.js'
+import { Button, Modal, documentUiLocale } from './plugin-ui.js'
 import { useEscapeLayer } from './escape-layer.js'
-import { documentAntdLocale, documentUiLocale } from './antd-locale.js'
 
 export type PluginUpdateUiOptions = {
   readonly endpoint: string
@@ -33,15 +32,6 @@ const UPDATE_HEADER = 'x-michengai-plugin-update'
 const STYLE_ID = 'michengai-plugin-update-ui'
 const CSS = `
 .mpi-version{margin-left:8px;color:var(--dsw-alias-label-tertiary,#a0a0a0);font-family:inherit;font-size:12px;font-weight:500;line-height:18px;letter-spacing:0;white-space:nowrap;vertical-align:baseline}.mpi-check-host{display:inline-flex;align-items:center}.mpi-icon{display:inline-flex;flex:0 0 auto;width:16px;height:16px;align-items:center;justify-content:center;pointer-events:none}.mpi-icon svg{display:block;width:16px;height:16px}
-.mpi-dialog .ant-modal-content{position:relative;isolation:isolate;padding:24px 28px !important;border-radius:var(--dsw-radius-panel,28px) !important;background:transparent !important;box-shadow:var(--dsw-elevation-panel, 0 20px 48px rgba(0,0,0,.35)) !important;border:0.5px solid var(--dsw-alias-border-l2) !important;box-sizing:border-box !important}
-.mpi-dialog .ant-modal-content::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-3,#1e2024)) !important;backdrop-filter:var(--dsw-menu-backdrop-filter, blur(20px)) !important;pointer-events:none}
-.mpi-dialog .ant-modal-header{background:transparent !important;margin-bottom:16px !important}
-.mpi-dialog .ant-modal-title{font-size:16px !important;font-weight:600 !important;color:var(--dsw-alias-label-primary) !important}
-.mpi-dialog .ant-modal-footer{display:flex !important;align-items:center !important;justify-content:flex-end !important;gap:10px !important;margin-top:24px !important;padding-top:16px !important;border-top:0.5px solid var(--dsw-alias-border-l2) !important}
-.mpi-dialog .ant-modal-footer button{height:32px !important;min-height:32px !important;padding:0 16px !important;font-size:13px !important;border-radius:var(--dsw-radius-sm,8px) !important;box-shadow:none !important}
-.mpi-dialog .ant-modal-footer button:not(.is-primary){border:0.5px solid var(--dsw-alias-border-l2) !important;background:transparent !important;color:var(--dsw-alias-label-primary) !important}
-.mpi-dialog .ant-modal-footer button:not(.is-primary):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover) !important;border-color:var(--dsw-alias-border-l3,#555) !important}
-.mpi-dialog .ant-modal-footer button.is-primary{background:var(--dsw-alias-button-primary-fill, var(--dsw-alias-brand-primary)) !important;color:var(--dsw-alias-label-primary-foreground, #fff) !important;border-color:transparent !important}
 .mpi-intro{margin:0 0 16px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px}.mpi-meta{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 18px;margin:0 0 16px;font-size:12px;line-height:18px}.mpi-meta dt{color:var(--dsw-alias-label-secondary)}.mpi-meta dd{margin:0}.mpi-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.mpi-latest{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}.mpi-status{font-size:13px;font-weight:600;line-height:18px}.mpi-status[data-kind=error]{color:var(--dsw-alias-state-error-primary)}.mpi-status[data-kind=success]{color:var(--dsw-alias-state-success-primary)}.mpi-status[data-kind=update]{color:#e8b15a !important}.mpi-manual{border-top:1px solid var(--dsw-alias-border-l2);padding-top:16px}.mpi-manual h3{margin:0 0 6px;font-size:14px;line-height:20px}.mpi-manual p{margin:0 0 10px;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mpi-command{display:flex;align-items:flex-start;gap:8px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;padding:10px;background:var(--dsw-alias-bg-layer-3,var(--dsw-specific-menu-item-hover))}.mpi-command code{min-width:0;flex:1;overflow:visible;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:18px;white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:560px){.mpi-meta{grid-template-columns:1fr;gap:2px}.mpi-meta dd{margin-bottom:6px}}
 `
 
@@ -166,8 +156,8 @@ function UpdateDialog(props: {
   const command = manualPluginUpdateCommand(current?.profileName ?? '', props.packageName, current?.latestVersion ?? 'latest')
   const currentVersion = current === undefined ? text.unknown : `v${current.currentVersion}`
   const latestVersion = current?.latestVersion === undefined ? text.unknown : `v${current.latestVersion}`
-  return React.createElement(AntdProvider, { locale: documentAntdLocale() }, React.createElement(Modal, {
-    open: true, keyboard: false, className: 'mpi-dialog', width: 680, zIndex: 1200, title: `${props.name} ${text.update}`, onCancel: props.onClose,
+  return React.createElement(Modal, {
+    className: 'mpi-dialog aag-prompt-dialog', width: 680, zIndex: 1200, title: `${props.name} ${text.update}`, onCancel: props.onClose,
     footer: [
       React.createElement(Button, { key: 'check', disabled: busy, onClick: () => { void checkNow() } }, text.recheck),
       React.createElement(Button, { key: 'update', type: 'primary', disabled: busy || current?.canAutoUpdate !== true || current.updateAvailable !== true, loading: busy, onClick: () => { void updateNow() } }, text.auto),
@@ -178,7 +168,7 @@ function UpdateDialog(props: {
       React.createElement('dt', null, text.current), React.createElement('dd', null, React.createElement('span', { className: 'mpi-mono' }, currentVersion)),
       React.createElement('dt', null, text.latestLabel), React.createElement('dd', { className: 'mpi-latest' }, React.createElement('span', { className: 'mpi-mono' }, latestVersion), React.createElement('span', { className: 'mpi-status', role: 'status', 'data-kind': kind, ...(kind === 'update' ? { style: { color: '#e8b15a' } } : {}) }, message)),
       React.createElement('dt', null, text.profile), React.createElement('dd', null, React.createElement('span', { className: 'mpi-mono' }, current?.profileName ?? text.unknown))),
-    busy ? React.createElement(Progress, { percent: 100, showInfo: false, status: 'active' }) : null,
+    busy ? React.createElement('div', { className: 'mpi-busy', role: 'progressbar', 'aria-busy': true, 'aria-label': text.updating }) : null,
     React.createElement('section', { className: 'mpi-manual' },
       React.createElement('h3', null, text.manual),
       React.createElement('p', null, current?.profileName === 'desktop' ? text.manualHintDesktop : text.manualHint),
@@ -189,7 +179,7 @@ function UpdateDialog(props: {
             setCopyLabel(text.copied)
             setTimeout(() => setCopyLabel(text.copy), 1_400)
           }).catch(() => setCopyLabel(text.copyFailed))
-        } }, copyLabel)))))
+        } }, copyLabel))))
 }
 
 export function observePluginUpdate(options: PluginUpdateUiOptions): () => void {

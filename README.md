@@ -69,7 +69,7 @@ Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_t
 - Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
 - Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
 
-> This README describes version 1.0.20; npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full changes and bilingual release description. Upgrades retain expert settings. Back up settings before downgrading because older versions do not support teams.
+> This README describes version 1.1.0; npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full changes and bilingual release description. Upgrades retain expert settings. Back up settings before downgrading because older versions do not support teams.
 ## Screenshots
 
 The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.
@@ -120,7 +120,7 @@ DSH `dsh.client.inject` controls browser module loading order. Missing graph ent
 
 ## Installation
 
-Supported DeepSeek Harness versions: `0.1.2-rc.1`, `0.1.5-rc.1`, `0.1.5-rc.2`, `0.1.5-rc.3`, `0.1.7-rc.1`, `0.1.7-rc.2`, `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.2`, and `0.2.1-alpha.3`. Older alpha releases (0.1.6/0.1.7) are not supported. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
+Supported DeepSeek Harness versions: `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, and `0.2.1-alpha.5`. Older 0.1.x releases are not supported. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
 
 The installation commands below use the official npm registry.
 

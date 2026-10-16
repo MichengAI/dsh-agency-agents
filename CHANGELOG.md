@@ -4,6 +4,15 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.1.0 - 2026-10-16
+
+- Focus host support strictly on DeepSeek Harness `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, and `0.2.1-alpha.5`; formally drop legacy 0.1.x support.
+- Fully adopt host `@deepseek-ai/dsh-client-ui-primitives` native primitives:
+  - Migrate switches to host native `<Switch>` primitive, completely eliminating custom CSS track and thumb rules.
+  - Migrate all modals and drawers to host native `<Modal>` primitive, replacing side drawers with centered modal dialogs and removing all `.agt-dialog`, `.mpi-dialog`, and `.ant-modal*` override stylesheets.
+  - Adopt host native `<Input>` primitive across search bars and form fields, ensuring pixel-perfect 32px height alignment with adjacent `<Menu>` dropdowns.
+- Purge all remaining simulated Ant Design button classes, unused `Switch` exports, and dead selector guards.
+
 ## 1.0.20 - 2026-10-16
 
 - Adopt official host `@deepseek-ai/dsh-client-ui-primitives` `Menu` and `Button` primitives, completely eliminating custom select/dropdown logic and Ant Design Select dependencies.

@@ -1,40 +1,26 @@
 import assert from 'node:assert/strict'
 import { test } from 'vitest'
-import { antdThemeConfig, antdThemeCss } from '../src/client/antd-theme.js'
+import { PLUGIN_UI_CSS } from '../src/client/plugin-ui.js'
 import { CARD_SETTINGS_CSS, COMPOSER_CSS, SETTINGS_CSS } from '../src/client/index.js'
 import { TEAM_CSS } from '../src/client/team-style.js'
 import { DISCOVERY_CSS } from '../src/client/expert-discovery.js'
 import { CUSTOM_EDITOR_CSS } from '../src/client/custom-editor.js'
 
-test('Ant Design 隔离命名空间与官方尺度配置', () => {
-  assert.deepEqual(antdThemeConfig.cssVar, { key: 'aag-theme', prefix: 'aag-ant' }, 'Ant 变量必须隔离于宿主及其他插件')
-  assert.deepEqual(
-    [antdThemeConfig.token?.borderRadiusXS, antdThemeConfig.token?.borderRadiusSM, antdThemeConfig.token?.borderRadius, antdThemeConfig.token?.borderRadiusLG],
-    [4, 8, 12, 16],
-    '兜底圆角显式采用官方尺度，不依赖 Ant 自动派生',
-  )
-})
-
-test('危险按钮悬停保持红色，弹窗页脚保留键盘焦点环且消除 ant-btn 假皮肤', () => {
-  assert.doesNotMatch(antdThemeCss, /\.aag-theme\.ant-btn/, '彻底消除假 ant-btn 模拟层')
+test('危险按钮悬停保持红色，且不再依赖 Ant 皮肤', () => {
+  assert.doesNotMatch(PLUGIN_UI_CSS, /\.ant-/, '插件样式不再引用 Ant 类名')
   assert.match(
-    antdThemeCss,
+    PLUGIN_UI_CSS,
     /\.aag-theme \.is-danger\{color:var\(--dsw-alias-state-error-primary,#ef4444\)!important/,
     '危险态采用纯净的语义类名',
   )
-  assert.doesNotMatch(antdThemeCss, /ant-modal-footer button:focus-visible\{outline:none/, '键盘焦点环不能被抹掉')
-  assert.match(
-    antdThemeCss,
-    /\.aag-theme \.ant-modal-footer button:focus-visible\{outline:var\(--dsw-focus-ring-width,1px\) solid var\(--dsw-focus-ring-color,var\(--dsw-alias-brand-primary\)\)!important/,
-    '页脚按钮使用宿主焦点环令牌',
-  )
+  assert.match(PLUGIN_UI_CSS, /\.aag-textarea/, '多行文本框采用官方统一设计规范')
+  assert.match(PLUGIN_UI_CSS, /\.aag-menu-select-trigger/, '选择触发器保留宿主令牌')
 })
 
-test('Ant Design CSS 桥接层不认领第三方皮肤作用域并采用官方半透明浮层令牌', () => {
-  assert.ok(!/data-dsh-glass|data-ds-dark-theme/.test(antdThemeCss), '适配层不认领第三方主题作用域，也不新增独立明暗配色')
-  assert.ok(antdThemeCss.includes('--dsw-alias-brand-primary'), '浮层材质归宿主主题所有')
-  assert.ok(antdThemeCss.includes('.aag-menu-select-trigger'), 'Select 触发器接入官方 outline 按钮')
-  assert.ok(antdThemeCss.includes('.aag-theme.ant-modal'), 'Modal 桥接官方 Panel 圆角')
+test('插件样式不认领第三方皮肤作用域', () => {
+  const combined = PLUGIN_UI_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS + TEAM_CSS + DISCOVERY_CSS + CUSTOM_EDITOR_CSS
+  assert.ok(!/data-dsh-glass|data-ds-dark-theme/.test(combined), '适配层不认领第三方主题作用域')
+  assert.ok(!/\.ant-/.test(combined), '源码样式不再包含 Ant 选择器')
 })
 
 test('插件各组件全面接入 DSH 官方圆角体系', () => {
@@ -44,14 +30,11 @@ test('插件各组件全面接入 DSH 官方圆角体系', () => {
   assert.match(SETTINGS_CSS, /\.aag-empty\{[^}]*border-radius:var\(--dsw-radius-md,12px\)/, '空状态卡片采用官方 R12 圆角')
   assert.match(DISCOVERY_CSS, /\.aag-discovery input\{[^}]*border-radius:var\(--dsw-radius-sm,8px\)/, '发现输入框采用官方 R8 圆角')
   assert.match(CUSTOM_EDITOR_CSS, /\.aag-custom-badge\{[^}]*border-radius:var\(--dsw-radius-xs,4px\)/, '徽章采用官方 R4 圆角')
-  assert.match(TEAM_CSS, /\.agt-dialog input:not\(\.ant-input\)[^}]*border-radius:var\(--dsw-radius-sm,8px\)/, '团队输入框采用官方 R8 圆角')
+  assert.match(TEAM_CSS, /\.agt-dialog input[^}]*border-radius:var\(--dsw-radius-sm,8px\)/, '团队输入框采用官方 R8 圆角')
   assert.ok(!/border-radius:\s*(?:6|7|10|20|24)px/.test(combinedCss), '不再存在未桥接官方阶梯的硬编码圆角')
 })
 
-test('Switch 原语对齐官方 36x20 尺寸与深灰/品牌色明暗反差规范', () => {
-  assert.match(CARD_SETTINGS_CSS, /\.aag-enable-switch\{[^}]*width:36px;height:20px/, '开关尺寸为官方 36x20')
-  assert.match(CARD_SETTINGS_CSS, /\.aag-enable-switch\{[^}]*background:var\(--dsw-alias-border-l3/, '关态为中性深灰底色')
-  assert.match(CARD_SETTINGS_CSS, /\.aag-enable-switch\[aria-checked=true\]\{background:var\(--dsw-alias-brand-primary/, '开态为品牌色')
-  assert.match(CARD_SETTINGS_CSS, /\.aag-enable-switch-thumb\{[^}]*width:16px;height:16px/, '滑块尺寸为 16x16')
-  assert.match(CARD_SETTINGS_CSS, /\.aag-icon-btn\{[^}]*width:28px;height:28px/, '工具栏按钮对齐 skills-manager 28px 图标规范')
+test('Switch 开关全面由宿主官方原语接管，彻底清空手写 CSS 规则', () => {
+  assert.doesNotMatch(CARD_SETTINGS_CSS, /\.aag-enable-switch\{/, '手写开关规则已彻底移除')
+  assert.match(CARD_SETTINGS_CSS, /\.aag-icon-btn\{[^}]*width:22px!important;min-width:22px!important;height:22px!important/, '纯图标按钮对齐技能插件 22px 描边规范')
 })

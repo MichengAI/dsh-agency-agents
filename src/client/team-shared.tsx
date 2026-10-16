@@ -1,6 +1,6 @@
 import { useTeamLocale } from './team-locale.js';
 import { LibraryConfirm } from './library-ui.js';
-import { Drawer, List, Modal } from './antd-ui.js';
+import { Modal } from './plugin-ui.js';
 import { useEscapeLayer } from './escape-layer.js';
 import React from 'react';
 import { IconX, IconUsers, IconUser, IconFileText, IconChevronDown, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconCheck, IconTrash, IconRefresh, IconGripVertical, } from '@tabler/icons-react/dist/esm/tabler-icons-react.mjs';
@@ -28,7 +28,7 @@ export function TeamAvatars({ team, experts, large = false, }: {
       {team.members.slice(0, 3).map((member) => (<Avatar key={member.expertSlug} expert={experts.find((e) => e.slug === member.expertSlug)} size={large ? 80 : 54}/>))}
     </div>);
 }
-/** 编辑走右侧抽屉，详情和成员选择走默认弹窗。 */
+/** 统一采用宿主官方原生居中模态窗口，彻底告别侧边抽屉。 */
 export function TeamDialog({ title, children, close, className = '', }: {
     title: string;
     children: React.ReactNode;
@@ -42,15 +42,20 @@ export function TeamDialog({ title, children, close, className = '', }: {
         const node = opener.current;
         queueMicrotask(() => { if (node?.isConnected) node.focus({ preventScroll: true }); });
     }, []);
-    if (editor) {
-        return (<Drawer classNames={{ body: `agt-dialog agt-editor ${className}` }} rootClassName="aag-editor-drawer" keyboard={false} styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 } }} title={title} open placement="right" size="min(560px, 100vw)" destroyOnHidden onClose={close}>
-          {children}
-        </Drawer>);
-    }
-    const picker = className.split(/\s+/u).includes('agt-picker');
-    return (<Modal className={`agt-dialog ${className}`} title={title} open zIndex={1200} keyboard={false} width="min(760px, calc(100vw - 32px))" footer={null} destroyOnHidden styles={{ body: { display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 160px)', overflow: picker ? 'hidden' : 'auto' } }} onCancel={close}>
-      {children}
-    </Modal>);
+    return (
+        <Modal
+            className={`agt-dialog ${className} ${editor ? 'agt-editor-modal' : ''}`}
+            title={title}
+            open
+            zIndex={1200}
+            width={editor ? "min(680px, calc(100vw - 32px))" : "min(760px, calc(100vw - 32px))"}
+            footer={null}
+            onCancel={close}
+            onClose={close}
+        >
+            {children}
+        </Modal>
+    );
 }
 export function TeamConfirm({ title, children, label, onCancel, onConfirm, busy = false, cancelLabel, danger, error, }: {
     cancelLabel?: string;
@@ -75,12 +80,18 @@ export function MemberList({ team, experts, }: {
 }) {
     const { locale, tx } = useTeamLocale();
 
-    return (<List className="agt-member-list" grid={{ gutter: 16, column: 2 }} dataSource={[...team.members]} rowKey={(member) => member.expertSlug} renderItem={(member) => {
-            const expert = experts.find((e) => e.slug === member.expertSlug);
-            return (<List.Item>
-              <List.Item.Meta avatar={<Avatar expert={expert} size={40}/>} title={(locale === 'en' ? expert?.nameEn : expert?.name) ?? tx("成员已失效")} description={member.duty}/>
-            </List.Item>);
-        }}/>);
+    return (<ul className="agt-member-list">
+      {team.members.map((member) => {
+        const expert = experts.find((e) => e.slug === member.expertSlug);
+        return (<li key={member.expertSlug}>
+          <Avatar expert={expert} size={40}/>
+          <span>
+            <strong>{(locale === 'en' ? expert?.nameEn : expert?.name) ?? tx("成员已失效")}</strong>
+            <small>{member.duty}</small>
+          </span>
+        </li>);
+      })}
+    </ul>);
 }
 export const teamIssue = (team: ExpertTeam, experts: readonly ExpertSummary[], enabled: readonly string[]): string | undefined => {
     if (team.members.some((m) => !experts.some((e) => e.slug === m.expertSlug && !e.conflict)))

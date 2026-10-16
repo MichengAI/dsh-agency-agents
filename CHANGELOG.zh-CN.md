@@ -4,6 +4,15 @@
 
 本文件记录版本功能与升级边界。正式发布状态以 npm 和 GitHub Releases 为准。
 
+## 1.1.0 - 2026-10-16
+
+- 宿主支持范围聚焦收拢为 DeepSeek Harness `0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-alpha.1`、`0.2.1-alpha.2`、`0.2.1-alpha.3`、`0.2.1-alpha.4` 及 `0.2.1-alpha.5`，正式淘汰 0.1.x 旧宿主历史包袱。
+- 全面拥抱宿主 `@deepseek-ai/dsh-client-ui-primitives` 官方原生原语：
+  - 开关全面迁移至宿主官方原生 `<Switch>` 原语，彻底删除自定义 CSS 轨道与滑块规则。
+  - 弹窗与右侧抽屉全面统一为宿主官方原生 `<Modal>` 原语，彻底移除 `.agt-dialog`、`.mpi-dialog` 及 `.ant-modal*` 私有样式覆盖层。
+  - 单行搜索与输入框全面换用宿主官方原生 `<Input>` 原语，与旁边 `<Menu>` 下拉框达成像素级 32px 绝对等高对齐。
+- 彻底清理模拟的 Ant Design 按钮类名、无用的 Switch 导出与死选择器守卫。
+
 ## 1.0.20 - 2026-10-16
 
 - 全面接入宿主官方 `@deepseek-ai/dsh-client-ui-primitives` 原生 `Menu` 与 `Button` 原语，彻底移除 Ant Design Select 依赖及自绘下拉逻辑。

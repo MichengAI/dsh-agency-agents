@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test'
 
 test('支持但未启用原生团队时建议开启，不阻断专家团操作', async ({ page }) => {
   await page.goto('/?teams&settings&teamDisabled')
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await expect(page.getByRole('note')).toContainText('建议在插件页开启 Agent Team 的 Host 与 Web 层')
   await page.getByRole('button', { name: '新建专家团', exact: true }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
@@ -12,7 +12,7 @@ test('支持但未启用原生团队时建议开启，不阻断专家团操作',
 
 test('团队编辑保留停用状态，配置冲突先核对再保存', async ({ page }) => {
   await page.goto('/?teams&settings&deleteFailure')
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
   const first = page.getByTestId('team-card').first()
   await first.getByRole('button', { name: '复制并自定义', exact: true }).click()
   await page.getByLabel('团队名称', { exact: true }).fill('流程验收团')
@@ -58,13 +58,13 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
   const expertDialog = page.getByRole('dialog')
   await expect(expertDialog).toBeVisible()
   await page.waitForFunction(() => {
-    const panel = document.querySelector('.ant-drawer-content-wrapper')
-    return panel !== null && getComputedStyle(panel).transform === 'none'
+    const dialog = document.querySelector('[role="dialog"]')
+    return dialog !== null && getComputedStyle(dialog).display !== 'none'
   })
   const expertDrawer = await expertDialog.boundingBox()
   await page.screenshot({ path: 'test-results/expert-editor-unified.png' })
   await page.keyboard.press('Escape')
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await expect(
     page.getByRole('button', { name: '新建专家团', exact: true }),
   ).toBeVisible()
@@ -80,8 +80,8 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
   const teamDialog = page.getByRole('dialog')
   await expect(teamDialog).toBeVisible()
   await page.waitForFunction(() => {
-    const panel = document.querySelector('.ant-drawer-content-wrapper')
-    return panel !== null && getComputedStyle(panel).transform === 'none'
+    const dialog = document.querySelector('[role="dialog"]')
+    return dialog !== null && getComputedStyle(dialog).display !== 'none'
   })
   const teamDrawer = await teamDialog.boundingBox()
   expect(teamDrawer!.width).toBe(expertDrawer!.width)
@@ -139,7 +139,7 @@ test('专家保留原标题工具栏与来源筛选，专家团采用同一结�
   const title = page.locator('main section:visible .aag-title').first()
   await expect(title).toBeVisible()
   await expect(page.locator('main section:visible .aag-toolbar .aag-title')).toBeVisible()
-  await expect(page.locator('main').locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) })).toBeVisible()
+  await expect(page.locator('main').getByRole('tab', { name: '专家团', exact: true })).toBeVisible()
   await expect(page.locator('aside').getByRole('button', { name: '专家团', exact: true })).toHaveCount(0)
   await expect(page.locator('.aag-expert-card').first()).toBeVisible()
   await page.screenshot({ path: 'test-results/experts-unified.png' })
@@ -159,7 +159,7 @@ test('专家保留原标题工具栏与来源筛选，专家团采用同一结�
       background: getComputedStyle(el).backgroundColor,
       radius: getComputedStyle(el).borderRadius,
     }))
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await expect(page.getByTestId('team-card')).toHaveCount(5)
   expect((await title.boundingBox())!.y).toBeLessThan(
     (await tabs.boundingBox())!.y,
@@ -199,8 +199,8 @@ test('切换专家团后保留专家搜索和来源筛选', async ({ page }) => 
   await sourceSelect.click()
   await page.getByRole('menuitem', { name: '内置', exact: true }).click()
   await page.locator('#aag-filter-search').fill('人类学')
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家', exact: true }) }).click()
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
+  await page.getByRole('tab', { name: '专家', exact: true }).click()
   await expect(page.locator('#aag-filter-search')).toHaveValue('人类学')
   await expect(sourceSelect).toContainText('内置')
   await expect(page.locator('.aag-expert-card:visible')).toHaveCount(1)
@@ -209,7 +209,7 @@ test('切换专家团后保留专家搜索和来源筛选', async ({ page }) => 
 test('一级页签使用官方分段页签，与来源筛选保持紧凑层级', async ({ page }) => {
   await page.setViewportSize({ width: 910, height: 887 })
   await page.goto('/?teams&settings')
-    await expect(page.getByRole('radio', { name: '专家', exact: true })).toBeChecked()
+    await expect(page.getByRole('tab', { name: '专家', exact: true })).toHaveAttribute('aria-selected', 'true')
   const navigation = await page.locator('main .aag-library-navigation').boundingBox()
   const filters = await page.locator('main .aag-card-filters:visible').boundingBox()
   expect(filters!.y - navigation!.y - navigation!.height).toBeLessThanOrEqual(24)
@@ -222,13 +222,13 @@ test('切换团队保留同一个公共头部及宿主注入内容', async ({ pa
   await expect(header.locator('.mpi-version')).toHaveText('v1.0.0')
   await expect(header.locator('[data-mpi-check]')).toBeVisible()
   const before = await header.boundingBox()
-  const tabsBefore = await page.getByRole('radiogroup', { name: '专家库类型' }).boundingBox()
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
+  const tabsBefore = await page.getByRole('tablist', { name: '专家库类型' }).boundingBox()
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await expect(header.locator('.mpi-version')).toHaveText('v1.0.0')
   await expect(header.locator('[data-mpi-check]')).toBeVisible()
   await expect(page.locator('main .aag-title-row')).toHaveCount(1)
   expect(await header.boundingBox()).toEqual(before)
-  expect(await page.getByRole('radiogroup', { name: '专家库类型' }).boundingBox()).toEqual(tabsBefore)
+  expect(await page.getByRole('tablist', { name: '专家库类型' }).boundingBox()).toEqual(tabsBefore)
   await expect(page.getByRole('button', { name: '新建专家团', exact: true })).toBeVisible()
   await header.locator('[data-mpi-check]').click()
   await expect(page.getByRole('dialog', { name: '专家 更新' })).toBeVisible()
@@ -240,7 +240,7 @@ test('数量写在对应页签上，来源选项与新建同行', async ({ page 
   await page.setViewportSize({ width: 910, height: 887 })
   await page.goto('/?teams&settings')
   for (const [tabName, createName, total] of [['专家', '新建专家', String(ROSTER.length)], ['专家团', '新建专家团', String(BUILTIN_TEAMS.length)]]) {
-    const tab = page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: tabName, exact: true }) })
+    const tab = page.getByRole('tab', { name: tabName, exact: true })
     await tab.click()
     await expect(tab).toContainText(total)
     await expect(tab).toContainText('已启用')
@@ -259,12 +259,12 @@ test('数量写在对应页签上，来源选项与新建同行', async ({ page 
 test('保存专家团后仍可直接修改已启用的自定义专家', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto('/?teams&settings&sharedSettings')
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await page.getByTestId('team-card').first().getByRole('button', { name: '复制并自定义', exact: true }).click()
   await page.getByLabel('团队名称', { exact: true }).fill('复现专家团')
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page.getByText('专家团配置已保存。')).toBeVisible()
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家', exact: true }) }).click()
+  await page.getByRole('tab', { name: '专家', exact: true }).click()
   await page.locator('#aag-filter-search').fill('租赁业务顾问')
   const card = page.locator('.aag-expert-card').filter({ hasText: '租赁业务顾问' })
   await card.getByRole('button', { name: '编辑专家', exact: true }).click()
@@ -279,7 +279,7 @@ test('保存专家团后仍可直接修改已启用的自定义专家', async ({
 
 test('添加成员默认只看已启用，停用专家仍可加入专家团', async ({ page }) => {
   await page.goto('/?teams&settings&visual')
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
   await page.getByRole('button', { name: '新建专家团', exact: true }).click()
   await page.getByRole('button', { name: '添加成员', exact: true }).click()
   const picker = page.getByRole('dialog', { name: '选择团队成员' })

@@ -1,5 +1,5 @@
 import { LibraryConfirm, LibraryEditorFooter } from './library-ui.js'
-import { Button, Drawer, Input } from './antd-ui.js'
+import { Button, Input, Modal } from './plugin-ui.js'
 import { useEscapeLayer } from './escape-layer.js'
 import React from 'react'
 import { CategorySelect } from './category-select.js'
@@ -99,9 +99,11 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
     'aria-label': text, onChange: (event: React.ChangeEvent<HTMLInputElement>) => set(key, event.currentTarget.value),
     ...(key === 'name' ? { placeholder: props.t('custom.namePlaceholder') } : {}),
   })
-  return h(Drawer, {
-    open: true, keyboard: false, placement: 'right', size: 'min(560px, 100vw)', destroyOnHidden: true,
-    rootClassName: 'aag-editor-drawer', styles: { body: { padding: 0 } }, title: props.t(draft.slug ? 'custom.edit' : 'custom.new'),
+  return h(Modal, {
+    open: true,
+    width: 'min(680px, calc(100vw - 32px))',
+    className: 'aag-editor-modal',
+    title: props.t(draft.slug ? 'custom.edit' : 'custom.new'),
     onClose: () => { if (discard) setDiscard(false); else close() },
   },
   h('form', { ref: form, className: 'aag-custom-body', onSubmit: (event: React.FormEvent) => event.preventDefault(), inert: discard ? '' : undefined },
@@ -166,8 +168,8 @@ export function CustomDeleteDialog(props: { name: string; busy: boolean; error: 
     h('p', null, props.name), h('p', { className: 'aag-note' }, props.t('custom.deleteHint')))
 }
 export const CUSTOM_EDITOR_CSS = `
-.aag-editor-drawer .ant-drawer-body{padding:0}
-.aag-custom-body{overflow-y:auto;overscroll-behavior:contain;padding:20px 24px;flex:1;min-height:0}
+.aag-editor-modal{display:flex;flex-direction:column;max-height:calc(100vh - 120px)}
+.aag-custom-body{overflow-y:auto;overscroll-behavior:contain;padding:16px 20px;flex:1;min-height:0;max-height:calc(100vh - 220px)}
 .aag-editor-intro{margin:0 0 16px;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:22px}
 .aag-custom-field{display:block;margin:18px 0;font-size:14px}
 .aag-custom-field>span,.aag-custom-field>label{display:block;margin-bottom:8px}
@@ -178,16 +180,15 @@ export const CUSTOM_EDITOR_CSS = `
 .aag-custom-avatars img{border-radius:var(--dsw-radius-sm,8px);object-fit:cover}
 .aag-custom-avatars button.is-selected{border-color:var(--dsw-alias-label-tertiary)}
 .aag-custom-prompt-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;font-size:14px}
-.aag-editor-drawer .aag-custom-prompt{min-height:220px;line-height:1.8}
+.aag-editor-modal .aag-custom-prompt{min-height:220px;line-height:1.8}
 .aag-custom-body .aag-error{margin-top:14px}
-.aag-custom-footer{padding:16px 24px 22px;border-top:0.5px solid var(--dsw-alias-border-l2);flex-shrink:0}
+.aag-custom-footer{padding:14px 20px 18px;border-top:0.5px solid var(--dsw-alias-border-l2);flex-shrink:0}
 .aag-custom-footer>div{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
 .aag-custom-footer>div>button:first-child{margin-right:auto}
-.aag-editor-drawer input:focus-visible,.aag-editor-drawer textarea:focus-visible,.aag-editor-drawer .ant-input:focus,.aag-editor-drawer .ant-input:focus-visible,.ant-modal input:focus-visible,.ant-modal textarea:focus-visible{outline:none}
 .aag-custom-badge{display:inline-block;font-size:10px;padding:1px 5px;border:0.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-xs,4px);margin-left:6px;color:var(--dsw-alias-label-secondary)}
 .aag-custom-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0;font-size:13px;color:var(--dsw-alias-label-primary)}
 .aag-custom-review{margin-top:16px;padding:14px;border:0.5px solid var(--dsw-alias-brand-primary);border-radius:var(--dsw-radius-sm,8px)}
 .aag-custom-review-actions{display:flex;flex-wrap:wrap;gap:8px}
 .aag-custom-review p{overflow-wrap:anywhere}
-@media(max-width:560px){.aag-custom-body{padding:16px}.aag-custom-footer{padding:14px 16px 20px}.aag-custom-prompt-head{flex-wrap:wrap}}
+@media(max-width:560px){.aag-custom-body{padding:14px}.aag-custom-footer{padding:12px 14px 16px}.aag-custom-prompt-head{flex-wrap:wrap}}
 `

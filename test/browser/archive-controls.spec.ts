@@ -10,7 +10,7 @@ for (const theme of ['dark', 'light']) test(`${theme}：沿用归档插件控件
   await expect(page.getByRole('menuitem').first()).toBeVisible()
   await page.keyboard.press('Escape')
   await page.screenshot({ path: `test-results/archive-controls-${theme}.png` })
-  await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
   const teamCard = page.getByTestId('team-card').first()
   await expect(page.getByRole('button', { name: '新建专家团', exact: true })).toBeVisible()
   const firstSwitch = teamCard.getByRole('switch')

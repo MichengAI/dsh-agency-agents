@@ -2,8 +2,7 @@ import { adoptSharedRevision, catalogState } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
-import { Button, Input, MaybeAntdProvider } from './antd-ui.js';
-import { antdLocale } from './antd-locale.js';
+import { Button, Input } from './plugin-ui.js';
 import { CategorySelect } from './category-select.js';
 import React from 'react';
 import { effectiveCoordinator, type ExpertTeam, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
@@ -303,7 +302,6 @@ export function TeamsPanel(props: {
         <div className="aag-filter-actions">
           <Button
             className="aag-icon-btn"
-            type="text"
             size="small"
             disabled={!snapshot || busy}
             aria-label={tx("新建专家团")}
@@ -383,5 +381,5 @@ export function TeamsPanel(props: {
           </p>
         </TeamConfirm>)}
     </section>);
-    return <MaybeAntdProvider locale={antdLocale(locale)}>{panel}</MaybeAntdProvider>;
+    return panel;
 }

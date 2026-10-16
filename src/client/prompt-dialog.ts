@@ -1,5 +1,4 @@
-import { Button, Input, MaybeAntdProvider, Modal } from './antd-ui.js'
-import { documentAntdLocale } from './antd-locale.js'
+import { Button, Input, Modal } from './plugin-ui.js'
 import { useEscapeLayer } from './escape-layer.js'
 import React from 'react'
 
@@ -18,10 +17,10 @@ export function PromptDialog(props: {
     })
   }
   useEscapeLayer(true, close)
-  return React.createElement(MaybeAntdProvider, { locale: documentAntdLocale() }, React.createElement(Modal, {
+  return React.createElement(Modal, {
     open: true,
     title: props.title,
-    width: 760,
+    className: 'aag-prompt-dialog',
     keyboard: false,
     closable: false,
     maskClosable: true,
@@ -35,5 +34,5 @@ export function PromptDialog(props: {
     value: props.value.prompt,
     'aria-label': props.title,
     style: { height: 'min(560px, calc(100vh - 220px))', minHeight: 240, resize: 'none', overflow: 'auto' },
-  })))
+  }))
 }

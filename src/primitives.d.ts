@@ -3,7 +3,7 @@
  * runtime by the host's frozen platform module table.
  */
 declare module '@deepseek-ai/dsh-client-ui-primitives' {
-  import type { ButtonHTMLAttributes, ReactElement, ReactNode } from 'react'
+  import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactElement, ReactNode } from 'react'
 
   export type ButtonVariant = 'primary' | 'ghost' | 'outline' | 'toolbar'
   export function Button(props: {
@@ -13,6 +13,54 @@ declare module '@deepseek-ai/dsh-client-ui-primitives' {
     className?: string | undefined
     children?: ReactNode
   } & ButtonHTMLAttributes<HTMLButtonElement>): ReactElement
+
+  export function Input(props: {
+    icon?: ReactNode
+    className?: string
+  } & InputHTMLAttributes<HTMLInputElement>): ReactElement
+
+  export function Modal(props: {
+    open?: boolean
+    onClose?: () => void
+    title?: ReactNode
+    closeLabel?: string
+    description?: string
+    children?: ReactNode
+    footer?: ReactNode
+    className?: string
+    contentClassName?: string
+    headless?: boolean
+    width?: number | string
+    zIndex?: number
+  }): ReactElement | null
+
+  export function SegmentedTabs<Value extends string>(props: {
+    items: readonly { value: Value; label: ReactNode; id: string; panelId: string }[]
+    value: Value
+    onChange: (value: Value) => void
+    label: string
+    className?: string
+  }): ReactElement
+
+  export function SegmentedControl<Value extends string>(props: {
+    id: string
+    value: Value
+    options: readonly { value: Value; label: string; disabled?: boolean; title?: string }[]
+    onChange: (value: Value) => void
+    label: string
+    disabled?: boolean
+    className?: string
+  }): ReactElement
+
+  export function Switch(props: {
+    checked: boolean
+    onChange: (next: boolean) => void
+    label?: string
+    disabled?: boolean
+    title?: string
+    className?: string
+    'aria-label'?: string
+  }): ReactElement
 
   export interface MenuItem {
     id: string

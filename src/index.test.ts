@@ -1346,17 +1346,16 @@ describe('专家库目标稿样式契约', () => {
 })
 
 describe('@ 菜单分组标题本地化', () => {
-  it("DSH peer 只枚举已验证的 RC，并覆盖最新 RC", () => {
-    const range = "0.1.2-rc.1 || 0.1.5-rc.1 || 0.1.5-rc.2 || 0.1.5-rc.3 || 0.1.7-rc.1 || 0.1.7-rc.2 || 0.2.0-rc.1 || 0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3";
+  it("DSH peer 只枚举已验证的 0.2.x 宿主版本", () => {
+    const range = "0.2.0-rc.1 || 0.2.0-rc.2 || 0.2.1-alpha.1 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-alpha.4 || 0.2.1-alpha.5";
     const peers = PACKAGE_MANIFEST.peerDependencies;
     expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
     expect(PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh"]?.optional).toBe(true);
 
     for (const [name, version] of Object.entries(peers ?? {})) {
       if (name.startsWith("@deepseek-ai/dsh-")) {
-        // 宿主把每条 dsh-* peer 都当成运行时版本约束，旧 runtime 窄范围会让 0.1.7-rc.1 禁用插件。
         expect(version).toBe(range);
-        expect(version).not.toMatch(/0\.1\.[67]-alpha/u);
+        expect(version).not.toMatch(/0\.1\./u);
       }
     }
     // inject 是浏览器模块加载顺序，不应转化为额外的 npm 强制依赖。

@@ -81,7 +81,7 @@ describe('独立插件更新', () => {
     expect(client).not.toContain('react-dom/client')
     expect(updateUi).toContain('data-mpi-label')
     expect(updateUi).toContain('handlePluginUpdateEscape')
-    expect(updateUi).toContain("className: 'mpi-dialog'")
+    expect(updateUi).toContain("className: 'mpi-dialog aag-prompt-dialog'")
     expect(updateUi).toContain('if (version.textContent !== versionLabel)')
     expect(updateUi).toContain('value.latestCheckFailed')
     expect(updateUi).toContain("color: '#e8b15a'")

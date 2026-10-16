@@ -1,5 +1,5 @@
-import { AntdProvider, Button, Input, Segmented } from './antd-ui.js'
-import { antdLocale } from './antd-locale.js'
+import { Button, Input } from './plugin-ui.js'
+import { SegmentedControl, SegmentedTabs } from '@deepseek-ai/dsh-client-ui-primitives'
 import { LibraryCard } from './library-ui.js'
 import { IconPlus } from './team-shared.js'
 import { Button as PrimitiveButton, type ButtonVariant } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -517,9 +517,9 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-action:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
 .aag-card-filters{align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:8px 12px;min-width:0}
 .aag-filter-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}
-.aag-icon-btn{width:28px;min-width:28px;height:28px;padding:0;color:var(--dsw-alias-label-secondary);border-radius:var(--dsw-radius-sm,8px);display:inline-flex;align-items:center;justify-content:center}
+.aag-icon-btn{box-sizing:border-box;width:22px!important;min-width:22px!important;height:22px!important;padding:0!important;border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-secondary);display:inline-flex;align-items:center;justify-content:center}
 .aag-icon-btn svg{display:block;width:16px;height:16px}
-.aag-icon-btn:hover:not(:disabled){color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}
+.aag-icon-btn:hover:not(:disabled):not(.is-danger){color:var(--dsw-alias-link)!important;border-color:var(--dsw-alias-link)!important;background:transparent!important}
 .aag-card-filters .aag-field-source,.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-status{flex:0 0 auto;width:auto;max-width:none}
 .aag-card-filters .aag-field-search{flex:1 1 0;min-width:0}
 .aag-card-filters .aag-field>span{display:inline-flex;width:auto;max-width:none}
@@ -552,25 +552,18 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-action span.aag-card-action-text{display:none}
 .aag-card-action{padding:0 4px}
 .aag-switch{position:absolute;top:0;right:0;display:flex;align-items:center;flex-direction:column;gap:3px}
-.aag-enable-switch{box-sizing:border-box;position:relative;flex:0 0 auto;width:36px;height:20px;padding:2px;border:0;border-radius:999px;corner-shape:round;background:var(--dsw-alias-border-l3,#555);cursor:pointer;outline:none;transition:background 120ms ease}
-.aag-enable-switch[aria-checked=true]{background:var(--dsw-alias-brand-primary,var(--dsw-alias-state-business-primary))}
-.aag-enable-switch:disabled{cursor:default;opacity:.5}
-.aag-enable-switch:focus-visible{outline:var(--dsw-focus-ring-width,1px) solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
-.aag-enable-switch-thumb{display:block;width:16px;height:16px;border-radius:50%;corner-shape:round;background:var(--dsw-alias-switch-thumb,#fff);box-shadow:0 1px 2px rgba(0,0,0,.15);transition:transform 120ms ease;pointer-events:none}
-.aag-enable-switch[aria-checked=false] .aag-enable-switch-thumb{background:var(--dsw-alias-switch-thumb,#fff)}
-.aag-enable-switch[aria-checked=true] .aag-enable-switch-thumb{background:var(--dsw-alias-label-primary-foreground,#fff);transform:translateX(16px)}
 .aag-switch-state{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;white-space:nowrap}
-.ant-modal .aag-prompt-body.ant-input{display:block;box-sizing:border-box;height:min(560px,calc(100vh - 220px));min-height:240px;margin:0;padding:12px 14px;resize:none;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;line-height:1.75;letter-spacing:0.01em;border:0.5px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:var(--dsw-radius-md,12px)}
-.ant-modal .aag-prompt-body.ant-input::-webkit-scrollbar{width:6px;height:6px}
-.ant-modal .aag-prompt-body.ant-input::-webkit-scrollbar-thumb{background:var(--dsw-alias-border-l3);border-radius:999px}
-.ant-modal .aag-prompt-body.ant-input:focus,.ant-modal .aag-prompt-body.ant-input:focus-visible{border-color:var(--dsw-alias-brand-primary);outline:none;box-shadow:none}
+.aag-prompt-body{display:block;box-sizing:border-box;height:min(560px,calc(100vh - 220px));min-height:240px;margin:0;padding:12px 14px;resize:none;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;line-height:1.75;letter-spacing:0.01em;border:0.5px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:var(--dsw-radius-md,12px)}
+.aag-prompt-body::-webkit-scrollbar{width:6px;height:6px}
+.aag-prompt-body::-webkit-scrollbar-thumb{background:var(--dsw-alias-border-l3);border-radius:999px}
+.aag-prompt-body:focus,.aag-prompt-body:focus-visible{border-color:var(--dsw-alias-brand-primary);outline:none;box-shadow:none}
 @container (max-width:519px){.aag-expert-grid{grid-template-columns:1fr}.aag-title-row{gap:8px 12px}.aag-settings-links{flex-basis:100%}}
 @container (max-width:430px){.aag-card-body{grid-template-columns:40px minmax(0,1fr);column-gap:10px}.aag-expert-avatar{width:40px;height:40px}.aag-card-name{font-size:16px;line-height:22px}}
 `
 
-import { antdThemeCss } from './antd-theme.js'
+import { PLUGIN_UI_CSS } from './plugin-ui.js'
 
-export const CSS = antdThemeCss + TEAM_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS + DISCOVERY_CSS
+export const CSS = PLUGIN_UI_CSS + TEAM_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS + DISCOVERY_CSS
   + MENU_NAME_OVERRIDE + `{${EXPERT_MENU_NAME_STYLE}}`
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
@@ -891,7 +884,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     const onPointerDown = (ev: PointerEvent): void => {
       const target = ev.target
       if (target instanceof Node && rootRef.current?.contains(target)) return
-      if (target instanceof Element && target.closest('.ant-modal, .ant-drawer, .dsh-primitives-menu, [role="menu"]')) return
+      if (target instanceof Element && target.closest('[role="dialog"], .dsh-primitives-menu, [role="menu"]')) return
       close()
     }
     document.addEventListener('pointerdown', onPointerDown)
@@ -976,13 +969,13 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     },
       insertError === null ? null : React.createElement('div', { className: 'aag-error', role: 'alert' }, insertError,
         React.createElement('button', { type: 'button', disabled: busy, onClick: () => load() }, props.t('btn.refresh'))),
-      'getTeams' in props.remote ? React.createElement(Segmented, {
-        block: true, 'aria-label': teamText(props.getActive(), '专家'), value: mode,
+      'getTeams' in props.remote ? React.createElement(SegmentedControl, {
+        id: 'aag-composer-mode', label: teamText(props.getActive(), '专家'), value: mode,
         options: [
           { value: 'experts' as const, label: teamText(props.getActive(), '专家') },
           { value: 'teams' as const, label: teamText(props.getActive(), '专家团') },
         ],
-        onChange: (value: unknown) => setMode(value === 'teams' ? 'teams' : 'experts'),
+        onChange: (value) => setMode(value === 'teams' ? 'teams' : 'experts'),
       }) : null,
       mode === 'teams' && 'getTeams' in props.remote ? React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamMenu, { remote: props.remote as TeamRemote,
         prepareSelect: props.prepareTeamSelection, onSelected: () => close(), onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) } })) :
@@ -990,13 +983,13 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
         query, onQuery: setQuery, busy, hasMore: searching && matches.length > results.length, onPick: slug => { void pick(slug) } }))
     : null
 
-  return React.createElement(AntdProvider, { locale: antdLocale(props.getActive()) }, React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef, onBlur: (event: React.FocusEvent) => {
+  return React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef, onBlur: (event: React.FocusEvent) => {
     const next = event.relatedTarget
-    if (next instanceof Element && (event.currentTarget.contains(next) || next.closest('.ant-modal, .ant-drawer, .dsh-primitives-menu, [role="menu"]'))) return
+    if (next instanceof Element && (event.currentTarget.contains(next) || next.closest('[role="dialog"], .dsh-primitives-menu, [role="menu"]'))) return
     if (next instanceof Node && !event.currentTarget.contains(next)) close()
   } },
     React.createElement('span', { ref: triggerRef }, React.createElement('button', { type: 'button', className: 'aag-btn', title: props.t('button.title'), 'aria-expanded': open, 'aria-haspopup': 'dialog', 'aria-controls': open ? menuId : undefined, onMouseDown: keepComposerFocus, onClick }, expertIcon(), props.t('settings.nav'))),
-    menu))
+    menu)
 }
 
 interface OpenPrompt {
@@ -1284,7 +1277,6 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     const filterActions = React.createElement('div', { className: 'aag-filter-actions' },
       React.createElement(Button, {
         className: 'aag-icon-btn',
-        type: 'text',
         size: 'small',
         disabled: isSaving,
         'aria-label': props.t('custom.new'),
@@ -1394,16 +1386,16 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
     React.createElement('span', { className: 'aag-tab-count', 'aria-hidden': true }, React.createElement('strong', null, total)),
     React.createElement('span', { className: 'aag-tab-count', 'aria-hidden': true }, props.t('summary.enabledPrefix'), React.createElement('strong', null, enabled)),
   )
-  const navigation = React.createElement(Segmented, {
-    block: true, className: 'aag-library-tabs', 'aria-label': tx('专家库类型'), value: view,
-    onChange: (value: unknown) => { if (value === 'experts' || value === 'teams') setView(value) },
-    options: [
-      { value: 'experts' as const, label: tabLabel(tx('专家'), expertSummary.total, expertSummary.enabled) },
-      { value: 'teams' as const, label: tabLabel(tx('专家团'), teamSummary.total, teamSummary.enabled) },
+  const navigation = React.createElement(SegmentedTabs, {
+    className: 'aag-library-tabs', label: tx('专家库类型'), value: view,
+    onChange: (value) => { if (value === 'experts' || value === 'teams') setView(value) },
+    items: [
+      { value: 'experts' as const, id: 'aag-library-tab-experts', panelId: 'aag-library-panel-experts', label: tabLabel(tx('专家'), expertSummary.total, expertSummary.enabled) },
+      { value: 'teams' as const, id: 'aag-library-tab-teams', panelId: 'aag-library-panel-teams', label: tabLabel(tx('专家团'), teamSummary.total, teamSummary.enabled) },
     ],
   })
   // 两个名册都保持挂载，切换时不丢失筛选，也不重新等待第一次加载。
-  return React.createElement(AntdProvider, { locale: antdLocale(props.getActive()) }, React.createElement('section', { className: 'aag-section aag-library-shell' },
+  return React.createElement('section', { className: 'aag-section aag-library-shell' },
     React.createElement('header', { className: 'aag-toolbar' }, React.createElement('div', { className: 'aag-title-row' },
       React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')), settingsGithubLinks(props.t))),
     React.createElement('div', { className: 'aag-library-navigation' }, navigation),
@@ -1411,7 +1403,7 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
     React.createElement('div', { id: 'aag-library-panel-teams', hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
       remote: props.remote as TeamRemote, sharedHeader: true, onSummary: setTeamSummary, prepareSelect: props.prepareTeamSelection,
       onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) },
-    })))))
+    }))))
 }
 export const inject = ['slots', 'inputTriggers', 'locale', 'remote', 'sessions', 'conversation']
 

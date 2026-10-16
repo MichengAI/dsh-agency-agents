@@ -1,5 +1,5 @@
-import { Button, MaybeAntdProvider, Modal } from './antd-ui.js'
-import { documentAntdLocale } from './antd-locale.js'
+import { Button, Modal } from './plugin-ui.js'
+import { Switch as PrimitiveSwitch } from '@deepseek-ai/dsh-client-ui-primitives'
 import { useEscapeLayer } from './escape-layer.js'
 import React from 'react'
 
@@ -69,22 +69,16 @@ export function LibraryCard(props: {
               <div className="aag-card-division">{props.metadata}</div>
             </div>
           </div>
-          <div className="aag-switch">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={props.enabled}
+          <div className="aag-switch" onClick={(event) => {
+            if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+          }}>
+            <PrimitiveSwitch
+              checked={props.enabled}
               disabled={props.disabled}
               aria-label={`${props.name}：${props.enabled ? props.enabledLabel : props.disabledLabel}`}
               title={props.enabled ? props.enabledLabel : props.disabledLabel}
-              className="aag-enable-switch"
-              onClick={(event) => {
-                if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
-                props.toggle()
-              }}
-            >
-              <span className="aag-enable-switch-thumb" aria-hidden="true" />
-            </button>
+              onChange={() => props.toggle()}
+            />
             <span className="aag-switch-state">
               {props.enabled ? props.enabledLabel : props.disabledLabel}
             </span>
@@ -130,7 +124,6 @@ export function LibraryConfirm(props: {
   useEscapeLayer(true, () => { if (!props.busy) props.close() })
   const isDanger = props.danger ?? (props.title.includes('放弃') || props.title.includes('删除') || props.title.toLowerCase().includes('discard') || props.title.toLowerCase().includes('delete'))
   return (
-    <MaybeAntdProvider locale={documentAntdLocale()}>
     <Modal
       open
       zIndex={1300}
@@ -151,6 +144,5 @@ export function LibraryConfirm(props: {
         </p>
       )}
     </Modal>
-    </MaybeAntdProvider>
   )
 }

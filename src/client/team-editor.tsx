@@ -3,7 +3,7 @@ import { LibraryEditorFooter } from './library-ui.js';
 import React from 'react';
 import { effectiveCoordinator, BUILTIN_TEAMS, TEAM_PROMPTS, teamInputSchema, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
-import { Button, Input } from './antd-ui.js';
+import { Button, Input } from './plugin-ui.js';
 import { CategorySelect } from './category-select.js';
 import { EN_DIVISION, ZH_DIVISION } from '../names.js';
 import { TeamDialog, TeamConfirm, Avatar, IconPlus, IconTrash, IconRefresh, IconSearch, } from './team-shared.js';
@@ -279,7 +279,7 @@ export function TeamEditor(props: {
                     setPicker(i);
                 }}>
                           <IconRefresh />{tx("替换")}</Button>
-                        <Button aria-label={tx("删除成员 {0}", [i + 1])} onClick={() => patch({
+                        <Button className="aag-icon-btn" danger aria-label={tx("删除成员 {0}", [i + 1])} onClick={() => patch({
                     members: draft.members.filter((_, n) => n !== i),
                 })}>
                           <IconTrash />
