@@ -546,10 +546,8 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-action-primary:hover:not(:disabled){color:var(--dsw-alias-link)}
 .aag-card-action-danger{color:var(--dsw-alias-state-error-primary)}
 .aag-card-action-danger:hover:not(:disabled){background:var(--dsw-alias-state-error-tertiary,rgba(239,68,68,0.1))}
-@container (max-width: 519px), (min-width: 0px) {
-  .aag-card-action span.aag-card-action-text { display: none; }
-  .aag-card-action { padding: 0 4px; }
-}
+.aag-card-action span.aag-card-action-text{display:none}
+.aag-card-action{padding:0 4px}
 .aag-switch{position:absolute;top:0;right:0;display:flex;align-items:center;flex-direction:column;gap:3px}
 .aag-enable-switch{box-sizing:border-box;position:relative;flex:0 0 auto;width:36px;height:20px;padding:2px;border:0;border-radius:999px;corner-shape:round;background:var(--dsw-alias-border-l3,#555);cursor:pointer;outline:none;transition:background 120ms ease}
 .aag-enable-switch[aria-checked=true]{background:var(--dsw-alias-brand-primary,var(--dsw-alias-state-business-primary))}
