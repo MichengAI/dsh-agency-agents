@@ -1,10 +1,8 @@
 import type { Locale } from 'antd/es/locale/index.js'
 import darkAlgorithmImport from 'antd/es/theme/themes/dark/index.js'
 import defaultAlgorithmImport from 'antd/es/theme/themes/default/index.js'
-import type { ButtonProps } from 'antd/es/button/Button.js'
 import { antdThemeConfig, antdThemeCss } from './antd-theme.js'
 import { useHostDark } from './host-theme.js'
-import ButtonImport from 'antd/es/button/index.js'
 import type { ConfigProviderProps } from 'antd/es/config-provider/index.js'
 import ConfigProviderImport from 'antd/es/config-provider/index.js'
 import type { DrawerProps } from 'antd/es/drawer/index.js'
@@ -24,6 +22,7 @@ import ListImport from 'antd/es/list/index.js'
 import type { ListItemMetaProps, ListItemProps } from 'antd/es/list/Item.js'
 import type { SwitchProps } from 'antd/es/switch/index.js'
 import SwitchImport from 'antd/es/switch/index.js'
+import { Button as PrimitiveButton, type ButtonVariant } from '@deepseek-ai/dsh-client-ui-primitives'
 import React from 'react'
 
 function unwrap<T>(mod: unknown): T {
@@ -33,10 +32,42 @@ function unwrap<T>(mod: unknown): T {
 
 const TextArea = unwrap<React.ComponentType<TextAreaProps>>(TextAreaImport)
 export const Input = Object.assign(unwrap<React.ComponentType<InputProps>>(InputImport), { TextArea })
-const AntButton = unwrap<React.ComponentType<ButtonProps>>(ButtonImport)
-/** 普通按钮跟随宿主尺寸与圆角，只有显式指定时才使用胶囊形。 */
-export function Button(props: ButtonProps): React.ReactElement {
-  return React.createElement(AntButton, props)
+
+export interface UnifiedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant
+  type?: any
+  danger?: boolean
+  loading?: boolean
+  block?: boolean
+  size?: 'md' | 'sm' | any
+  icon?: React.ReactNode
+  shape?: string
+  href?: string
+  target?: string
+}
+
+/** 桥接官方宿主原语 Button，自动映射 Antd 常用属性（type="primary", danger, block, etc.） */
+export function Button({ variant, type, danger, loading, block, size, shape, className, children, ...props }: UnifiedButtonProps): React.ReactElement {
+  let mappedVariant: ButtonVariant = variant ?? 'outline'
+  if (type === 'primary') mappedVariant = 'primary'
+  else if (type === 'text' || type === 'link') mappedVariant = 'ghost'
+
+  const classes = [
+    className,
+    danger ? 'is-danger' : '',
+    block ? 'is-block' : '',
+    loading ? 'is-loading' : '',
+  ].filter(Boolean).join(' ')
+
+  const mappedSize = (size === 'small' || size === 'sm') ? 'sm' : 'md'
+
+  return React.createElement(PrimitiveButton, {
+    ...props,
+    variant: mappedVariant,
+    size: mappedSize,
+    className: classes || undefined,
+    disabled: props.disabled || loading,
+  }, children)
 }
 export const ConfigProvider = unwrap<React.ComponentType<ConfigProviderProps>>(ConfigProviderImport)
 export const Drawer = unwrap<React.ComponentType<DrawerProps>>(DrawerImport)
