@@ -98,6 +98,8 @@ export const antdThemeCss = `
 .aag-theme.ant-modal{--aag-ant-border-radius-lg:var(--dsw-radius-panel,28px)}
 .aag-theme .ant-modal-container{position:relative;isolation:isolate;border:0;border-radius:var(--dsw-radius-panel,28px);background:transparent;box-shadow:var(--dsw-elevation-panel,none)}
 .aag-theme .ant-modal-container::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-3));backdrop-filter:var(--dsw-menu-backdrop-filter,none);pointer-events:none}
+.aag-theme .ant-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.aag-theme .ant-modal-footer>*{margin:0!important}
 .aag-theme .ant-drawer-content{position:relative;isolation:isolate;background:transparent}
 .aag-theme .ant-drawer-content::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-3));backdrop-filter:var(--dsw-menu-backdrop-filter,none);pointer-events:none}
 .aag-theme.aag-theme.aag-theme.ant-select,
