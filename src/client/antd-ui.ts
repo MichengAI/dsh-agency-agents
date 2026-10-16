@@ -47,7 +47,7 @@ export interface UnifiedButtonProps extends Omit<React.ButtonHTMLAttributes<HTML
 }
 
 /** 桥接官方宿主原语 Button，自动映射 Antd 常用属性（type="primary", danger, block, etc.） */
-export function Button({ variant, type, danger, loading, block, size, shape, className, children, ...props }: UnifiedButtonProps): React.ReactElement {
+export function Button({ variant, type, danger, loading, block, size, shape, className, children, href, target, rel, icon, ...props }: UnifiedButtonProps): React.ReactElement {
   let mappedVariant: ButtonVariant = variant ?? 'outline'
   if (type === 'primary') mappedVariant = 'primary'
   else if (type === 'text' || type === 'link') mappedVariant = 'ghost'
@@ -57,6 +57,7 @@ export function Button({ variant, type, danger, loading, block, size, shape, cla
   const classes = [
     'ant-btn',
     'aag-theme',
+    href ? 'aag-link-btn' : '',
     className,
     isPrimary ? 'ant-btn-primary' : '',
     danger ? (isPrimary ? 'ant-btn-dangerous ant-btn-primary is-danger' : 'ant-btn-dangerous is-danger') : '',
@@ -66,14 +67,34 @@ export function Button({ variant, type, danger, loading, block, size, shape, cla
 
   const mappedSize = (size === 'small' || size === 'sm') ? 'sm' : 'md'
 
+  const hasChildren = children !== undefined && children !== null && children !== false
+  const iconElement = icon ? React.createElement('span', {
+    key: 'icon',
+    className: 'ant-btn-icon',
+    style: { display: 'inline-flex', alignItems: 'center', marginRight: (hasChildren && !href) ? 6 : undefined },
+  }, icon) : null
+
+  const content = [iconElement, children]
+
+  if (href) {
+    return React.createElement('a', {
+      ...(props as unknown as React.AnchorHTMLAttributes<HTMLAnchorElement>),
+      href,
+      target,
+      rel: rel || (target === '_blank' ? 'noreferrer' : undefined),
+      className: classes || undefined,
+      'aria-label': props['aria-label'],
+      style: Object.assign({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }, props.style),
+    }, content)
+  }
+
   return React.createElement(PrimitiveButton, {
     ...props,
     variant: mappedVariant,
     size: mappedSize,
-    icon: props.icon,
     className: classes || undefined,
     disabled: props.disabled || loading,
-  }, children)
+  }, content)
 }
 export const ConfigProvider = unwrap<React.ComponentType<ConfigProviderProps>>(ConfigProviderImport)
 export const Drawer = unwrap<React.ComponentType<DrawerProps>>(DrawerImport)
