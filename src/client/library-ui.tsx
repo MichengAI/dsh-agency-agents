@@ -107,7 +107,7 @@ export function LibraryCard(props: {
             onClick={() => item.onSelect()}
           >
             {item.icon}
-            <span>{item.label}</span>
+            <span className="aag-card-action-text">{item.label}</span>
           </button>
         ))}
       </div>

@@ -536,8 +536,8 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-division{margin-top:2px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:18px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
 .aag-card-description{flex:1;display:-webkit-box;margin:10px 0 0;overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:1.55;-webkit-box-orient:vertical;-webkit-line-clamp:3}
 .aag-card-actions{display:flex;align-items:stretch;min-height:48px;border-top:0.5px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2)}
-.aag-card-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1 0 auto;min-height:48px;padding:0 10px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;font-weight:500;line-height:18px;white-space:nowrap;cursor:pointer;transition:color 120ms ease,background 120ms ease}
-.aag-card-action svg{flex-shrink:0;opacity:.8;transition:opacity 120ms ease}
+.aag-card-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1 1 0;min-width:0;min-height:48px;padding:0 8px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;font-weight:500;line-height:18px;white-space:nowrap;cursor:pointer;transition:color 120ms ease,background 120ms ease}
+.aag-card-action svg{flex-shrink:0;width:18px;height:18px;opacity:.85;transition:opacity 120ms ease}
 .aag-card-action:hover:not(:disabled) svg{opacity:1}
 .aag-card-action+.aag-card-action{border-left:0.5px solid var(--dsw-alias-border-l2)}
 .aag-card-action:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
@@ -546,6 +546,10 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-action-primary:hover:not(:disabled){color:var(--dsw-alias-link)}
 .aag-card-action-danger{color:var(--dsw-alias-state-error-primary)}
 .aag-card-action-danger:hover:not(:disabled){background:var(--dsw-alias-state-error-tertiary,rgba(239,68,68,0.1))}
+@container (max-width: 519px), (min-width: 0px) {
+  .aag-card-action span.aag-card-action-text { display: none; }
+  .aag-card-action { padding: 0 4px; }
+}
 .aag-switch{position:absolute;top:0;right:0;display:flex;align-items:center;flex-direction:column;gap:3px}
 .aag-enable-switch{box-sizing:border-box;position:relative;flex:0 0 auto;width:36px;height:20px;padding:2px;border:0;border-radius:999px;corner-shape:round;background:var(--dsw-alias-border-l3,#555);cursor:pointer;outline:none;transition:background 120ms ease}
 .aag-enable-switch[aria-checked=true]{background:var(--dsw-alias-brand-primary,var(--dsw-alias-state-business-primary))}
@@ -1381,9 +1385,9 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           ],
           actions: React.createElement(React.Fragment, null,
             React.createElement('button', { type: 'button', className: 'aag-card-action', title: props.t('settings.viewPromptTitle'), 'aria-label': props.t('settings.viewPromptTitle'), 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
-              React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), props.t('settings.viewPrompt')),
+              React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), React.createElement('span', { className: 'aag-card-action-text' }, props.t('settings.viewPrompt'))),
             React.createElement('button', { type: 'button', className: 'aag-card-action aag-card-action-primary', title: copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPromptTitle'), 'aria-label': copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPromptTitle'), onClick: () => copyPrompt(expert) },
-              React.createElement(Copy, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPrompt'))),
+              React.createElement(Copy, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), React.createElement('span', { className: 'aag-card-action-text' }, copiedSlug === expert.slug ? props.t('settings.copySuccess') : props.t('settings.copyPrompt')))),
         })
       } }))
     }

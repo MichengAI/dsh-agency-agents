@@ -335,7 +335,7 @@ export function TeamsPanel(props: {
                     ...(!team.builtin ? [{ id: 'delete', label: tx("删除专家团"), icon: <IconTrash size={16} />, danger: true, disabled: busy, onSelect: () => void change(team, 'delete') }] : []),
                 ]} actions={<>
                   <button type="button" className="aag-card-action" title={tx("查看详情")} aria-label={tx("查看详情")} aria-haspopup="dialog" onClick={() => setDetails(team)}>
-                    <IconEye size={18}/><span>{tx("查看详情")}</span></button>
+                    <IconEye size={18}/><span className="aag-card-action-text">{tx("查看详情")}</span></button>
                 </>}/>);
         })}
       </div>{' '}
