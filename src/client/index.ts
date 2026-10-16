@@ -484,11 +484,14 @@ export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inl
 // 设置页版式对齐 dsh-skills-manager：工具栏 + 汇总条 + 分组卡片 + 行内启停按钮。
 export const SETTINGS_CSS = `
 .aag-section{box-sizing:border-box;display:flex;min-width:0;max-width:760px;width:100%;margin:0 auto;flex-direction:column;gap:16px;padding:0 0 32px;color:var(--dsw-alias-label-primary)}
-.aag-toolbar{display:flex;align-items:flex-start;gap:16px;padding-bottom:12px}
-.aag-title-row{display:flex;align-items:center;gap:8px;min-width:0}.aag-settings-links{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto}
-.aag-settings-links .ant-btn,.aag-settings-links button{height:28px!important;padding:0 8px!important;font-size:12px!important;border-radius:var(--dsw-radius-sm,8px)!important;background:transparent!important;border:0.5px solid var(--dsw-alias-border-l2)!important;color:var(--dsw-alias-label-secondary)!important}
-.aag-settings-links .ant-btn:hover:not(:disabled),.aag-settings-links button:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)!important;color:var(--dsw-alias-label-primary)!important;border-color:var(--dsw-alias-border-l3,#555)!important}
-.aag-settings-links .ant-btn svg,.aag-settings-links button svg{width:14px;height:14px;flex-shrink:0}
+.aag-toolbar{display:flex;flex-direction:column;gap:8px;padding-bottom:12px}
+.aag-title-row{display:flex;align-items:center;gap:8px 12px;min-width:0;flex-wrap:wrap}
+.aag-settings-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.aag-settings-links>span[data-mpi-check]{display:inline-flex;align-items:center}
+.aag-settings-links>a,.aag-settings-links button{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;height:28px!important;padding:0 10px!important;border:0.5px solid var(--dsw-alias-border-l2,#494949)!important;border-radius:var(--dsw-radius-sm,8px)!important;background:transparent!important;color:var(--dsw-alias-label-secondary,#b9b9b9)!important;font:inherit!important;font-size:12px!important;line-height:20px!important;text-decoration:none!important;cursor:pointer!important;user-select:none!important;box-sizing:border-box!important;transition:border-color 120ms ease,color 120ms ease,background 120ms ease!important}
+.aag-settings-links>a:hover,.aag-settings-links button:hover{border-color:var(--dsw-alias-border-l3,#555)!important;color:var(--dsw-alias-label-primary,#eee)!important;background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.12))!important}
+.aag-settings-links>a:focus-visible,.aag-settings-links button:focus-visible{outline:var(--dsw-focus-ring-width,1px) solid var(--dsw-focus-ring-color,var(--dsw-alias-brand-primary))!important;outline-offset:0!important}
+.aag-settings-links svg{display:block!important;width:14px!important;height:14px!important}
 .aag-title{margin:0;font-size:20px;line-height:28px;font-weight:650;letter-spacing:-.2px}
 .aag-note{overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;text-overflow:ellipsis;white-space:nowrap}
 .aag-error{color:var(--dsw-alias-state-error-primary);font-size:13px;line-height:20px}
@@ -1276,7 +1279,8 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     if (!props.sharedHeader) nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
       React.createElement('div', { className: 'aag-title-row' },
         React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')),
-        settingsGithubLinks(props.t),
+        settingsGithubLinks(props.t)),
+      React.createElement('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } },
         React.createElement('span', { className: 'aag-header-stat' },
           React.createElement('strong', null, total),
           props.t(total === 1 ? 'summary.total.one' : 'summary.total.other', { count: total })),
