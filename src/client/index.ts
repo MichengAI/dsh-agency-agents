@@ -108,6 +108,19 @@ function Copy(props: LineIconProps): React.ReactElement {
     React.createElement('path', { d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' }))
 }
 
+function EditIcon(props: LineIconProps): React.ReactElement {
+  return lineIcon(props,
+    React.createElement('path', { d: 'M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z' }),
+    React.createElement('path', { d: 'm15 5 4 4' }))
+}
+
+function TrashIcon(props: LineIconProps): React.ReactElement {
+  return lineIcon(props,
+    React.createElement('path', { d: 'M3 6h18' }),
+    React.createElement('path', { d: 'M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6' }),
+    React.createElement('path', { d: 'M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2' }))
+}
+
 function Eye(props: LineIconProps): React.ReactElement {
   return lineIcon(props,
     React.createElement('path', { d: 'M2.06 12a10.7 10.7 0 0 1 19.88 0 10.7 10.7 0 0 1-19.88 0' }),
@@ -1363,8 +1376,8 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           enabledLabel: props.t('settings.enabled'), disabledLabel: props.t('settings.disabled'),
           toggle: () => toggle(expert.slug),
           moreItems: [
-            { id: 'edit', label: props.t(expert.custom ? 'custom.edit' : 'custom.copy'), disabled: isSaving, onSelect: () => openEditor(expert) },
-            ...(expert.custom ? [{ id: 'delete', label: props.t('custom.delete'), danger: true, disabled: isSaving, onSelect: () => { setDeleting(expert); setDeleteError(null) } }] : []),
+            { id: 'edit', label: props.t(expert.custom ? 'custom.edit' : 'custom.copy'), icon: React.createElement(EditIcon, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }), disabled: isSaving, onSelect: () => openEditor(expert) },
+            ...(expert.custom ? [{ id: 'delete', label: props.t('custom.delete'), icon: React.createElement(TrashIcon, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }), danger: true, disabled: isSaving, onSelect: () => { setDeleting(expert); setDeleteError(null) } }] : []),
           ],
           actions: React.createElement(React.Fragment, null,
             React.createElement('button', { type: 'button', className: 'aag-card-action', title: props.t('settings.viewPromptTitle'), 'aria-label': props.t('settings.viewPromptTitle'), 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },

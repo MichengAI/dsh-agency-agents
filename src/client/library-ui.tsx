@@ -6,6 +6,7 @@ import React from 'react'
 export interface LibraryMenuItem {
   id: string
   label: string
+  icon?: React.ReactNode
   disabled?: boolean
   danger?: boolean
   onSelect(): void
@@ -102,9 +103,11 @@ export function LibraryCard(props: {
             className={item.danger ? 'aag-card-action aag-card-action-danger' : 'aag-card-action'}
             disabled={item.disabled}
             title={item.label}
+            aria-label={item.label}
             onClick={() => item.onSelect()}
           >
-            {item.label}
+            {item.icon}
+            <span>{item.label}</span>
           </button>
         ))}
       </div>

@@ -10,7 +10,7 @@ import { effectiveCoordinator, type ExpertTeam, type TeamInput, type TeamSnapsho
 import type { ExpertSummary } from '../expert-contract.js';
 import type { AgencyCatalogRemote, AgencyTeamsRemote } from './remote.js';
 import { TeamEditor } from './team-editor.js';
-import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, } from './team-shared.js';
+import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconTrash, } from './team-shared.js';
 export { TEAM_CSS } from './team-style.js';
 export type TeamRemote = AgencyCatalogRemote & AgencyTeamsRemote;
 export async function unwrap<T>(promise: Promise<{
@@ -331,11 +331,11 @@ export function TeamsPanel(props: {
                 </div>} metadata={tx("{0} 位专家", [team.members.length])} description={enabled && issue
                     ? `${team.description} ${tx(issue)}`
                     : team.description} enabled={enabled} disabled={busy} enabledLabel={tx("已启用")} disabledLabel={tx("已停用")} toggle={() => void change(team, 'enable')} moreItems={[
-                    { id: 'edit', label: team.builtin ? tx("复制并自定义") : tx("编辑专家团"), disabled: busy, onSelect: () => (team.builtin ? copy(team) : edit(team)) },
-                    ...(!team.builtin ? [{ id: 'delete', label: tx("删除专家团"), danger: true, disabled: busy, onSelect: () => void change(team, 'delete') }] : []),
+                    { id: 'edit', label: team.builtin ? tx("复制并自定义") : tx("编辑专家团"), icon: <IconCopy size={16} />, disabled: busy, onSelect: () => (team.builtin ? copy(team) : edit(team)) },
+                    ...(!team.builtin ? [{ id: 'delete', label: tx("删除专家团"), icon: <IconTrash size={16} />, danger: true, disabled: busy, onSelect: () => void change(team, 'delete') }] : []),
                 ]} actions={<>
                   <button type="button" className="aag-card-action" title={tx("查看详情")} aria-label={tx("查看详情")} aria-haspopup="dialog" onClick={() => setDetails(team)}>
-                    <IconEye size={18}/>{tx("查看详情")}</button>
+                    <IconEye size={18}/><span>{tx("查看详情")}</span></button>
                 </>}/>);
         })}
       </div>{' '}
