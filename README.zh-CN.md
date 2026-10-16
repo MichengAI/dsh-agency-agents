@@ -116,7 +116,7 @@
 
 ## 宿主依赖与兼容性
 
-DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块图中不存在的项会跳过，冻结模块也不一定对应 Profile 内的 npm 包。设置页控件随插件打包为 Ant Design，不再注入宿主 primitives。`dsh-client-ui-slots` 等 required peer 仍表达运行时契约；关闭 `auto-install-peers` 的 Profile 可能出现 unmet peer 提示，严格 peer 检查还可能阻止安装，需核对宿主版本及浏览器模块是否提供，不能据 npm 包树缺失直接判定运行失败。
+DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块图中不存在的项会跳过，冻结模块也不一定对应 Profile 内的 npm 包。UI 全面接入宿主官方原语（`@deepseek-ai/dsh-client-ui-primitives`）的 `Menu` 和 `Button` 原语与半透明毛玻璃材质，彻底移除了自定义自绘下拉及独立的 Ant Design Select。`dsh-client-ui-slots` 等 required peer 仍表达运行时契约；关闭 `auto-install-peers` 的 Profile 可能出现 unmet peer 提示，严格 peer 检查还可能阻止安装，需核对宿主版本及浏览器模块是否提供，不能据 npm 包树缺失直接判定运行失败。
 
 ## 安装
 

@@ -101,6 +101,10 @@ export const antdThemeCss = `
 .aag-theme button.is-danger,.aag-theme a.is-danger{color:var(--dsw-alias-state-error-primary,#ef4444)!important;border:0.5px solid var(--dsw-alias-state-error-primary,#ef4444)!important;background:transparent!important}
 .aag-theme button.is-danger:hover:not(:disabled),.aag-theme a.is-danger:hover:not(:disabled){background:var(--dsw-alias-state-error-tertiary,rgba(239,68,68,0.15))!important;color:var(--dsw-alias-state-error-primary,#ef4444)!important;border-color:var(--dsw-alias-state-error-primary,#ef4444)!important}
 .aag-theme button.is-block{display:flex!important;width:100%!important}
+.aag-theme button.is-loading{position:relative;pointer-events:none;color:transparent!important}
+.aag-theme button.is-loading::after{content:"";position:absolute;width:14px;height:14px;top:50%;left:50%;margin:-7px 0 0 -7px;border:1.5px solid currentColor;border-top-color:transparent;border-radius:50%;animation:aag-spin .6s linear infinite;color:var(--dsw-alias-label-primary)}
+@keyframes aag-spin{to{transform:rotate(360deg)}}
+.aag-theme button.is-danger.is-loading::after{color:var(--dsw-alias-state-error-primary,#ef4444)}
 .aag-theme.ant-segmented{--aag-ant-segmented-track-bg:var(--dsw-alias-interactive-bg-hover);--aag-ant-segmented-item-selected-bg:var(--dsw-alias-bg-layer-1);--aag-ant-segmented-item-selected-color:var(--dsw-alias-label-primary);--aag-ant-segmented-item-color:var(--dsw-alias-label-secondary);border-radius:var(--dsw-radius-md,12px);padding:4px}
 .aag-theme.ant-segmented .ant-segmented-item,.aag-theme.ant-segmented .ant-segmented-thumb{border-radius:var(--dsw-radius-sm,8px)}
 `

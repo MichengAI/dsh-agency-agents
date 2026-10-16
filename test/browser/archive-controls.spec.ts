@@ -3,11 +3,11 @@ import { test, expect } from '@playwright/test'
 for (const theme of ['dark', 'light']) test(`${theme}：沿用归档插件控件，启用状态保持绿色`, async ({ page }) => {
   await page.goto(`/?teams&settings&visual&theme=${theme}`)
   const search = page.locator('#aag-filter-search')
-  const select = page.getByRole('combobox', { name: '来源' })
+  const select = page.getByRole('button', { name: '来源' })
   await expect(search).toBeVisible()
   await expect(select).toBeVisible()
   await select.click()
-  await expect(page.getByRole('option').first()).toBeVisible()
+  await expect(page.getByRole('menuitem').first()).toBeVisible()
   await page.keyboard.press('Escape')
   await page.screenshot({ path: `test-results/archive-controls-${theme}.png` })
   await page.locator('.ant-segmented-item').filter({ has: page.getByRole('radio', { name: '专家团', exact: true }) }).click()

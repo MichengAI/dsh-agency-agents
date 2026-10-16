@@ -25,8 +25,8 @@ test('英文设置页与专家团详情、编辑表单没有中文界面残留',
 
 for (const theme of ['dark', 'light']) test(`${theme}：分类菜单和启用开关使用宿主角色`, async ({ page }) => {
   await page.goto(`/?teams&settings&theme=${theme}`)
-  await page.getByRole('combobox', { name: '来源' }).click()
-  await expect(page.getByRole('option').first()).toBeVisible()
+  await page.getByRole('button', { name: '来源' }).click()
+  await expect(page.getByRole('menuitem').first()).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('switch').first()).toBeVisible()
   await page.screenshot({ path: `test-results/official-controls-${theme}.png` })

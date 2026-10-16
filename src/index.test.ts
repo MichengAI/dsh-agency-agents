@@ -1305,7 +1305,7 @@ describe('专家库目标稿样式契约', () => {
     expect(CARD_SETTINGS_CSS).toContain('.aag-section{container-type:inline-size}')
   })
 
-  it('专家卡片固定高度，短标题也预留两行', () => {
+  it('专家卡片固定高度，单行标题紧凑排版', () => {
     expect(CARD_SETTINGS_CSS).toContain('.aag-expert-card{display:grid')
     expect(CARD_SETTINGS_CSS).toContain('height:191px;min-height:191px')
     expect(CARD_SETTINGS_CSS).toContain('.aag-card-name{display:flex')

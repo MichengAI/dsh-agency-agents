@@ -6,6 +6,12 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 ## Unreleased
 
+- Adopt official host `@deepseek-ai/dsh-client-ui-primitives` `Menu` and `Button` primitives, completely eliminating custom select/dropdown logic and Ant Design Select dependencies.
+- Elevate dropdown visual fidelity with native frosted glass (`blur(16px)` / `blur(20px)`), prominent shadows, and fine hairline borders.
+- Streamline card action footer into compact 32px height with icon-only controls (View, Copy & Customize, Edit, Delete), eliminating visual clutter and redundant prompt copy actions.
+- Wrap card division categories in refined pill badges and eliminate vertical empty holes on single-line titles.
+- Unify confirmation modal button styling with lightweight hairline outline danger feedback and enhanced dialog copy.
+
 ## 1.0.19 - 2026-10-15
 
 - Support DSH `0.2.1-alpha.3` while retaining all existing supported versions; pin development `@deepseek-ai/dsh*` dependencies to host `0.2.1-alpha.3` and Cordis to `4.0.5-alpha.2`.

@@ -23,8 +23,8 @@ export function CategorySelect(props: {
 }): React.ReactElement {
   const [open, setOpen] = React.useState(false)
 
-  const selectedOption = props.options.find((opt) => opt.value === props.value) ?? props.options[0]
-  const currentText = selectedOption ? selectedOption.label : (props.label || '')
+  const selectedOption = props.options.find((opt) => opt.value === props.value)
+  const currentText = selectedOption ? selectedOption.label : (props.label || props.value || '')
 
   const items = React.useMemo<readonly MenuEntry[]>(() => {
     return props.options.map((opt) => ({
@@ -48,9 +48,9 @@ export function CategorySelect(props: {
         id: props.id,
         variant: 'outline',
         size: 'sm',
-        role: 'combobox',
         'aria-label': props.label,
         'aria-expanded': open,
+        'aria-haspopup': 'menu',
         disabled: props.disabled,
         className: `aag-menu-select-trigger${open ? ' is-open' : ''}`,
         onClick: () => {

@@ -1,6 +1,7 @@
 import { AntdProvider, Button, Input, Segmented } from './antd-ui.js'
 import { antdLocale } from './antd-locale.js'
 import { LibraryCard } from './library-ui.js'
+import { IconPlus } from './team-shared.js'
 import type { AgencyTeamsRemote } from './remote.js'
 import { TeamsPanel, unwrap, type TeamRemote } from './team-ui.js'
 import { TEAM_CSS } from './team-style.js'
@@ -1290,8 +1291,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
         disabled: isSaving,
         'aria-label': props.t('custom.new'),
         title: props.t('custom.new'),
-        icon: React.createElement('svg', { viewBox: '0 0 16 16', width: 16, height: 16, 'aria-hidden': true, focusable: false },
-          React.createElement('path', { d: 'M8 2.5v11M2.5 8h11', fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' })),
+        icon: React.createElement(IconPlus, { 'aria-hidden': true }),
         onClick: () => openEditor(),
       }))
     if (notice !== null) nodes.push(React.createElement('div', { key: 'notice', className: 'aag-custom-notice', role: 'status' }, notice))

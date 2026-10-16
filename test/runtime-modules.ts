@@ -12,12 +12,13 @@ export function Button(props: any) {
 export function Menu(props: any) {
   return React.createElement('div', { className: 'dsh-primitives-menu' },
     props.anchor,
-    props.open ? React.createElement('div', { role: 'listbox' },
+    props.open ? React.createElement('div', { role: 'menu' },
       props.items?.map((item: any) =>
-        React.createElement('div', {
+        React.createElement('button', {
           key: item.id,
-          role: 'option',
-          'aria-selected': props.selectedId === item.id,
+          type: 'button',
+          role: 'menuitem',
+          'aria-checked': props.selectedId === item.id,
           onClick: () => props.onSelect?.(item.id),
         }, item.label)
       )

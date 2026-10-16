@@ -33,13 +33,13 @@ function unwrap<T>(mod: unknown): T {
 const TextArea = unwrap<React.ComponentType<TextAreaProps>>(TextAreaImport)
 export const Input = Object.assign(unwrap<React.ComponentType<InputProps>>(InputImport), { TextArea })
 
-export interface UnifiedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface UnifiedButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
   variant?: ButtonVariant
-  type?: any
+  type?: 'primary' | 'ghost' | 'outline' | 'default' | 'text' | 'link' | 'button' | 'submit' | 'reset'
   danger?: boolean
   loading?: boolean
   block?: boolean
-  size?: 'md' | 'sm' | any
+  size?: 'md' | 'sm' | 'middle' | 'small' | 'large'
   icon?: React.ReactNode
   shape?: string
   href?: string
