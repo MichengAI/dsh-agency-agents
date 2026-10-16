@@ -97,8 +97,12 @@ button.is-danger:hover:not(:disabled),a.is-danger:hover:not(:disabled),.aag-them
 .aag-theme.ant-modal{--aag-ant-border-radius-lg:var(--dsw-radius-panel,28px)}
 .aag-theme .ant-modal-container{position:relative;isolation:isolate;border:0;border-radius:var(--dsw-radius-panel,28px);background:transparent;box-shadow:var(--dsw-elevation-panel,none)}
 .aag-theme .ant-modal-container::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-3));backdrop-filter:var(--dsw-menu-backdrop-filter,none);pointer-events:none}
-.aag-theme .ant-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.aag-theme .ant-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:12px 16px 16px}
 .aag-theme .ant-modal-footer>*{margin:0!important}
+.aag-theme .ant-modal-footer button{height:32px!important;min-height:32px!important;padding:0 14px!important;font-size:13px!important;border-radius:var(--dsw-radius-sm,8px)!important;box-shadow:none!important}
+.aag-theme .ant-modal-footer button:focus,.aag-theme .ant-modal-footer button:focus-visible{outline:none!important;box-shadow:none!important}
+.aag-theme .ant-modal-footer button:not(.is-danger):not(.ant-btn-dangerous):not(.ant-btn-primary){background:transparent!important;border:0.5px solid var(--dsw-alias-border-l2)!important;color:var(--dsw-alias-label-primary)!important}
+.aag-theme .ant-modal-footer button:not(.is-danger):not(.ant-btn-dangerous):not(.ant-btn-primary):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)!important;border-color:var(--dsw-alias-border-l3,#555)!important;color:var(--dsw-alias-label-primary)!important}
 .aag-theme .ant-drawer-content{position:relative;isolation:isolate;background:transparent}
 .aag-theme .ant-drawer-content::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--dsw-specific-menu,var(--dsw-alias-bg-layer-3));backdrop-filter:var(--dsw-menu-backdrop-filter,none);pointer-events:none}
 .aag-menu-select-trigger{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:32px;padding:0 10px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;cursor:pointer;user-select:none;transition:border-color 120ms ease,background 120ms ease}
