@@ -49,7 +49,6 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const PLUGIN_ID = '@michengai/dsh-agency-agents'
 /** 本插件客户端词条字典命名空间。 */
 const NS = 'agency'
-export const COPY_PROMPT_FEEDBACK_MS = 1_600
 
 const UPDATE_ICON_PATHS: Record<PluginUpdateIconName, readonly string[]> = {
   refresh: ['M13.5 5.5V2.5m0 0h-3m3 0-2.1 2.1A5.5 5.5 0 1 0 13.2 12'],
@@ -544,8 +543,6 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-action+.aag-card-action{border-left:0.5px solid var(--dsw-alias-border-l2)}
 .aag-card-action:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
 .aag-card-action:disabled{opacity:.5;cursor:default}
-.aag-card-action-primary{color:var(--dsw-alias-label-primary)}
-.aag-card-action-primary:hover:not(:disabled){color:var(--dsw-alias-link)}
 .aag-card-action-danger{color:var(--dsw-alias-state-error-primary)}
 .aag-card-action-danger:hover:not(:disabled){background:var(--dsw-alias-state-error-tertiary,rgba(239,68,68,0.1))}
 .aag-card-action span.aag-card-action-text{display:none}
@@ -1368,9 +1365,8 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
             { id: 'edit', label: props.t(expert.custom ? 'custom.edit' : 'custom.copy'), icon: React.createElement(expert.custom ? EditIcon : Copy, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }), disabled: isSaving, onSelect: () => openEditor(expert) },
             ...(expert.custom ? [{ id: 'delete', label: props.t('custom.delete'), icon: React.createElement(TrashIcon, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }), danger: true, disabled: isSaving, onSelect: () => { setDeleting(expert); setDeleteError(null) } }] : []),
           ],
-          actions: React.createElement(React.Fragment, null,
-            React.createElement('button', { type: 'button', className: 'aag-card-action', title: props.t('settings.viewPromptTitle'), 'aria-label': props.t('settings.viewPromptTitle'), 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
-              React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), React.createElement('span', { className: 'aag-card-action-text' }, props.t('settings.viewPrompt')))),
+          actions: React.createElement('button', { type: 'button', className: 'aag-card-action', title: props.t('settings.viewPromptTitle'), 'aria-label': props.t('settings.viewPromptTitle'), 'aria-haspopup': 'dialog', onClick: (event: React.MouseEvent<HTMLButtonElement>) => viewPrompt(expert, event.currentTarget) },
+            React.createElement(Eye, { size: 18, strokeWidth: 1.7, 'aria-hidden': true }), React.createElement('span', { className: 'aag-card-action-text' }, props.t('settings.viewPrompt'))),
         })
       } }))
     }
