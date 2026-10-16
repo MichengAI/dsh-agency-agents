@@ -174,19 +174,19 @@ export const CUSTOM_EDITOR_CSS = `
 .aag-custom-field small{font-size:11px;opacity:.65;margin-left:8px}
 .aag-custom-avatars{border:0;padding:0;margin:20px 0;display:flex;gap:8px;flex-wrap:wrap}
 .aag-custom-avatars legend{margin-bottom:10px;font-size:13px}
-.aag-custom-avatars button{padding:3px;border:2px solid transparent;background:transparent;border-radius:12px;cursor:pointer}
-.aag-custom-avatars img{border-radius:8px;object-fit:cover}
+.aag-custom-avatars button{padding:3px;border:2px solid transparent;background:transparent;border-radius:var(--dsw-radius-md,12px);cursor:pointer}
+.aag-custom-avatars img{border-radius:var(--dsw-radius-sm,8px);object-fit:cover}
 .aag-custom-avatars button.is-selected{border-color:var(--dsw-alias-label-tertiary)}
 .aag-custom-prompt-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;font-size:14px}
 .aag-editor-drawer .aag-custom-prompt{min-height:220px;line-height:1.8}
 .aag-custom-body .aag-error{margin-top:14px}
-.aag-custom-footer{padding:16px 24px 22px;border-top:1px solid var(--dsw-alias-border-l2);flex-shrink:0}
+.aag-custom-footer{padding:16px 24px 22px;border-top:0.5px solid var(--dsw-alias-border-l2);flex-shrink:0}
 .aag-custom-footer>div{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
 .aag-custom-footer>div>button:first-child{margin-right:auto}
 .aag-editor-drawer input:focus-visible,.aag-editor-drawer textarea:focus-visible,.aag-editor-drawer .ant-input:focus,.aag-editor-drawer .ant-input:focus-visible,.ant-modal input:focus-visible,.ant-modal textarea:focus-visible{outline:none}
-.aag-custom-badge{display:inline-block;font-size:10px;padding:1px 5px;border:1px solid var(--dsw-alias-border-l3);border-radius:4px;margin-left:6px;color:var(--dsw-alias-label-secondary)}
+.aag-custom-badge{display:inline-block;font-size:10px;padding:1px 5px;border:0.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-xs,4px);margin-left:6px;color:var(--dsw-alias-label-secondary)}
 .aag-custom-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0;font-size:13px;color:var(--dsw-alias-label-primary)}
-.aag-custom-review{margin-top:16px;padding:14px;border:1px solid var(--dsw-alias-brand-primary);border-radius:8px}
+.aag-custom-review{margin-top:16px;padding:14px;border:0.5px solid var(--dsw-alias-brand-primary);border-radius:var(--dsw-radius-sm,8px)}
 .aag-custom-review-actions{display:flex;flex-wrap:wrap;gap:8px}
 .aag-custom-review p{overflow-wrap:anywhere}
 @media(max-width:560px){.aag-custom-body{padding:16px}.aag-custom-footer{padding:14px 16px 20px}.aag-custom-prompt-head{flex-wrap:wrap}}

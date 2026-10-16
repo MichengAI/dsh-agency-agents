@@ -1343,8 +1343,8 @@ describe('专家库目标稿样式契约', () => {
 
   it('卡片设置页使用宿主主题表面和边框颜色', () => {
     expect(CARD_SETTINGS_CSS).not.toMatch(/#[0-9a-f]{6}/iu)
-    expect(CARD_SETTINGS_CSS).toContain('background:var(--dsw-alias-bg-layer-2)')
-    expect(CARD_SETTINGS_CSS).toContain('border:1px solid var(--dsw-alias-border-l2)')
+    expect(CARD_SETTINGS_CSS).toContain('background:var(--dsw-alias-bg-layer-1)')
+    expect(CARD_SETTINGS_CSS).toContain('border:0.5px solid var(--dsw-alias-border-l2)')
   })
 })
 

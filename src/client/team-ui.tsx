@@ -301,7 +301,16 @@ export function TeamsPanel(props: {
           </div>
         </div>
         <div className="aag-filter-actions">
-          <Button type="primary" disabled={!snapshot || busy} onClick={() => setEditor({ enabled: false, revision: snapshot!.revision })}>{tx("新建专家团")}</Button>
+          <Button
+            className="aag-icon-btn"
+            type="text"
+            size="small"
+            disabled={!snapshot || busy}
+            aria-label={tx("新建专家团")}
+            title={tx("新建专家团")}
+            icon={<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8 2.5v11M2.5 8h11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+            onClick={() => setEditor({ enabled: false, revision: snapshot!.revision })}
+          />
         </div>
       </div>
       {error && (<div className="aag-error" role="alert">

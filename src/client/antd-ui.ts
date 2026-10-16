@@ -2,6 +2,7 @@ import type { Locale } from 'antd/es/locale/index.js'
 import darkAlgorithmImport from 'antd/es/theme/themes/dark/index.js'
 import defaultAlgorithmImport from 'antd/es/theme/themes/default/index.js'
 import type { ButtonProps } from 'antd/es/button/Button.js'
+import { antdThemeConfig, antdThemeCss } from './antd-theme.js'
 import { useHostDark } from './host-theme.js'
 import ButtonImport from 'antd/es/button/index.js'
 import type { ConfigProviderProps } from 'antd/es/config-provider/index.js'
@@ -35,9 +36,9 @@ function unwrap<T>(mod: unknown): T {
 const TextArea = unwrap<React.ComponentType<TextAreaProps>>(TextAreaImport)
 export const Input = Object.assign(unwrap<React.ComponentType<InputProps>>(InputImport), { TextArea })
 const AntButton = unwrap<React.ComponentType<ButtonProps>>(ButtonImport)
-/** 页面按钮默认圆角。顶部入口可以传入 shape、size 覆盖。 */
+/** 普通按钮跟随宿主尺寸与圆角，只有显式指定时才使用胶囊形。 */
 export function Button(props: ButtonProps): React.ReactElement {
-  return React.createElement(AntButton, { shape: 'round', ...props })
+  return React.createElement(AntButton, props)
 }
 export const ConfigProvider = unwrap<React.ComponentType<ConfigProviderProps>>(ConfigProviderImport)
 export const Drawer = unwrap<React.ComponentType<DrawerProps>>(DrawerImport)
@@ -60,17 +61,17 @@ export function useAntdMounted(): boolean {
   return React.useContext(antdMounted)
 }
 
-/** 按钮不插汉字空格。亮暗跟随宿主，主色保持 Ant Design 默认蓝。 */
+/** 按钮不插汉字空格。亮暗跟随宿主，接入官方圆角与主题隔离命名空间。 */
 export function AntdProvider(props: { locale?: Locale; children?: React.ReactNode }): React.ReactElement {
   const dark = useHostDark()
   return React.createElement(antdMounted.Provider, { value: true }, React.createElement(ConfigProvider, {
     locale: props.locale,
     button: { autoInsertSpace: false },
     theme: {
+      ...antdThemeConfig,
       algorithm: dark ? darkAlgorithm : defaultAlgorithm,
-      components: { Button: { borderRadius: 8 } },
     },
-  }, props.children))
+  }, React.createElement('style', { 'data-plugin': '@michengai/dsh-agency-agents' }, antdThemeCss), props.children))
 }
 
 /** 设置页已经有主题时不再包一层，独立挂载时才补上。 */

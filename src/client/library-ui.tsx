@@ -1,4 +1,4 @@
-import { Button, MaybeAntdProvider, Modal, Switch } from './antd-ui.js'
+import { Button, MaybeAntdProvider, Modal } from './antd-ui.js'
 import { documentAntdLocale } from './antd-locale.js'
 import { useEscapeLayer } from './escape-layer.js'
 import React from 'react'
@@ -71,13 +71,21 @@ export function LibraryCard(props: {
           {props.description}
         </div>
         <div className="aag-switch">
-          <Switch
-            checked={props.enabled}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={props.enabled}
             disabled={props.disabled}
             aria-label={`${props.name}：${props.enabled ? props.enabledLabel : props.disabledLabel}`}
             title={props.enabled ? props.enabledLabel : props.disabledLabel}
-            onChange={() => props.toggle()}
-          />
+            className="aag-enable-switch"
+            onClick={(event) => {
+              if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+              props.toggle()
+            }}
+          >
+            <span className="aag-enable-switch-thumb" aria-hidden="true" />
+          </button>
           <span className="aag-switch-state">
             {props.enabled ? props.enabledLabel : props.disabledLabel}
           </span>
@@ -126,7 +134,7 @@ export function LibraryConfirm(props: {
       closable={!props.busy}
       footer={[
         <Button key="cancel" autoFocus disabled={props.busy} onClick={() => { if (!props.busy) props.close() }}>{props.cancelLabel}</Button>,
-        <Button key="confirm" type="primary" disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
+        <Button key="confirm" type="primary" danger={props.title.includes('放弃') || props.title.includes('删除')} disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
       ]}
     >
       {props.children}

@@ -466,7 +466,7 @@ const MENU_NAME_OVERRIDE = EXPERT_MENU_ITEM_SELECTORS
   .map((selector) => `${selector} span:last-child`)
   .join(',')
 const EXPERT_MENU_NAME_STYLE = 'flex:1 1 auto;max-width:none;min-width:0'
-export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inline-flex;flex:0 0 auto}.aag-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 8px;white-space:nowrap;border:none;border-radius:24px;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover,.aag-btn[aria-expanded="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-btn:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}.aag-btn>svg{flex:none}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100dvh - 24px);overflow-y:auto;border:0;border-radius:20px;background:var(--dsw-specific-menu);backdrop-filter:var(--dsw-menu-backdrop-filter);box-shadow:var(--dsw-elevation-prominent);z-index:10000}.aag-menu[data-placement="below"]{top:calc(100% + 4px);bottom:auto}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:10px;background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}'
+export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inline-flex;flex:0 0 auto}.aag-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 8px;white-space:nowrap;border:none;border-radius:999px;corner-shape:round;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover,.aag-btn[aria-expanded="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-btn:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}.aag-btn>svg{flex:none}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100dvh - 24px);overflow-y:auto;border:0;border-radius:var(--dsw-radius-xl,20px);background:var(--dsw-specific-menu);backdrop-filter:var(--dsw-menu-backdrop-filter);box-shadow:var(--dsw-elevation-prominent);z-index:10000}.aag-menu[data-placement="below"]{top:calc(100% + 4px);bottom:auto}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:var(--dsw-radius-md,10px);background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}'
 // 设置页版式对齐 dsh-skills-manager：工具栏 + 汇总条 + 分组卡片 + 行内启停按钮。
 export const SETTINGS_CSS = `
 .aag-section{box-sizing:border-box;display:flex;min-width:0;max-width:760px;width:100%;margin:0 auto;flex-direction:column;gap:16px;padding:0 0 32px;color:var(--dsw-alias-label-primary)}
@@ -481,7 +481,7 @@ export const SETTINGS_CSS = `
 .aag-field-search{flex:1 1 0;min-width:0;max-width:100%}
 .aag-search-wrap{display:flex;align-items:center;width:100%;min-width:0;max-width:100%}
 .aag-search{box-sizing:border-box;width:100%;min-width:0;max-width:100%}
-.aag-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 16px;border:1px dashed var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;text-align:center}
+.aag-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 16px;border:0.5px dashed var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md,12px);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;text-align:center}
 @media (max-width:560px){.aag-toolbar,.aag-title-row{flex-wrap:wrap}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}}
 `
 // 标题固定占两行。卡片高度必须和这个占位一致，虚拟列表不能再测量视口里的第一张卡。
@@ -500,6 +500,10 @@ export const CARD_SETTINGS_CSS = `
 .aag-card-action:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
 .aag-card-filters{align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:8px 12px;min-width:0}
 .aag-filter-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}
+.aag-icon-btn{width:28px;min-width:28px;height:28px;padding:0;color:var(--dsw-alias-label-secondary);border-radius:var(--dsw-radius-sm,8px);display:inline-flex;align-items:center;justify-content:center}
+.aag-icon-btn.ant-btn{width:28px;min-width:28px;height:28px;padding:0}
+.aag-icon-btn svg{display:block;width:16px;height:16px}
+.aag-icon-btn:hover:not(:disabled){color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}
 .aag-card-filters .aag-field-source,.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-status{flex:0 0 auto;width:auto;max-width:none}
 .aag-card-filters .aag-field-search{flex:1 1 0;min-width:0}
 .aag-card-filters .aag-field>span{display:inline-flex;width:auto;max-width:none}
@@ -509,29 +513,39 @@ export const CARD_SETTINGS_CSS = `
 .aag-search-wrap>.aag-search input::placeholder{color:var(--dsw-alias-label-dimmed)}
 .aag-expert-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;margin-top:2px}
 .aag-expert-window{position:relative;margin-top:2px;overflow-anchor:none}.aag-expert-window>.aag-expert-grid{position:absolute;right:0;left:0;margin-top:0}
-.aag-expert-card{display:grid;box-sizing:border-box;min-width:0;height:${EXPERT_CARD_HEIGHT}px;min-height:${EXPERT_CARD_HEIGHT}px;overflow:hidden;grid-template-rows:minmax(141px,1fr) 48px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:var(--dsw-alias-bg-layer-2)}
+.aag-expert-card{display:grid;box-sizing:border-box;min-width:0;height:${EXPERT_CARD_HEIGHT}px;min-height:${EXPERT_CARD_HEIGHT}px;overflow:hidden;grid-template-rows:minmax(141px,1fr) 48px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md,12px);background:var(--dsw-alias-bg-layer-1)}
 .aag-expert-card:hover{border-color:var(--dsw-alias-border-l3)}
 .aag-card-body{position:relative;display:grid;min-width:0;grid-template-columns:44px minmax(0,1fr);column-gap:10px;row-gap:9px;padding:12px}
-.aag-expert-avatar{display:block;width:44px;height:44px;border:0;border-radius:50%;background:var(--dsw-alias-bg-layer-3);object-fit:cover;object-position:center 20%}
+.aag-expert-avatar{display:block;width:44px;height:44px;border:0;border-radius:50%;corner-shape:round;background:var(--dsw-alias-bg-layer-3);object-fit:cover;object-position:center 20%}
 .aag-card-identity{display:flex;min-width:0;flex-direction:column;padding-right:48px}
 .aag-card-name{display:-webkit-box;overflow:hidden;height:${EXPERT_CARD_NAME_HEIGHT}px;min-height:${EXPERT_CARD_NAME_HEIGHT}px;font-size:16px;font-weight:650;line-height:22px;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .aag-card-division{margin-top:2px;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:18px}
 .aag-card-description{grid-column:1/-1;display:-webkit-box;min-height:60px;margin:0;overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:20px;-webkit-box-orient:vertical;-webkit-line-clamp:3}
-.aag-card-actions{display:flex;align-items:stretch;min-height:48px;border-top:1px solid var(--dsw-alias-border-l2)}
+.aag-card-actions{display:flex;align-items:stretch;min-height:48px;border-top:0.5px solid var(--dsw-alias-border-l2)}
 .aag-card-action{display:inline-flex;align-items:center;justify-content:center;gap:4px;flex:1 0 auto;min-height:48px;padding:0 8px;border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;line-height:18px;white-space:nowrap;cursor:pointer}
-.aag-card-action+.aag-card-action{border-left:1px solid var(--dsw-alias-border-l2)}
+.aag-card-action+.aag-card-action{border-left:0.5px solid var(--dsw-alias-border-l2)}
 .aag-card-action:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
 .aag-card-action:disabled{opacity:.5;cursor:default}
 .aag-card-action-primary{color:var(--dsw-alias-label-secondary)}
 .aag-card-action-danger{color:var(--dsw-alias-state-error-primary)}
 .aag-switch{position:absolute;top:12px;right:12px;display:flex;align-items:center;flex-direction:column;gap:3px}
+.aag-enable-switch{box-sizing:border-box;position:relative;flex:0 0 auto;width:36px;height:20px;padding:2px;border:0;border-radius:999px;corner-shape:round;background:var(--dsw-alias-border-l3,#555);cursor:pointer;outline:none;transition:background 120ms ease}
+.aag-enable-switch[aria-checked=true]{background:var(--dsw-alias-brand-primary,var(--dsw-alias-state-business-primary))}
+.aag-enable-switch:disabled{cursor:default;opacity:.5}
+.aag-enable-switch:focus-visible{outline:var(--dsw-focus-ring-width,1px) solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
+.aag-enable-switch-thumb{display:block;width:16px;height:16px;border-radius:50%;corner-shape:round;background:var(--dsw-alias-switch-thumb,#fff);box-shadow:0 1px 2px rgba(0,0,0,.15);transition:transform 120ms ease;pointer-events:none}
+.aag-enable-switch[aria-checked=false] .aag-enable-switch-thumb{background:var(--dsw-alias-switch-thumb,#fff)}
+.aag-enable-switch[aria-checked=true] .aag-enable-switch-thumb{background:var(--dsw-alias-label-primary-foreground,#fff);transform:translateX(16px)}
 .aag-switch-state{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;white-space:nowrap}
-.ant-modal .aag-prompt-body.ant-input{display:block;box-sizing:border-box;height:min(560px,calc(100vh - 220px));min-height:240px;margin:0;resize:none;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;line-height:1.65}
+.ant-modal .aag-prompt-body.ant-input{display:block;box-sizing:border-box;height:min(560px,calc(100vh - 220px));min-height:240px;margin:0;resize:none;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;line-height:1.65;border:0.5px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:var(--dsw-radius-md,12px)}
+.ant-modal .aag-prompt-body.ant-input:focus,.ant-modal .aag-prompt-body.ant-input:focus-visible{border-color:var(--dsw-alias-brand-primary);outline:none;box-shadow:none}
 @container (max-width:519px){.aag-expert-grid{grid-template-columns:1fr}.aag-title-row{gap:8px 12px}.aag-settings-links{flex-basis:100%}}
 @container (max-width:430px){.aag-card-body{grid-template-columns:40px minmax(0,1fr);column-gap:10px}.aag-expert-avatar{width:40px;height:40px}.aag-card-name{font-size:16px;line-height:22px}}
 `
 
-export const CSS = TEAM_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS + DISCOVERY_CSS
+import { antdThemeCss } from './antd-theme.js'
+
+export const CSS = antdThemeCss + TEAM_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS + DISCOVERY_CSS
   + MENU_NAME_OVERRIDE + `{${EXPERT_MENU_NAME_STYLE}}`
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
@@ -1268,7 +1282,17 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           props.t('summary.enabledPrefix'),
           React.createElement('strong', null, enabledCount)))))
     const filterActions = React.createElement('div', { className: 'aag-filter-actions' },
-      React.createElement(Button, { type: 'primary', disabled: isSaving, onClick: () => openEditor() }, props.t('custom.new')))
+      React.createElement(Button, {
+        className: 'aag-icon-btn',
+        type: 'text',
+        size: 'small',
+        disabled: isSaving,
+        'aria-label': props.t('custom.new'),
+        title: props.t('custom.new'),
+        icon: React.createElement('svg', { viewBox: '0 0 16 16', width: 16, height: 16, 'aria-hidden': true, focusable: false },
+          React.createElement('path', { d: 'M8 2.5v11M2.5 8h11', fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' })),
+        onClick: () => openEditor(),
+      }))
     if (notice !== null) nodes.push(React.createElement('div', { key: 'notice', className: 'aag-custom-notice', role: 'status' }, notice))
     nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters aag-card-filters' },
       React.createElement('div', { className: 'aag-field aag-field-source' },
