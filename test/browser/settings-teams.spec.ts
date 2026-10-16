@@ -99,6 +99,30 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
   expect(['rgba(0, 0, 0, 0)', 'transparent'].includes(discardBg)).toBe(true)
   const discardBorder = await discardBtn.evaluate((el) => getComputedStyle(el).borderColor)
   expect(discardBorder).toBe('rgb(239, 68, 68)')
+  await discardBtn.hover()
+  const discardHover = await discardBtn.evaluate((el) => {
+    const style = getComputedStyle(el)
+    return { background: style.backgroundColor, border: style.borderColor, color: style.color }
+  })
+  expect(discardHover.background).toBe('rgba(239, 68, 68, 0.15)')
+  expect(discardHover.border).toBe('rgb(239, 68, 68)')
+  expect(discardHover.color).toBe('rgb(239, 68, 68)')
+  await page.keyboard.press('Tab')
+  const cancelBtn = page.getByRole('button', { name: '继续编辑' })
+  await cancelBtn.focus()
+  const focusRing = await cancelBtn.evaluate((el) => {
+    const style = getComputedStyle(el)
+    return {
+      visible: el.matches(':focus-visible'),
+      style: style.outlineStyle,
+      width: style.outlineWidth,
+      color: style.outlineColor,
+    }
+  })
+  expect(focusRing.visible).toBe(true)
+  expect(focusRing.style).not.toBe('none')
+  expect(Number.parseFloat(focusRing.width)).toBeGreaterThan(0)
+  expect(focusRing.color).not.toBe('rgba(0, 0, 0, 0)')
   await page.getByRole('button', { name: '继续编辑' }).click()
   await expect(page.getByLabel('团队名称', { exact: true })).toHaveValue(
     '统一交互测试',

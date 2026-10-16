@@ -15,6 +15,20 @@ test('Ant Design 隔离命名空间与官方尺度配置', () => {
   )
 })
 
+test('危险按钮悬停保持红色，弹窗页脚保留键盘焦点环', () => {
+  assert.match(
+    antdThemeCss,
+    /\.aag-theme\.ant-btn:not\(\.ant-btn-primary\):not\(\.ant-btn-text\):not\(\.ant-btn-link\):not\(\.is-danger\):not\(\.ant-btn-dangerous\):hover/,
+    '通用悬停不得盖住 danger',
+  )
+  assert.doesNotMatch(antdThemeCss, /ant-modal-footer button:focus-visible\{outline:none/, '键盘焦点环不能被抹掉')
+  assert.match(
+    antdThemeCss,
+    /\.aag-theme \.ant-modal-footer button:focus-visible\{outline:var\(--dsw-focus-ring-width,1px\) solid var\(--dsw-focus-ring-color,var\(--dsw-alias-brand-primary\)\)!important/,
+    '页脚按钮使用宿主焦点环令牌',
+  )
+})
+
 test('Ant Design CSS 桥接层不认领第三方皮肤作用域并采用官方半透明浮层令牌', () => {
   assert.ok(!/data-dsh-glass|data-ds-dark-theme/.test(antdThemeCss), '适配层不认领第三方主题作用域，也不新增独立明暗配色')
   assert.ok(antdThemeCss.includes('--dsw-alias-brand-primary'), '浮层材质归宿主主题所有')

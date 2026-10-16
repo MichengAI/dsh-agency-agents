@@ -87,7 +87,7 @@ export const antdThemeCss = `
 .aag-theme.aag-theme.aag-theme{${Object.entries(variables).map(([name, value]) => `--aag-ant-${name}:${value}`).join(';')}}
 .aag-theme.ant-btn{--aag-ant-button-default-bg:var(--dsw-alias-bg-layer-1,transparent);--aag-ant-button-default-border-color:var(--dsw-alias-border-l2);--aag-ant-button-default-color:var(--dsw-alias-label-primary);--aag-ant-button-default-hover-bg:var(--dsw-alias-interactive-bg-hover);--aag-ant-button-default-active-bg:var(--dsw-alias-interactive-bg-active);--aag-ant-button-default-hover-color:var(--dsw-alias-link);--aag-ant-button-default-hover-border-color:var(--dsw-alias-link);--aag-ant-button-default-active-color:var(--dsw-alias-link);--aag-ant-button-default-active-border-color:var(--dsw-alias-link);border:0.5px solid var(--dsw-alias-border-l2)!important}
 .aag-theme.ant-btn:not(.ant-btn-primary):not(.ant-btn-text):not(.ant-btn-link):not(.is-danger):not(.ant-btn-dangerous){background:var(--dsw-alias-bg-layer-1,transparent)!important;color:var(--dsw-alias-label-primary)!important;box-shadow:none!important}
-.aag-theme.ant-btn:not(.ant-btn-primary):not(.ant-btn-text):not(.ant-btn-link):hover{border-color:var(--dsw-alias-border-l3,#555)!important;background:var(--dsw-alias-interactive-bg-hover)!important}
+.aag-theme.ant-btn:not(.ant-btn-primary):not(.ant-btn-text):not(.ant-btn-link):not(.is-danger):not(.ant-btn-dangerous):hover{border-color:var(--dsw-alias-border-l3,#555)!important;background:var(--dsw-alias-interactive-bg-hover)!important}
 .aag-theme.ant-btn-primary{background:var(--dsw-alias-button-primary-fill, var(--dsw-alias-brand-primary))!important;color:var(--dsw-alias-label-primary-foreground, #fff)!important;border-color:transparent!important}
 .aag-theme.ant-btn-primary:not(:disabled):hover{background:var(--dsw-alias-button-primary-hover, var(--dsw-alias-interactive-bg-active))!important;color:var(--dsw-alias-label-primary-foreground, #fff)!important}
 .aag-theme.ant-btn-primary:not(:disabled):active{background:var(--dsw-alias-button-primary-hover, var(--dsw-alias-interactive-bg-active))!important;color:var(--dsw-alias-label-primary-foreground, #fff)!important}
@@ -100,7 +100,8 @@ button.is-danger:hover:not(:disabled),a.is-danger:hover:not(:disabled),.aag-them
 .aag-theme .ant-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:12px 16px 16px}
 .aag-theme .ant-modal-footer>*{margin:0!important}
 .aag-theme .ant-modal-footer button{height:32px!important;min-height:32px!important;padding:0 14px!important;font-size:13px!important;border-radius:var(--dsw-radius-sm,8px)!important;box-shadow:none!important}
-.aag-theme .ant-modal-footer button:focus,.aag-theme .ant-modal-footer button:focus-visible{outline:none!important;box-shadow:none!important}
+.aag-theme .ant-modal-footer button:focus:not(:focus-visible){outline:none!important;box-shadow:none!important}
+.aag-theme .ant-modal-footer button:focus-visible{outline:var(--dsw-focus-ring-width,1px) solid var(--dsw-focus-ring-color,var(--dsw-alias-brand-primary))!important;outline-offset:2px!important}
 .aag-theme .ant-modal-footer button:not(.is-danger):not(.ant-btn-dangerous):not(.ant-btn-primary){background:transparent!important;border:0.5px solid var(--dsw-alias-border-l2)!important;color:var(--dsw-alias-label-primary)!important}
 .aag-theme .ant-modal-footer button:not(.is-danger):not(.ant-btn-dangerous):not(.ant-btn-primary):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)!important;border-color:var(--dsw-alias-border-l3,#555)!important;color:var(--dsw-alias-label-primary)!important}
 .aag-theme .ant-drawer-content{position:relative;isolation:isolate;background:transparent}

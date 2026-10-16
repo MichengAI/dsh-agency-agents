@@ -11,6 +11,7 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 - Streamline card action footer into compact 32px height with icon-only controls (View, Copy & Customize, Edit, Delete), eliminating visual clutter and redundant prompt copy actions.
 - Wrap card division categories in refined pill badges and eliminate vertical empty holes on single-line titles.
 - Unify confirmation modal button styling with lightweight hairline outline danger feedback and enhanced dialog copy.
+- Keep a visible keyboard focus ring on confirmation dialog buttons, and keep delete or discard buttons red on hover.
 
 ## 1.0.19 - 2026-10-15
 
