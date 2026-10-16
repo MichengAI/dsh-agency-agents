@@ -1,100 +1,76 @@
 /**
  * 专家管理器在 DSH 设置侧边导航栏中的专属图标。
  * 
- * 机制对齐 dsh-skills-manager 与 dshmarket：
- * 宿主 settings.section 插槽未暴露 icon 字段，默认第三方降级为齿轮。
- * 通过 MutationObserver 识别当前插件并打标，使用 CSS mask-image 配合 currentColor 呈现专属图标。
+ * 机制 100% 对齐 dsh-skills-manager 与 dsh-codex-ui:
+ * 1. 采用与 codex-ui 完全相同的用户/专家专属矢量路径 (EXPERT_PATHS) (IconUserOutline16);
+ * 2. 采用 DOM SVG 内容直替机制 (svg.innerHTML = EXPERT_PATHS, viewBox 0 0 16 16);
+ * 3. 继承宿主原生 SVG 的精确对齐、尺寸 (16x16)、currentColor 色彩继承与悬停/高亮动画;
+ * 4. 独立自包含，无论宿主是否安装 codex-ui，专家设置项均能呈现与 codex-ui 100% 统一的图标。
  */
 
 export const NAV_ICON_MARKER = 'data-aag-nav-icon'
 export const NAV_ROW_SELECTOR = '[role="dialog"] nav button'
-export const NAV_ICON_SIZE = 16
 
-/** 专属专家团/代理图标（对齐 Codex UI / Host 的 IconUserOutline16 风格） */
-export function agencyMaskSvg(): string {
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="#000" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">'
-    + '<circle cx="8" cy="5" r="3.2"/>'
-    + '<path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/>'
-    + '</svg>'
-}
-
-export function agencyMaskUrl(svg: string = agencyMaskSvg()): string {
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`
-}
+/** 100% 对齐 dsh-codex-ui 官方的专家/用户专属矢量路径（viewBox: 0 0 16 16） */
+export const EXPERT_PATHS = '<circle cx="8" cy="4.8" r="3.2" stroke="currentColor" stroke-width="1.3" fill="none"/>'
+  + '<path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" fill="none"/>'
 
 export function isOwnNavRow(rowText: string | null | undefined, wantedLabel: string | null | undefined): boolean {
   const wanted = String(wantedLabel ?? '').trim()
   if (wanted.length === 0) return false
-  return String(rowText ?? '').trim() === wanted
+  const current = String(rowText ?? '').trim()
+  return current === wanted || current === '专家' || current === 'Experts' || current === '智能体'
 }
 
-export function navIconCss(maskUrl: string): string {
-  return [
-    `[${NAV_ICON_MARKER}] > svg { display: none !important; }`,
-    `[${NAV_ICON_MARKER}]::before {`,
-    '  content: "";',
-    '  flex: none;',
-    `  width: ${NAV_ICON_SIZE}px;`,
-    `  height: ${NAV_ICON_SIZE}px;`,
-    '  background-color: currentColor;',
-    `  -webkit-mask-image: url("${maskUrl}");`,
-    `  mask-image: url("${maskUrl}");`,
-    '  -webkit-mask-repeat: no-repeat;',
-    '  mask-repeat: no-repeat;',
-    '  -webkit-mask-position: center;',
-    '  mask-position: center;',
-    `  -webkit-mask-size: ${NAV_ICON_SIZE}px ${NAV_ICON_SIZE}px;`,
-    `  mask-size: ${NAV_ICON_SIZE}px ${NAV_ICON_SIZE}px;`,
-    '}',
-  ].join('\n')
+export function applySettingsNavIcon(button: Element, wantedLabel: () => string): boolean {
+  if (!isOwnNavRow(button.textContent, wantedLabel())) return false
+  const svg = button.querySelector('svg')
+  if (!svg) return false
+  if (svg.getAttribute('data-aag-nav-icon') === 'expert') return false
+
+  svg.setAttribute('data-aag-nav-icon', 'expert')
+  svg.setAttribute('viewBox', '0 0 16 16')
+  svg.setAttribute('fill', 'none')
+  svg.innerHTML = EXPERT_PATHS
+  button.setAttribute(NAV_ICON_MARKER, '')
+  return true
 }
 
 export interface NavIconContext {
   effect(callback: () => unknown, label?: string): void
 }
 
-export function installSettingsNavIcon(ctx: NavIconContext, resolveLabel: () => string): void {
+export function installSettingsNavIcon(ctx: NavIconContext): void {
   if (typeof document === 'undefined') return
 
   ctx.effect(() => {
-    const tag = document.createElement('style')
-    tag.dataset.plugin = '@michengai/dsh-agency-agents'
-    tag.dataset.pluginCss = 'dsh-agency-agents/settings-nav-icon'
-    tag.textContent = navIconCss(agencyMaskUrl())
-    document.head.appendChild(tag)
-
     let disposed = false
-    let timer: number | null = null
+    let scheduled = false
 
-    const tagNavButtons = (): void => {
+    const sync = () => {
+      scheduled = false
       if (disposed) return
-      const buttons = document.querySelectorAll(NAV_ROW_SELECTOR)
-      const label = resolveLabel()
-      buttons.forEach((btn) => {
-        const text = btn.textContent ?? ''
-        if (isOwnNavRow(text, label)) {
-          btn.setAttribute(NAV_ICON_MARKER, 'true')
-        } else if (btn.hasAttribute(NAV_ICON_MARKER)) {
-          btn.removeAttribute(NAV_ICON_MARKER)
-        }
-      })
+      for (const row of document.querySelectorAll(NAV_ROW_SELECTOR)) {
+        applySettingsNavIcon(row, () => '专家')
+      }
     }
 
-    const observer = new MutationObserver(() => {
-      tagNavButtons()
-    })
+    const schedule = () => {
+      if (scheduled || disposed) return
+      scheduled = true
+      queueMicrotask(sync)
+    }
 
-    observer.observe(document.body, { childList: true, subtree: true })
-    tagNavButtons()
+    sync()
+    const observer = new MutationObserver(schedule)
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true })
 
     return () => {
       disposed = true
       observer.disconnect()
-      if (timer !== null) window.clearTimeout(timer)
-      tag.remove()
-      document.querySelectorAll(`[${NAV_ICON_MARKER}]`).forEach((el) => {
-        el.removeAttribute(NAV_ICON_MARKER)
-      })
+      for (const row of document.querySelectorAll(`[${NAV_ICON_MARKER}]`)) {
+        row.removeAttribute(NAV_ICON_MARKER)
+      }
     }
   }, 'agency-agents: settings nav icon')
 }

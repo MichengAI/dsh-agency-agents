@@ -1438,9 +1438,9 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     enName: 'Experts',
     createIcon: createPluginUpdateIcon,
   }), 'agency-agents: plugin update ui')
-  installSettingsNavIcon(ctx, () => t('settings.nav'))
   const t = ctx.locale.bind(NS)
   const getActive = (): 'zh' | 'en' => ctx.locale.getSnapshot().active === 'en' ? 'en' : 'zh'
+  installSettingsNavIcon(ctx)
 
   // 挂载本插件的 Typert Remote：host 端由 gateway 的 SRC 自动发现（@Remote
   // markers）。namespace 是独立的 Cordis 服务，必须在挂载后通过 ctx.get()
