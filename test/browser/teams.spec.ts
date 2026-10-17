@@ -12,7 +12,7 @@ test('五团展示、复制编辑主理人规则、启用成员与删除团队',
   await page.getByRole('dialog').getByRole('button', { name: '复制并自定义', exact: true }).click()
   await page.getByLabel('团队名称', { exact: true }).fill('我的产品评审团')
   await expect(page.getByRole('heading', { name: '主理人提示词', exact: true })).toBeVisible()
-  await page.getByRole('region', { name: '主理人提示词' }).getByRole('button', { name: '自定义', exact: true }).click()
+  await page.getByRole('tablist', { name: '主理人提示词来源' }).getByRole('tab', { name: '自定义', exact: true }).click()
   await page
     .getByLabel('主理人提示词正文')
     .fill('先核对证据，再解释分歧，输出可执行结论。')
@@ -65,7 +65,7 @@ test('未保存修改确认、主理人恢复模板与窄屏无溢出', async ({
     ),
   ).toBe(true)
   await expect(page.getByRole('heading', { name: '主理人提示词', exact: true })).toBeVisible()
-  await page.getByRole('region', { name: '主理人提示词' }).getByRole('button', { name: '自定义', exact: true }).click()
+  await page.getByRole('tablist', { name: '主理人提示词来源' }).getByRole('tab', { name: '自定义', exact: true }).click()
   await page.getByLabel('主理人提示词正文').fill('暂存的自定义规则')
   await page.getByRole('button', { name: '恢复团队模板', exact: true }).click()
   await page.getByRole('button', { name: '确认恢复', exact: true }).click()
@@ -106,7 +106,7 @@ test('标签逐字输入保留分隔符，超限字段明确反馈且保留草�
   await expect(page.getByRole('alert')).toContainText('每个标签最多 16 个字符')
   await expect(tags).toBeFocused()
   await tags.fill('算法，数据')
-  await page.getByRole('region', { name: '主理人提示词' }).getByRole('button', { name: '自定义', exact: true }).click()
+  await page.getByRole('tablist', { name: '主理人提示词来源' }).getByRole('tab', { name: '自定义', exact: true }).click()
   await page.getByLabel('主理人提示词正文').fill('规'.repeat(12001))
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('12000')
