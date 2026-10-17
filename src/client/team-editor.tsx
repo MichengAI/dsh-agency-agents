@@ -4,6 +4,7 @@ import React from 'react';
 import { effectiveCoordinator, BUILTIN_TEAMS, TEAM_PROMPTS, teamInputSchema, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
 import { Button, Input } from './plugin-ui.js';
+import { SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives';
 import { CategorySelect } from './category-select.js';
 import { EN_DIVISION, ZH_DIVISION } from '../names.js';
 import { TeamDialog, TeamConfirm, Avatar, IconPlus, IconTrash, IconRefresh, IconSearch, } from './team-shared.js';
@@ -93,7 +94,7 @@ function MemberPicker(props: {
       <p className="agt-help agt-picker-note" role="note">{props.tx("停用的专家也可以加入专家团。不想单独使用专家、只想用专家团时，把状态改为「全部」或「已停用」。")}</p>
       <div className="agt-picker-list" ref={scroller} onScroll={(event) => setTop(event.currentTarget.scrollTop)}>
         {matches.length === 0 ? <p className="agt-help">{props.tx("没有匹配的专家")}</p> : <div style={{ height: matches.length * PICKER_ROW, position: 'relative' }}>
-          {slice.map((expert, index) => (<button type="button" key={expert.slug} style={{ position: 'absolute', top: (start + index) * PICKER_ROW, left: 0, right: 0, height: PICKER_ROW }} onClick={() => props.onPick(expert)}>
+          {slice.map((expert, index) => (<button type="button" className="agt-picker-row" key={expert.slug} style={{ position: 'absolute', top: (start + index) * PICKER_ROW, left: 0, right: 0 }} onClick={() => props.onPick(expert)}>
             <Avatar expert={expert} size={40}/>
             <span>
               <strong>{expert.name}</strong>
@@ -271,14 +272,15 @@ export function TeamEditor(props: {
                           {props.experts.find((e) => e.slug === m.expertSlug)
                     ?.name ?? tx("成员已失效")}
                         </strong>
-                        <Button onClick={() => {
+                        <Button className="aag-icon-btn" title={tx("替换")} aria-label={tx("替换成员 {0}", [props.experts.find((e) => e.slug === m.expertSlug)?.name ?? String(i + 1)])} onClick={() => {
                     setQuery('');
                     setPickerSource('all');
                     setPickerDivision('');
                     setPickerStatus('enabled');
                     setPicker(i);
                 }}>
-                          <IconRefresh />{tx("替换")}</Button>
+                          <IconRefresh />
+                        </Button>
                         <Button className="aag-icon-btn" danger aria-label={tx("删除成员 {0}", [i + 1])} onClick={() => patch({
                     members: draft.members.filter((_, n) => n !== i),
                 })}>
@@ -330,14 +332,22 @@ export function TeamEditor(props: {
               {section(tx("主理人提示词"), <>
                   <p className="agt-help">{tx("定义如何分配任务、处理分歧并汇总专家结果")}</p>
                   <div className="agt-row">
-                    <div className="agt-segment">
-                      <Button type={draft.coordinatorMode === 'template' ? 'primary' : 'default'} aria-pressed={draft.coordinatorMode === 'template'} onClick={() => patch({ coordinatorMode: 'template' })}>{tx("团队模板")}</Button>
-                      <Button type={draft.coordinatorMode === 'custom' ? 'primary' : 'default'} aria-pressed={draft.coordinatorMode === 'custom'} onClick={() => patch({
-                coordinatorMode: 'custom',
-                coordinatorPrompt: draft.coordinatorPrompt ||
-                    effectiveCoordinator(draft, locale),
-            })}>{tx("自定义")}</Button>
-                    </div>
+                    <SegmentedControl
+                      id="agt-coordinator-mode"
+                      label={tx("主理人提示词来源")}
+                      value={draft.coordinatorMode}
+                      options={[
+                        { value: 'template', label: tx("团队模板") },
+                        { value: 'custom', label: tx("自定义") },
+                      ]}
+                      onChange={(mode) => {
+                        if (mode === 'template') patch({ coordinatorMode: 'template' })
+                        else patch({
+                          coordinatorMode: 'custom',
+                          coordinatorPrompt: draft.coordinatorPrompt || effectiveCoordinator(draft, locale),
+                        })
+                      }}
+                    />
                     <Button onClick={() => setConfirm('restore')}>
                       <IconRefresh />{tx("恢复团队模板")}</Button>
                   </div>

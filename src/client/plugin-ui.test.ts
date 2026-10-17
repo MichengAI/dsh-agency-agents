@@ -10,8 +10,13 @@ import { TeamDialog } from './team-shared.js'
 import { TEAM_CSS } from './team-style.js'
 
 test('团队弹窗不会把搜索清除按钮改成 32px 描边，文字也不会压到清除钮', () => {
-  assert.match(TEAM_CSS, /\.agt-dialog button:not\(\.aag-host-btn\):not\(\.aag-input-clear\)/)
+  assert.match(TEAM_CSS, /\.agt-dialog button:not\(\.aag-host-btn\):not\(\.aag-input-clear\):not\(\[role=tab\]\):not\(\.agt-picker-row\)/)
+  assert.match(TEAM_CSS, /\.agt-picker-row\{[^}]*border-radius:0/)
+  assert.match(TEAM_CSS, /\.agt-picker-row\{[^}]*overflow:hidden/)
+  assert.doesNotMatch(TEAM_CSS, /aria-pressed=true/)
   assert.match(TEAM_CSS, /\.agt-dialog \.aag-input-clearable \.aag-host-input input\{[^}]*padding-right:28px/)
+  assert.doesNotMatch(TEAM_CSS, /\.agt-dialog input,/)
+  assert.doesNotMatch(TEAM_CSS, /\.agt-dialog textarea/)
 })
 
 test('搜索框有清除按钮，且不把 allowClear 传给宿主 input', () => {
@@ -104,5 +109,5 @@ test('团队弹窗内容样式不改宿主关闭按钮，也不给宿主输入�
   assert.ok(closeAt > 0)
   assert.equal(html.slice(0, closeAt).includes('agt-dialog'), false)
   assert.match(html, /agt-dialog/)
-  assert.match(TEAM_CSS, /\.agt-dialog \.aag-host-input input\{[^}]*border:0/)
+  assert.doesNotMatch(TEAM_CSS, /\.agt-dialog input,/)
 })

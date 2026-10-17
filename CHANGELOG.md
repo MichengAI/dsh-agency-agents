@@ -13,9 +13,9 @@ Expert and expert-team settings stay in the host `agency-agents` namespace. This
 Supported hosts only:
 
 - `0.2.0-rc.1`, `0.2.0-rc.2`
-- `0.2.1-rc.1`
+- `0.2.1-rc.1`, `0.2.1-rc.2`
 
-`0.1.x` and `0.2.1-alpha.1` through `0.2.1-alpha.5` are rejected by the version gate, and the plugin will not run. Upgrade the host to one of the three release candidates above first.
+`0.1.x` and `0.2.1-alpha.1` through `0.2.1-alpha.5` are rejected by the version gate, and the plugin will not run. Upgrade the host to one of the four release candidates above first.
 
 Other changes:
 

@@ -15,7 +15,7 @@
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm 下载量](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH 支持至 0.2.1-rc.1](https://img.shields.io/badge/DSH-up%20to%200.2.1--rc.1-2563eb.svg)](#前置条件)
+  [![DSH 支持至 0.2.1-rc.2](https://img.shields.io/badge/DSH-up%20to%200.2.1--rc.2-2563eb.svg)](#前置条件)
 </div>
 
 > DSH Agency Agents 是社区维护的 DeepSeek Harness（DSH）插件，并非 DeepSeek AI 官方产品。
@@ -120,7 +120,7 @@ DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块�
 
 ## 安装
 
-**破坏性升级。** 1.2.0 只支持 DeepSeek Harness `0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-rc.1`。`0.1.x` 和 `0.2.1-alpha.1` 到 `0.2.1-alpha.5` 安装或启用本版本会被版本门拒绝，插件不会运行。请先把宿主升到上面三个 RC 之一，再安装。专家和专家团配置仍保留，不需要重新录入。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装；后续宿主版本需另行验证兼容性。
+**破坏性升级。** 1.2.0 只支持 DeepSeek Harness `0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-rc.1`、`0.2.1-rc.2`。`0.1.x` 和 `0.2.1-alpha.1` 到 `0.2.1-alpha.5` 安装或启用本版本会被版本门拒绝，插件不会运行。请先把宿主升到上面四个 RC 之一，再安装。专家和专家团配置仍保留，不需要重新录入。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装；后续宿主版本需另行验证兼容性。
 
 以下安装命令使用官方 npm 源。
 

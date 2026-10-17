@@ -28,9 +28,10 @@ test('插件各组件全面接入 DSH 官方圆角体系', () => {
   assert.match(CARD_SETTINGS_CSS, /\.aag-expert-card\{[^}]*border-radius:var\(--dsw-radius-md,12px\)/, '专家卡片采用官方 R12 圆角')
   assert.match(CARD_SETTINGS_CSS, /\.aag-expert-card\{[^}]*background:var\(--dsw-alias-bg-layer-1\)/, '专家卡片采用 layer-1 避免实心遮挡')
   assert.match(SETTINGS_CSS, /\.aag-empty\{[^}]*border-radius:var\(--dsw-radius-md,12px\)/, '空状态卡片采用官方 R12 圆角')
-  assert.match(DISCOVERY_CSS, /\.aag-discovery input\{[^}]*border-radius:var\(--dsw-radius-sm,8px\)/, '发现输入框采用官方 R8 圆角')
+  assert.match(PLUGIN_UI_CSS, /\.aag-textarea\{[^}]*border-radius:var\(--dsw-radius-sm,8px\)/, '多行文本框采用官方 R8 圆角')
+  assert.doesNotMatch(DISCOVERY_CSS, /\.aag-discovery input\{/, '发现搜索不再手写输入框边框')
   assert.match(CUSTOM_EDITOR_CSS, /\.aag-custom-badge\{[^}]*border-radius:var\(--dsw-radius-xs,4px\)/, '徽章采用官方 R4 圆角')
-  assert.match(TEAM_CSS, /\.agt-dialog input[^}]*border-radius:var\(--dsw-radius-sm,8px\)/, '团队输入框采用官方 R8 圆角')
+  assert.doesNotMatch(TEAM_CSS, /\.agt-dialog input,/, '团队弹窗不再改宿主输入框圆角')
   assert.ok(!/border-radius:\s*(?:6|7|10|20|24)px/.test(combinedCss), '不再存在未桥接官方阶梯的硬编码圆角')
 })
 

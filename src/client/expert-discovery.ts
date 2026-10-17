@@ -1,6 +1,7 @@
 import React from 'react'
 import type { ExpertView } from './catalog.js'
 import type { AgencyKey } from './locales.js'
+import { Input } from './plugin-ui.js'
 
 interface DiscoveryProps {
   readonly experts: readonly ExpertView[]
@@ -26,7 +27,7 @@ export function ExpertDiscovery(props: DiscoveryProps): React.ReactElement {
   const name = (expert: ExpertView): string => props.locale === 'en' ? expert.nameEn : expert.name
   return React.createElement(React.Fragment, null,
     React.createElement('div', { className: 'aag-discovery-tools' },
-      React.createElement('input', { type: 'search', autoFocus: true, value: props.query,
+      React.createElement(Input, { type: 'search', autoFocus: true, allowClear: true, value: props.query,
         'aria-label': props.t('discovery.search'), placeholder: props.t('discovery.search'),
         onChange: (event: React.ChangeEvent<HTMLInputElement>) => props.onQuery(event.target.value) })),
     React.createElement('div', { className: 'aag-discovery-results', 'aria-busy': props.busy && props.experts.length === 0 },
@@ -54,8 +55,7 @@ export function ExpertDiscovery(props: DiscoveryProps): React.ReactElement {
 export const DISCOVERY_CSS = `
 .aag-menu.aag-discovery{width:340px;max-width:calc(100vw - 24px);max-height:360px;overflow:hidden;padding:6px;color:var(--dsw-alias-label-primary);font-family:inherit;font-size:13px;line-height:1.5}
 .aag-discovery-tools{padding:2px 2px 6px;flex:none}
-.aag-discovery input{box-sizing:border-box;width:100%;min-height:36px;padding:7px 10px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:var(--dsw-alias-bg-layer-1);color:inherit;font:inherit}
-.aag-discovery input:focus-visible{outline:none;border-color:var(--dsw-alias-brand-primary)}
+.aag-discovery-tools .aag-host-input{width:100%}
 .aag-discovery button.aag-discovery-row{display:flex;align-items:center;width:100%;gap:10px;padding:8px 10px;border:0;border-radius:var(--dsw-radius-sm,8px);background:transparent;color:inherit;text-align:left;cursor:pointer;transition:background 100ms ease}
 .aag-discovery button.aag-discovery-row:hover:not(:disabled),.aag-discovery button.aag-discovery-row:focus-visible{background:var(--dsw-alias-interactive-bg-hover);outline:none}
 .aag-discovery button:disabled{opacity:.55;cursor:default}

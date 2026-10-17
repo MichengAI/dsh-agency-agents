@@ -95,7 +95,7 @@ export const TEAM_EN = {
   '保存失败，请重试。': 'Save failed. Please retry.', '必填': 'Required', '团队名片': 'Team profile', '填写名称与简介': 'Enter a name and description',
   '团队名称': 'Team name', '一句话简介': 'Description', '场景标签': 'Use-case tags', '最多 3 个，用逗号分隔': 'Up to 3 tags, separated by commas',
   '团队头像由成员头像自动组成。': 'The team avatar is composed from its members.', '预览': 'Preview', '{0} 位专家 · 分工已配置': '{0} experts · Assignments configured',
-  '添加成员': 'Add member', '成员已失效': 'Member unavailable', '替换': 'Replace', '删除成员 {0}': 'Remove member {0}',
+  '添加成员': 'Add member', '成员已失效': 'Member unavailable', '替换': 'Replace', '替换成员 {0}': 'Replace member {0}', '删除成员 {0}': 'Remove member {0}',
   '职责摘要': 'Responsibility', '展开详细分工': 'Expand assignment', '详细分工': 'Detailed assignment', '上移': 'Move up', '下移': 'Move down',
   '协作与交付': 'Collaboration and deliverables', '填写共同目标与交付要求': 'Enter the shared goal and deliverables', '团队目标': 'Team goal',
   '交付要求': 'Deliverables', '通用约束（选填）': 'Shared constraints (optional)', '主理人提示词': 'Coordinator prompt',

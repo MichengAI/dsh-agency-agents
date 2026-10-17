@@ -6,6 +6,7 @@ import type { ExpertTeam, TeamSnapshot } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
 import { TeamDetails, unwrap, type TeamRemote } from './team-ui.js';
 import { TeamAvatars, TeamConfirm, teamIssue, IconEye } from './team-shared.js';
+import { Input } from './plugin-ui.js';
 export function TeamMenu(props: {
     remote: TeamRemote;
     prepareSelect?(): (team: ExpertTeam, example?: string) => boolean | Promise<boolean>;
@@ -107,7 +108,7 @@ export function TeamMenu(props: {
             .toLowerCase()
             .includes(query.toLowerCase())) ?? [];
     return (<div className="agt-compact">
-      <input autoFocus aria-label={tx("搜索专家团")} placeholder={tx("搜索团队或工作目标")} value={query} onChange={(e) => setQuery(e.target.value)}/>
+      <Input autoFocus allowClear aria-label={tx("搜索专家团")} placeholder={tx("搜索团队或工作目标")} value={query} onChange={(e) => setQuery(e.target.value)}/>
       {error && (<div role="alert">
           {error}
           <button type="button" onClick={() => void load()}>{tx("刷新")}</button>
