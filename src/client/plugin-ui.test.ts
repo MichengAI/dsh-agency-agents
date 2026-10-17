@@ -27,6 +27,7 @@ test('宿主输入框与清除包装层声明 border-box，避免 width: 100% �
   assert.match(PLUGIN_UI_CSS, /\.aag-host-input\{[^}]*box-sizing:border-box/)
   assert.match(PLUGIN_UI_CSS, /\.aag-input-clearable\{[^}]*box-sizing:border-box/)
   assert.match(DISCOVERY_CSS, /\.aag-discovery-tools\{[^}]*box-sizing:border-box/)
+  assert.match(DISCOVERY_CSS, /\.aag-discovery-tools\{[^}]*padding:8px 2px 6px/)
   assert.match(DISCOVERY_CSS, /\.aag-discovery-tools \.aag-host-input\{[^}]*box-sizing:border-box/)
 })
 

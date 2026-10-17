@@ -54,7 +54,7 @@ export function ExpertDiscovery(props: DiscoveryProps): React.ReactElement {
 
 export const DISCOVERY_CSS = `
 .aag-menu.aag-discovery{width:340px;max-width:calc(100vw - 24px);max-height:360px;overflow:hidden;padding:6px;color:var(--dsw-alias-label-primary);font-family:inherit;font-size:13px;line-height:1.5}
-.aag-discovery-tools{box-sizing:border-box;padding:2px 2px 6px;flex:none}
+.aag-discovery-tools{box-sizing:border-box;padding:8px 2px 6px;flex:none}
 .aag-discovery-tools .aag-host-input{box-sizing:border-box;width:100%}
 .aag-discovery button.aag-discovery-row{display:flex;align-items:center;width:100%;gap:10px;padding:8px 10px;border:0;border-radius:var(--dsw-radius-sm,8px);background:transparent;color:inherit;text-align:left;cursor:pointer;transition:background 100ms ease}
 .aag-discovery button.aag-discovery-row:hover:not(:disabled),.aag-discovery button.aag-discovery-row:focus-visible{background:var(--dsw-alias-interactive-bg-hover);outline:none}
