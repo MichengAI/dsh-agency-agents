@@ -73,9 +73,9 @@ export const TEAM_CSS = `
 .agt-compact-row>button:first-child>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .agt-compact-row small{margin-left:8px;opacity:.65}
 .agt-compact-row>button:last-child{background:transparent;border:0;color:inherit;cursor:pointer}
-.agt-compact>.aag-host-input{width:calc(100% - 16px);margin:8px}
-.agt-compact .aag-input-clearable{width:calc(100% - 16px);margin:8px}
-.agt-compact .aag-input-clearable>.aag-host-input{width:100%;margin:0}
+.agt-compact>.aag-host-input{box-sizing:border-box;width:calc(100% - 16px);margin:8px}
+.agt-compact .aag-input-clearable{box-sizing:border-box;width:calc(100% - 16px);margin:8px}
+.agt-compact .aag-input-clearable>.aag-host-input{box-sizing:border-box;width:100%;margin:0}
 @media(max-width:560px){.agt-detail-head{align-items:flex-start;flex-wrap:wrap}.agt-editor .agt-prompt{min-height:240px}}
 @media(prefers-reduced-motion:reduce){.agt-dialog *{transition:none!important}}
 `

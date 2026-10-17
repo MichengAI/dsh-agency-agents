@@ -21,6 +21,15 @@ test('团队弹窗不会把搜索清除按钮改成 32px 描边，文字也不�
   assert.match(TEAM_CSS, /\.agt-compact>\.aag-host-input\{/)
 })
 
+test('宿主输入框与清除包装层声明 border-box，避免 width: 100% 溢出容器', async () => {
+  const { PLUGIN_UI_CSS } = await import('./plugin-ui.js')
+  const { DISCOVERY_CSS } = await import('./expert-discovery.js')
+  assert.match(PLUGIN_UI_CSS, /\.aag-host-input\{[^}]*box-sizing:border-box/)
+  assert.match(PLUGIN_UI_CSS, /\.aag-input-clearable\{[^}]*box-sizing:border-box/)
+  assert.match(DISCOVERY_CSS, /\.aag-discovery-tools\{[^}]*box-sizing:border-box/)
+  assert.match(DISCOVERY_CSS, /\.aag-discovery-tools \.aag-host-input\{[^}]*box-sizing:border-box/)
+})
+
 test('搜索框有清除按钮，且不把 allowClear 传给宿主 input', () => {
   const html = renderToStaticMarkup(React.createElement(Input, {
     value: 'review',
