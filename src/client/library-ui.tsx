@@ -109,37 +109,33 @@ export function LibraryCard(props: {
   )
 }
 
-/** 删除、放弃修改及启用依赖使用同一种确认弹窗。 */
+/** 删除、放弃修改及启用依赖使用同一种确认弹窗。说明放宿主描述槽，避免正文边距把句子压到按钮上。 */
 export function LibraryConfirm(props: {
   title: string
+  description?: string
   children?: React.ReactNode
   confirmLabel: string
   cancelLabel: string
   busy?: boolean
-  danger?: boolean
   error?: string | null
   confirm(): void
   close(): void
 }) {
   useEscapeLayer(true, () => { if (!props.busy) props.close() })
-  const isDanger = props.danger ?? (props.title.includes('放弃') || props.title.includes('删除') || props.title.toLowerCase().includes('discard') || props.title.toLowerCase().includes('delete'))
+  const extra = props.error ? <p className="aag-error" role="alert">{props.error}</p> : null
+  const body = props.children || extra ? <>{props.children}{extra}</> : undefined
   return (
     <Modal
       open
       title={props.title}
-      closeLabel={props.cancelLabel}
+      description={props.description}
       onCancel={() => { if (!props.busy) props.close() }}
       footer={[
         <Button key="cancel" variant="outline" disabled={props.busy} onClick={() => { if (!props.busy) props.close() }}>{props.cancelLabel}</Button>,
-        <Button key="confirm" variant={isDanger ? 'outline' : 'primary'} danger={isDanger} disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
+        <Button key="confirm" variant="primary" disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
       ]}
     >
-      {props.children}
-      {props.error && (
-        <p className="aag-error" role="alert">
-          {props.error}
-        </p>
-      )}
+      {body}
     </Modal>
   )
 }

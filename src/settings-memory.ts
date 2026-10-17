@@ -11,12 +11,6 @@ interface Registration {
   revision: number
 }
 
-interface SectionHooks {
-  setSource(current: () => unknown): void
-  onChange(): void
-  validate?: SettingsValidate
-}
-
 /** 测试替身只保留插件实际依赖的注册、修订号和持久化语义。 */
 export class MemorySettings {
   readonly writable = true
@@ -49,12 +43,6 @@ export class MemorySettings {
     }
     registration.resolved = this.resolve(registration, this.section(ns))
     this.registrations.set(ns, registration)
-  }
-
-  installSection(_owner: unknown, ns: string, schema: SettingsSchema, entry: unknown, hooks: SectionHooks): void {
-    this.register(ns, schema, { base: entry, validate: hooks.validate })
-    hooks.setSource(() => this.get(ns))
-    hooks.onChange()
   }
 
   get(ns: string): unknown {

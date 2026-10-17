@@ -16,11 +16,10 @@ import { localizeTeam } from './team-content-en.js'
  *   - `summon_expert(expert, task)` delegate a task to a subagent whose
  *     persona is that expert's, through the `ctx.subagents` spawn provider.
  *
- * A summoned expert does NOT replace the parent's persona: on DSH 0.2.1-alpha.2+
+ * A summoned expert does NOT replace the parent's persona: on DSH 0.2.1-rc.1
  * the child gets a scoped `deployment:persona-prefix` (and a tool denylist) on
- * `agent/created` after `startActivation`. 0.2.0-rc.1、0.2.0-rc.2 and
- * 0.2.1-alpha.1 still pass start-time `persona` / `toolFilter` through
- * `ctx.subagents.start`.
+ * `agent/created` after `startActivation`. 0.2.0-rc.1 and 0.2.0-rc.2 still pass
+ * start-time `persona` / `toolFilter` through `ctx.subagents.start`.
  *
  * Strict `{{...}}` interpolation runs over every system-prompt section, so any
  * complete brace group inside expert prose would throw at assembly. A
@@ -762,7 +761,7 @@ export function apply(ctx: Context, config: Config): void {
       }) => Promise<SubagentRunHandle>
       on?: Context['on']
     }
-    // DSH 0.2.0-rc.1 / 0.2.0-rc.2 / 0.2.1-alpha.1: start-time persona / toolFilter.
+    // DSH 0.2.0-rc.1 / 0.2.0-rc.2: start-time persona / toolFilter.
     const runSignal = signal ?? new AbortController().signal
     if (typeof service.start === 'function') {
       return service.start(providerName, {
@@ -775,7 +774,7 @@ export function apply(ctx: Context, config: Config): void {
         toolFilter,
       })
     }
-    // DSH 0.2.1-alpha.2+: startActivation + scoped persona / tools.restrict on agent/created.
+    // DSH 0.2.1-rc.1: startActivation + scoped persona / tools.restrict on agent/created.
     if (typeof service.startActivation === 'function') {
       const childId = SessionId(randomUUID())
       const stopCreated = ctx.on('agent/created', (event: { agent: { id: string; ctx: Context } }) => {
@@ -819,7 +818,7 @@ export function apply(ctx: Context, config: Config): void {
     const provider = ctx.subagents.getProvider(config.provider)
     if (provider === undefined) throw new Error(formatHost(locale, 'error.providerMissing', { provider: config.provider }))
     const caps = provider.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean }
-    // 0.2.0-rc.1 and 0.2.1-alpha.1 still advertise persona/toolFilter; alpha.2+ drops them.
+    // 0.2.0-rc.1 / 0.2.0-rc.2 still advertise persona/toolFilter; 0.2.1-rc.1 drops them.
     if (caps.persona !== undefined || caps.toolFilter !== undefined) {
       if (!caps.persona) throw new Error(formatHost(locale, 'error.providerNoPersona', { provider: config.provider }))
       if (!caps.toolFilter) throw new Error(formatHost(locale, 'error.providerNoToolFilter', { provider: config.provider }))
@@ -961,7 +960,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         }
         const provider = ctx.subagents.getProvider(config.provider);
         const teamCaps = provider?.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean } | undefined
-        // 0.2.0-rc.1 / 0.2.1-alpha.1 仍声明 persona/toolFilter；alpha.2+ 不再声明，身份改在 agent/created 写入。
+        // 0.2.0-rc.1 / 0.2.0-rc.2 仍声明 persona/toolFilter；0.2.1-rc.1 不再声明，身份改在 agent/created 写入。
         const legacyTeamCaps = teamCaps !== undefined && (teamCaps.persona !== undefined || teamCaps.toolFilter !== undefined)
         if (!provider || (legacyTeamCaps && (!teamCaps?.persona || !teamCaps.toolFilter)) || (maxDepth !== undefined && !teamCaps?.depthLimit))
             throw new Error(teamTx("当前子代理服务不支持专家团所需的身份、工具过滤或深度限制。"));

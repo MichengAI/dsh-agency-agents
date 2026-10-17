@@ -15,7 +15,7 @@
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm downloads](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20downloads)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH supported through 0.2.1-alpha.3](https://img.shields.io/badge/DSH-up%20to%200.2.1--alpha.3-2563eb.svg)](#prerequisites)
+  [![DSH supported through 0.2.1-rc.1](https://img.shields.io/badge/DSH-up%20to%200.2.1--rc.1-2563eb.svg)](#prerequisites)
 </div>
 
 > DSH Agency Agents is a community-maintained DeepSeek Harness (DSH) plugin, not an official DeepSeek AI product.
@@ -116,11 +116,11 @@ For a desktop workbench, download [DSH Codex Desktop](https://github.com/Micheng
 
 ## Host dependencies and compatibility
 
-DSH `dsh.client.inject` controls browser module loading order. Missing graph entries are skipped, and frozen modules need not exist as npm packages in a profile. The UI adopts official host primitives (`@deepseek-ai/dsh-client-ui-primitives`) for `Menu` and `Button` controls with frosted glass aesthetics, completely removing custom select dropdowns and isolated Ant Design Select. Required peers such as `dsh-client-ui-slots` retain the runtime contract. Profiles with `auto-install-peers` disabled may report unmet peers; strict peer checks may also block installation. Check the host version and browser module availability rather than modifying dependency declarations.
+DSH `dsh.client.inject` controls browser module loading order. Missing graph entries are skipped, and frozen modules need not exist as npm packages in a profile. The UI adopts official host primitives (`@deepseek-ai/dsh-client-ui-primitives`) for `Menu` and `Button` controls with frosted glass aesthetics, completely removing custom select dropdowns and isolated Ant Design Select. Required peers such as `dsh-client-ui-slots` and `dsh-client-ui-primitives` retain the runtime contract. Profiles with `auto-install-peers` disabled may report unmet peers; strict peer checks may also block installation. Check the host version and browser module availability rather than modifying dependency declarations.
 
 ## Installation
 
-**Breaking upgrade.** 1.2.0 supports only DeepSeek Harness `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, and `0.2.1-alpha.5`. Installing or enabling this version on a 0.1.x host is rejected by the version gate, and the plugin will not run. Upgrade the host first. Expert and team settings are retained and do not need to be entered again. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
+**Breaking upgrade.** 1.2.0 supports only DeepSeek Harness `0.2.0-rc.1`, `0.2.0-rc.2`, and `0.2.1-rc.1`. Installing or enabling this version on a `0.1.x` host, or on `0.2.1-alpha.1` through `0.2.1-alpha.5`, is rejected by the version gate, and the plugin will not run. Upgrade the host to one of those three release candidates first. Expert and team settings are retained and do not need to be entered again. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
 
 The installation commands below use the official npm registry.
 

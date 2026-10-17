@@ -15,18 +15,19 @@ export const TEAM_CSS = `
 .agt-avatar{object-fit:cover;border-radius:50%;flex-shrink:0}
 .agt-dialog{font-family:inherit;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary)}
 .agt-dialog *{box-sizing:border-box}
-.agt-dialog button:not(.aag-host-btn){display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:0 12px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;cursor:pointer}
-.agt-dialog button:not(.aag-host-btn):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
-.agt-dialog button:not(.aag-host-btn):disabled{opacity:.5;cursor:default}
-.agt-dialog button:not(.aag-host-btn):focus-visible,.agt-dialog summary:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
+.agt-dialog button:not(.aag-host-btn):not(.aag-input-clear){display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:0 12px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;cursor:pointer}
+.agt-dialog button:not(.aag-host-btn):not(.aag-input-clear):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
+.agt-dialog button:not(.aag-host-btn):not(.aag-input-clear):disabled{opacity:.5;cursor:default}
+.agt-dialog button:not(.aag-host-btn):not(.aag-input-clear):focus-visible,.agt-dialog summary:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
 .agt-dialog input:focus-visible,.agt-dialog textarea:focus-visible{outline:none;border-color:var(--dsw-alias-label-tertiary)}
-.agt-dialog h3 svg,.agt-dialog button:not(.aag-host-btn) svg{width:18px;height:18px;flex:none;stroke-width:1.7}
+.agt-dialog h3 svg,.agt-dialog button:not(.aag-host-btn):not(.aag-input-clear) svg{width:18px;height:18px;flex:none;stroke-width:1.7}
 .agt-dialog h2{font-size:18px;line-height:26px;margin:0 0 8px}
 .agt-dialog h3{font-size:15px;line-height:22px;margin:0}
 .agt-dialog h4{font-size:14px;line-height:22px;margin:0 0 12px}
 .agt-dialog p:not(.aag-note){margin:8px 0 12px}
 .agt-dialog input,.agt-dialog textarea{width:100%;min-width:0;font:inherit;background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-button-elevated-fill));color:inherit;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);padding:6px 8px;min-height:32px}
 .agt-dialog .aag-host-input input{width:100%;min-width:0;border:0;padding:0;min-height:0;background:transparent;border-radius:0}
+.agt-dialog .aag-input-clearable .aag-host-input input{padding-right:28px}
 .agt-dialog .aag-host-input input:focus-visible{border-color:transparent;outline:none}
 .agt-dialog textarea{resize:vertical;line-height:1.6}
 .agt-dialog .agt-help,.agt-dialog small{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}
@@ -44,7 +45,6 @@ export const TEAM_CSS = `
 .agt-member-list strong,.agt-member-list small{display:block;overflow-wrap:anywhere}
 .agt-examples{display:grid;gap:8px}
 .agt-read-prompt{white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.65}
-.agt-danger{color:var(--dsw-alias-state-error-primary)!important;margin:0 16px 16px}
 .agt-editor-modal{display:flex;flex-direction:column;max-height:calc(100vh - 120px)}
 .agt-editor-modal .agt-dialog{display:flex;flex-direction:column;max-height:calc(100vh - 120px)}
 .agt-editor form{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;max-height:calc(100vh - 180px)}

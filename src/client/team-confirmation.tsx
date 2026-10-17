@@ -19,7 +19,7 @@ export function confirmTeamAction(message: string, locale: TeamLocale): Promise<
     }
     const cancel = () => finish(false)
     window.addEventListener('pagehide', cancel, { once: true })
-    root.render(<LibraryConfirm title={teamText(locale, '确认选择专家团')} cancelLabel={teamText(locale, '取消')}
-      confirmLabel={teamText(locale, '确认')} close={cancel} confirm={() => finish(true)}><p>{message}</p></LibraryConfirm>)
+    root.render(<LibraryConfirm title={teamText(locale, '确认选择专家团')} description={message} cancelLabel={teamText(locale, '取消')}
+      confirmLabel={teamText(locale, '确认')} close={cancel} confirm={() => finish(true)} />)
   })
 }

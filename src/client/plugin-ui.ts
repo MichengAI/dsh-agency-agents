@@ -53,10 +53,14 @@ export function Input({ prefix, icon, className, allowClear, value, onChange, ..
 }
 Input.TextArea = TextArea
 
-/** 调用方仍可传 onCancel。宿主只认 onClose、title 和 closeLabel，不认宽度、层级和遮罩开关。 */
+/**
+ * 调用方仍可传 onCancel。宿主只认 onClose、title 和 closeLabel，不认宽度、层级和遮罩开关。
+ * closeLabel 只用于右上角的 ×：必须是「关闭弹窗」这类独立文案，复用例文会和页脚动作重名。
+ */
 export function Modal({
   open = true,
   title,
+  description,
   children,
   footer,
   onCancel,
@@ -66,6 +70,7 @@ export function Modal({
 }: {
   open?: boolean
   title: string
+  description?: string
   children?: React.ReactNode
   footer?: React.ReactNode
   onCancel?: () => void
@@ -76,8 +81,9 @@ export function Modal({
   return React.createElement(PrimitiveModal, {
     open,
     title,
+    description,
     footer,
-    closeLabel: closeLabel ?? (documentUiLocale() === 'en' ? 'Close' : '关闭'),
+    closeLabel: closeLabel ?? (documentUiLocale() === 'en' ? 'Close dialog' : '关闭弹窗'),
     className: ['aag-theme', 'aag-host-modal', className].filter(Boolean).join(' '),
     onClose: onClose || onCancel || (() => undefined),
   }, children)
@@ -91,7 +97,6 @@ export interface UnifiedButtonProps extends Omit<React.ButtonHTMLAttributes<HTML
   block?: boolean
   size?: 'md' | 'sm' | 'middle' | 'small' | 'large'
   icon?: React.ReactNode
-  shape?: string
   href?: string
   target?: string
 }
@@ -150,7 +155,7 @@ export function documentUiLocale(): 'zh' | 'en' {
 export const PLUGIN_UI_CSS = `
 .aag-theme .is-danger{color:var(--dsw-alias-state-error-primary,#ef4444)!important;border:0.5px solid var(--dsw-alias-state-error-primary,#ef4444)!important;background:transparent!important}
 .aag-theme .is-danger:hover:not(:disabled){background:var(--dsw-alias-state-error-tertiary,rgba(239,68,68,0.15))!important;color:var(--dsw-alias-state-error-primary,#ef4444)!important;border-color:var(--dsw-alias-state-error-primary,#ef4444)!important}
-.aag-input-clearable{position:relative;display:flex;width:100%;min-width:0}.aag-input-clearable>.aag-host-input{width:100%}.aag-input-clear{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:18px;height:18px;padding:0;border:0;border-radius:var(--dsw-radius-xs,4px);background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer}.aag-input-clear::before{content:"×";font-size:14px;line-height:18px}.aag-input-clear:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}
+.aag-input-clearable{position:relative;display:flex;width:100%;min-width:0}.aag-input-clearable>.aag-host-input{width:100%}.aag-input-clearable .aag-host-input input{padding-right:28px}.aag-input-clear{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:18px;height:18px;padding:0;border:0;border-radius:var(--dsw-radius-xs,4px);background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer}.aag-input-clear::before{content:"×";font-size:14px;line-height:18px}.aag-input-clear:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}
 .aag-textarea{box-sizing:border-box;width:100%;min-width:0;padding:8px 12px;font:inherit;font-size:13px;line-height:20px;border-radius:var(--dsw-radius-sm,8px);background:var(--dsw-alias-bg-layer-1);border:0.5px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-primary);resize:vertical;transition:border-color 120ms ease}
 .aag-textarea:focus,.aag-textarea:focus-visible{outline:var(--dsw-focus-ring-width,1px) solid var(--dsw-focus-ring-color,var(--dsw-alias-brand-primary));outline-offset:0;border-color:var(--dsw-alias-brand-primary)}
 .aag-host-modal.aag-editor-modal,.aag-host-modal.agt-editor-modal,.aag-host-modal.agt-picker,.aag-host-modal.agt-detail{width:min(760px,100%)!important;max-height:100%!important}

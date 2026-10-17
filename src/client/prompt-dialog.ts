@@ -21,7 +21,6 @@ export function PromptDialog(props: {
     open: true,
     title: props.title,
     className: 'aag-prompt-dialog',
-    closeLabel: props.closeLabel,
     onCancel: close,
     footer: [
       React.createElement(Button, { key: 'close', type: 'primary', autoFocus: true, onClick: close }, props.closeLabel),

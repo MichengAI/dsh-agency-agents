@@ -1,6 +1,6 @@
-import "@deepseek-ai/dsh-settings";
 import schema from "@deepseek-ai/schemastery";
 import { Context } from "@deepseek-ai/cordis";
+import "@deepseek-ai/dsh-settings";
 //#region src/names.d.ts
 /** 智能体 slug（文件名去 .md）→ 中文名（现实岗位）。缺省时回退英文 frontmatter name。 */
 declare const ZH_NAME: Readonly<Record<string, string>>;

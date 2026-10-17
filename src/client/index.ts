@@ -690,9 +690,9 @@ export interface ReferenceInsertionTarget {
 
 /** 会话列表快照里能用来回退「当前主视图」的字段。 */
 export interface ReferenceSessionListSnapshot {
-  /** alpha.1 及更早：全局当前会话。alpha.2 已删除。 */
+  /** 0.2.0-rc.1 / 0.2.0-rc.2：全局当前会话。0.2.1-rc.1 已删除。 */
   readonly current?: SessionId
-  /** alpha.2：主视图由 `retainedBy.mainView` 标记，不再有 `current`。 */
+  /** 0.2.1-rc.1：主视图由 `retainedBy.mainView` 标记，不再有 `current`。 */
   readonly byId?: Readonly<Record<string, {
     readonly id?: SessionId
     readonly retainedBy?: { readonly mainView?: number }
@@ -708,7 +708,7 @@ export interface ReferenceSessionAccess {
   binding?(id: SessionId): { readonly ctx: CordisClientContext } | undefined
 }
 
-/** slot 未给 sessionId 时：0.2.0-rc.1 / 0.2.1-alpha.1 认 `current`，alpha.2 起按主视图 retain 反查。 */
+/** slot 未给 sessionId 时：0.2.0-rc.1 / 0.2.0-rc.2 认 `current`，0.2.1-rc.1 按主视图 retain 反查。 */
 export function resolveTargetSessionId(
   sessions: ReferenceSessionAccess,
   sessionId?: SessionId,

@@ -15,7 +15,7 @@
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm 下载量](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH 支持至 0.2.1-alpha.3](https://img.shields.io/badge/DSH-up%20to%200.2.1--alpha.3-2563eb.svg)](#前置条件)
+  [![DSH 支持至 0.2.1-rc.1](https://img.shields.io/badge/DSH-up%20to%200.2.1--rc.1-2563eb.svg)](#前置条件)
 </div>
 
 > DSH Agency Agents 是社区维护的 DeepSeek Harness（DSH）插件，并非 DeepSeek AI 官方产品。
@@ -116,11 +116,11 @@
 
 ## 宿主依赖与兼容性
 
-DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块图中不存在的项会跳过，冻结模块也不一定对应 Profile 内的 npm 包。UI 全面接入宿主官方原语（`@deepseek-ai/dsh-client-ui-primitives`）的 `Menu` 和 `Button` 原语与半透明毛玻璃材质，彻底移除了自定义自绘下拉及独立的 Ant Design Select。`dsh-client-ui-slots` 等 required peer 仍表达运行时契约；关闭 `auto-install-peers` 的 Profile 可能出现 unmet peer 提示，严格 peer 检查还可能阻止安装，需核对宿主版本及浏览器模块是否提供，不能据 npm 包树缺失直接判定运行失败。
+DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块图中不存在的项会跳过，冻结模块也不一定对应 Profile 内的 npm 包。UI 全面接入宿主官方原语（`@deepseek-ai/dsh-client-ui-primitives`）的 `Menu` 和 `Button` 原语与半透明毛玻璃材质，彻底移除了自定义自绘下拉及独立的 Ant Design Select。`dsh-client-ui-slots`、`dsh-client-ui-primitives` 等 required peer 仍表达运行时契约；关闭 `auto-install-peers` 的 Profile 可能出现 unmet peer 提示，严格 peer 检查还可能阻止安装，需核对宿主版本及浏览器模块是否提供，不能据 npm 包树缺失直接判定运行失败。
 
 ## 安装
 
-**破坏性升级。** 1.2.0 只支持 DeepSeek Harness `0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-alpha.1`、`0.2.1-alpha.2`、`0.2.1-alpha.3`、`0.2.1-alpha.4`、`0.2.1-alpha.5`。0.1.x 宿主安装或启用本版本会被版本门拒绝，插件不会运行。请先升级宿主，再安装。专家和专家团配置仍保留，不需要重新录入。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装；后续宿主版本需另行验证兼容性。
+**破坏性升级。** 1.2.0 只支持 DeepSeek Harness `0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-rc.1`。`0.1.x` 和 `0.2.1-alpha.1` 到 `0.2.1-alpha.5` 安装或启用本版本会被版本门拒绝，插件不会运行。请先把宿主升到上面三个 RC 之一，再安装。专家和专家团配置仍保留，不需要重新录入。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装；后续宿主版本需另行验证兼容性。
 
 以下安装命令使用官方 npm 源。
 

@@ -75,22 +75,26 @@ export function Switch({ checked, onChange, disabled, label, className }: any) {
   }, React.createElement('span', { className: 'dsh-switch-thumb' }))
 }
 
-export function Modal({ open = true, onClose, title, closeLabel, children, footer, className }: any) {
+export function Modal({ open = true, onClose, title, closeLabel, description, children, footer, className }: any) {
   if (!open) return null
   const titleText = typeof title === 'string' ? title : undefined
   return React.createElement('div', {
     className: 'dsh-primitives-modal-backdrop',
-    onClick: (e: any) => { if (e.target === e.currentTarget) onClose?.() },
+    // 对齐宿主 Modal.module.css：根层铺满视口并居中，卡片默认 min(380px,100%)；宽度只靠调用方类名覆盖。
+    style: { position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(0,0,0,0.45)' },
+    onClick: (e: React.MouseEvent<HTMLDivElement>) => { if (e.target === e.currentTarget) onClose?.() },
   },
     React.createElement('div', {
       role: 'dialog',
       'aria-modal': 'true',
       'aria-label': titleText,
       className: ['dsh-primitives-modal', className].filter(Boolean).join(' '),
-      onClick: (e: any) => e.stopPropagation(),
+      style: { position: 'relative', boxSizing: 'border-box', width: 'min(380px, 100%)', maxHeight: '100%', overflow: 'hidden' },
+      onClick: (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation(),
     },
       React.createElement('button', { type: 'button', 'aria-label': closeLabel, className: 'dsh-modal-close', onClick: onClose }, '✕'),
-      React.createElement('div', { className: 'dsh-modal-body' }, children),
+      description ? React.createElement('p', { className: 'dsh-modal-description' }, description) : null,
+      children != null ? React.createElement('div', { className: 'dsh-modal-body' }, children) : null,
       footer ? React.createElement('div', { className: 'dsh-modal-footer' }, footer) : null,
     ),
   )

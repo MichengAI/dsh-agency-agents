@@ -1320,7 +1320,7 @@ describe('专家库目标稿样式契约', () => {
 
 describe('@ 菜单分组标题本地化', () => {
   it("DSH peer 只枚举已验证的 0.2.x 宿主版本", () => {
-    const range = "0.2.0-rc.1 || 0.2.0-rc.2 || 0.2.1-alpha.1 || 0.2.1-alpha.2 || 0.2.1-alpha.3 || 0.2.1-alpha.4 || 0.2.1-alpha.5";
+    const range = "0.2.0-rc.1 || 0.2.0-rc.2 || 0.2.1-rc.1";
     const peers = PACKAGE_MANIFEST.peerDependencies;
     expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
     expect(PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh"]?.optional).toBe(true);
@@ -1331,8 +1331,8 @@ describe('@ 菜单分组标题本地化', () => {
         expect(version).not.toMatch(/0\.1\./u);
       }
     }
-    // inject 是浏览器模块加载顺序，不应转化为额外的 npm 强制依赖。
-    expect(peers).not.toHaveProperty("@deepseek-ai/dsh-client-ui-primitives");
+    expect(peers?.["@deepseek-ai/dsh-client-ui-primitives"]).toBe(range);
+    expect(PACKAGE_MANIFEST.dsh?.client?.inject).toContain("@deepseek-ai/dsh-client-ui-primitives");
     expect(PACKAGE_MANIFEST.dsh?.client?.inject).not.toContain(
       "@deepseek-ai/dsh-client-ui-renderer",
     );
@@ -1346,10 +1346,10 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 0.2.1-alpha.3', () => {
+  it('DSH 开发依赖固定为 0.2.1-rc.1', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.2.1-alpha.3')
+        expect(version).toBe('0.2.1-rc.1')
       }
     }
   })

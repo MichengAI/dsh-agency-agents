@@ -402,9 +402,11 @@ export function TeamEditor(props: {
         </div>
         <LibraryEditorFooter editing={!!draft.id} busy={busy} blocked={needsReview} help={tx("保存配置不会发送任务。")} cancelLabel={tx("取消")} saveLabel={tx("保存")} primaryLabel={busy ? tx("正在保存…") : draft.id ? tx("保存修改") : tx("保存并启用")} close={close} save={() => void submit(false)} primary={() => void submit(draft.id ? currentEnabled : true)}/>{' '}
       </form>
-      {confirm && (<TeamConfirm danger={confirm === 'discard' || confirm === 'restore'} busy={busy} error={error} cancelLabel={confirm === 'discard' ? tx("继续编辑") : tx("取消")} title={confirm === 'discard'
+      {confirm && (<TeamConfirm busy={busy} error={error} cancelLabel={confirm === 'discard' ? tx("继续编辑") : tx("取消")} title={confirm === 'discard'
                 ? tx("放弃未保存修改？") : confirm === 'restore'
-                ? tx("恢复团队模板？") : tx("启用团队成员")} label={confirm === 'discard'
+                ? tx("恢复团队模板？") : tx("启用团队成员")} description={confirm === 'enable'
+                ? tx("同时启用：{0}。停用团队时不会停用这些专家。", [missing.map((e) => e.name).join(locale === 'en' ? ', ' : '、')]) : confirm === 'restore'
+                ? tx("只恢复主理人规则，不修改成员分工、目标或交付要求。") : tx("未保存的表单改动将丢弃。")} label={confirm === 'discard'
                 ? tx("放弃修改") : confirm === 'restore'
                 ? tx("确认恢复") : tx("启用团队及所需成员")} onCancel={() => setConfirm(null)} onConfirm={() => {
                 const action = confirm;
@@ -416,13 +418,7 @@ export function TeamEditor(props: {
                     patch({ coordinatorMode: 'template', coordinatorPrompt: '' });
                 else
                     void submit(true, true);
-            }}>
-          <p>
-            {confirm === 'enable'
-                ? tx("同时启用：{0}。停用团队时不会停用这些专家。", [missing.map((e) => e.name).join(locale === 'en' ? ', ' : '、')]) : confirm === 'restore'
-                ? tx("只恢复主理人规则，不修改成员分工、目标或交付要求。") : tx("未保存的表单改动将丢弃。")}
-          </p>
-        </TeamConfirm>)}
+            }} />)}
       {picker !== null && (<MemberPicker experts={props.experts} locale={locale} query={query} source={pickerSource} division={pickerDivision} status={pickerStatus} enabled={props.enabledExperts} taken={draft.members} replacing={picker} tx={tx} onQuery={setQuery} onSource={setPickerSource} onDivision={setPickerDivision} onStatus={setPickerStatus} close={() => setPicker(null)} onPick={(expert) => {
             const member = {
                 expertSlug: expert.slug,

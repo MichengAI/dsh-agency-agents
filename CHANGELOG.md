@@ -13,7 +13,9 @@ Expert and expert-team settings stay in the host `agency-agents` namespace. This
 Supported hosts only:
 
 - `0.2.0-rc.1`, `0.2.0-rc.2`
-- `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, `0.2.1-alpha.5`
+- `0.2.1-rc.1`
+
+`0.1.x` and `0.2.1-alpha.1` through `0.2.1-alpha.5` are rejected by the version gate, and the plugin will not run. Upgrade the host to one of the three release candidates above first.
 
 Other changes:
 
@@ -22,6 +24,8 @@ Other changes:
 - Drop dialog props the host does not accept (width, stacking, mask, and closable flags). Close buttons have a localized name, search fields can be cleared, and switches pass their name through the host `label`.
 - Side editor drawers are now centered modals. Confirmation dialogs keep the host default width. Expert-team editing, member picking, and details are 760px.
 - Icon-only buttons are 22px outline controls, matching the skills plugin.
+- Confirmation copy uses the host modal description slot. Confirm buttons use the host solid primary style instead of a red outline override.
+- Declare `@deepseek-ai/dsh-client-ui-primitives` as a peer and include it in the browser module load order.
 
 ## 1.0.20 - 2026-10-16
 

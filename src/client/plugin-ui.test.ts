@@ -4,9 +4,15 @@ import { test } from 'vitest'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Input, Modal } from './plugin-ui.js'
-import { LibraryCard } from './library-ui.js'
+import { LibraryCard, LibraryConfirm } from './library-ui.js'
+import { PromptDialog } from './prompt-dialog.js'
 import { TeamDialog } from './team-shared.js'
 import { TEAM_CSS } from './team-style.js'
+
+test('团队弹窗不会把搜索清除按钮改成 32px 描边，文字也不会压到清除钮', () => {
+  assert.match(TEAM_CSS, /\.agt-dialog button:not\(\.aag-host-btn\):not\(\.aag-input-clear\)/)
+  assert.match(TEAM_CSS, /\.agt-dialog \.aag-input-clearable \.aag-host-input input\{[^}]*padding-right:28px/)
+})
 
 test('搜索框有清除按钮，且不把 allowClear 传给宿主 input', () => {
   const html = renderToStaticMarkup(React.createElement(Input, {
@@ -49,6 +55,42 @@ test('专家开关把名称交给宿主 label，读屏能读到专家名', () =>
     moreItems: [],
   }))
   assert.match(html, /role="switch"[^>]*aria-label="评审专家：已启用"|aria-label="评审专家：已启用"[^>]*role="switch"/)
+})
+
+test('弹窗右上角的关闭按钮与页脚动作不同名，避免同名二义', () => {
+  // 宿主把 closeLabel 直接作为 × 的 aria-label；复用例文会让一个可访问名对应两个按钮。
+  const nameCount = (html: string, name: string): number =>
+    (html.match(new RegExp(`aria-label="${name}"`, 'g')) ?? []).length
+    + (html.match(new RegExp(`>${name}</button>`, 'g')) ?? []).length
+  const confirm = renderToStaticMarkup(React.createElement(LibraryConfirm, {
+    title: '放弃修改',
+    confirmLabel: '放弃',
+    cancelLabel: '继续编辑',
+    confirm: () => undefined,
+    close: () => undefined,
+  }))
+  assert.equal(nameCount(confirm, '继续编辑'), 1, '× 不应复用取消文案')
+  assert.match(confirm, /aria-label="关闭弹窗"/)
+  const described = renderToStaticMarkup(React.createElement(LibraryConfirm, {
+    title: '删除专家',
+    description: '删除后不能恢复。',
+    confirmLabel: '删除',
+    cancelLabel: '取消',
+    confirm: () => undefined,
+    close: () => undefined,
+  }))
+  assert.match(described, /class="dsh-modal-description">删除后不能恢复。/)
+  assert.doesNotMatch(described, /dsh-modal-body/)
+  assert.match(described, /dsh-button-primary/)
+  assert.doesNotMatch(described, /is-danger/)
+  const prompt = renderToStaticMarkup(React.createElement(PromptDialog, {
+    value: { name: '专家', prompt: '正文' },
+    title: '提示词',
+    closeLabel: '关闭',
+    returnFocus: undefined as unknown as HTMLElement,
+    onClose: () => undefined,
+  }))
+  assert.equal(nameCount(prompt, '关闭'), 1, '× 不应复用页脚关闭文案')
 })
 
 test('团队弹窗内容样式不改宿主关闭按钮，也不给宿主输入内层再加边框', () => {
