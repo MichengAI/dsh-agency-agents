@@ -418,7 +418,7 @@ export function TeamEditor(props: {
                 ? tx("同时启用：{0}。停用团队时不会停用这些专家。", [missing.map((e) => e.name).join(locale === 'en' ? ', ' : '、')]) : confirm === 'restore'
                 ? tx("只恢复主理人规则，不修改成员分工、目标或交付要求。") : tx("未保存的表单改动将丢弃。")} label={confirm === 'discard'
                 ? tx("放弃修改") : confirm === 'restore'
-                ? tx("确认恢复") : tx("启用团队及所需成员")} onCancel={() => setConfirm(null)} onConfirm={() => {
+                ? tx("确认恢复") : tx("启用团队及所需成员")} danger={confirm !== 'enable'} onCancel={() => setConfirm(null)} onConfirm={() => {
                 const action = confirm;
                 if (action !== 'enable')
                     setConfirm(null);

@@ -109,7 +109,7 @@ export function LibraryCard(props: {
   )
 }
 
-/** 删除、放弃修改及启用依赖使用同一种确认弹窗。说明放宿主描述槽，避免正文边距把句子压到按钮上。 */
+/** 删除、放弃修改及启用依赖使用同一种确认弹窗。说明放宿主描述槽，避免正文边距把句子压到按钮上。破坏性操作传 danger，确认键用宿主警示模式的红色描边。 */
 export function LibraryConfirm(props: {
   title: string
   description?: string
@@ -118,6 +118,7 @@ export function LibraryConfirm(props: {
   cancelLabel: string
   busy?: boolean
   error?: string | null
+  danger?: boolean
   confirm(): void
   close(): void
 }) {
@@ -132,7 +133,7 @@ export function LibraryConfirm(props: {
       onCancel={() => { if (!props.busy) props.close() }}
       footer={[
         <Button key="cancel" variant="outline" disabled={props.busy} onClick={() => { if (!props.busy) props.close() }}>{props.cancelLabel}</Button>,
-        <Button key="confirm" variant="primary" disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
+        <Button key="confirm" variant={props.danger ? 'outline' : 'primary'} danger={props.danger} disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,
       ]}
     >
       {body}

@@ -99,7 +99,7 @@ export function TeamDetails(props: {
         <Button style={{ marginTop: 8 }} onClick={() => setPrompt(!prompt)} aria-expanded={prompt}>{tx("查看主理人提示词")}</Button>
         {prompt && (<Input.TextArea className="agt-read-prompt" readOnly aria-label={tx("主理人提示词正文")} value={effectiveCoordinator(props.team, locale)} style={{ height: 280, resize: 'none', overflow: 'auto' }}/>)}
       </section>
-      {props.onDelete && (<Button style={{ margin: '0 16px 16px', alignSelf: 'flex-start' }} onClick={props.onDelete}>{tx("删除专家团")}</Button>)}
+      {props.onDelete && (<Button danger style={{ margin: '0 16px 16px', alignSelf: 'flex-start' }} onClick={props.onDelete}>{tx("删除专家团")}</Button>)}
     </TeamDialog>);
 }
 export function TeamsPanel(props: {
@@ -372,7 +372,7 @@ export function TeamsPanel(props: {
                 ? tx("删除“{0}”的配置，保留成员专家和历史会话。", [confirm.team.name]) : tx("同时启用：{0}。停用团队时不会停用成员。", [confirm.team.members
                     .filter((m) => !snapshot!.enabledExperts.includes(m.expertSlug))
                     .map((m) => experts.find((e) => e.slug === m.expertSlug)?.name ?? tx("失效成员"))
-                    .join(locale === 'en' ? ', ' : '、')])} label={confirm.action === 'delete' ? tx("确认删除") : tx("启用团队及所需成员")} busy={busy} error={error} onCancel={() => setConfirm(null)} onConfirm={() => {
+                    .join(locale === 'en' ? ', ' : '、')])} label={confirm.action === 'delete' ? tx("确认删除") : tx("启用团队及所需成员")} danger={confirm.action === 'delete'} busy={busy} error={error} onCancel={() => setConfirm(null)} onConfirm={() => {
                 const current = confirm;
                 void change(current.team, current.action, current.example, true);
             }} />)}

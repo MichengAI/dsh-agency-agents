@@ -60,7 +60,7 @@ export function TeamDialog({ title, children, close, className = '', }: {
         </Modal>
     );
 }
-export function TeamConfirm({ title, description, children, label, onCancel, onConfirm, busy = false, cancelLabel, error, }: {
+export function TeamConfirm({ title, description, children, label, onCancel, onConfirm, busy = false, cancelLabel, error, danger = false, }: {
     cancelLabel?: string;
     title: string;
     description?: string;
@@ -70,9 +70,10 @@ export function TeamConfirm({ title, description, children, label, onCancel, onC
     onConfirm(): void;
     busy?: boolean;
     error?: string;
+    danger?: boolean;
 }) {
     const { tx } = useTeamLocale();
-    return (<LibraryConfirm title={title} description={description} busy={busy} error={error} cancelLabel={cancelLabel ?? tx("取消")} confirmLabel={busy ? tx("正在处理…") : label} close={onCancel} confirm={onConfirm}>
+    return (<LibraryConfirm title={title} description={description} busy={busy} error={error} danger={danger} cancelLabel={cancelLabel ?? tx("取消")} confirmLabel={busy ? tx("正在处理…") : label} close={onCancel} confirm={onConfirm}>
       {children}
     </LibraryConfirm>);
 }

@@ -104,13 +104,14 @@ test('弹窗右上角的关闭按钮与页脚动作不同名，避免同名二�
     description: '删除后不能恢复。',
     confirmLabel: '删除',
     cancelLabel: '取消',
+    danger: true,
     confirm: () => undefined,
     close: () => undefined,
   }))
   assert.match(described, /class="dsh-modal-description">删除后不能恢复。/)
   assert.doesNotMatch(described, /dsh-modal-body/)
-  assert.match(described, /dsh-button-primary/)
-  assert.doesNotMatch(described, /is-danger/)
+  assert.doesNotMatch(described, /dsh-button-primary/)
+  assert.match(described, /is-danger/)
   const prompt = renderToStaticMarkup(React.createElement(PromptDialog, {
     value: { name: '专家', prompt: '正文' },
     title: '提示词',
