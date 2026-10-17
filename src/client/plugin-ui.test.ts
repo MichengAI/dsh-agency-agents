@@ -30,6 +30,14 @@ test('宿主输入框与清除包装层声明 border-box，避免 width: 100% �
   assert.match(DISCOVERY_CSS, /\.aag-discovery-tools \.aag-host-input\{[^}]*box-sizing:border-box/)
 })
 
+test('专家选择浮层使用宿主模态窗口标准层级背景与面板圆角', async () => {
+  const { COMPOSER_CSS } = await import('./index.js')
+  assert.match(COMPOSER_CSS, /\.aag-menu\{[^}]*background:var\(--dsw-alias-bg-layer-2\)/)
+  assert.match(COMPOSER_CSS, /\.aag-menu\{[^}]*border-radius:var\(--dsw-radius-panel/)
+  assert.match(COMPOSER_CSS, /\.aag-menu\{[^}]*--dsw-elevation-stroke-color:var\(--dsw-alias-border-l1\)/)
+  assert.doesNotMatch(COMPOSER_CSS, /\.aag-menu\{[^}]*backdrop-filter:/)
+})
+
 test('搜索框有清除按钮，且不把 allowClear 传给宿主 input', () => {
   const html = renderToStaticMarkup(React.createElement(Input, {
     value: 'review',
