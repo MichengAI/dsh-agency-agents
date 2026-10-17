@@ -111,7 +111,7 @@ export function TeamMenu(props: {
       <Input autoFocus allowClear aria-label={tx("搜索专家团")} placeholder={tx("搜索团队或工作目标")} value={query} onChange={(e) => setQuery(e.target.value)}/>
       {error && (<div role="alert">
           {error}
-          <button type="button" onClick={() => void load()}>{tx("刷新")}</button>
+          <button type="button" className="agt-plain-btn" onClick={() => void load()}>{tx("刷新")}</button>
         </div>)}
       <div className="agt-compact-list">
         {teams.map((team) => (<div className="agt-compact-row" key={team.id}>

@@ -10,12 +10,13 @@ import { TeamDialog } from './team-shared.js'
 import { TEAM_CSS } from './team-style.js'
 
 test('团队弹窗不会把搜索清除按钮改成 32px 描边，文字也不会压到清除钮', () => {
-  assert.match(TEAM_CSS, /\.agt-dialog button:not\(\.aag-host-btn\):not\(\.aag-input-clear\):not\(\[role=tab\]\):not\(\.agt-picker-row\)/)
+  assert.doesNotMatch(TEAM_CSS, /\.agt-dialog button:not\(/)
+  assert.match(TEAM_CSS, /\.agt-dialog button\.agt-plain-btn\{/)
   assert.match(TEAM_CSS, /\.agt-picker-row\{[^}]*border-radius:0/)
   assert.match(TEAM_CSS, /\.agt-picker-row\{[^}]*overflow:hidden/)
   assert.doesNotMatch(TEAM_CSS, /aria-pressed=true/)
   assert.match(TEAM_CSS, /\.agt-dialog \.aag-input-clearable \.aag-host-input input\{[^}]*padding-right:28px/)
-  assert.doesNotMatch(TEAM_CSS, /\.agt-dialog input,/)
+  assert.doesNotMatch(TEAM_CSS, /\.agt-dialog input/)
   assert.doesNotMatch(TEAM_CSS, /\.agt-dialog textarea/)
 })
 

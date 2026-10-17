@@ -15,11 +15,11 @@ export const TEAM_CSS = `
 .agt-avatar{object-fit:cover;border-radius:50%;flex-shrink:0}
 .agt-dialog{font-family:inherit;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary)}
 .agt-dialog *{box-sizing:border-box}
-.agt-dialog button:not(.aag-host-btn):not(.aag-input-clear):not([role=tab]):not(.agt-picker-row){display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:0 12px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;cursor:pointer}
-.agt-dialog button:not(.aag-host-btn):not(.aag-input-clear):not([role=tab]):not(.agt-picker-row):hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
-.agt-dialog button:not(.aag-host-btn):not(.aag-input-clear):not([role=tab]):not(.agt-picker-row):disabled{opacity:.5;cursor:default}
-.agt-dialog button:not(.aag-host-btn):not(.aag-input-clear):not([role=tab]):not(.agt-picker-row):focus-visible,.agt-dialog summary:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
-.agt-dialog h3 svg,.agt-dialog button:not(.aag-host-btn):not(.aag-input-clear):not([role=tab]):not(.agt-picker-row) svg{width:18px;height:18px;flex:none;stroke-width:1.7}
+.agt-dialog button.agt-plain-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:0 12px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:20px;cursor:pointer}
+.agt-dialog button.agt-plain-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
+.agt-dialog button.agt-plain-btn:disabled{opacity:.5;cursor:default}
+.agt-dialog button.agt-plain-btn:focus-visible,.agt-dialog summary:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}
+.agt-dialog h3 svg,.agt-dialog button.agt-plain-btn svg{width:18px;height:18px;flex:none;stroke-width:1.7}
 .agt-dialog h2{font-size:18px;line-height:26px;margin:0 0 8px}
 .agt-dialog h3{font-size:15px;line-height:22px;margin:0}
 .agt-dialog h4{font-size:14px;line-height:22px;margin:0 0 12px}
@@ -60,7 +60,7 @@ export const TEAM_CSS = `
 .agt-picker-tools{flex:none;margin:0}
 .agt-picker-note{margin:8px 0 0}
 .agt-dialog.agt-picker .agt-picker-list{flex:none;height:min(480px,calc(100vh - 328px));min-height:240px;max-height:none;overflow:auto;padding:8px 0 0}
-.agt-dialog.agt-picker .agt-picker-row{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;height:72px;min-height:0;margin:0;padding:8px 12px;overflow:hidden;border:0;border-bottom:0.5px solid var(--dsw-alias-border-l2);border-radius:0;background:var(--dsw-alias-bg-base,var(--dsw-alias-bg-layer-1));color:inherit;text-align:left;box-shadow:none;cursor:pointer}
+.agt-dialog.agt-picker .agt-picker-row{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;min-height:0;margin:0;padding:8px 12px;overflow:hidden;border:0;border-bottom:0.5px solid var(--dsw-alias-border-l2);border-radius:0;background:var(--dsw-alias-bg-base,var(--dsw-alias-bg-layer-1));color:inherit;text-align:left;box-shadow:none;cursor:pointer}
 .agt-dialog.agt-picker .agt-picker-row:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
 .agt-dialog.agt-picker .agt-picker-list span{display:flex;min-width:0;flex-direction:column}
 .agt-dialog.agt-picker .agt-picker-list small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -73,7 +73,8 @@ export const TEAM_CSS = `
 .agt-compact-row>button:first-child>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .agt-compact-row small{margin-left:8px;opacity:.65}
 .agt-compact-row>button:last-child{background:transparent;border:0;color:inherit;cursor:pointer}
-.agt-compact .aag-host-input{width:calc(100% - 16px);margin:8px}
+.agt-compact .aag-input-clearable{width:calc(100% - 16px);margin:8px}
+.agt-compact .aag-input-clearable>.aag-host-input{width:100%;margin:0}
 @media(max-width:560px){.agt-detail-head{align-items:flex-start;flex-wrap:wrap}.agt-editor .agt-prompt{min-height:240px}}
 @media(prefers-reduced-motion:reduce){.agt-dialog *{transition:none!important}}
 `

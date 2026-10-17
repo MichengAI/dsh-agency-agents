@@ -25,6 +25,9 @@ Other changes:
 - Side editor drawers are now centered modals. Confirmation dialogs keep the host default width. Expert-team editing, member picking, and details are 760px.
 - Icon-only buttons are 22px outline controls, matching the skills plugin.
 - Confirmation copy uses the host modal description slot. Confirm buttons use the host solid primary style instead of a red outline override.
+- Team template and custom prompt sources use the host segmented control instead of a hand-styled selected state.
+- Dialogs no longer restyle host input and textarea borders, padding, or focus rings.
+- Member replace is a 22px icon button, and its accessible name uses the expert name.
 - Declare `@deepseek-ai/dsh-client-ui-primitives` as a peer and include it in the browser module load order.
 
 ## 1.0.20 - 2026-10-16

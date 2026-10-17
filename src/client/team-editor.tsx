@@ -94,7 +94,7 @@ function MemberPicker(props: {
       <p className="agt-help agt-picker-note" role="note">{props.tx("停用的专家也可以加入专家团。不想单独使用专家、只想用专家团时，把状态改为「全部」或「已停用」。")}</p>
       <div className="agt-picker-list" ref={scroller} onScroll={(event) => setTop(event.currentTarget.scrollTop)}>
         {matches.length === 0 ? <p className="agt-help">{props.tx("没有匹配的专家")}</p> : <div style={{ height: matches.length * PICKER_ROW, position: 'relative' }}>
-          {slice.map((expert, index) => (<button type="button" className="agt-picker-row" key={expert.slug} style={{ position: 'absolute', top: (start + index) * PICKER_ROW, left: 0, right: 0 }} onClick={() => props.onPick(expert)}>
+          {slice.map((expert, index) => (<button type="button" className="agt-picker-row" key={expert.slug} style={{ position: 'absolute', top: (start + index) * PICKER_ROW, left: 0, right: 0, height: PICKER_ROW }} onClick={() => props.onPick(expert)}>
             <Avatar expert={expert} size={40}/>
             <span>
               <strong>{expert.name}</strong>
@@ -265,14 +265,14 @@ export function TeamEditor(props: {
             }}>
                       <IconPlus />{tx("添加成员")}</Button>
                   </div>
-                  {draft.members.map((m, i) => (<div className="agt-edit-member" key={m.expertSlug}>
+                  {draft.members.map((m, i) => {
+                const member = props.experts.find((e) => e.slug === m.expertSlug)
+                const memberName = member?.name ?? tx("成员已失效")
+                return (<div className="agt-edit-member" key={m.expertSlug}>
                       <div className="agt-row">
-                        <Avatar expert={props.experts.find((e) => e.slug === m.expertSlug)}/>
-                        <strong>
-                          {props.experts.find((e) => e.slug === m.expertSlug)
-                    ?.name ?? tx("成员已失效")}
-                        </strong>
-                        <Button className="aag-icon-btn" title={tx("替换")} aria-label={tx("替换成员 {0}", [props.experts.find((e) => e.slug === m.expertSlug)?.name ?? String(i + 1)])} onClick={() => {
+                        <Avatar expert={member}/>
+                        <strong>{memberName}</strong>
+                        <Button className="aag-icon-btn" title={tx("替换")} aria-label={tx("替换成员 {0}", [memberName])} onClick={() => {
                     setQuery('');
                     setPickerSource('all');
                     setPickerDivision('');
@@ -281,7 +281,7 @@ export function TeamEditor(props: {
                 }}>
                           <IconRefresh />
                         </Button>
-                        <Button className="aag-icon-btn" danger aria-label={tx("删除成员 {0}", [i + 1])} onClick={() => patch({
+                        <Button className="aag-icon-btn" danger title={tx("删除成员 {0}", [memberName])} aria-label={tx("删除成员 {0}", [memberName])} onClick={() => patch({
                     members: draft.members.filter((_, n) => n !== i),
                 })}>
                           <IconTrash />
@@ -322,7 +322,7 @@ export function TeamEditor(props: {
                 }}>{tx("下移")}</Button>
                         </div>
                       </details>
-                    </div>))}
+                    </div>)})}
                 </>)}
               {section(tx("协作与交付"), <>
                   {field(tx("团队目标"), 'goal', 2000, true)}

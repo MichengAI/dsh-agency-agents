@@ -98,7 +98,7 @@ export const TEAM_EN = {
   '添加成员': 'Add member', '成员已失效': 'Member unavailable', '替换': 'Replace', '替换成员 {0}': 'Replace member {0}', '删除成员 {0}': 'Remove member {0}',
   '职责摘要': 'Responsibility', '展开详细分工': 'Expand assignment', '详细分工': 'Detailed assignment', '上移': 'Move up', '下移': 'Move down',
   '协作与交付': 'Collaboration and deliverables', '填写共同目标与交付要求': 'Enter the shared goal and deliverables', '团队目标': 'Team goal',
-  '交付要求': 'Deliverables', '通用约束（选填）': 'Shared constraints (optional)', '主理人提示词': 'Coordinator prompt',
+  '交付要求': 'Deliverables', '通用约束（选填）': 'Shared constraints (optional)', '主理人提示词': 'Coordinator prompt', '主理人提示词来源': 'Coordinator prompt source',
   '使用团队模板 · 由当前会话执行': 'Team template · Coordinated in this conversation', '使用自定义规则 · 由当前会话执行': 'Custom rules · Coordinated in this conversation',
   '定义如何分配任务、处理分歧并汇总专家结果': 'Define how tasks are assigned, disagreements resolved and results combined', '团队模板': 'Team template',
   '恢复团队模板': 'Restore team template', '主理人提示词正文': 'Coordinator prompt text',

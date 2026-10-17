@@ -31,7 +31,7 @@ test('插件各组件全面接入 DSH 官方圆角体系', () => {
   assert.match(PLUGIN_UI_CSS, /\.aag-textarea\{[^}]*border-radius:var\(--dsw-radius-sm,8px\)/, '多行文本框采用官方 R8 圆角')
   assert.doesNotMatch(DISCOVERY_CSS, /\.aag-discovery input\{/, '发现搜索不再手写输入框边框')
   assert.match(CUSTOM_EDITOR_CSS, /\.aag-custom-badge\{[^}]*border-radius:var\(--dsw-radius-xs,4px\)/, '徽章采用官方 R4 圆角')
-  assert.doesNotMatch(TEAM_CSS, /\.agt-dialog input,/, '团队弹窗不再改宿主输入框圆角')
+  assert.doesNotMatch(TEAM_CSS, /\.agt-dialog input/, '团队弹窗不再改宿主输入框')
   assert.ok(!/border-radius:\s*(?:6|7|10|20|24)px/.test(combinedCss), '不再存在未桥接官方阶梯的硬编码圆角')
 })
 
