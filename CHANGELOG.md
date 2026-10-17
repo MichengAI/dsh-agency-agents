@@ -4,6 +4,10 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.1 - 2026-10-17
+
+- Align destructive action buttons with the host warning pattern: expert delete, discard-changes, team-template restore, and expert-team removal confirmations use a red outline instead of the solid primary style, matching the skills plugin.
+
 ## 1.2.0 - 2026-10-17
 
 **Breaking upgrade.** This version no longer supports DeepSeek Harness 0.1.x. Installing or enabling 1.2.0 on 0.1.2, 0.1.5, 0.1.7, or any other 0.1.x host is rejected by the version gate, and the plugin will not run. Upgrade the host to a version in the list below before installing this plugin.
