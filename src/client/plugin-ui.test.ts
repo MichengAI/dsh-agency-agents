@@ -18,6 +18,7 @@ test('团队弹窗不会把搜索清除按钮改成 32px 描边，文字也不�
   assert.match(TEAM_CSS, /\.agt-dialog \.aag-input-clearable \.aag-host-input input\{[^}]*padding-right:28px/)
   assert.doesNotMatch(TEAM_CSS, /\.agt-dialog input/)
   assert.doesNotMatch(TEAM_CSS, /\.agt-dialog textarea/)
+  assert.match(TEAM_CSS, /\.agt-compact>\.aag-host-input\{/)
 })
 
 test('搜索框有清除按钮，且不把 allowClear 传给宿主 input', () => {
