@@ -26,6 +26,8 @@ export const TEAM_CSS = `
 .agt-dialog h4{font-size:14px;line-height:22px;margin:0 0 12px}
 .agt-dialog p:not(.aag-note){margin:8px 0 12px}
 .agt-dialog input,.agt-dialog textarea{width:100%;min-width:0;font:inherit;background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-button-elevated-fill));color:inherit;border:0.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);padding:6px 8px;min-height:32px}
+.agt-dialog .aag-host-input input{width:100%;min-width:0;border:0;padding:0;min-height:0;background:transparent;border-radius:0}
+.agt-dialog .aag-host-input input:focus-visible{border-color:transparent;outline:none}
 .agt-dialog textarea{resize:vertical;line-height:1.6}
 .agt-dialog .agt-help,.agt-dialog small{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}
 .agt-dialog .agt-tag{display:inline-block;font-size:11px;line-height:18px;padding:1px 6px;border:0.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-xs,4px);color:var(--dsw-alias-label-secondary)}

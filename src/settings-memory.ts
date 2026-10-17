@@ -17,7 +17,7 @@ interface SectionHooks {
   validate?: SettingsValidate
 }
 
-/** 0.1.7 已移除 SettingsProvider。测试只保留插件实际依赖的注册、修订号和持久化语义。 */
+/** 测试替身只保留插件实际依赖的注册、修订号和持久化语义。 */
 export class MemorySettings {
   readonly writable = true
   disk: Record<string, unknown> = {}

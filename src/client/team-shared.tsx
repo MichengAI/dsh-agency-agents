@@ -36,24 +36,27 @@ export function TeamDialog({ title, children, close, className = '', }: {
     className?: string;
 }) {
     useEscapeLayer(true, close);
+    const { tx } = useTeamLocale();
     const editor = className === 'agt-editor';
     const opener = React.useRef<HTMLElement | null>(typeof document !== 'undefined' && document.activeElement instanceof HTMLElement ? document.activeElement : null);
     React.useEffect(() => () => {
         const node = opener.current;
         queueMicrotask(() => { if (node?.isConnected) node.focus({ preventScroll: true }); });
     }, []);
+    const modalClass = [
+        editor ? 'agt-editor-modal' : '',
+        className === 'agt-picker' ? 'agt-picker' : '',
+        className === 'agt-detail' ? 'agt-detail' : '',
+    ].filter(Boolean).join(' ');
     return (
         <Modal
-            className={`agt-dialog ${className} ${editor ? 'agt-editor-modal' : ''}`}
+            className={modalClass}
             title={title}
             open
-            zIndex={1200}
-            width={editor ? "min(680px, calc(100vw - 32px))" : "min(760px, calc(100vw - 32px))"}
-            footer={null}
-            onCancel={close}
+            closeLabel={tx("关闭")}
             onClose={close}
         >
-            {children}
+            <div className={`agt-dialog ${className}`}>{children}</div>
         </Modal>
     );
 }

@@ -38,6 +38,22 @@ class TestSettings extends MemorySettings {
     this.disk[ns] = structuredClone(section);
   }
 }
+
+function volatileConfig(settings: TestSettings) {
+  settings.register("agency-agents", (value) => value);
+  const read = () => (settings.get("agency-agents") ?? {}) as {
+    enabled?: string[];
+    customExperts?: unknown[];
+    customTeams?: unknown[];
+    enabledTeams?: string[];
+  };
+  return {
+    enabled: { get: () => read().enabled ?? [] },
+    customExperts: { get: () => read().customExperts ?? [] },
+    customTeams: { get: () => read().customTeams ?? [] },
+    enabledTeams: { get: () => read().enabledTeams ?? [] },
+  };
+}
 const builtin: ExpertSummary = {
   slug: "builtin-reviewer",
   name: "审查员",
@@ -95,37 +111,18 @@ describe("自定义专家 Host 存储", () => {
     expect(mutate).not.toHaveBeenCalled();
   });
 
-  it("设置区延迟注册后仍自动清理旧删除记录", async () => {
+  it("启动时自动清理旧删除记录", async () => {
     const ctx = new Context();
     const settings = new TestSettings(ctx);
     const slug = "custom-00000000-0000-4000-8000-000000000000";
     settings.restore({ "agency-agents": {
       enabled: [slug], customExperts: [{ ...input, slug, deleted: true }],
     } });
-    let register: (() => void) | undefined;
-    const settingsApi = settings as unknown as {
-      installSection?: (...args: unknown[]) => void;
-    };
-    if (settingsApi.installSection) {
-      const install = settingsApi.installSection.bind(settings);
-      vi.spyOn(settingsApi, "installSection").mockImplementation((...args) => {
-        register = () => install(...args);
-      });
-    } else {
-      vi.spyOn(ctx, "inject").mockImplementation((_deps, callback) => {
-        register = () => { callback(ctx); };
-        return ctx.fiber as ReturnType<Context["inject"]>;
-      });
-    }
     ctx.provide("tools", { register: () => {} });
     ctx.provide("systemPrompt", { section: () => {} });
     const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
-      apply(ctx, { root: "", provider: "spawn", divisions: ["engineering"] });
-      await Promise.resolve();
-      expect(warning).not.toHaveBeenCalled();
-      expect(register).toBeDefined();
-      register!();
+      apply(ctx, { root: "", provider: "spawn", divisions: ["engineering"], ...volatileConfig(settings) } as never);
       await vi.waitFor(() => expect(settings.disk["agency-agents"]).toMatchObject({
         enabled: [], customExperts: [],
       }));
@@ -324,7 +321,7 @@ describe("真实 Host 与 Remote 集成", () => {
         },
       },
     } as unknown as Context;
-    apply(ctx, { root: "", provider: "spawn", divisions: ["engineering"] });
+    apply(ctx, { root: "", provider: "spawn", divisions: ["engineering"], ...volatileConfig(settings) } as never);
     const remote = new AgencyAgentsRemote(ctx);
     const initial = await remote.getCatalog();
     await expect(remote.setEnabled(['missing-expert'], initial.revision)).rejects.toThrow();

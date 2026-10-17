@@ -16,10 +16,11 @@ import { localizeTeam } from './team-content-en.js'
  *   - `summon_expert(expert, task)` delegate a task to a subagent whose
  *     persona is that expert's, through the `ctx.subagents` spawn provider.
  *
- * A summoned expert does NOT replace the parent's persona: on DSH 0.2.1-alpha.3+
+ * A summoned expert does NOT replace the parent's persona: on DSH 0.2.1-alpha.2+
  * the child gets a scoped `deployment:persona-prefix` (and a tool denylist) on
- * `agent/created` after `startActivation`; older hosts still pass start-time
- * `persona` / `toolFilter` when `ctx.subagents.start` exists.
+ * `agent/created` after `startActivation`. 0.2.0-rc.1、0.2.0-rc.2 and
+ * 0.2.1-alpha.1 still pass start-time `persona` / `toolFilter` through
+ * `ctx.subagents.start`.
  *
  * Strict `{{...}}` interpolation runs over every system-prompt section, so any
  * complete brace group inside expert prose would throw at assembly. A
@@ -46,9 +47,9 @@ import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { createHostLocaleReader, formatHost, localizedExpertDescription, localizedExpertName, matchDivision, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
-import { hasLegacySettingsInstall, installSettingsSectionCompat, isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
+import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
 import { registerPluginUpdater } from './plugin-updater.js'
-import { AGENCY_LIBRARY_SERVICE, agencySettingsSchema, createExpertLibrary, validateAgencySettings, type AgencySettings } from './expert-library.js'
+import { AGENCY_LIBRARY_SERVICE, createExpertLibrary, type AgencySettings } from './expert-library.js'
 
 export const name = 'agency-agents'
 export const inject = ['tools', 'subagents', 'systemPrompt', 'settings', 'webServer']
@@ -611,42 +612,24 @@ export function apply(ctx: Context, config: Config): void {
       console.warn('[agency-agents] 旧删除记录清理失败，下次写入时重试：', error),
     )
   }
-  if (hasLegacySettingsInstall(ctx)) {
-    installSettingsSectionCompat<AgencySettings>(
-      ctx,
-      settingsNamespace,
-      agencySettingsSchema,
-      { enabled: [], customExperts: [] },
-      {
-        setSource: (current) => {
-          settingsSource = current
-          retryCleanup()
-        },
-        onChange: () => {},
-        validate: (value) => validateAgencySettings(value, activeLocale()),
-      },
-      undefined,
-      activeLocale(),
-    )
-  } else if (isLiveValue((config as { enabled?: unknown }).enabled)) {
-    settingsSource = () => readAgencySettings(config, activeLocale())
-    retryCleanup()
-    const settingsApi = ctx.settings as { configure?: (policy: { auto?: boolean }, owner?: unknown) => () => void }
-    const fiber = (ctx as { fiber?: object }).fiber
-    if (typeof ctx.effect === 'function' && fiber !== undefined && typeof settingsApi.configure === 'function') {
-      ctx.effect(() => settingsApi.configure!({ auto: false }, fiber), 'agency-agents: settings presentation')
-    }
-    if (typeof ctx.effect === 'function') {
-      ctx.effect(() => {
-        let cancelled = false
-        void recoverImportedAgencySettings(ctx, settingsNamespace, () => settingsSource(), () => cancelled, undefined, activeLocale()).catch((error: unknown) => {
-          console.warn('[agency-agents] 旧设置导入失败，数据仍保留在 settings.yaml.imported：', error)
-        })
-        return () => { cancelled = true }
-      }, 'agency-agents: import legacy settings')
-    }
-  } else {
+  if (!isLiveValue((config as { enabled?: unknown }).enabled)) {
     throw new Error(formatHost(activeLocale(), 'error.settingsLiveUnsupported'))
+  }
+  settingsSource = () => readAgencySettings(config, activeLocale())
+  retryCleanup()
+  const settingsApi = ctx.settings as { configure?: (policy: { auto?: boolean }, owner?: unknown) => () => void }
+  const fiber = (ctx as { fiber?: object }).fiber
+  if (typeof ctx.effect === 'function' && fiber !== undefined && typeof settingsApi.configure === 'function') {
+    ctx.effect(() => settingsApi.configure!({ auto: false }, fiber), 'agency-agents: settings presentation')
+  }
+  if (typeof ctx.effect === 'function') {
+    ctx.effect(() => {
+      let cancelled = false
+      void recoverImportedAgencySettings(ctx, settingsNamespace, () => settingsSource(), () => cancelled, undefined, activeLocale()).catch((error: unknown) => {
+        console.warn('[agency-agents] 旧设置导入失败，数据仍保留在 settings.yaml.imported：', error)
+      })
+      return () => { cancelled = true }
+    }, 'agency-agents: import legacy settings')
   }
   // 闭包读取当前 source，避免 settings 服务替换时继续持有旧快照。
   const personaSource: AgencyPersonaSource = {
@@ -779,7 +762,7 @@ export function apply(ctx: Context, config: Config): void {
       }) => Promise<SubagentRunHandle>
       on?: Context['on']
     }
-    // Older hosts: start-time persona / toolFilter on ctx.subagents.start.
+    // DSH 0.2.0-rc.1 / 0.2.0-rc.2 / 0.2.1-alpha.1: start-time persona / toolFilter.
     const runSignal = signal ?? new AbortController().signal
     if (typeof service.start === 'function') {
       return service.start(providerName, {
@@ -792,7 +775,7 @@ export function apply(ctx: Context, config: Config): void {
         toolFilter,
       })
     }
-    // DSH 0.2.1-alpha.3+: startActivation + scoped persona / tools.restrict on agent/created.
+    // DSH 0.2.1-alpha.2+: startActivation + scoped persona / tools.restrict on agent/created.
     if (typeof service.startActivation === 'function') {
       const childId = SessionId(randomUUID())
       const stopCreated = ctx.on('agent/created', (event: { agent: { id: string; ctx: Context } }) => {
@@ -836,7 +819,7 @@ export function apply(ctx: Context, config: Config): void {
     const provider = ctx.subagents.getProvider(config.provider)
     if (provider === undefined) throw new Error(formatHost(locale, 'error.providerMissing', { provider: config.provider }))
     const caps = provider.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean }
-    // Legacy hosts still advertise persona/toolFilter; alpha.3+ drops them (applied on agent/created).
+    // 0.2.0-rc.1 and 0.2.1-alpha.1 still advertise persona/toolFilter; alpha.2+ drops them.
     if (caps.persona !== undefined || caps.toolFilter !== undefined) {
       if (!caps.persona) throw new Error(formatHost(locale, 'error.providerNoPersona', { provider: config.provider }))
       if (!caps.toolFilter) throw new Error(formatHost(locale, 'error.providerNoToolFilter', { provider: config.provider }))
@@ -978,6 +961,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         }
         const provider = ctx.subagents.getProvider(config.provider);
         const teamCaps = provider?.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean } | undefined
+        // 0.2.0-rc.1 / 0.2.1-alpha.1 仍声明 persona/toolFilter；alpha.2+ 不再声明，身份改在 agent/created 写入。
         const legacyTeamCaps = teamCaps !== undefined && (teamCaps.persona !== undefined || teamCaps.toolFilter !== undefined)
         if (!provider || (legacyTeamCaps && (!teamCaps?.persona || !teamCaps.toolFilter)) || (maxDepth !== undefined && !teamCaps?.depthLimit))
             throw new Error(teamTx("当前子代理服务不支持专家团所需的身份、工具过滤或深度限制。"));

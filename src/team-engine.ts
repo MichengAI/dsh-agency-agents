@@ -7,7 +7,7 @@ import type { Context } from '@deepseek-ai/cordis';
 import type { Agent } from '@deepseek-ai/dsh-agent';
 import { executeTeam } from './team-runtime.js';
 import type { TeamEngineStatus } from './team-contract.js';
-/** 只依赖已核对的原生接口形状，旧宿主不必安装实验包。 */
+/** 只依赖已核对的原生接口形状。未安装实验包时回退普通子代理，不要求每个 0.2.x 宿主都启用 Agent Team。 */
 export interface NativeTeamService {
     tryMembership(agent: object): {
         role: string;

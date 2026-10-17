@@ -14,7 +14,7 @@ import { en, zh, type AgencyKey } from './client/locales.js'
 import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
-import { agencySettingsFromLegacyDocument, hasLegacySettingsInstall, installSettingsSectionCompat, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
+import { agencySettingsFromLegacyDocument, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
 
 const PACKAGE_MANIFEST = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
   packageManager?: string
@@ -33,17 +33,25 @@ function alphaSettings(enabled: readonly string[], locale?: 'zh' | 'en') {
       if (namespace === 'locale' && locale !== undefined) return { preference: locale }
       return undefined
     },
-    installSection: (
-      _owner: unknown,
-      _namespace: string,
-      _schema: unknown,
-      _entry: unknown,
-      hooks: { setSource(current: () => { enabled: string[] }): void; onChange(): void },
-    ): void => {
-      hooks.setSource(() => ({ enabled: [...enabled] }))
-      hooks.onChange()
-    },
   }
+}
+
+/** 测试里的宿主配置走 0.2 volatile 字段；已自带 get() 的配置保持原样。 */
+function applyOnHost(ctx: Context, config: Parameters<typeof apply>[1]): void {
+  const current = config as { enabled?: unknown }
+  if (current.enabled !== null && typeof current.enabled === 'object' && typeof (current.enabled as { get?: unknown }).get === 'function') {
+    apply(ctx, config)
+    return
+  }
+  const settings = (ctx as { settings?: { get?: (ns: string) => { enabled?: string[]; customExperts?: unknown[]; customTeams?: unknown[]; enabledTeams?: string[] } | undefined } }).settings
+  const read = () => settings?.get?.('agency-agents')
+  apply(ctx, {
+    ...config,
+    enabled: { get: () => read()?.enabled ?? [] },
+    customExperts: { get: () => read()?.customExperts ?? [] },
+    customTeams: { get: () => read()?.customTeams ?? [] },
+    enabledTeams: { get: () => read()?.enabledTeams ?? [] },
+  } as Parameters<typeof apply>[1])
 }
 
 describe('Config', () => {
@@ -72,43 +80,8 @@ describe('Config', () => {
 })
 
 describe('DSH settings 兼容层', () => {
-  it('RC 使用旧模块 helper 与 branded namespace', () => {
-    const calls: unknown[][] = []
-    const namespace = settingsNamespaceCompat('agency-agents', {
-      settingsNamespace: (value: string) => `legacy:${value}`,
-    })
-    const ctx = {} as Context
-    const schema = {}
-    const entry = { enabled: [] as string[] }
-    const hooks = { setSource: () => {}, onChange: () => {} }
-    installSettingsSectionCompat(ctx, namespace, schema, entry, hooks, {
-      installSettingsSection: (...args: unknown[]) => { calls.push(args) },
-    })
-
-    expect(namespace).toBe('legacy:agency-agents')
-    expect(calls).toEqual([[ctx, namespace, schema, entry, hooks]])
-  })
-
-  it('alpha.2 使用纯字符串 namespace 与 settings.installSection', () => {
-    const calls: unknown[][] = []
-    const namespace = settingsNamespaceCompat('agency-agents', {})
-    const ctx = {
-      settings: { installSection: (...args: unknown[]) => { calls.push(args) } },
-    } as unknown as Context
-    const schema = {}
-    const entry = { enabled: [] as string[] }
-    const hooks = { setSource: () => {}, onChange: () => {} }
-    installSettingsSectionCompat(ctx, namespace, schema, entry, hooks, {})
-
-    expect(namespace).toBe('agency-agents')
-    expect(calls).toEqual([[ctx, namespace, schema, entry, hooks]])
-  })
-
-  it('没有 volatile 方法时不标记实时字段，避免旧宿主把用户数据写进会重载插件的普通配置', () => {
+  it('没有 volatile 方法时不标记实时字段，避免把用户数据写进会重载插件的普通配置', () => {
     expect(liveSchemaField({ default: () => 'plain' } as unknown as z<string>)).toBeUndefined()
-    expect(hasLegacySettingsInstall({ settings: { installSection: () => undefined } } as unknown as Context, {})).toBe(true)
-    expect(hasLegacySettingsInstall({ settings: {} } as unknown as Context, {})).toBe(false)
-    expect(hasLegacySettingsInstall({ settings: {} } as unknown as Context, { installSettingsSection: () => undefined })).toBe(true)
     expect(() => readAgencySettings({ enabled: [], customExperts: [{ slug: 'bad' }] })).toThrow()
   })
 
@@ -148,7 +121,7 @@ describe('DSH settings 兼容层', () => {
     expect(() => loadHostModule('@deepseek-ai/schemastery', join(tmpdir(), 'not-a-dsh-entry'))).toThrow(/Cannot find module/)
   })
 
-  it('0.1.7 从 volatile 引用读取启用名单，并关闭自动生成的原始配置表单', async () => {
+  it('从 volatile 引用读取启用名单，并关闭自动生成的原始配置表单', async () => {
     const root = await mkdtemp(join(tmpdir(), 'aag-live-settings-'))
     const stored = { enabled: ['reviewer'] as string[] }
     const configured: unknown[] = []
@@ -177,7 +150,7 @@ describe('DSH settings 兼容层', () => {
       on: () => () => undefined,
         get: () => undefined,
       } as unknown as Context
-      apply(ctx, {
+      applyOnHost(ctx, {
         root,
         provider: 'spawn',
         divisions: ['engineering'],
@@ -501,7 +474,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
@@ -536,7 +509,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
@@ -590,7 +563,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
@@ -638,7 +611,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: null as unknown as number })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: null as unknown as number })
     const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
@@ -678,7 +651,7 @@ describe('summon_expert', () => {
       },
     } as unknown as Context
 
-    apply(ctx, { root: '', provider: 'spawn', divisions: ['company'] })
+    applyOnHost(ctx, { root: '', provider: 'spawn', divisions: ['company'] })
     const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
@@ -703,7 +676,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const text = sections.find((section) => section.name === 'agency:experts')?.text
     expect(typeof text).toBe('function')
     if (typeof text !== 'function') throw new Error('agency:experts must be dynamic')
@@ -727,7 +700,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const text = sections.find((section) => section.name === 'agency:experts')?.text
     if (typeof text !== 'function') throw new Error('agency:experts must be dynamic')
     const prompt = text({ agent: { session: { header: {} } } })
@@ -762,7 +735,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    expect(() => apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: 0 })).toThrow(formatHost('zh', 'error.maxDepth'))
+    expect(() => applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: 0 })).toThrow(formatHost('zh', 'error.maxDepth'))
   })
 
   it('分区筛选会去除空白并要求精确 division', async () => {
@@ -779,7 +752,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const list = tools.find((tool) => (tool as { name?: string }).name === 'list_experts') as {
       execute: (args: unknown) => Promise<{ divisions: Array<{ division: string }>; total: number }>
     }
@@ -809,7 +782,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], ...(maxDepth === undefined ? {} : { maxDepth }) })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], ...(maxDepth === undefined ? {} : { maxDepth }) })
     const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
@@ -834,7 +807,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
@@ -865,7 +838,7 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
@@ -996,7 +969,7 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
           },
         },
       } as unknown as Context
-      apply(pluginCtx, { root, provider: 'spawn', divisions: ['engineering'] })
+      applyOnHost(pluginCtx, { root, provider: 'spawn', divisions: ['engineering'] })
 
       const remoteCtx = {
         reflect: { provide: () => undefined },
@@ -1654,7 +1627,7 @@ describe('list_experts 语言切换', () => {
       },
       reflect: { provide: () => undefined },
     } as unknown as Context
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const list = tools.find((tool) => (tool as { name?: string }).name === 'list_experts') as {
       execute: (args: unknown) => Promise<{ divisions: Array<{ division: string; count: number; experts?: Array<{ name: string; description: string }> }>; total: number }>
       output: { render: (args: unknown, value: unknown) => Array<{ type: string; text: string }> }
@@ -1677,7 +1650,7 @@ describe('list_experts 语言切换', () => {
       inject: () => undefined,
       reflect: { provide: () => undefined },
     } as unknown as Context
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const teams = tools.filter(tool => ['list_expert_teams', 'get_expert_team', 'summon_expert_team'].includes(tool.name))
     expect(teams).toHaveLength(3)
     const readsAfterApply = describeSettings.mock.calls.length
@@ -1702,7 +1675,7 @@ describe('list_experts 语言切换', () => {
       inject: () => undefined,
       reflect: { provide: () => undefined },
     } as unknown as Context
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const teams = tools.filter(tool => ['list_expert_teams', 'get_expert_team', 'summon_expert_team'].includes(tool.name))
     expect(teams).toHaveLength(3)
     for (const tool of teams) expect(tool.description).toMatch(/[\u3400-\u9fff]/u)
@@ -1724,7 +1697,7 @@ describe('list_experts 语言切换', () => {
       inject: () => undefined,
       reflect: { provide: () => undefined },
     } as unknown as Context
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const team = tools.find(tool => tool.name === 'summon_expert_team')
     const english = JSON.stringify(team?.parameters ?? {})
     expect(english).toContain('Do not paste source, CSS, HTML, or quoted code')
@@ -1852,7 +1825,7 @@ describe('summon_experts', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    apply(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
     const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_experts') as {
       execute: (args: unknown, exec: unknown) => Promise<{ results: Array<{ expert: string; ok: boolean; answer: string; error?: string }> }>
       output: { render: (args: unknown, value: unknown) => Array<{ type: string; text: string }> }

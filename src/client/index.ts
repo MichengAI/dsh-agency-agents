@@ -436,7 +436,7 @@ export function inputTriggerSourceId(division: string): string {
   return `${PLUGIN_ID}:${division}`
 }
 
-/** 专家引用在新版宿主采用内置代理图标；旧宿主会忽略 appearance 并保留默认 @ 标记。 */
+/** 专家引用使用宿主内置代理图标。宿主不认识 appearance 时会忽略该字段，仍显示默认 @ 标记。 */
 export interface ExpertReference extends ReferenceInsert {
   readonly appearance: 'session'
 }
@@ -451,7 +451,7 @@ export function buildExpertReference(
     source: inputTriggerSourceId(expert.division),
     ref: expert.slug,
     label: name,
-    // dsh-client-ui-input-trigger RC.6 尚未声明该运行时字段；新版宿主将其渲染为内置代理图标。
+    // 0.2.0-rc 的输入触发类型尚未声明该字段；认识它的宿主渲染为内置代理图标。
     appearance: 'session',
     clipboardText: formatExpertMentionInsertion(name),
   }
@@ -708,7 +708,7 @@ export interface ReferenceSessionAccess {
   binding?(id: SessionId): { readonly ctx: CordisClientContext } | undefined
 }
 
-/** slot 未给 sessionId 时：先认旧宿主的 `current`，再按官方主视图 retain 反查。 */
+/** slot 未给 sessionId 时：0.2.0-rc.1 / 0.2.1-alpha.1 认 `current`，alpha.2 起按主视图 retain 反查。 */
 export function resolveTargetSessionId(
   sessions: ReferenceSessionAccess,
   sessionId?: SessionId,

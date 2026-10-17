@@ -12,6 +12,22 @@ class TestSettings extends MemorySettings {
     _section: Record<string, unknown>,
   ): Promise<void> {}
 }
+
+function volatileConfig(settings: TestSettings) {
+  settings.register('agency-agents', (value) => value)
+  const read = () => (settings.get('agency-agents') ?? {}) as {
+    enabled?: string[]
+    customExperts?: unknown[]
+    customTeams?: unknown[]
+    enabledTeams?: string[]
+  }
+  return {
+    enabled: { get: () => read().enabled ?? [] },
+    customExperts: { get: () => read().customExperts ?? [] },
+    customTeams: { get: () => read().customTeams ?? [] },
+    enabledTeams: { get: () => read().enabledTeams ?? [] },
+  }
+}
 describe('专家团宿主与远端集成', () => {
   it('五团名册、启用、主理人规则、三人委派、子会话隔离与停用', async () => {
     const settings = new TestSettings(new Context())
@@ -56,7 +72,7 @@ describe('专家团宿主与远端集成', () => {
         },
       },
     } as unknown as Context
-    apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS })
+    apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS, ...volatileConfig(settings) } as never)
     const remote = new AgencyAgentsRemote(ctx)
     const initial = await remote.getTeams()
     expect(initial.teams).toHaveLength(5)

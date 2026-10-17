@@ -40,7 +40,7 @@ export const zhHost = {
   'error.partialOutput': '\n部分输出：\n{text}',
   'error.maxDepth': 'agency-agents 配置 maxDepth 必须是正安全整数',
   'error.settingsMissing': 'agency-agents 设置区尚未注册',
-  'error.settingsLiveUnsupported': '当前 DSH settings 服务不支持 installSection，且 agency-agents 配置没有可实时更新的字段。',
+  'error.settingsLiveUnsupported': '当前宿主没有可实时更新的 agency-agents 配置字段，插件无法保存启用名单。',
   'error.subagentsUnavailable': '当前宿主 subagents 服务未提供可用的子代理启动方法 (start / startActivation)。',
   'error.personaSourceUnavailable': '专家提示词服务尚未就绪，请稍后重试。',
   'list.empty': '暂无可用专家。',
@@ -81,7 +81,7 @@ export const enHost = {
   'error.partialOutput': '\nPartial output:\n{text}',
   'error.maxDepth': 'agency-agents config maxDepth must be a positive safe integer',
   'error.settingsMissing': 'agency-agents settings section is not registered',
-  'error.settingsLiveUnsupported': 'This DSH settings service has no installSection, and the agency-agents config has no live-updating fields.',
+  'error.settingsLiveUnsupported': 'This host has no live-updating agency-agents config fields, so the plugin cannot save the enabled list.',
   'error.subagentsUnavailable': 'The host subagents service has no available launch method (start / startActivation).',
   'error.personaSourceUnavailable': 'The expert prompt service is not ready. Try again shortly.',
   'list.empty': 'No experts available.',
@@ -106,7 +106,7 @@ export function formatHost(locale: LocaleId, key: HostKey, params?: Record<strin
   return text
 }
 
-/** 从宿主 locale.preference 读取语言，缺失或异常时回退 zh。0.1.7 起该值在 describe() 的实时配置里。 */
+/** 从宿主 locale.preference 读取语言，缺失或异常时回退 zh。实时值在 describe() 里，get() 能直接取当前快照。 */
 export function readHostLocale(ctx: {
   settings?: {
     get?: (ns: SettingsNamespace) => unknown
@@ -160,7 +160,7 @@ export function createHostLocaleReader(ctx: Context): () => LocaleId {
   ctx.effect?.(() => () => { disposed = true })
 
   return () => {
-    // 旧宿主有便宜的 get 路径，继续读取实时值，不要求它支持新设置事件。
+    // get() 能读到当前快照时直接用，不依赖设置事件是否已经发出。
     try {
       const settings = ctx.settings as Parameters<typeof readHostLocale>[0]['settings']
       const section = settings?.get?.(LOCALE_SETTINGS_NAMESPACE) as { preference?: unknown } | undefined

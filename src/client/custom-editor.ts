@@ -101,9 +101,9 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
   })
   return h(Modal, {
     open: true,
-    width: 'min(680px, calc(100vw - 32px))',
     className: 'aag-editor-modal',
     title: props.t(draft.slug ? 'custom.edit' : 'custom.new'),
+    closeLabel: props.t('settings.promptClose'),
     onClose: () => { if (discard) setDiscard(false); else close() },
   },
   h('form', { ref: form, className: 'aag-custom-body', onSubmit: (event: React.FormEvent) => event.preventDefault(), inert: discard ? '' : undefined },

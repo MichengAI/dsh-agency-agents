@@ -75,7 +75,7 @@ export function LibraryCard(props: {
             <PrimitiveSwitch
               checked={props.enabled}
               disabled={props.disabled}
-              aria-label={`${props.name}：${props.enabled ? props.enabledLabel : props.disabledLabel}`}
+              label={`${props.name}：${props.enabled ? props.enabledLabel : props.disabledLabel}`}
               title={props.enabled ? props.enabledLabel : props.disabledLabel}
               onChange={() => props.toggle()}
             />
@@ -126,12 +126,9 @@ export function LibraryConfirm(props: {
   return (
     <Modal
       open
-      zIndex={1300}
-      keyboard={false}
       title={props.title}
+      closeLabel={props.cancelLabel}
       onCancel={() => { if (!props.busy) props.close() }}
-      maskClosable={!props.busy}
-      closable={!props.busy}
       footer={[
         <Button key="cancel" variant="outline" disabled={props.busy} onClick={() => { if (!props.busy) props.close() }}>{props.cancelLabel}</Button>,
         <Button key="confirm" variant={isDanger ? 'outline' : 'primary'} danger={isDanger} disabled={props.busy} loading={props.busy} onClick={props.confirm}>{props.confirmLabel}</Button>,

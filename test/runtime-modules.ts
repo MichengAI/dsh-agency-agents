@@ -62,26 +62,24 @@ export function Input({ icon, className, ...props }: any) {
   )
 }
 
-export function Switch({ checked, onChange, disabled, label, className, ...props }: any) {
+export function Switch({ checked, onChange, disabled, label, className }: any) {
   const classes = ['dsh-primitives-switch', className, checked ? 'is-checked' : ''].filter(Boolean).join(' ')
   return React.createElement('button', {
-    ...props,
     type: 'button',
     role: 'switch',
     'aria-checked': !!checked,
-    'aria-label': props['aria-label'] || label,
+    'aria-label': label,
     disabled,
     className: classes,
     onClick: () => { if (!disabled) onChange?.(!checked) },
-  }, React.createElement('span', { className: 'dsh-switch-thumb' }), label)
+  }, React.createElement('span', { className: 'dsh-switch-thumb' }))
 }
 
-export function Modal({ open = true, onClose, title, children, footer, className, width }: any) {
+export function Modal({ open = true, onClose, title, closeLabel, children, footer, className }: any) {
   if (!open) return null
   const titleText = typeof title === 'string' ? title : undefined
   return React.createElement('div', {
     className: 'dsh-primitives-modal-backdrop',
-    style: { position: 'fixed', inset: 0, zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.45)' },
     onClick: (e: any) => { if (e.target === e.currentTarget) onClose?.() },
   },
     React.createElement('div', {
@@ -89,20 +87,11 @@ export function Modal({ open = true, onClose, title, children, footer, className
       'aria-modal': 'true',
       'aria-label': titleText,
       className: ['dsh-primitives-modal', className].filter(Boolean).join(' '),
-      style: { position: 'relative', width: width || 'min(640px, calc(100vw - 32px))', maxHeight: 'calc(100vh - 120px)', zIndex: 1201 },
       onClick: (e: any) => e.stopPropagation(),
     },
-      React.createElement('div', {
-        className: 'dsh-modal-container',
-        style: { display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 120px)', overflow: 'hidden' },
-      },
-        React.createElement('div', { className: 'dsh-modal-header', style: { flexShrink: 0 } },
-          typeof title === 'string' ? React.createElement('h3', null, title) : title,
-          onClose ? React.createElement('button', { type: 'button', 'aria-label': 'Close', className: 'dsh-modal-close', onClick: onClose }, '✕') : null
-        ),
-        React.createElement('div', { className: 'dsh-modal-body', style: { flex: 1, minHeight: 0, overflowY: 'auto' } }, children),
-        footer ? React.createElement('div', { className: 'dsh-modal-footer', style: { flexShrink: 0 } }, footer) : null
-      )
-    )
+      React.createElement('button', { type: 'button', 'aria-label': closeLabel, className: 'dsh-modal-close', onClick: onClose }, '✕'),
+      React.createElement('div', { className: 'dsh-modal-body' }, children),
+      footer ? React.createElement('div', { className: 'dsh-modal-footer' }, footer) : null,
+    ),
   )
 }

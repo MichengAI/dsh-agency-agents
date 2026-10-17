@@ -20,18 +20,16 @@ declare module '@deepseek-ai/dsh-client-ui-primitives' {
   } & InputHTMLAttributes<HTMLInputElement>): ReactElement
 
   export function Modal(props: {
-    open?: boolean
-    onClose?: () => void
-    title?: ReactNode
-    closeLabel?: string
+    open: boolean
+    onClose: () => void
+    title: string
+    closeLabel: string
     description?: string
     children?: ReactNode
     footer?: ReactNode
     className?: string
     contentClassName?: string
     headless?: boolean
-    width?: number | string
-    zIndex?: number
   }): ReactElement | null
 
   export function SegmentedTabs<Value extends string>(props: {
@@ -55,11 +53,10 @@ declare module '@deepseek-ai/dsh-client-ui-primitives' {
   export function Switch(props: {
     checked: boolean
     onChange: (next: boolean) => void
-    label?: string
+    label: string
     disabled?: boolean
     title?: string
     className?: string
-    'aria-label'?: string
   }): ReactElement
 
   export interface MenuItem {

@@ -1,5 +1,4 @@
 import type { Context } from '@deepseek-ai/cordis'
-import * as dshSettings from '@deepseek-ai/dsh-settings'
 import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import { createRequire } from 'node:module'
 import { existsSync, realpathSync } from 'node:fs'
@@ -7,50 +6,10 @@ import { readFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { validateAgencySettings, type AgencySettings } from './expert-library.js'
 
-type SettingsSectionHooks<T> = {
-  setSource(current: () => T): void
-  onChange(): void
-  validate?: (value: T) => void
+/** 0.2.x 的命名空间就是校验过的字符串，不再调用已删除的 settingsNamespace()。 */
+export function settingsNamespaceCompat(value: string): SettingsNamespace {
+  return value as SettingsNamespace
 }
-
-type LegacySettingsModule = {
-  settingsNamespace?: (value: string) => SettingsNamespace
-  installSettingsSection?: <T>(
-    ctx: Context,
-    namespace: SettingsNamespace,
-    schema: unknown,
-    entry: T,
-    hooks: SettingsSectionHooks<T>,
-  ) => void
-}
-
-type AlphaSettingsService = {
-  installSection<T>(
-    owner: Context,
-    namespace: SettingsNamespace,
-    schema: unknown,
-    entry: T,
-    hooks: SettingsSectionHooks<T>,
-  ): void
-}
-
-function moduleExport(module: object, name: string): unknown {
-  return (module as Record<string, unknown>)[name]
-}
-
-/**
- * DSH 0.1.2-alpha.2 accepts validated plain namespace strings and removed the
- * legacy settingsNamespace export. Keep one runtime bridge so the same package
- * can still run on the current RC line.
- */
-export function settingsNamespaceCompat(value: string, module: object = dshSettings): SettingsNamespace {
-  const legacy = moduleExport(module, 'settingsNamespace')
-  return typeof legacy === 'function'
-    ? (legacy as (candidate: string) => SettingsNamespace)(value)
-    : value as SettingsNamespace
-}
-
-let hostSettingsModule: object | undefined
 
 function missingHostModule(specifier: string): NodeJS.ErrnoException {
   const error = new Error(`Cannot find module '${specifier}'`) as NodeJS.ErrnoException
@@ -102,58 +61,7 @@ export function resolveHostModule(specifier: string, entry = process.argv[1]): s
   return hostRequireFor(specifier, entry).resolve(specifier)
 }
 
-/** 旧 RC 的模块助手必须从宿主入口解析。插件自己的依赖可能更旧，不能用来判断当前宿主。 */
-function settingsModuleFromHost(): object {
-  if (hostSettingsModule !== undefined) return hostSettingsModule
-  try {
-    hostSettingsModule = loadHostModule('@deepseek-ai/dsh-settings') as object
-  } catch {
-    hostSettingsModule = {}
-  }
-  return hostSettingsModule
-}
-
-function installSectionMissing(locale: 'zh' | 'en'): string {
-  return locale === 'en'
-    ? 'This DSH settings service has no installSection.'
-    : '当前 DSH settings 服务不支持 installSection。'
-}
-
-/**
- * RC releases expose installSettingsSection as a module helper. Alpha.2 moved
- * the same owner-scoped lifecycle wiring onto ctx.settings.installSection.
- * The running host context decides; a helper found only in this package does not.
- */
-export function installSettingsSectionCompat<T>(
-  ctx: Context,
-  namespace: SettingsNamespace,
-  schema: unknown,
-  entry: T,
-  hooks: SettingsSectionHooks<T>,
-  module: object = settingsModuleFromHost(),
-  locale: 'zh' | 'en' = 'zh',
-): void {
-  const settings = (ctx as Context & { settings?: AlphaSettingsService }).settings
-  if (typeof settings?.installSection === 'function') {
-    settings.installSection(ctx, namespace, schema, entry, hooks)
-    return
-  }
-  const legacy = moduleExport(module, 'installSettingsSection')
-  if (typeof legacy === 'function') {
-    ;(legacy as NonNullable<LegacySettingsModule['installSettingsSection']>)(ctx, namespace, schema, entry, hooks)
-    return
-  }
-  throw new Error(installSectionMissing(locale))
-}
-
-/** 0.1.6 及更早宿主仍通过 installSection 保存启用名单；0.1.7 已移除该接口。 */
-export function hasLegacySettingsInstall(ctx: Context, module: object = settingsModuleFromHost()): boolean {
-  const settings = (ctx as Context & { settings?: { installSection?: unknown } }).settings
-  if (typeof settings?.installSection === 'function') return true
-  return typeof moduleExport(module, 'installSettingsSection') === 'function'
-}
-
-/** 0.1.7 的 volatile 配置字段是带 get() 的稳定引用，读取时必须取当前快照。 */
+/** volatile 配置字段是带 get() 的稳定引用，读取时必须取当前快照。 */
 export function isLiveValue(value: unknown): value is { get(): unknown } {
   return value !== null && typeof value === 'object' && typeof (value as { get?: unknown }).get === 'function'
 }

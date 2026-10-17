@@ -4,14 +4,24 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
-## 1.1.0 - 2026-10-16
+## 1.2.0 - 2026-10-17
 
-- Focus host support strictly on DeepSeek Harness `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, and `0.2.1-alpha.5`; formally drop legacy 0.1.x support.
-- Fully adopt host `@deepseek-ai/dsh-client-ui-primitives` native primitives:
-  - Migrate switches to host native `<Switch>` primitive, completely eliminating custom CSS track and thumb rules.
-  - Migrate all modals and drawers to host native `<Modal>` primitive, replacing side drawers with centered modal dialogs and removing all `.agt-dialog`, `.mpi-dialog`, and `.ant-modal*` override stylesheets.
-  - Adopt host native `<Input>` primitive across search bars and form fields, ensuring pixel-perfect 32px height alignment with adjacent `<Menu>` dropdowns.
-- Purge all remaining simulated Ant Design button classes, unused `Switch` exports, and dead selector guards.
+**Breaking upgrade.** This version no longer supports DeepSeek Harness 0.1.x. Installing or enabling 1.2.0 on 0.1.2, 0.1.5, 0.1.7, or any other 0.1.x host is rejected by the version gate, and the plugin will not run. Upgrade the host to a version in the list below before installing this plugin.
+
+Expert and expert-team settings stay in the host `agency-agents` namespace. This upgrade does not wipe them or require re-entry. Back up settings before downgrading to 1.0.x.
+
+Supported hosts only:
+
+- `0.2.0-rc.1`, `0.2.0-rc.2`
+- `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, `0.2.1-alpha.5`
+
+Other changes:
+
+- Remove Ant Design. Switches, dialogs, single-line inputs, and segmented tabs use host primitives. Member lists are a plain grid.
+- Remove the settings install bridge kept only for 0.1.x (`settingsNamespace()`, `installSettingsSection`, `installSection`). 0.2.x uses volatile config fields.
+- Drop dialog props the host does not accept (width, stacking, mask, and closable flags). Close buttons have a localized name, search fields can be cleared, and switches pass their name through the host `label`.
+- Side editor drawers are now centered modals. Confirmation dialogs keep the host default width. Expert-team editing, member picking, and details are 760px.
+- Icon-only buttons are 22px outline controls, matching the skills plugin.
 
 ## 1.0.20 - 2026-10-16
 
