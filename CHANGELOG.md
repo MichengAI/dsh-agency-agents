@@ -27,6 +27,7 @@ Other changes:
 - Confirmation copy uses the host modal description slot. Confirm buttons use the host solid primary style instead of a red outline override.
 - Team template and custom prompt sources use the host segmented control instead of a hand-styled selected state.
 - Dialogs no longer restyle host input and textarea borders, padding, or focus rings.
+- Update and prompt preview dialogs use the host default width instead of a forced 680px.
 - Member replace is a 22px icon button, and its accessible name uses the expert name.
 - Declare `@deepseek-ai/dsh-client-ui-primitives` as a peer and include it in the browser module load order.
 

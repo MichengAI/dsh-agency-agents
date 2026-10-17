@@ -20,7 +20,6 @@ export function PromptDialog(props: {
   return React.createElement(Modal, {
     open: true,
     title: props.title,
-    className: 'aag-prompt-dialog',
     onCancel: close,
     footer: [
       React.createElement(Button, { key: 'close', type: 'primary', autoFocus: true, onClick: close }, props.closeLabel),

@@ -45,6 +45,7 @@ test('弹窗关闭按钮使用调用方文案，不再接收宿主没有的宽�
   assert.doesNotMatch(sources, /\b(zIndex|maskClosable|keyboard)\s*[:=]/)
   assert.doesNotMatch(sources, /\bclosable\s*[:=]/)
   assert.doesNotMatch(sources, /\bwidth:\s*['"]min\(/)
+  assert.doesNotMatch(sources, /width:min\(680px/)
 })
 
 test('专家开关把名称交给宿主 label，读屏能读到专家名', () => {

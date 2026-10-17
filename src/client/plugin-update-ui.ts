@@ -157,7 +157,7 @@ function UpdateDialog(props: {
   const currentVersion = current === undefined ? text.unknown : `v${current.currentVersion}`
   const latestVersion = current?.latestVersion === undefined ? text.unknown : `v${current.latestVersion}`
   return React.createElement(Modal, {
-    className: 'mpi-dialog aag-prompt-dialog', closeLabel: text.close, title: `${props.name} ${text.update}`, onCancel: props.onClose,
+    className: 'mpi-dialog', closeLabel: text.close, title: `${props.name} ${text.update}`, onCancel: props.onClose,
     footer: [
       React.createElement(Button, { key: 'check', disabled: busy, onClick: () => { void checkNow() } }, text.recheck),
       React.createElement(Button, { key: 'update', type: 'primary', disabled: busy || current?.canAutoUpdate !== true || current.updateAvailable !== true, loading: busy, onClick: () => { void updateNow() } }, text.auto),
