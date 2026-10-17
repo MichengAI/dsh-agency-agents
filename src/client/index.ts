@@ -960,7 +960,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
   const results = searching ? matches.slice(0, 8) : groupByDivision(matches, props.getActive()).flatMap(group => group.experts)
   const menu = open
     ? React.createElement('div', {
-      className: 'aag-menu aag-discovery', id: menuId, role: 'dialog', 'aria-label': props.t('settings.nav'),
+      className: 'aag-menu aag-discovery', id: menuId, role: 'dialog', 'aria-modal': 'true', 'aria-label': props.t('settings.nav'),
       'data-placement': menuPosition?.placement,
       style: { maxHeight: `${Math.min(360, menuPosition?.maxHeight ?? 360)}px`, left: `${menuLeft}px` },
       onKeyDown: (event: React.KeyboardEvent) => {

@@ -36,6 +36,8 @@ test('专家选择浮层使用宿主模态窗口标准层级背景与面板圆�
   assert.match(COMPOSER_CSS, /\.aag-menu\{[^}]*border-radius:var\(--dsw-radius-panel/)
   assert.match(COMPOSER_CSS, /\.aag-menu\{[^}]*--dsw-elevation-stroke-color:var\(--dsw-alias-border-l1\)/)
   assert.doesNotMatch(COMPOSER_CSS, /\.aag-menu\{[^}]*backdrop-filter:/)
+  const clientIndex = readFileSync(new URL('./index.ts', import.meta.url), 'utf8')
+  assert.match(clientIndex, /className:\s*'aag-menu aag-discovery'[^}]*role:\s*'dialog'[^}]*'aria-modal':\s*'true'/)
 })
 
 test('搜索框有清除按钮，且不把 allowClear 传给宿主 input', () => {
