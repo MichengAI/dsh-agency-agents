@@ -27,7 +27,7 @@ export function ExpertDiscovery(props: DiscoveryProps): React.ReactElement {
   const name = (expert: ExpertView): string => props.locale === 'en' ? expert.nameEn : expert.name
   return React.createElement(React.Fragment, null,
     React.createElement('div', { className: 'aag-discovery-tools' },
-      React.createElement(Input, { type: 'search', autoFocus: true, allowClear: true, value: props.query,
+      React.createElement(Input, { type: 'search', autoFocus: true, value: props.query,
         'aria-label': props.t('discovery.search'), placeholder: props.t('discovery.search'),
         onChange: (event: React.ChangeEvent<HTMLInputElement>) => props.onQuery(event.target.value) })),
     React.createElement('div', { className: 'aag-discovery-results', 'aria-busy': props.busy && props.experts.length === 0 },

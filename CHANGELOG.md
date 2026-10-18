@@ -4,6 +4,10 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.2 - 2026-10-18
+
+- Fix search focus loss and double clear icons: adopt host primitive `Input` directly and remove hand-rolled clear buttons with conditional wrapper elements, eliminating DOM reconstruction focus drops on initial keystroke and conflicting native cancel buttons (Issue #20).
+
 ## 1.2.1 - 2026-10-17
 
 - Align destructive action buttons with the host warning pattern: expert delete, discard-changes, team-template restore, and expert-team removal confirmations use a red outline instead of the solid primary style, matching the skills plugin.

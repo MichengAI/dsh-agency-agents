@@ -87,7 +87,7 @@ function MemberPicker(props: {
         </div>
         <div className="aag-field aag-field-search">
           <div className="aag-search-wrap">
-            <Input className="aag-search" aria-label={props.tx("搜索团队成员")} autoFocus autoComplete="off" spellCheck={false} allowClear={{ clearIcon: <span aria-label={props.tx("清除搜索")}/> }} placeholder={props.tx("搜索专家、职责或领域")} prefix={<IconSearch size={16}/>} value={props.query} onChange={(event) => props.onQuery(event.target.value)}/>
+            <Input className="aag-search" aria-label={props.tx("搜索团队成员")} autoFocus autoComplete="off" spellCheck={false} placeholder={props.tx("搜索专家、职责或领域")} prefix={<IconSearch size={16}/>} value={props.query} onChange={(event) => props.onQuery(event.target.value)}/>
           </div>
         </div>
       </div>

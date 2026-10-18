@@ -9,23 +9,22 @@ import { PromptDialog } from './prompt-dialog.js'
 import { TeamDialog } from './team-shared.js'
 import { TEAM_CSS } from './team-style.js'
 
-test('团队弹窗不会把搜索清除按钮改成 32px 描边，文字也不会压到清除钮', () => {
+test('团队弹窗不会把按钮样式改坏', () => {
   assert.doesNotMatch(TEAM_CSS, /\.agt-dialog button:not\(/)
   assert.match(TEAM_CSS, /\.agt-dialog button\.agt-plain-btn\{/)
   assert.match(TEAM_CSS, /\.agt-picker-row\{[^}]*border-radius:0/)
   assert.match(TEAM_CSS, /\.agt-picker-row\{[^}]*overflow:hidden/)
   assert.doesNotMatch(TEAM_CSS, /aria-pressed=true/)
-  assert.match(TEAM_CSS, /\.agt-dialog \.aag-input-clearable \.aag-host-input input\{[^}]*padding-right:28px/)
   assert.doesNotMatch(TEAM_CSS, /\.agt-dialog input/)
   assert.doesNotMatch(TEAM_CSS, /\.agt-dialog textarea/)
   assert.match(TEAM_CSS, /\.agt-compact>\.aag-host-input\{/)
 })
 
-test('宿主输入框与清除包装层声明 border-box，避免 width: 100% 溢出容器', async () => {
+test('宿主输入框声明 border-box，避免 width: 100% 溢出容器', async () => {
   const { PLUGIN_UI_CSS } = await import('./plugin-ui.js')
   const { DISCOVERY_CSS } = await import('./expert-discovery.js')
   assert.match(PLUGIN_UI_CSS, /\.aag-host-input\{[^}]*box-sizing:border-box/)
-  assert.match(PLUGIN_UI_CSS, /\.aag-input-clearable\{[^}]*box-sizing:border-box/)
+  assert.doesNotMatch(PLUGIN_UI_CSS, /\.aag-input-clearable/)
   assert.match(DISCOVERY_CSS, /\.aag-discovery-tools\{[^}]*box-sizing:border-box/)
   assert.match(DISCOVERY_CSS, /\.aag-discovery-tools\{[^}]*padding:8px 2px 6px/)
   assert.match(DISCOVERY_CSS, /\.aag-discovery-tools \.aag-host-input\{[^}]*box-sizing:border-box/)
@@ -41,15 +40,15 @@ test('专家选择浮层使用宿主模态窗口标准层级背景与面板圆�
   assert.match(clientIndex, /className:\s*'aag-menu aag-discovery'[^}]*role:\s*'dialog'[^}]*'aria-modal':\s*'true'/)
 })
 
-test('搜索框有清除按钮，且不把 allowClear 传给宿主 input', () => {
+test('输入框使用宿主原生 Input 原语，不污染 allowClear 属性到 DOM，不手写清除按钮', () => {
   const html = renderToStaticMarkup(React.createElement(Input, {
     value: 'review',
     allowClear: { clearIcon: React.createElement('span', { 'aria-label': '清除搜索' }) },
     onChange: () => undefined,
   }))
-  assert.match(html, /aria-label="清除搜索"/)
   assert.doesNotMatch(html, /allowClear/)
-  assert.match(html, /<button[^>]*aria-label="清除搜索"/)
+  assert.doesNotMatch(html, /aag-input-clearable/)
+  assert.doesNotMatch(html, /<button/)
 })
 
 test('弹窗关闭按钮使用调用方文案，不再接收宿主没有的宽度和遮罩参数', () => {

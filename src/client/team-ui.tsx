@@ -296,7 +296,7 @@ export function TeamsPanel(props: {
         </div>
         <div className="aag-field aag-field-search">
           <div className="aag-search-wrap">
-            <Input id="aag-team-search" className="aag-search" aria-label={tx("搜索专家团")} placeholder={tx("搜索团队、用途或成员")} value={query} autoComplete="off" spellCheck={false} prefix={<IconSearch size={16}/>} allowClear={{ clearIcon: <span aria-label={tx("清除搜索")}/> }} onChange={(event) => setQuery(event.target.value)}/>
+            <Input id="aag-team-search" className="aag-search" aria-label={tx("搜索专家团")} placeholder={tx("搜索团队、用途或成员")} value={query} autoComplete="off" spellCheck={false} prefix={<IconSearch size={16}/>} onChange={(event) => setQuery(event.target.value)}/>
           </div>
         </div>
         <div className="aag-filter-actions">

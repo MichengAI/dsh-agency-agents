@@ -1319,7 +1319,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       React.createElement('div', { className: 'aag-field aag-field-search' },
         React.createElement('div', { className: 'aag-search-wrap' },
           React.createElement(Input, {
-            id: 'aag-filter-search', className: 'aag-search', allowClear: { clearIcon: React.createElement('span', { 'aria-label': props.t('settings.search.clear') }) },
+            id: 'aag-filter-search', className: 'aag-search',
             value: query, prefix: React.createElement(Search, { size: 16, strokeWidth: 1.7, 'aria-hidden': true }),
             autoComplete: 'off', spellCheck: false, placeholder: props.t('settings.search.placeholder'),
             'aria-label': props.t('settings.search'),

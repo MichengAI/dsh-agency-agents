@@ -24,7 +24,6 @@ export const TEAM_CSS = `
 .agt-dialog h3{font-size:15px;line-height:22px;margin:0}
 .agt-dialog h4{font-size:14px;line-height:22px;margin:0 0 12px}
 .agt-dialog p:not(.aag-note){margin:8px 0 12px}
-.agt-dialog .aag-input-clearable .aag-host-input input{padding-right:28px}
 .agt-dialog .agt-help,.agt-dialog small{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}
 .agt-dialog .agt-tag{display:inline-block;font-size:11px;line-height:18px;padding:1px 6px;border:0.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-xs,4px);color:var(--dsw-alias-label-secondary)}
 .agt-tags,.agt-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -74,8 +73,7 @@ export const TEAM_CSS = `
 .agt-compact-row small{margin-left:8px;opacity:.65}
 .agt-compact-row>button:last-child{background:transparent;border:0;color:inherit;cursor:pointer}
 .agt-compact>.aag-host-input{box-sizing:border-box;width:calc(100% - 16px);margin:8px}
-.agt-compact .aag-input-clearable{box-sizing:border-box;width:calc(100% - 16px);margin:8px}
-.agt-compact .aag-input-clearable>.aag-host-input{box-sizing:border-box;width:100%;margin:0}
+.agt-compact .aag-host-input{box-sizing:border-box;width:calc(100% - 16px);margin:8px}
 @media(max-width:560px){.agt-detail-head{align-items:flex-start;flex-wrap:wrap}.agt-editor .agt-prompt{min-height:240px}}
 @media(prefers-reduced-motion:reduce){.agt-dialog *{transition:none!important}}
 `
