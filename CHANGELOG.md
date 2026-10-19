@@ -4,7 +4,7 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
-## Unreleased
+## 1.2.7 - 2026-10-19
 
 - Keep the expert-team editor inside the host modal padding box: move its action bar into the host `Modal` footer slot, give the content a flex scroll chain, and drop the hard-coded viewport heights (Issue #25).
 
