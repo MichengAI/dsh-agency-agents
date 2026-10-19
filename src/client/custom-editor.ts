@@ -102,9 +102,16 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
   return h(Modal, {
     open: true,
     className: 'aag-editor-modal',
+    contentClassName: 'aag-editor-modal-content',
     title: props.t(draft.slug ? 'custom.edit' : 'custom.new'),
     closeLabel: props.t('settings.promptClose'),
     onClose: () => { if (discard) setDiscard(false); else close() },
+    footer: h(LibraryEditorFooter, {
+      editing: !!draft.slug, busy, blocked: needsReview, inert: discard,
+      help: props.t('custom.enableHint'), cancelLabel: props.t('custom.cancel'), saveLabel: props.t('custom.save'),
+      primaryLabel: props.t(busy ? 'custom.saving' : draft.slug ? 'custom.saveChanges' : 'custom.saveEnable'),
+      close, save: () => submit(false), primary: () => submit(draft.slug ? enabled : true),
+    }),
   },
   h('form', { ref: form, className: 'aag-custom-body', onSubmit: (event: React.FormEvent) => event.preventDefault(), inert: discard ? '' : undefined },
     h('p', { className: 'aag-editor-intro' }, props.t('custom.intro')),
@@ -155,12 +162,7 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
         ),
       ) : null,
   ),
-  h(LibraryEditorFooter, {
-    editing: !!draft.slug, busy, blocked: needsReview, inert: discard,
-    help: props.t('custom.enableHint'), cancelLabel: props.t('custom.cancel'), saveLabel: props.t('custom.save'),
-    primaryLabel: props.t(busy ? 'custom.saving' : draft.slug ? 'custom.saveChanges' : 'custom.saveEnable'),
-    close, save: () => submit(false), primary: () => submit(draft.slug ? enabled : true),
-  }),  discard ? h(LibraryConfirm, { title: props.t('custom.discardTitle'), description: props.t('custom.discardDesc'), cancelLabel: props.t('custom.keep'), confirmLabel: props.t('custom.discard'), danger: true, close: () => setDiscard(false), confirm: props.onClose }) : null)
+  discard ? h(LibraryConfirm, { title: props.t('custom.discardTitle'), description: props.t('custom.discardDesc'), cancelLabel: props.t('custom.keep'), confirmLabel: props.t('custom.discard'), danger: true, close: () => setDiscard(false), confirm: props.onClose }) : null)
 }
 
 export function CustomDeleteDialog(props: { name: string; busy: boolean; error: string | null; t: TranslateNS<'agency'>; close(): void; confirm(): void }): React.ReactElement {
@@ -168,10 +170,10 @@ export function CustomDeleteDialog(props: { name: string; busy: boolean; error: 
     h('p', null, props.name))
 }
 export const CUSTOM_EDITOR_CSS = `
-.aag-editor-modal{display:flex;flex-direction:column;max-height:calc(100vh - 120px)}
-.aag-editor-modal>div:first-child{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
-.aag-editor-modal>div:first-child>div:last-child{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;margin-top:0;padding:0}
-.aag-custom-body{overflow-y:auto;overscroll-behavior:contain;padding:16px 20px;flex:1;min-height:0;max-height:calc(100vh - 220px)}
+/* 宿主 Modal 的 content 由 contentClassName 标记；body 无公开类名，用「content 内最后一个 div」锁定内容槽。 */
+.aag-editor-modal-content{flex:1;min-height:0;overflow:hidden}
+.aag-editor-modal-content>div:last-child{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;margin-top:0;padding:0}
+.aag-custom-body{overflow-y:auto;overscroll-behavior:contain;padding:16px 20px;flex:1;min-height:0}
 .aag-editor-intro{margin:0 0 16px;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:22px}
 .aag-custom-field{display:block;margin:18px 0;font-size:14px}
 .aag-custom-field>span,.aag-custom-field>label{display:block;margin-bottom:8px}
@@ -185,6 +187,8 @@ export const CUSTOM_EDITOR_CSS = `
 .aag-editor-modal .aag-custom-prompt{min-height:220px;line-height:1.8}
 .aag-custom-body .aag-error{margin-top:14px}
 .aag-custom-footer{padding:14px 20px 18px;border-top:0.5px solid var(--dsw-alias-border-l2);flex-shrink:0}
+/* footer 进入宿主 footer 槽后，水平内边距由宿主提供，避免 24px+20px 叠加。 */
+.aag-editor-modal .aag-custom-footer{box-sizing:border-box;width:100%;padding:14px 0 0}
 .aag-custom-footer>div{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
 .aag-custom-footer>div>button:first-child{margin-right:auto}
 .aag-custom-badge{display:inline-block;font-size:10px;padding:1px 5px;border:0.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-xs,4px);margin-left:6px;color:var(--dsw-alias-label-secondary)}

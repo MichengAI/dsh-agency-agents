@@ -62,9 +62,6 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
     return dialog !== null && getComputedStyle(dialog).display !== 'none'
   })
   const expertDrawer = await expertDialog.boundingBox()
-  await expect(page.getByRole('button', { name: '保存并启用', exact: true })).toBeVisible()
-  const saveBtnBox = await page.getByRole('button', { name: '保存并启用', exact: true }).boundingBox()
-  expect(saveBtnBox!.y + saveBtnBox!.height).toBeLessThanOrEqual(expertDrawer!.y + expertDrawer!.height + 1)
   await page.screenshot({ path: 'test-results/expert-editor-unified.png' })
   await page.keyboard.press('Escape')
   await page.getByRole('tab', { name: '专家团', exact: true }).click()
@@ -131,6 +128,34 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
     '统一交互测试',
   )
   await page.screenshot({ path: 'test-results/team-editor-unified.png' })
+})
+
+test('矮视口下自定义专家操作栏不随表单滚动', async ({ page }) => {
+  await page.setViewportSize({ width: 910, height: 520 })
+  await page.goto('/?teams&settings')
+  await page.getByRole('button', { name: '新建专家', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  const save = page.getByRole('button', { name: '保存并启用', exact: true })
+  const drawer = await dialog.boundingBox()
+  const saveBefore = await save.boundingBox()
+  if (drawer === null || saveBefore === null) throw new Error('弹窗或操作栏未完成布局')
+  expect(saveBefore.y + saveBefore.height).toBeLessThanOrEqual(
+    drawer.y + drawer.height + 1,
+  )
+
+  // 先确认表单确实产生了滚动，再断言滚动只作用于表单、不带走操作栏。
+  const form = dialog.locator('form.aag-custom-body')
+  expect(await form.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeGreaterThan(0)
+  await form.evaluate((el) => { el.scrollTop = el.scrollHeight })
+
+  const saveAfter = await save.boundingBox()
+  if (saveAfter === null) throw new Error('滚动后操作栏布局丢失')
+  expect(Math.abs(saveAfter.y - saveBefore.y)).toBeLessThanOrEqual(1)
+  expect(saveAfter.y + saveAfter.height).toBeLessThanOrEqual(
+    drawer.y + drawer.height + 1,
+  )
+  await expect(save).toBeVisible()
 })
 
 test('专家保留原标题工具栏与来源筛选，专家团采用同一结构', async ({

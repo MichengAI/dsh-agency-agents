@@ -601,11 +601,15 @@ it.each(["删除", "改名"] as const)("他窗%s释放名称后，编辑器保�
   }) as typeof React.useRef);
   const effectHook = vi.spyOn(React, "useEffect").mockImplementation(() => {});
   const layoutHook = vi.spyOn(React, "useLayoutEffect").mockImplementation(() => {});
-  type ElementProps = { children?: React.ReactNode; onClick?: () => void };
+  type ElementProps = { children?: React.ReactNode; footer?: React.ReactNode; onClick?: () => void };
   const elements = (node: React.ReactNode): React.ReactElement<ElementProps>[] => {
     if (!React.isValidElement<ElementProps>(node)) return [];
     if (node.type === LibraryEditorFooter) return elements(LibraryEditorFooter(node.props as React.ComponentProps<typeof LibraryEditorFooter>));
-    return [node, ...React.Children.toArray(node.props.children).flatMap(elements)];
+    return [
+      node,
+      ...React.Children.toArray(node.props.children).flatMap(elements),
+      ...React.Children.toArray(node.props.footer).flatMap(elements),
+    ];
   };
   const render = () => {
     cursor = 0;

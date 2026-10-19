@@ -42,6 +42,7 @@ export function Modal({
   onCancel,
   onClose,
   className,
+  contentClassName,
   closeLabel,
 }: {
   open?: boolean
@@ -52,6 +53,7 @@ export function Modal({
   onCancel?: () => void
   onClose?: () => void
   className?: string
+  contentClassName?: string
   closeLabel?: string
 }): React.ReactElement | null {
   return React.createElement(PrimitiveModal, {
@@ -61,6 +63,7 @@ export function Modal({
     footer,
     closeLabel: closeLabel ?? (documentUiLocale() === 'en' ? 'Close dialog' : '关闭弹窗'),
     className: ['aag-theme', 'aag-host-modal', className].filter(Boolean).join(' '),
+    contentClassName,
     onClose: onClose || onCancel || (() => undefined),
   }, children)
 }
