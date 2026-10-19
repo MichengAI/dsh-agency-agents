@@ -4,6 +4,11 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.5 - 2026-10-19
+
+- Let the settings panel fill the host content column: remove the 760px cap and the now-dead centering declarations, so expert and team grids line up with the rest of the settings page.
+- Keep the custom-expert footer outside the scrolling form: render it through the host `Modal` footer slot, cap the dialog with `max-height: 100%` instead of a viewport calc, and add a short-viewport regression test proving the action bar does not scroll away.
+
 ## 1.2.3 - 2026-10-19
 
 - Compact expert library tabs: align the top segmented tabs height to 32px with host select triggers and inputs, supply 14px vector stroke icons for Experts and Teams, and remove heavy shadows and excess container height.
