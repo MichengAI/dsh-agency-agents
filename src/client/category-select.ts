@@ -44,6 +44,7 @@ export function CategorySelect(props: {
       selectedId: props.value,
       align: 'start',
       portal: true,
+      dense: true,
       anchor: React.createElement(Button, {
         id: props.id,
         variant: 'outline',
@@ -52,23 +53,24 @@ export function CategorySelect(props: {
         'aria-expanded': open,
         'aria-haspopup': 'menu',
         disabled: props.disabled,
-        className: `aag-menu-select-trigger${open ? ' is-open' : ''}`,
+        className: 'aag-menu-select-trigger',
         onClick: () => {
           if (!props.disabled) setOpen((prev) => !prev)
         },
-        icon: React.createElement('svg', {
-          className: 'aag-native-select-arrow',
-          viewBox: '0 0 16 16',
-          width: 12,
-          height: 12,
-          fill: 'none',
-          stroke: 'currentColor',
-          strokeWidth: 1.8,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-          style: { transition: 'transform 150ms ease', transform: open ? 'rotate(180deg)' : 'none' },
-        }, React.createElement('path', { d: 'm4 6 4 4 4-4' })),
-      }, currentText),
+      },
+      React.createElement('span', { className: 'aag-select-label' }, currentText),
+      React.createElement('svg', {
+        className: 'aag-native-select-arrow',
+        viewBox: '0 0 16 16',
+        width: 12,
+        height: 12,
+        fill: 'none',
+        stroke: 'currentColor',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+        style: { flex: 'none', marginLeft: 4, transition: 'transform 150ms ease', transform: open ? 'rotate(180deg)' : 'none' },
+      }, React.createElement('path', { d: 'm4 6 4 4 4-4' }))),
       items,
     })
   )

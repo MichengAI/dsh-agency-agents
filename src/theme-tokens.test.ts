@@ -14,7 +14,7 @@ test('危险按钮悬停保持红色，且不再依赖 Ant 皮肤', () => {
     '危险态采用纯净的语义类名',
   )
   assert.match(PLUGIN_UI_CSS, /\.aag-textarea/, '多行文本框采用官方统一设计规范')
-  assert.match(PLUGIN_UI_CSS, /\.aag-menu-select-trigger/, '选择触发器保留宿主令牌')
+  assert.match(PLUGIN_UI_CSS, /\.aag-menu-select-trigger\{[^}]*height:32px!important[^}]*border:0\.5px solid var\(--dsw-alias-border-l2\)/, '选择触发器对齐归档 32px 密度')
 })
 
 test('插件样式不认领第三方皮肤作用域', () => {

@@ -325,7 +325,7 @@ test('专家保留原标题工具栏与来源筛选，专家团采用同一结�
 
 test('切换专家团后保留专家搜索和来源筛选', async ({ page }) => {
   await page.goto('/?teams&settings')
-  const sourceSelect = page.locator('.aag-field-source:visible .aag-menu-select-trigger')
+  const sourceSelect = page.locator('#aag-filter-source')
   await sourceSelect.click()
   await page.getByRole('menuitem', { name: '内置', exact: true }).click()
   await page.locator('#aag-filter-search').fill('人类学')
@@ -369,13 +369,13 @@ test('切换团队保留同一个公共头部及宿主注入内容', async ({ pa
 test('数量写在对应页签上，来源选项与新建同行', async ({ page }) => {
   await page.setViewportSize({ width: 910, height: 887 })
   await page.goto('/?teams&settings')
-  for (const [tabName, createName, total] of [['专家', '新建专家', String(ROSTER.length)], ['专家团', '新建专家团', String(BUILTIN_TEAMS.length)]]) {
+  for (const [tabName, createName, total, idPrefix] of [['专家', '新建专家', String(ROSTER.length), 'aag-filter'], ['专家团', '新建专家团', String(BUILTIN_TEAMS.length), 'aag-team']]) {
     const tab = page.getByRole('tab', { name: tabName, exact: true })
     await tab.click()
     await expect(tab).toContainText(total)
     await expect(tab).toContainText('已启用')
-    const source = page.locator('.aag-field-source:visible .aag-menu-select-trigger')
-    const status = page.locator('.aag-field-status:visible .aag-menu-select-trigger')
+    const source = page.locator(`#${idPrefix}-source`)
+    const status = page.locator(`#${idPrefix}-status`)
     await expect(source).toContainText('全部')
     const sourceBox = await source.boundingBox()
     const statusBox = await status.boundingBox()
@@ -419,7 +419,7 @@ test('添加成员默认只看已启用，停用专家仍可加入专家团', as
   await expect(picker.getByRole('button', { name: '产品经理' })).toBeVisible()
   await picker.getByLabel('搜索团队成员').fill('前端开发者')
   await expect(picker.getByText('没有匹配的专家')).toBeVisible()
-  await picker.locator('.aag-field-status .aag-menu-select-trigger').click()
+  await picker.locator('#agt-picker-status').click()
   await page.getByRole('menuitem', { name: '全部状态', exact: true }).click()
   await expect(picker.getByRole('button', { name: '前端开发者' })).toBeVisible()
   await picker.getByRole('button', { name: '前端开发者' }).click()
