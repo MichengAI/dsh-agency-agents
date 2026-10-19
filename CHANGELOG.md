@@ -4,6 +4,10 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.3 - 2026-10-19
+
+- Compact expert library tabs: align the top segmented tabs height to 32px with host select triggers and inputs, supply 14px vector stroke icons for Experts and Teams, and remove heavy shadows and excess container height.
+
 ## 1.2.2 - 2026-10-18
 
 - Fix search focus loss and double clear icons: adopt host primitive `Input` directly and remove hand-rolled clear buttons with conditional wrapper elements, eliminating DOM reconstruction focus drops on initial keystroke and conflicting native cancel buttons (Issue #20).

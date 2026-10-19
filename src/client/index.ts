@@ -621,6 +621,14 @@ function expertIcon(): React.ReactElement {
     React.createElement('path', { d: 'M12.75 10.25l.55 1.2 1.2.55-1.2.55-.55 1.2-.55-1.2-1.2-.55 1.2-.55z' }))
 }
 
+function teamTabIcon(): React.ReactElement {
+  return React.createElement('svg', { viewBox: '0 0 16 16', width: 14, height: 14, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
+    React.createElement('circle', { cx: 6, cy: 5, r: 2.5 }),
+    React.createElement('path', { d: 'M2 13.5v-.75A3.25 3.25 0 0 1 5.25 9.5h1.5A3.25 3.25 0 0 1 10 12.75v.75' }),
+    React.createElement('circle', { cx: 11.5, cy: 5.5, r: 2 }),
+    React.createElement('path', { d: 'M11 9.5a2.75 2.75 0 0 1 3 2.75v1.25' }))
+}
+
 /** GitHub 品牌标识未由宿主图标库提供，内联以保持离线可用和主题适配。 */
 function githubMark16(): React.ReactElement {
   return React.createElement('svg', { viewBox: '0 0 16 16', width: 16, height: 16, 'aria-hidden': true, focusable: false },
@@ -1381,7 +1389,8 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
   const [view, setView] = React.useState<'experts' | 'teams'>('experts')
   const [expertSummary, setExpertSummary] = React.useState({ total: 0, enabled: 0 })
   const [teamSummary, setTeamSummary] = React.useState({ total: 0, enabled: 0 })
-  const tabLabel = (name: string, total: number, enabled: number) => React.createElement(React.Fragment, null,
+  const tabLabel = (icon: React.ReactElement, name: string, total: number, enabled: number) => React.createElement(React.Fragment, null,
+    icon,
     name,
     React.createElement('span', { className: 'aag-tab-count', 'aria-hidden': true }, React.createElement('strong', null, total)),
     React.createElement('span', { className: 'aag-tab-count', 'aria-hidden': true }, props.t('summary.enabledPrefix'), React.createElement('strong', null, enabled)),
@@ -1390,8 +1399,8 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
     className: 'aag-library-tabs', label: tx('专家库类型'), value: view,
     onChange: (value) => { if (value === 'experts' || value === 'teams') setView(value) },
     items: [
-      { value: 'experts' as const, id: 'aag-library-tab-experts', panelId: 'aag-library-panel-experts', label: tabLabel(tx('专家'), expertSummary.total, expertSummary.enabled) },
-      { value: 'teams' as const, id: 'aag-library-tab-teams', panelId: 'aag-library-panel-teams', label: tabLabel(tx('专家团'), teamSummary.total, teamSummary.enabled) },
+      { value: 'experts' as const, id: 'aag-library-tab-experts', panelId: 'aag-library-panel-experts', label: tabLabel(expertIcon(), tx('专家'), expertSummary.total, expertSummary.enabled) },
+      { value: 'teams' as const, id: 'aag-library-tab-teams', panelId: 'aag-library-panel-teams', label: tabLabel(teamTabIcon(), tx('专家团'), teamSummary.total, teamSummary.enabled) },
     ],
   })
   // 两个名册都保持挂载，切换时不丢失筛选，也不重新等待第一次加载。
