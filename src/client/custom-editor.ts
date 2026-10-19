@@ -169,6 +169,8 @@ export function CustomDeleteDialog(props: { name: string; busy: boolean; error: 
 }
 export const CUSTOM_EDITOR_CSS = `
 .aag-editor-modal{display:flex;flex-direction:column;max-height:calc(100vh - 120px)}
+.aag-editor-modal>div:first-child{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.aag-editor-modal>div:first-child>div:last-child{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;margin-top:0;padding:0}
 .aag-custom-body{overflow-y:auto;overscroll-behavior:contain;padding:16px 20px;flex:1;min-height:0;max-height:calc(100vh - 220px)}
 .aag-editor-intro{margin:0 0 16px;color:var(--dsw-alias-label-secondary);font-size:14px;line-height:22px}
 .aag-custom-field{display:block;margin:18px 0;font-size:14px}

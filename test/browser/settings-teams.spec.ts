@@ -62,6 +62,9 @@ test('专家团复用专家的筛选、卡片操作和编辑抽屉', async ({ pa
     return dialog !== null && getComputedStyle(dialog).display !== 'none'
   })
   const expertDrawer = await expertDialog.boundingBox()
+  await expect(page.getByRole('button', { name: '保存并启用', exact: true })).toBeVisible()
+  const saveBtnBox = await page.getByRole('button', { name: '保存并启用', exact: true }).boundingBox()
+  expect(saveBtnBox!.y + saveBtnBox!.height).toBeLessThanOrEqual(expertDrawer!.y + expertDrawer!.height + 1)
   await page.screenshot({ path: 'test-results/expert-editor-unified.png' })
   await page.keyboard.press('Escape')
   await page.getByRole('tab', { name: '专家团', exact: true }).click()
