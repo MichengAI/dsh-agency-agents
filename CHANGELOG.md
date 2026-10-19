@@ -4,6 +4,10 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.6 - 2026-10-19
+
+- Render the Experts settings nav icon as an independent CSS mask so third-party skins cannot hide it, and only decorate buttons with a direct host `svg` so wrapped icons keep the host layout.
+
 ## 1.2.5 - 2026-10-19
 
 - Let the settings panel fill the host content column: remove the 760px cap and the now-dead centering declarations, so expert and team grids line up with the rest of the settings page.
