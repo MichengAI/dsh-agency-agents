@@ -49,9 +49,12 @@ export const TEAM_CSS = `
 .agt-member-list strong,.agt-member-list small{display:block;overflow-wrap:anywhere}
 .agt-examples{display:grid;gap:8px}
 .agt-read-prompt{white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.65}
-.agt-editor-modal{display:flex;flex-direction:column;max-height:calc(100vh - 120px)}
-.agt-editor-modal .agt-dialog{display:flex;flex-direction:column;max-height:calc(100vh - 120px)}
-.agt-editor form{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;max-height:calc(100vh - 180px)}
+.agt-editor-modal{display:flex;flex-direction:column}
+/* 与自定义专家一致：弹窗只受宿主 padding box 限制，内容区建立 flex 滚动链，绝不写死视口高度。 */
+.agt-editor-content{flex:1;min-height:0;overflow:hidden}
+.agt-editor-content>div:last-child{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;margin-top:0;padding:0}
+.agt-editor-modal .agt-dialog{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.agt-editor form{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 .agt-editor-scroll{flex:1;min-height:0;overflow:auto;padding-right:4px}
 .agt-editor-fields fieldset{border:0;padding:0;margin:0;min-width:0}
 .agt-section{border-bottom:0.5px solid var(--dsw-alias-border-l2);padding:0 0 20px;margin-bottom:20px}
@@ -64,8 +67,7 @@ export const TEAM_CSS = `
 .agt-edit-member details{margin-top:8px}
 .agt-edit-member summary{cursor:pointer;color:var(--dsw-alias-label-secondary);font-size:12px;user-select:none}
 .agt-edit-member summary:hover{color:var(--dsw-alias-label-primary)}
-.agt-editor .aag-custom-footer{flex-shrink:0}
-.agt-editor .aag-custom-footer>span{display:block;font-size:12px;color:var(--dsw-alias-label-secondary);margin-bottom:8px}
+.agt-editor-modal .aag-custom-footer{box-sizing:border-box;width:100%;padding:14px 0 0;flex-shrink:0}
 .agt-picker-tools{flex:none;margin:0}
 .agt-picker-note{margin:8px 0 0}
 .agt-dialog.agt-picker .agt-picker-list{flex:none;height:min(480px,calc(100vh - 328px));min-height:240px;max-height:none;overflow:auto;padding:8px 0 0}

@@ -29,10 +29,11 @@ export function TeamAvatars({ team, experts, large = false, }: {
     </div>);
 }
 /** 统一采用宿主官方原生居中模态窗口，彻底告别侧边抽屉。 */
-export function TeamDialog({ title, children, close, className = '', }: {
+export function TeamDialog({ title, children, close, footer, className = '', }: {
     title: string;
     children: React.ReactNode;
     close(): void;
+    footer?: React.ReactNode;
     className?: string;
 }) {
     useEscapeLayer(true, close);
@@ -51,11 +52,12 @@ export function TeamDialog({ title, children, close, className = '', }: {
     return (
         <Modal
             className={modalClass}
-            contentClassName={className === 'agt-detail' ? 'agt-detail-content' : undefined}
+            contentClassName={className === 'agt-detail' ? 'agt-detail-content' : className === 'agt-editor' ? 'agt-editor-content' : undefined}
             title={title}
             open
             closeLabel={tx("关闭")}
             onClose={close}
+            footer={footer}
         >
             <div className={`agt-dialog ${className}`}>{children}</div>
         </Modal>

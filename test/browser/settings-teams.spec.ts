@@ -158,6 +158,83 @@ test('矮视口下自定义专家操作栏不随表单滚动', async ({ page }) 
   await expect(save).toBeVisible()
 })
 
+test('桌面窗口安全区内专家团操作栏保持在弹窗底部', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 700 })
+  await page.goto('/?teams&settings')
+  // 桌面端窗口会给遮罩留出顶部安全区，弹窗必须按宿主 padding box 收缩，不能写死 100vh。
+  await page.evaluate(() => {
+    document.documentElement.style.setProperty('--dsh-frame-overlay-top', '80px')
+  })
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
+  await page.getByRole('button', { name: '新建专家团', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  const save = page.getByRole('button', { name: '保存并启用', exact: true })
+  const drawer = await dialog.boundingBox()
+  const saveBefore = await save.boundingBox()
+  if (drawer === null || saveBefore === null) throw new Error('弹窗或操作栏未完成布局')
+  expect(saveBefore.y + saveBefore.height).toBeLessThanOrEqual(
+    drawer.y + drawer.height + 1,
+  )
+
+  const scroll = dialog.locator('.agt-editor-scroll')
+  expect(await scroll.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeGreaterThan(0)
+  await scroll.evaluate((el) => { el.scrollTop = el.scrollHeight })
+  const saveAfter = await save.boundingBox()
+  if (saveAfter === null) throw new Error('滚动后操作栏布局丢失')
+  expect(Math.abs(saveAfter.y - saveBefore.y)).toBeLessThanOrEqual(1)
+  expect(saveAfter.y + saveAfter.height).toBeLessThanOrEqual(
+    drawer.y + drawer.height + 1,
+  )
+  await expect(save).toBeVisible()
+
+  // 主理人提示词完整落在滚动区内，而不是被弹窗裁掉一半。
+  const prompt = dialog.locator('.agt-prompt')
+  await prompt.scrollIntoViewIfNeeded()
+  const viewport = await scroll.boundingBox()
+  const promptBox = await prompt.boundingBox()
+  if (viewport === null || promptBox === null) throw new Error('提示词未完成布局')
+  expect(promptBox.y).toBeGreaterThanOrEqual(viewport.y - 1)
+  expect(promptBox.y + promptBox.height).toBeLessThanOrEqual(
+    viewport.y + viewport.height + 1,
+  )
+})
+
+test('桌面窗口安全区内自定义专家提示词完整可达', async ({ page }) => {
+  await page.setViewportSize({ width: 910, height: 520 })
+  await page.goto('/?teams&settings')
+  await page.evaluate(() => {
+    document.documentElement.style.setProperty('--dsh-frame-overlay-top', '80px')
+  })
+  await page.getByRole('button', { name: '新建专家', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  const form = dialog.locator('form.aag-custom-body')
+  const prompt = dialog.locator('.aag-custom-prompt')
+  const viewport = await form.boundingBox()
+  if (viewport === null) throw new Error('表单未完成布局')
+  expect(await form.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeGreaterThan(0)
+
+  // 提示词比可视区高，滚到表单底部时其下边缘必须完整露出，而不是被弹窗裁掉。
+  await form.evaluate((el) => { el.scrollTop = el.scrollHeight })
+  const promptBox = await prompt.boundingBox()
+  if (promptBox === null) throw new Error('提示词未完成布局')
+  expect(promptBox.y + promptBox.height).toBeLessThanOrEqual(
+    viewport.y + viewport.height + 1,
+  )
+  expect(promptBox.y + promptBox.height).toBeGreaterThan(viewport.y)
+
+  // 滚到表单底部后，宿主 footer 槽里的操作栏仍在弹窗内。
+  const save = page.getByRole('button', { name: '保存并启用', exact: true })
+  await form.evaluate((el) => { el.scrollTop = el.scrollHeight })
+  const drawer = await dialog.boundingBox()
+  const saveBox = await save.boundingBox()
+  if (drawer === null || saveBox === null) throw new Error('操作栏未完成布局')
+  expect(saveBox.y + saveBox.height).toBeLessThanOrEqual(
+    drawer.y + drawer.height + 1,
+  )
+})
+
 test('矮视口下专家团详情在弹窗内滚动', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 650 })
   await page.goto('/?teams&settings')

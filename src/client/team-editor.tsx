@@ -234,7 +234,7 @@ export function TeamEditor(props: {
       <span>{label}{key !== 'constraints' && <small>{tx("必填")}</small>}</span>
       {multi ? (<Input.TextArea aria-label={label} name={key} value={draft[key]} maxLength={max} onChange={(e) => patch({ [key]: e.target.value })} rows={key === 'description' ? 2 : 3} required={key !== 'constraints'}/>) : (<Input aria-label={label} name={key} value={draft[key]} maxLength={max} required={key !== 'constraints'} onChange={(e) => patch({ [key]: e.target.value })}/>)}
     </label>);
-    return (<TeamDialog title={props.initial?.id ? tx("编辑专家团") : tx("新建专家团")} close={close} className="agt-editor">
+    return (<TeamDialog title={props.initial?.id ? tx("编辑专家团") : tx("新建专家团")} close={close} className="agt-editor" footer={<LibraryEditorFooter editing={!!draft.id} busy={busy} blocked={needsReview} help={tx("保存配置不会发送任务。")} cancelLabel={tx("取消")} saveLabel={tx("保存")} primaryLabel={busy ? tx("正在保存…") : draft.id ? tx("保存修改") : tx("保存并启用")} close={close} save={() => void submit(false)} primary={() => void submit(draft.id ? currentEnabled : true)}/>}>
       <form ref={form} onSubmit={(e) => {
             e.preventDefault();
             void submit(currentEnabled);
@@ -410,7 +410,6 @@ export function TeamEditor(props: {
               </section>)}{' '}
           </div>
         </div>
-        <LibraryEditorFooter editing={!!draft.id} busy={busy} blocked={needsReview} help={tx("保存配置不会发送任务。")} cancelLabel={tx("取消")} saveLabel={tx("保存")} primaryLabel={busy ? tx("正在保存…") : draft.id ? tx("保存修改") : tx("保存并启用")} close={close} save={() => void submit(false)} primary={() => void submit(draft.id ? currentEnabled : true)}/>{' '}
       </form>
       {confirm && (<TeamConfirm busy={busy} error={error} cancelLabel={confirm === 'discard' ? tx("继续编辑") : tx("取消")} title={confirm === 'discard'
                 ? tx("放弃未保存修改？") : confirm === 'restore'
