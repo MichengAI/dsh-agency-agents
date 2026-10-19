@@ -158,6 +158,31 @@ test('矮视口下自定义专家操作栏不随表单滚动', async ({ page }) 
   await expect(save).toBeVisible()
 })
 
+test('矮视口下专家团详情在弹窗内滚动', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 650 })
+  await page.goto('/?teams&settings')
+  await page.getByRole('tab', { name: '专家团', exact: true }).click()
+  await page
+    .getByTestId('team-card')
+    .first()
+    .getByRole('button', { name: '查看详情', exact: true })
+    .click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  const detail = dialog.locator('.agt-dialog.agt-detail')
+  const drawer = await dialog.boundingBox()
+  const body = await detail.boundingBox()
+  if (drawer === null || body === null) throw new Error('详情弹窗未完成布局')
+  expect(body.y + body.height).toBeLessThanOrEqual(drawer.y + drawer.height + 1)
+  expect(await detail.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeGreaterThan(0)
+
+  // 底部内容初始在视口外，滚动后可完整看到。
+  const prompt = page.getByRole('button', { name: '查看主理人提示词', exact: true })
+  await expect(prompt).not.toBeInViewport()
+  await detail.evaluate((el) => { el.scrollTop = el.scrollHeight })
+  await expect(prompt).toBeInViewport()
+})
+
 test('专家保留原标题工具栏与来源筛选，专家团采用同一结构', async ({
   page,
 }) => {

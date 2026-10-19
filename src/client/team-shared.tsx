@@ -51,6 +51,7 @@ export function TeamDialog({ title, children, close, className = '', }: {
     return (
         <Modal
             className={modalClass}
+            contentClassName={className === 'agt-detail' ? 'agt-detail-content' : undefined}
             title={title}
             open
             closeLabel={tx("关闭")}

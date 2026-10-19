@@ -34,6 +34,10 @@ export const TEAM_CSS = `
 .agt-dialog .agt-tag{display:inline-block;font-size:11px;line-height:18px;padding:1px 6px;border:0.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-xs,4px);color:var(--dsw-alias-label-secondary)}
 .agt-tags,.agt-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .agt-detail>.agt-detail-head,.agt-detail>.agt-description,.agt-detail>.agt-tags,.agt-detail>section{margin:16px}
+/* 详情弹窗沿用自定义专家的 flex 收缩链：标题固定，正文在弹窗内滚动。 */
+.aag-host-modal.agt-detail .agt-detail-content{flex:1;min-height:0;overflow:hidden}
+.aag-host-modal.agt-detail .agt-detail-content>div:last-child{flex:1;min-height:0;overflow:hidden}
+.agt-dialog.agt-detail{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
 .agt-detail-head{display:flex;align-items:center;gap:16px}
 .agt-name-line{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px}
 .agt-name-line h2{margin:0}

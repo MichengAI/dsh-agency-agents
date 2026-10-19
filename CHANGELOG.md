@@ -8,6 +8,7 @@ This file records features and upgrade boundaries. npm and GitHub Releases remai
 
 - Let the settings panel fill the host content column: remove the 760px cap and the now-dead centering declarations, so expert and team grids line up with the rest of the settings page.
 - Keep the custom-expert footer outside the scrolling form: render it through the host `Modal` footer slot, cap the dialog with `max-height: 100%` instead of a viewport calc, and add a short-viewport regression test proving the action bar does not scroll away.
+- Keep the expert-team detail dialog inside the viewport: give its content a flex scroll chain so long member duties and coordinator prompts remain reachable, with a short-viewport regression test.
 
 ## 1.2.3 - 2026-10-19
 
