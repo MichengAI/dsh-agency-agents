@@ -121,6 +121,67 @@ describe('DSH settings 兼容层', () => {
     expect(() => loadHostModule('@deepseek-ai/schemastery', join(tmpdir(), 'not-a-dsh-entry'))).toThrow(/Cannot find module/)
   })
 
+  it('当 process.argv[1] 被 pm2 包装器改写时，回退到 pm_exec_path 解析宿主模块', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aag-host-pm2-'))
+    const entry = join(root, 'node_modules', '@deepseek-ai', 'dsh', 'lib', 'bin.js')
+    const pkgDir = join(root, 'node_modules', '@deepseek-ai', 'schemastery')
+    const originalArgv1 = process.argv[1]
+    const originalPmExecPath = process.env.pm_exec_path
+    try {
+      await mkdir(join(root, 'node_modules', '@deepseek-ai', 'dsh', 'lib'), { recursive: true })
+      await mkdir(pkgDir, { recursive: true })
+      await writeFile(entry, '', 'utf8')
+      await writeFile(join(pkgDir, 'package.json'), JSON.stringify({ name: '@deepseek-ai/schemastery', main: 'index.cjs' }), 'utf8')
+      await writeFile(join(pkgDir, 'index.cjs'), 'module.exports = { marker: "host-schema-from-pm2" }\n', 'utf8')
+
+      // 模拟 pm2 fork 模式环境：argv[1] 为 pm2 容器，pm_exec_path 为真实 dsh 入口
+      process.argv[1] = join(root, 'fake-pm2', 'lib', 'ProcessContainerFork.js')
+      process.env.pm_exec_path = entry
+
+      expect(loadHostModule('@deepseek-ai/schemastery')).toEqual({ marker: 'host-schema-from-pm2' })
+    } finally {
+      process.argv[1] = originalArgv1
+      if (originalPmExecPath !== undefined) {
+        process.env.pm_exec_path = originalPmExecPath
+      } else {
+        delete process.env.pm_exec_path
+      }
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  it('当 argv[1] 缺失且无 pm2 环境变量时，回退到 process.mainModule?.filename 解析宿主模块', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aag-host-main-'))
+    const entry = join(root, 'node_modules', '@deepseek-ai', 'dsh', 'lib', 'bin.js')
+    const pkgDir = join(root, 'node_modules', '@deepseek-ai', 'schemastery')
+    const originalArgv1 = process.argv[1]
+    const originalPmExecPath = process.env.pm_exec_path
+    const proc = process as { mainModule?: { filename?: string } }
+    const originalMainModule = proc.mainModule
+    try {
+      await mkdir(join(root, 'node_modules', '@deepseek-ai', 'dsh', 'lib'), { recursive: true })
+      await mkdir(pkgDir, { recursive: true })
+      await writeFile(entry, '', 'utf8')
+      await writeFile(join(pkgDir, 'package.json'), JSON.stringify({ name: '@deepseek-ai/schemastery', main: 'index.cjs' }), 'utf8')
+      await writeFile(join(pkgDir, 'index.cjs'), 'module.exports = { marker: "host-schema-from-main-module" }\n', 'utf8')
+
+      process.argv[1] = ''
+      delete process.env.pm_exec_path
+      proc.mainModule = { filename: entry }
+
+      expect(loadHostModule('@deepseek-ai/schemastery')).toEqual({ marker: 'host-schema-from-main-module' })
+    } finally {
+      process.argv[1] = originalArgv1
+      if (originalPmExecPath !== undefined) {
+        process.env.pm_exec_path = originalPmExecPath
+      } else {
+        delete process.env.pm_exec_path
+      }
+      proc.mainModule = originalMainModule
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
   it('从 volatile 引用读取启用名单，并关闭自动生成的原始配置表单', async () => {
     const root = await mkdtemp(join(tmpdir(), 'aag-live-settings-'))
     const stored = { enabled: ['reviewer'] as string[] }

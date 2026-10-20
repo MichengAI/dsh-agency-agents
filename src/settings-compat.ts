@@ -35,29 +35,57 @@ function hostModuleAnchors(entry: string): string[] {
   return anchors
 }
 
-function hostRequireFor(specifier: string, entry = process.argv[1]): NodeRequire {
-  if (entry === undefined || entry === '') throw missingHostModule(specifier)
+/**
+ * 宿主入口候选推导：
+ * 显式指定 entry 时直接使用；默认未指定时依次尝试 pm2 真实入口（pm_exec_path）、
+ * 包装器主模块路径（mainModule.filename）以及标准命令行参数（process.argv[1]）。
+ */
+function hostEntryCandidates(explicitEntry?: string): string[] {
+  if (explicitEntry !== undefined) {
+    return explicitEntry.trim() === '' ? [] : [explicitEntry]
+  }
+  const raw = [
+    process.env.pm_exec_path,
+    (process as { mainModule?: { filename?: string } }).mainModule?.filename,
+    process.argv[1],
+  ]
+  const seen = new Set<string>()
+  const candidates: string[] = []
+  for (const item of raw) {
+    if (typeof item === 'string' && item.trim() !== '' && !seen.has(item)) {
+      seen.add(item)
+      candidates.push(item)
+    }
+  }
+  return candidates
+}
+
+function hostRequireFor(specifier: string, entry?: string): NodeRequire {
+  const candidates = hostEntryCandidates(entry)
+  if (candidates.length === 0) throw missingHostModule(specifier)
   let last: unknown = missingHostModule(specifier)
-  for (const anchor of hostModuleAnchors(entry)) {
-    try {
-      const hostRequire = createRequire(anchor)
-      hostRequire.resolve(specifier)
-      return hostRequire
-    } catch (error) {
-      last = error
-      if ((error as NodeJS.ErrnoException).code !== 'MODULE_NOT_FOUND') throw error
+  for (const candidate of candidates) {
+    for (const anchor of hostModuleAnchors(candidate)) {
+      try {
+        const hostRequire = createRequire(anchor)
+        hostRequire.resolve(specifier)
+        return hostRequire
+      } catch (error) {
+        last = error
+        if ((error as NodeJS.ErrnoException).code !== 'MODULE_NOT_FOUND') throw error
+      }
     }
   }
   throw last
 }
 
 /** 从当前宿主安装位置加载模块。解析不到时抛出 MODULE_NOT_FOUND，不回退到插件自己的依赖。 */
-export function loadHostModule(specifier: string, entry = process.argv[1]): unknown {
+export function loadHostModule(specifier: string, entry?: string): unknown {
   return hostRequireFor(specifier, entry)(specifier)
 }
 
 /** 只确认宿主模块能否解析，不执行包入口。 */
-export function resolveHostModule(specifier: string, entry = process.argv[1]): string {
+export function resolveHostModule(specifier: string, entry?: string): string {
   return hostRequireFor(specifier, entry).resolve(specifier)
 }
 
