@@ -4,6 +4,10 @@
 
 本文件记录版本功能与升级边界。正式发布状态以 npm 和 GitHub Releases 为准。
 
+## 1.2.9 - 2026-10-20
+
+- 修复 pm2 等包装器环境下启动宿主时插件无法激活的问题：扩展宿主入口推导逻辑，依次探测 `process.env.pm_exec_path`、`process.mainModule?.filename` 及 `process.argv[1]`，解决因 `process.argv[1]` 被包装器改写导致宿主 `@deepseek-ai/schemastery` 的 `volatile()` 实时配置能力被误判并在启动时报错抛出的缺陷（Issue #26）。
+
 ## 1.2.8 - 2026-10-19
 
 - 专家设置页的分段页签和筛选下拉对齐归档插件：复用归档的页签轨道与滑块尺寸，下拉触发器改为 32px、箭头移至尾部、文字超出省略，菜单选项采用 30px 密集行高。

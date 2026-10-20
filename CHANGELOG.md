@@ -4,6 +4,10 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.9 - 2026-10-20
+
+- Support pm2 and process wrapper environments for host module detection: extend host entry discovery to inspect `process.env.pm_exec_path`, `process.mainModule?.filename`, and `process.argv[1]`, fixing an issue where pm2 overwrites `process.argv[1]` with its container script, causing the host's `@deepseek-ai/schemastery` volatile config capability to be misdetected as unsupported and failing plugin activation at startup (Issue #26).
+
 ## 1.2.8 - 2026-10-19
 
 - Align the Experts settings tabs and filter dropdowns with the archive plugin: archive-shaped segmented-tab track and slider geometry, 32px select triggers with trailing chevrons, ellipsis labels, and dense 30px menu rows.
