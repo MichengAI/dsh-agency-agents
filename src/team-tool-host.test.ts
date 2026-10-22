@@ -12,16 +12,16 @@ const { ToolRuntime, defineTool } = await import(pathToFileURL(hostRequire.resol
 const { SystemPrompt } = await import(pathToFileURL(hostRequire.resolve('@deepseek-ai/dsh-system-prompt')).href) as typeof import('@deepseek-ai/dsh-system-prompt')
 
 describe('真实宿主工具注册与模型提示组装', () => {
-  it('locale 晚于插件激活时纠正初始中文快照，无需工具扫描或设置面板', async () => {
+  it('locale 晚于插件激活时把初始 en 快照纠正为 zh，无需工具扫描或设置面板', async () => {
     const ctx = new Context()
     let active = false
-    const describeSettings = vi.fn(() => active ? [{ ns: 'locale', value: { preference: 'en' } }] : [])
+    const describeSettings = vi.fn(() => active ? [{ ns: 'locale', value: { preference: 'zh' } }] : [])
     const locale = createHostLocaleReader({
       settings: { describe: describeSettings },
       on: ctx.on.bind(ctx), effect: ctx.effect.bind(ctx),
     } as unknown as typeof ctx)
     try {
-      expect(locale()).toBe('zh')
+      expect(locale()).toBe('en')
       for (let i = 0; i < 76; i++) locale()
       expect(describeSettings).toHaveBeenCalledTimes(1)
       const activated = (id: string) => ctx.emit('internal/status', {
@@ -34,7 +34,7 @@ describe('真实宿主工具注册与模型提示组装', () => {
       active = true
       activated('locale')
       await Promise.resolve()
-      expect(locale()).toBe('en')
+      expect(locale()).toBe('zh')
       expect(describeSettings).toHaveBeenCalledTimes(2)
     } finally {
       await ctx.fiber.dispose()

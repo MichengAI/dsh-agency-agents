@@ -91,9 +91,14 @@ export const enHost = {
   'list.expertFailed': 'Failed: {error}',
 } satisfies Record<HostKey, string>
 
-/** 将未知值收成 zh / en；只有显式 en 才走英文。 */
+/**
+ * 将未知值收成 zh / en。只有显式中标语言（zh、zh-*）才走中文；未选择时按 DSH 约定回退 en，
+ * 因为 locale.preference 缺失表示「交给浏览器」，宿主无权替用户假定中文。
+ */
 export function resolveHostLocale(value: unknown): LocaleId {
-  return value === 'en' ? 'en' : 'zh'
+  if (typeof value !== 'string') return 'en'
+  const tag = value.trim().toLowerCase()
+  return tag === 'zh' || tag.startsWith('zh-') ? 'zh' : 'en'
 }
 
 /** 按当前语言格式化宿主文案。 */
@@ -106,7 +111,7 @@ export function formatHost(locale: LocaleId, key: HostKey, params?: Record<strin
   return text
 }
 
-/** 从宿主 locale.preference 读取语言，缺失或异常时回退 zh。实时值在 describe() 里，get() 能直接取当前快照。 */
+/** 从宿主 locale.preference 读取语言；未选择（缺失或读取异常）时按 DSH 约定回退 en。实时值在 describe() 里，get() 能直接取当前快照。 */
 export function readHostLocale(ctx: {
   settings?: {
     get?: (ns: SettingsNamespace) => unknown
@@ -127,7 +132,8 @@ export function readHostLocale(ctx: {
       : undefined
     return resolveHostLocale(preference)
   } catch {
-    return 'zh'
+    // 读不到语言时同样不猜中文：DSH 的兜底语言是 en。
+    return 'en'
   }
 }
 

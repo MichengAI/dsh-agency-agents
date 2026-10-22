@@ -836,7 +836,7 @@ describe('summon_expert', () => {
       },
       systemPrompt: { section: () => undefined },
       on: () => () => undefined,
-      settings: alphaSettings(['reviewer']),
+      settings: alphaSettings(['reviewer'], 'zh'),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -861,7 +861,7 @@ describe('summon_expert', () => {
       },
       systemPrompt: { section: () => undefined },
       on: () => () => undefined,
-      settings: alphaSettings(['reviewer']),
+      settings: alphaSettings(['reviewer'], 'zh'),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -892,7 +892,7 @@ describe('summon_expert', () => {
       },
       systemPrompt: { section: () => undefined },
       on: () => () => undefined,
-      settings: alphaSettings(['reviewer']),
+      settings: alphaSettings(['reviewer'], 'zh'),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },
@@ -1101,24 +1101,30 @@ describe('AgencyAgentsRemote（Host↔Client 读写链路）', () => {
 })
 
 describe('宿主 i18n', () => {
-  it('zh/en 词条 key 对齐，且只有显式 en 才切换语言', () => {
+  it('zh/en 词条 key 对齐，且只有显式中文才切换语言', () => {
     expect(Object.keys(zh).sort()).toEqual(Object.keys(en).sort())
     expect(Object.keys(zhHost).sort()).toEqual(Object.keys(enHost).sort())
     expect(Object.hasOwn(zh, 'group.count')).toBe(false)
-    expect(resolveHostLocale('en')).toBe('en')
     expect(resolveHostLocale('zh')).toBe('zh')
-    expect(resolveHostLocale('en-US')).toBe('zh')
-    expect(readHostLocale({})).toBe('zh')
+    expect(resolveHostLocale('zh-CN')).toBe('zh')
+    expect(resolveHostLocale('en')).toBe('en')
+    expect(resolveHostLocale('en-US')).toBe('en')
+    expect(resolveHostLocale('ja')).toBe('en')
+    // 未选择语言时按 DSH 的 en 兜底，不替用户假定中文。
+    expect(resolveHostLocale(undefined)).toBe('en')
+    expect(readHostLocale({})).toBe('en')
+    expect(readHostLocale({ settings: { get: () => ({ preference: 'zh' }) } })).toBe('zh')
     expect(readHostLocale({ settings: { get: () => ({ preference: 'en' }) } })).toBe('en')
+    expect(readHostLocale({ settings: { get: () => ({ preference: undefined }) } })).toBe('en')
     expect(readHostLocale({ settings: { describe: () => [{ ns: 'locale', value: { preference: 'en' } }] } })).toBe('en')
     expect(zh['settings.nav']).toBe('专家')
     expect(en['settings.nav']).toBe('Experts')
-    expect(readHostLocale({ settings: { get: () => { throw new Error('missing') } } })).toBe('zh')
+    expect(readHostLocale({ settings: { get: () => { throw new Error('missing') } } })).toBe('en')
     expect(readHostLocale({
       get settings(): never {
         throw new Error('cannot get property "settings" without inject')
       },
-    })).toBe('zh')
+    })).toBe('en')
   })
 
   it('中英词条占位符一致，筛选空态跟随「全部」译文', () => {
@@ -1770,8 +1776,8 @@ describe('list_experts 语言切换', () => {
     expect(prompt).toContain('不要把源码、CSS、HTML 或带引号的代码写进工具参数')
   })
 
-  it('默认中文：可用中文分区名筛选，并返回中文名和简介', async () => {
-    const { list } = install()
+  it('settings locale=zh 时可用中文分区名筛选，并返回中文名和简介', async () => {
+    const { list } = install('zh')
     const result = await list.execute({ division: '工程' })
     expect(result).toMatchObject({
       divisions: [{
@@ -1880,7 +1886,7 @@ describe('summon_experts', () => {
       },
       systemPrompt: { section: () => undefined },
       on: () => () => undefined,
-      settings: alphaSettings(['reviewer', 'historian']),
+      settings: alphaSettings(['reviewer', 'historian'], 'zh'),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer', 'historian'] }), watch: () => () => {} }) }, effect: () => () => {} })
       },

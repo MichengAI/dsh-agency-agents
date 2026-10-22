@@ -31,7 +31,9 @@ function volatileConfig(settings: TestSettings) {
 describe('专家团宿主与远端集成', () => {
   it('五团名册、启用、主理人规则、三人委派、子会话隔离与停用', async () => {
     const settings = new TestSettings(new Context())
-    settings.restore({ 'agency-agents': { enabled: [] } })
+    // 这个用例断言中文主理人规则，因此显式选择 zh；未选择时宿主按 DSH 约定回退 en。
+    settings.register('locale', (value) => value)
+    settings.restore({ 'agency-agents': { enabled: [] }, locale: { preference: 'zh' } })
     const services = new Map<string, unknown>()
     const tools = new Map<
       string,
