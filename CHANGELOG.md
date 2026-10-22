@@ -4,6 +4,10 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.10 - 2026-10-22
+
+- Fall back to English when host locale preference is unselected: align host locale resolution with `@deepseek-ai/dsh-client-locale` by resolving `zh` and `zh-*` to Chinese and all other values (including unselected `undefined` or retrieval exceptions) to English, preventing Chinese expert names, tool descriptions, and durable subagent descriptor labels in English browser environments (PR #30).
+
 ## 1.2.9 - 2026-10-20
 
 - Support pm2 and process wrapper environments for host module detection: extend host entry discovery to inspect `process.env.pm_exec_path`, `process.mainModule?.filename`, and `process.argv[1]`, fixing an issue where pm2 overwrites `process.argv[1]` with its container script, causing the host's `@deepseek-ai/schemastery` volatile config capability to be misdetected as unsupported and failing plugin activation at startup (Issue #26).

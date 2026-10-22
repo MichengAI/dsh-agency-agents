@@ -4,6 +4,10 @@
 
 本文件记录版本功能与升级边界。正式发布状态以 npm 和 GitHub Releases 为准。
 
+## 1.2.10 - 2026-10-22
+
+- 宿主未配置语言偏好时默认回退为英文：对齐 `@deepseek-ai/dsh-client-locale` 规范，仅当明确为 `zh` 或 `zh-*` 时解析为中文，未设置（`undefined`）或异常时默认回退为英文，解决英文浏览器环境下专家名、工具文案与持久化子会话标签出现中文的问题（PR #30）。
+
 ## 1.2.9 - 2026-10-20
 
 - 修复 pm2 等包装器环境下启动宿主时插件无法激活的问题：扩展宿主入口推导逻辑，依次探测 `process.env.pm_exec_path`、`process.mainModule?.filename` 及 `process.argv[1]`，解决因 `process.argv[1]` 被包装器改写导致宿主 `@deepseek-ai/schemastery` 的 `volatile()` 实时配置能力被误判并在启动时报错抛出的缺陷（Issue #26）。
