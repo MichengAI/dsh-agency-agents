@@ -12,6 +12,8 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
       enabledTeams: [],
     }
 
+    const VOLATILE_PATHS = new Set(['enabled', 'customExperts', 'customTeams', 'enabledTeams', 'sidebarEntry', 'onlineUpdate'])
+
     const mockCtx = {
       webServer: {
         register: vi.fn((route: { path: string; handler: (req: any, res: any) => Promise<void> }) => {
@@ -24,7 +26,11 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
         mutate: vi.fn(async (_ns: string, ops: any[]) => {
           for (const op of ops) {
             if (op.op === 'set') {
-              mockSettingsState[op.path[0]] = op.value
+              const field = op.path[0]
+              if (!VOLATILE_PATHS.has(field)) {
+                throw new Error(`Host rejected mutation on non-volatile path: ${field}`)
+              }
+              mockSettingsState[field] = op.value
             }
           }
         }),

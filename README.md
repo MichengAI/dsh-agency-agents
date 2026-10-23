@@ -171,7 +171,7 @@ Two native switches are available:
   - **Endpoint Guard**: When disabled, the update API route returns `HTTP 403` for all check and install requests, preventing unreviewed updates;
   - **Host / Platform Lock**: For curated plugin indexes (such as VibeDev) or restricted enterprise environments, this can be locked directly via Cordis configuration (bundle patch) without needing UI interaction:
     ```yaml
-    updater: false # or onlineUpdate: false
+    updater: false
     ```
     Once configured, the built-in updater is disabled at startup and the update action stays hidden.
   - **Update Modes**: When a newer release is available, **Update automatically** runs only when the DSH CLI or Desktop update service is available; otherwise, the dialog provides a profile-specific manual command to copy and run.

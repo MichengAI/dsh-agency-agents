@@ -607,8 +607,7 @@ async function readJsonBody(request: { on(event: string, listener: (...args: unk
 }
 
 export function apply(ctx: Context, config: Config): void {
-  const hostUpdateDisabled = (config as { updater?: unknown; onlineUpdate?: unknown }).updater === false
-    || (config as { updater?: unknown; onlineUpdate?: unknown }).onlineUpdate === false
+  const hostUpdateDisabled = (config as { updater?: unknown }).updater === false
   const maxDepth = normalizeMaxDepth(config.maxDepth)
   const settingsNamespace = settingsNamespaceCompat('agency-agents')
   let settingsSource: () => AgencySettings = () => ({ enabled: [], customExperts: [] })
@@ -682,9 +681,12 @@ export function apply(ctx: Context, config: Config): void {
 
     const registerApiRoutes = () => {
       const checkAuthAndMutation = (request: any, response: any): boolean => {
-        const connection = (typeof ctx.get === 'function' ? ctx.get('connection') : undefined) as {
-          requestRejection?: (request: { headers: any }) => 401 | 403 | undefined
-        } | undefined
+        let connection: { requestRejection?: (request: { headers: any }) => 401 | 403 | undefined } | undefined
+        try {
+          connection = typeof ctx.get === 'function' ? ctx.get('connection') : undefined
+        } catch {
+          connection = undefined
+        }
         if (typeof connection?.requestRejection === 'function') {
           const rejection = connection.requestRejection(request)
           if (rejection !== undefined) {

@@ -171,7 +171,7 @@ dsh --profile web --dump-config
   - **接口安全拦截**：关闭后，服务端的更新路由对任何版本检查和安装请求均返回 `HTTP 403` 禁用状态，彻底杜绝在插件内安装未审核版本；
   - **宿主/平台级锁定**：面向精选插件索引（如 VibeDev）或企业安全合规环境，支持直接在 Cordis 配置文件（bundle patch）中声明锁定：
     ```yaml
-    updater: false # 或 onlineUpdate: false
+    updater: false
     ```
     配置生效后，更新器在启动时即被完全禁用，且更新开关处于锁定状态。
   - **更新模式**：发现新版后，只有检测到 DSH CLI 或 Desktop 更新服务时才可使用“自动更新”；其他环境会在弹窗中提供可复制、与当前 Profile 对应的手工更新命令。
