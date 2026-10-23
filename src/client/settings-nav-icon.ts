@@ -9,7 +9,6 @@
  */
 
 export const NAV_ICON_MARKER = 'data-aag-nav-icon'
-export const NAV_ICON_CLASS = 'aag-nav-icon-expert'
 export const NAV_ROW_SELECTOR = '[role="dialog"] nav button'
 
 /** 100% 对齐 dsh-codex-ui 官方的专家/用户专属矢量路径（viewBox: 0 0 16 16） */
@@ -22,7 +21,24 @@ const EXPERT_ICON_MASK = `url("data:image/svg+xml,${encodeURIComponent(
 )}")`
 
 const NAV_ICON_STYLE_ID = 'aag-settings-nav-icon-style'
-const NAV_ICON_CSS = `[${NAV_ICON_MARKER}="expert"]>svg{display:none!important}.${NAV_ICON_CLASS}{display:inline-block;flex:none;width:16px;height:16px;background:currentColor;-webkit-mask:${EXPERT_ICON_MASK} center/contain no-repeat;mask:${EXPERT_ICON_MASK} center/contain no-repeat}`
+const NAV_ICON_CSS = [
+  `[${NAV_ICON_MARKER}] > svg { display: none !important; }`,
+  `[${NAV_ICON_MARKER}]::before {`,
+  `  content: '';`,
+  `  flex: none;`,
+  `  width: 16px;`,
+  `  height: 16px;`,
+  `  background-color: currentColor;`,
+  `  -webkit-mask: ${EXPERT_ICON_MASK} center / contain no-repeat;`,
+  `  mask: ${EXPERT_ICON_MASK} center / contain no-repeat;`,
+  `  -webkit-mask-repeat: no-repeat;`,
+  `  mask-repeat: no-repeat;`,
+  `  -webkit-mask-position: center;`,
+  `  mask-position: center;`,
+  `  -webkit-mask-size: 16px 16px;`,
+  `  mask-size: 16px 16px;`,
+  `}`,
+].join('\n')
 
 /** 注入导航图标样式；重复安装时复用同一个 style 元素 */
 function ensureNavIconStyle(doc: Document): void {
@@ -41,34 +57,27 @@ export function isOwnNavRow(rowText: string | null | undefined, wantedLabel: str
 }
 
 /**
- * 用独立 mask 图标覆盖设置导航入口图标。
- * 宿主 svg 保持原样，避免与皮肤的内容级图标识别/隐藏规则互相覆盖。
+ * 100% 对齐 dshmarket：用纯属性标记控制 ::before 伪元素渲染图标。
+ * 不修改任何 DOM 节点，避免移动端列表项排版下与文字重叠冲突。
  */
 export function applySettingsNavIcon(button: Element, wantedLabel: () => string): boolean {
-  if (!isOwnNavRow(button.textContent, wantedLabel())) return false
-  // 只认宿主直接渲染在按钮里的图标；包裹型图标插入额外节点会打乱布局
-  if (!button.querySelector(':scope > svg')) return false
-  if (button.getAttribute(NAV_ICON_MARKER) === 'expert' && button.querySelector(`.${NAV_ICON_CLASS}`)) return false
-
-  const doc = button.ownerDocument
-  if (!doc) return false
-  button.setAttribute(NAV_ICON_MARKER, 'expert')
-  if (button.querySelector(`.${NAV_ICON_CLASS}`)) return false
-
-  const icon = doc.createElement('span')
-  icon.className = NAV_ICON_CLASS
-  icon.setAttribute('aria-hidden', 'true')
-  button.prepend(icon)
-  return true
+  const isOwn = isOwnNavRow(button.textContent, wantedLabel())
+  if (isOwn) {
+    if (button.getAttribute(NAV_ICON_MARKER) === '') return false
+    button.setAttribute(NAV_ICON_MARKER, '')
+    return true
+  }
+  if (button.hasAttribute(NAV_ICON_MARKER)) {
+    button.removeAttribute(NAV_ICON_MARKER)
+    return true
+  }
+  return false
 }
 
-/** 移除本插件添加的图标与标记，宿主 svg 内容始终未被动过 */
+/** 移除本插件添加的标记，宿主 svg 恢复显示 */
 export function restoreSettingsNavIcon(button: Element): boolean {
-  const marked = button.hasAttribute(NAV_ICON_MARKER)
-  const icon = button.querySelector(`.${NAV_ICON_CLASS}`)
-  if (!marked && !icon) return false
+  if (!button.hasAttribute(NAV_ICON_MARKER)) return false
   button.removeAttribute(NAV_ICON_MARKER)
-  icon?.remove()
   return true
 }
 
