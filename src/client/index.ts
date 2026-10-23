@@ -34,7 +34,7 @@ import { EXPERT_AVATAR_URLS } from './avatars.js'
 import { ROSTER } from './roster.js'
 import { zh, en, type AgencyKey } from './locales.js'
 import { TYPERT_REMOTE, type AgencyAgentsEnabledState, type AgencyAgentsPrompt } from './remote.js'
-import { observePluginUpdate, type PluginUpdateIconName } from './plugin-update-ui.js'
+import { observePluginUpdate, type PluginUpdateIconName, PLUGIN_UPDATE_TOGGLE_EVENT } from './plugin-update-ui.js'
 import { setupSidebarEntry } from './bundle-config.js'
 import { resolveApiUrl } from '../api-base.js'
 export { resolveApiUrl }
@@ -1480,7 +1480,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
     }),
     onOnlineUpdateChange: () => {
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('aag-update-toggle'))
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(PLUGIN_UPDATE_TOGGLE_EVENT))
     },
   })
   ctx.effect(() => () => { sidebarController.destroy() }, 'agency-agents: sidebar entry')

@@ -380,6 +380,8 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
     setOnlineUpdate,
     destroy: () => {
       listeners.clear()
+      sidebarSupported = false
+      mainSupported = false
       if (offRow) {
         try { offRow() } catch {}
         offRow = null

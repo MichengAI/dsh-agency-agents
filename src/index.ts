@@ -584,6 +584,7 @@ async function readJsonBody(request: { on(event: string, listener: (...args: unk
       received += buf.length
       if (received > MAX_SETTINGS_BODY_BYTES) {
         oversized = true
+        try { (request as any).destroy?.() } catch {}
         return
       }
       chunks.push(buf)
