@@ -24,10 +24,12 @@
 
 Choose a specialist in DSH for code review, design, operations, or research. All 331 experts are bundled and ready to use after installation.
 
-- **Find the right expert**: filter by category or search in **Settings → Experts**.
-- **Enable the roles you need**: keep the picker focused by enabling or disabling experts.
-- **Describe the task directly**: use `@` or the **Experts** picker, then write your complete request.
-- **Get one final delivery**: experts provide specialist analysis and the parent conversation brings the results together. Experts cannot summon further experts.
+- **Dual-surface access & wide layout**: Access management from **Settings → Experts** or enable the persistent primary sidebar entry to open in a dedicated 960px centered workspace view.
+- **Complete roster of 331 domain experts**: Covers 22 standard divisions from engineering, product, and design to marketing, sales, and legal, with instant prefix matching.
+- **Multi-agent team collaboration**: 5 high-impact built-in review teams and support for up to 100 custom teams with automated handoffs, parallel execution, or debate modes.
+- **Fast invocation in composer**: Summon specialists or teams via the `@` trigger or composer picker button, instantly inserting task examples without accidental sends.
+- **Enterprise control & security**: Toggle online updates or declare `updater: false` for strict platform lock; endpoints are guarded by token headers and content-type validation.
+- **Reverse proxy compatibility**: Automatic URL base resolution (`document.baseURI`) ensures seamless operation behind prefix-stripping reverse proxies.
 
 ## Expert teams
 
@@ -69,7 +71,7 @@ Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_t
 - Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
 - Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
 
-> This README describes version 1.2.10. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
+> This README describes version 1.2.11. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
 ## Screenshots
 
 The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.

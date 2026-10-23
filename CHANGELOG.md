@@ -4,6 +4,13 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.11 - 2026-10-23
+
+- **Add dedicated primary sidebar entry**: Support enabling a persistent sidebar entry via **Plugins → @michengai/dsh-agency-agents** config card (disabled by default). Clicking the sidebar entry opens the full 331-expert roster and team collaboration editor in a spacious 960px centered workspace view, removing viewport scrolling constraints in narrow settings dialogs. Safely reverts to default views when disabled.
+- **Support independent online update toggle and platform locking**: Provide an "Online Updates" switch (enabled by default) to dynamically show or hide update checks and version badges. Supports enterprise environments locking updates via Cordis static configuration (`updater: false`).
+- **Support reverse proxy deployment with base URI resolution**: Automatically resolve API and update endpoints against `document.baseURI`, preventing 404 errors when hosted behind prefix-stripping reverse proxies (e.g. `/app/dsh/`).
+- **Harden endpoint security and volatile settings configuration**: Register runtime settings as volatile fields for seamless host mutations, enforce client token verification and content-type checks on settings routes, and handle oversized payloads without connection hanging.
+
 ## 1.2.10 - 2026-10-22
 
 - Fall back to English when host locale preference is unselected: align host locale resolution with `@deepseek-ai/dsh-client-locale` by resolving `zh` and `zh-*` to Chinese and all other values (including unselected `undefined` or retrieval exceptions) to English, preventing Chinese expert names, tool descriptions, and durable subagent descriptor labels in English browser environments (PR #30).
