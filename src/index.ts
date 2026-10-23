@@ -573,37 +573,42 @@ function validateApiMutation(request: { method?: string; headers?: Record<string
   return undefined
 }
 
-async function readJsonBody(request: { on(event: string, listener: (...args: unknown[]) => void): void }): Promise<{ ok: boolean; status?: number; data?: any; error?: string }> {
+async function readJsonBody(request: { on(event: string, listener: (...args: unknown[]) => void): void; resume?: () => void }): Promise<{ ok: boolean; status?: number; data?: any; error?: string }> {
   return new Promise((resolvePromise) => {
+    let settled = false
+    const settle = (res: { ok: boolean; status?: number; data?: any; error?: string }) => {
+      if (settled) return
+      settled = true
+      resolvePromise(res)
+    }
+
     const chunks: Buffer[] = []
     let received = 0
-    let oversized = false
 
     request.on('data', (chunk: unknown) => {
+      if (settled) return
       const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))
       received += buf.length
       if (received > MAX_SETTINGS_BODY_BYTES) {
-        oversized = true
-        try { (request as any).destroy?.() } catch {}
+        try { request.resume?.() } catch {}
+        settle({ ok: false, status: 413, error: 'payload too large' })
         return
       }
       chunks.push(buf)
     })
 
     request.on('end', () => {
-      if (oversized) {
-        resolvePromise({ ok: false, status: 413, error: 'payload too large' })
-        return
-      }
+      if (settled) return
       try {
         const raw = Buffer.concat(chunks).toString('utf8')
-        resolvePromise({ ok: true, data: raw ? JSON.parse(raw) : {} })
+        settle({ ok: true, data: raw ? JSON.parse(raw) : {} })
       } catch {
-        resolvePromise({ ok: false, status: 400, error: 'invalid json' })
+        settle({ ok: false, status: 400, error: 'invalid json' })
       }
     })
 
-    request.on('error', () => resolvePromise({ ok: false, status: 400, error: 'read error' }))
+    request.on('error', () => settle({ ok: false, status: 400, error: 'read error' }))
+    request.on('close', () => settle({ ok: false, status: 400, error: 'connection closed' }))
   })
 }
 

@@ -70,10 +70,17 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
       'x-michengai-client': '1',
       'content-type': 'application/json',
     } : {}
+    const listeners: Record<string, Function[]> = {}
     return {
       method,
       headers: { ...defaultHeaders, ...headers },
+      resume: vi.fn(),
+      destroy: vi.fn(() => {
+        for (const cb of listeners['close'] ?? []) cb()
+      }),
       on: (event: string, cb: Function) => {
+        listeners[event] = listeners[event] ?? []
+        listeners[event].push(cb)
         if (event === 'data' && bodyStr) cb(Buffer.from(bodyStr))
         if (event === 'end') cb()
       },
@@ -199,5 +206,25 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
     await handler!(mockRequest('POST', { enabled: true }), postRes)
     expect(postRes.status).toBe(403)
     expect(postRes.json.ok).toBe(false)
+  })
+
+  it('请求流中途异常 close 时立即终止不挂起', async () => {
+    const { routes } = setupHarness()
+    const handler = routes.get('/api/michengai/dsh-agency-agents/sidebar-entry')
+    const listeners: Record<string, Function[]> = {}
+    const abortingReq = {
+      method: 'POST',
+      headers: { 'x-michengai-client': '1', 'content-type': 'application/json' },
+      on: (event: string, cb: Function) => {
+        listeners[event] = listeners[event] ?? []
+        listeners[event].push(cb)
+      },
+    }
+    const res = mockResponse()
+    const promise = handler!(abortingReq, res)
+    for (const cb of listeners['close'] ?? []) cb()
+    await promise
+    expect(res.status).toBe(400)
+    expect(res.json.error).toBe('connection closed')
   })
 })
