@@ -80,6 +80,9 @@ describe('setupSidebarEntry 侧边栏与更新开关生命周期', () => {
     expect(slotsMap.has('plugins.bundle.config')).toBe(true)
 
     // 开启侧边栏入口
+    if (injectCallbacks['main']) {
+      injectCallbacks['main']()
+    }
     if (injectCallbacks['sidebar.panellist']) {
       injectCallbacks['sidebar.panellist']()
     }
@@ -122,6 +125,68 @@ describe('setupSidebarEntry 侧边栏与更新开关生命周期', () => {
       expect.objectContaining({ method: 'POST' }),
     )
 
+    controller.destroy()
+  })
+
+  it('宿主重载或重建插槽时正确复位并重新注册', async () => {
+    const { ctx, slotsMap, injectCallbacks } = createMockCtx()
+    const callApi = vi.fn(async (path: string, options?: any) => {
+      if (path === '/api/michengai/dsh-agency-agents/sidebar-entry') {
+        if (options?.method === 'POST') return { ok: true, enabled: JSON.parse(options.body).enabled }
+        return { ok: true, enabled: true }
+      }
+      return { ok: true, enabled: true }
+    })
+
+    const controller = setupSidebarEntry(ctx as any, {
+      callApi,
+      renderPanel: () => null,
+      ns: 'agency',
+    })
+
+    // 启用状态下声明 main 和 sidebar.panellist
+    let cleanupMain: Function | undefined
+    let cleanupSidebar: Function | undefined
+    if (injectCallbacks['main']) cleanupMain = injectCallbacks['main']()
+    if (injectCallbacks['sidebar.panellist']) cleanupSidebar = injectCallbacks['sidebar.panellist']()
+
+    await vi.waitFor(() => expect(controller.isEnabled()).toBe(true))
+    expect(slotsMap.has('sidebar.panellist')).toBe(true)
+    expect(slotsMap.has('main')).toBe(true)
+
+    // 宿主触发撤销（例如切 profile 或重载）
+    cleanupSidebar?.()
+    expect(slotsMap.has('sidebar.panellist')).toBe(false)
+
+    // 宿主重新声明 sidebar.panellist，验证入口正常恢复注册
+    injectCallbacks['sidebar.panellist']?.()
+    expect(slotsMap.has('sidebar.panellist')).toBe(true)
+
+    cleanupMain?.()
+    expect(slotsMap.has('main')).toBe(false)
+
+    controller.destroy()
+  })
+
+  it('更新开关切换保存成功后再次通知监听器', async () => {
+    const { ctx } = createMockCtx()
+    let notifyCount = 0
+    const callApi = vi.fn(async (_path: string, options?: any) => {
+      if (options?.method === 'POST') {
+        return { ok: true, enabled: JSON.parse(options.body).enabled }
+      }
+      return { ok: true, enabled: true }
+    })
+
+    const controller = setupSidebarEntry(ctx as any, {
+      callApi,
+      renderPanel: () => null,
+      ns: 'agency',
+      onOnlineUpdateChange: () => { notifyCount += 1 },
+    })
+
+    await controller.setOnlineUpdate(false)
+    expect(notifyCount).toBeGreaterThanOrEqual(2) // 乐观更新 + 成功保存后通知
     controller.destroy()
   })
 })

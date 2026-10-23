@@ -1455,7 +1455,10 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
 
   const callApi = async (path: string, options?: RequestInit): Promise<any> => {
     const url = resolveApiUrl(path)
-    const res = await fetch(url, options)
+    const headers = Object.assign({
+      'x-michengai-client': '1',
+    }, options?.headers)
+    const res = await fetch(url, { ...options, headers })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     return res.json()
   }
@@ -1482,28 +1485,16 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   })
   ctx.effect(() => () => { sidebarController.destroy() }, 'agency-agents: sidebar entry')
 
-  ctx.effect(() => {
-    const cleanup = observePluginUpdate({
-      endpoint: '/api/michengai/dsh-agency-agents/update',
-      packageName: '@michengai/dsh-agency-agents',
-      titleRowSelector: '.aag-title-row',
-      linksSelector: '.aag-settings-links',
-      zhName: '专家',
-      enName: 'Experts',
-      createIcon: createPluginUpdateIcon,
-      isEnabled: () => sidebarController.isOnlineUpdateEnabled(),
-    })
-    const onToggle = () => {
-      window.requestAnimationFrame(() => {
-        window.dispatchEvent(new Event('resize'))
-      })
-    }
-    window.addEventListener('aag-update-toggle', onToggle)
-    return () => {
-      window.removeEventListener('aag-update-toggle', onToggle)
-      cleanup()
-    }
-  }, 'agency-agents: plugin update ui')
+  ctx.effect(() => observePluginUpdate({
+    endpoint: '/api/michengai/dsh-agency-agents/update',
+    packageName: '@michengai/dsh-agency-agents',
+    titleRowSelector: '.aag-title-row',
+    linksSelector: '.aag-settings-links',
+    zhName: '专家',
+    enName: 'Experts',
+    createIcon: createPluginUpdateIcon,
+    isEnabled: () => sidebarController.isOnlineUpdateEnabled(),
+  }), 'agency-agents: plugin update ui')
 
   let enabledForMentions: ReadonlySet<string> | undefined
   const lexiconListeners = new Set<() => void>()

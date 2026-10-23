@@ -18,6 +18,8 @@ export type PluginUpdateUiOptions = {
 
 export type PluginUpdateIconName = 'refresh' | 'download' | 'copy' | 'close'
 
+export const PLUGIN_UPDATE_TOGGLE_EVENT = 'aag-update-toggle'
+
 type UpdatePayload = {
   packageName: string
   currentVersion: string
@@ -290,9 +292,17 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
     frame = window.requestAnimationFrame(() => { frame = undefined; applyControls() })
   })
   observer.observe(document.body, { childList: true, subtree: true })
+  const onToggle = (): void => {
+    applyControls()
+    if (!options.isEnabled || options.isEnabled()) {
+      void load().catch(() => {})
+    }
+  }
+  if (typeof window !== 'undefined') window.addEventListener(PLUGIN_UPDATE_TOGGLE_EVENT, onToggle)
   applyControls()
   void load().catch(() => {})
   return () => {
+    if (typeof window !== 'undefined') window.removeEventListener(PLUGIN_UPDATE_TOGGLE_EVENT, onToggle)
     controller.abort(); observer.disconnect(); closeDialog(); unmountCheck()
     if (frame !== undefined) window.cancelAnimationFrame(frame)
     document.querySelectorAll(`[data-mpi-check="${options.packageName}"],.mpi-version[data-package="${options.packageName}"]`).forEach(node => node.remove())

@@ -248,7 +248,9 @@ for (const [key, field] of [
   ['customExperts', schema.array(schema.any()).default([])],
   ['customTeams', schema.array(schema.any()).default([])],
   ['enabledTeams', schema.array(schema.string()).default([])],
-] as const) {
+  ['sidebarEntry', schema.boolean()],
+  ['onlineUpdate', schema.boolean()],
+] as Array<readonly [string, z<any>]>) {
   const live = markLiveFields ? liveSchemaField(field) : undefined
   if (live !== undefined) configFields[key] = live
 }
@@ -553,21 +555,54 @@ export function resolveExpert<T extends { readonly slug: string; readonly name: 
   throw new Error(formatHost(locale, 'error.expertMissing', { query: String(query) }))
 }
 
-async function readJsonBody(request: { on(event: string, listener: (...args: unknown[]) => void): void }): Promise<unknown> {
-  return new Promise((resolvePromise, rejectPromise) => {
-    let body = ''
+const SETTINGS_API_HEADER = 'x-michengai-client'
+const MAX_SETTINGS_BODY_BYTES = 64 * 1024
+
+function header(request: { headers?: Record<string, string | string[] | undefined> }, name: string): string | undefined {
+  const value = request.headers?.[name]
+  return Array.isArray(value) ? value[0] : value
+}
+
+function validateApiMutation(request: { method?: string; headers?: Record<string, string | string[] | undefined> }): { status: number; error: string } | undefined {
+  const method = (request.method ?? 'GET').toUpperCase()
+  if (method === 'GET' || method === 'HEAD') return undefined
+  const marker = header(request, SETTINGS_API_HEADER)
+  if (marker !== '1') return { status: 403, error: 'forbidden mutation request' }
+  const contentType = header(request, 'content-type')?.split(';', 1)[0]?.trim().toLowerCase()
+  if (contentType !== 'application/json') return { status: 415, error: 'content-type must be application/json' }
+  return undefined
+}
+
+async function readJsonBody(request: { on(event: string, listener: (...args: unknown[]) => void): void }): Promise<{ ok: boolean; status?: number; data?: any; error?: string }> {
+  return new Promise((resolvePromise) => {
+    const chunks: Buffer[] = []
+    let received = 0
+    let oversized = false
+
     request.on('data', (chunk: unknown) => {
-      body += String(chunk)
-      if (body.length > 64 * 1024) rejectPromise(new Error('body too large'))
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))
+      received += buf.length
+      if (received > MAX_SETTINGS_BODY_BYTES) {
+        oversized = true
+        return
+      }
+      chunks.push(buf)
     })
+
     request.on('end', () => {
+      if (oversized) {
+        resolvePromise({ ok: false, status: 413, error: 'payload too large' })
+        return
+      }
       try {
-        resolvePromise(body ? JSON.parse(body) : {})
-      } catch (err) {
-        rejectPromise(err)
+        const raw = Buffer.concat(chunks).toString('utf8')
+        resolvePromise({ ok: true, data: raw ? JSON.parse(raw) : {} })
+      } catch {
+        resolvePromise({ ok: false, status: 400, error: 'invalid json' })
       }
     })
-    request.on('error', rejectPromise)
+
+    request.on('error', () => resolvePromise({ ok: false, status: 400, error: 'read error' }))
   })
 }
 
@@ -646,27 +681,49 @@ export function apply(ctx: Context, config: Config): void {
     else mountUpdater()
 
     const registerApiRoutes = () => {
+      const checkAuthAndMutation = (request: any, response: any): boolean => {
+        const connection = (typeof ctx.get === 'function' ? ctx.get('connection') : undefined) as {
+          requestRejection?: (request: { headers: any }) => 401 | 403 | undefined
+        } | undefined
+        if (typeof connection?.requestRejection === 'function') {
+          const rejection = connection.requestRejection(request)
+          if (rejection !== undefined) {
+            response.writeHead(rejection, { 'content-type': 'application/json; charset=utf-8' })
+            response.end(JSON.stringify({ ok: false, error: rejection === 401 ? '请先登录 DSH / Sign in to DSH first' : '宿主拒绝此请求 / Request forbidden' }))
+            return false
+          }
+        }
+        const mutationError = validateApiMutation(request)
+        if (mutationError !== undefined) {
+          response.writeHead(mutationError.status, { 'content-type': 'application/json; charset=utf-8' })
+          response.end(JSON.stringify({ ok: false, error: mutationError.error }))
+          return false
+        }
+        return true
+      }
+
       const disposers: Array<() => void> = []
       disposers.push(webServer.register!({
         kind: 'exact',
         path: '/api/michengai/dsh-agency-agents/sidebar-entry',
         handler: async (request: any, response: any) => {
+          if (!checkAuthAndMutation(request, response)) return
           if (request.method === 'GET' || request.method === 'HEAD') {
             response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
             response.end(request.method === 'HEAD' ? undefined : JSON.stringify({ ok: true, enabled: settingsSource().sidebarEntry === true }))
             return
           }
           if (request.method === 'POST') {
+            const bodyRes = await readJsonBody(request)
+            if (!bodyRes.ok || !bodyRes.data || typeof bodyRes.data.enabled !== 'boolean') {
+              response.writeHead(bodyRes.status ?? 400, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: false, error: bodyRes.error ?? 'enabled 必须是布尔值' }))
+              return
+            }
             try {
-              const body = await readJsonBody(request) as { enabled?: unknown }
-              if (!body || typeof body.enabled !== 'boolean') {
-                response.writeHead(400, { 'content-type': 'application/json; charset=utf-8' })
-                response.end(JSON.stringify({ ok: false, error: 'enabled 必须是布尔值' }))
-                return
-              }
-              await setAgencySidebarEntry(ctx, settingsNamespace, body.enabled)
+              await setAgencySidebarEntry(ctx, settingsNamespace, bodyRes.data.enabled)
               response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
-              response.end(JSON.stringify({ ok: true, enabled: body.enabled }))
+              response.end(JSON.stringify({ ok: true, enabled: bodyRes.data.enabled }))
             } catch (err) {
               response.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
               response.end(JSON.stringify({ ok: false, error: String(err) }))
@@ -682,6 +739,7 @@ export function apply(ctx: Context, config: Config): void {
         kind: 'exact',
         path: '/api/michengai/dsh-agency-agents/online-update',
         handler: async (request: any, response: any) => {
+          if (!checkAuthAndMutation(request, response)) return
           if (request.method === 'GET' || request.method === 'HEAD') {
             response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
             response.end(request.method === 'HEAD' ? undefined : JSON.stringify({
@@ -697,16 +755,16 @@ export function apply(ctx: Context, config: Config): void {
               response.end(JSON.stringify({ ok: false, error: '在线更新已被宿主配置锁定禁用' }))
               return
             }
+            const bodyRes = await readJsonBody(request)
+            if (!bodyRes.ok || !bodyRes.data || typeof bodyRes.data.enabled !== 'boolean') {
+              response.writeHead(bodyRes.status ?? 400, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: false, error: bodyRes.error ?? 'enabled 必须是布尔值' }))
+              return
+            }
             try {
-              const body = await readJsonBody(request) as { enabled?: unknown }
-              if (!body || typeof body.enabled !== 'boolean') {
-                response.writeHead(400, { 'content-type': 'application/json; charset=utf-8' })
-                response.end(JSON.stringify({ ok: false, error: 'enabled 必须是布尔值' }))
-                return
-              }
-              await setAgencyOnlineUpdate(ctx, settingsNamespace, body.enabled)
+              await setAgencyOnlineUpdate(ctx, settingsNamespace, bodyRes.data.enabled)
               response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
-              response.end(JSON.stringify({ ok: true, enabled: body.enabled }))
+              response.end(JSON.stringify({ ok: true, enabled: bodyRes.data.enabled }))
             } catch (err) {
               response.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
               response.end(JSON.stringify({ ok: false, error: String(err) }))

@@ -3,7 +3,7 @@ import { apply } from './index.js'
 import type { Context } from '@deepseek-ai/cordis'
 
 describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () => {
-  function setupHarness(configOverrides: Record<string, unknown> = {}) {
+  function setupHarness(configOverrides: Record<string, unknown> = {}, extraCtx: Record<string, unknown> = {}) {
     const routes = new Map<string, (req: any, res: any) => Promise<void>>()
     const mockSettingsState: Record<string, any> = {
       enabled: [],
@@ -36,7 +36,7 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
       reflect: { provide: vi.fn() },
       effect: vi.fn((fn: () => any) => fn()),
       on: vi.fn(),
-      get: vi.fn(),
+      get: vi.fn((name: string) => (extraCtx as any)[name]),
       logger: { warn: vi.fn() },
     } as unknown as Context
 
@@ -58,10 +58,15 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
     return { routes, mockSettingsState, mockCtx }
   }
 
-  function mockRequest(method: string, bodyObj?: unknown) {
-    const bodyStr = bodyObj !== undefined ? JSON.stringify(bodyObj) : ''
+  function mockRequest(method: string, bodyObj?: unknown, headers: Record<string, string> = {}) {
+    const bodyStr = bodyObj !== undefined ? (typeof bodyObj === 'string' ? bodyObj : JSON.stringify(bodyObj)) : ''
+    const defaultHeaders = method === 'POST' ? {
+      'x-michengai-client': '1',
+      'content-type': 'application/json',
+    } : {}
     return {
       method,
+      headers: { ...defaultHeaders, ...headers },
       on: (event: string, cb: Function) => {
         if (event === 'data' && bodyStr) cb(Buffer.from(bodyStr))
         if (event === 'end') cb()
@@ -138,6 +143,38 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
     const getRes2 = mockResponse()
     await handler!(mockRequest('GET'), getRes2)
     expect(getRes2.json).toEqual({ ok: true, enabled: false, locked: false })
+  })
+
+  it('安全防护：缺少 x-michengai-client 标记头应返回 403，非法 Content-Type 返回 415，超限返回 413', async () => {
+    const { routes } = setupHarness()
+    const handler = routes.get('/api/michengai/dsh-agency-agents/sidebar-entry')
+
+    // 缺少 x-michengai-client
+    const resNoHeader = mockResponse()
+    await handler!(mockRequest('POST', { enabled: true }, { 'x-michengai-client': '' }), resNoHeader)
+    expect(resNoHeader.status).toBe(403)
+
+    // 非法 Content-Type
+    const resBadType = mockResponse()
+    await handler!(mockRequest('POST', { enabled: true }, { 'content-type': 'text/plain' }), resBadType)
+    expect(resBadType.status).toBe(415)
+
+    // 超限 body (>64KB)
+    const bigPayload = 'x'.repeat(65 * 1024)
+    const resOversized = mockResponse()
+    await handler!(mockRequest('POST', bigPayload), resOversized)
+    expect(resOversized.status).toBe(413)
+  })
+
+  it('宿主 connection.requestRejection 认证拦截测试', async () => {
+    const { routes } = setupHarness({}, {
+      connection: { requestRejection: () => 401 },
+    })
+    const handler = routes.get('/api/michengai/dsh-agency-agents/sidebar-entry')
+
+    const res = mockResponse()
+    await handler!(mockRequest('GET'), res)
+    expect(res.status).toBe(401)
   })
 
   it('宿主配置锁定 updater: false 时，online-update 拒绝修改并返回 403', async () => {

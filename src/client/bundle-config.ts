@@ -174,6 +174,7 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
   const { callApi, renderPanel, ns } = options
   let sidebarEntryEnabled = false
   let sidebarSupported = false
+  let mainSupported = false
   let offPanel: (() => void) | null = null
   let offRow: (() => void) | null = null
   let epoch = 0
@@ -187,28 +188,32 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
   }
 
   const sync = () => {
-    if (sidebarSupported && sidebarEntryEnabled) {
-      if (!offPanel) {
-        const res = ctx.slots.register({
-          name: 'main',
-          key: SIDEBAR_PANEL_ID,
-          locale: ns,
-          inject: () => {
-            const extra = typeof options.injectProps === 'function' ? options.injectProps() : options.injectProps
-            return Object.assign({ t: ctx.locale?.bind ? ctx.locale.bind(ns) : undefined }, extra)
-          },
-        }, (ownerProps: any) => React.createElement('div', { className: 'aag-main-panel' }, renderPanel(ownerProps)))
-        offPanel = typeof res === 'function' ? res : () => {}
+    if (sidebarEntryEnabled) {
+      if (mainSupported && !offPanel) {
+        try {
+          const res = ctx.slots.register({
+            name: 'main',
+            key: SIDEBAR_PANEL_ID,
+            locale: ns,
+            inject: () => {
+              const extra = typeof options.injectProps === 'function' ? options.injectProps() : options.injectProps
+              return Object.assign({ t: ctx.locale?.bind ? ctx.locale.bind(ns) : undefined }, extra)
+            },
+          }, (ownerProps: any) => React.createElement('div', { className: 'aag-main-panel' }, renderPanel(ownerProps)))
+          offPanel = typeof res === 'function' ? res : () => {}
+        } catch {}
       }
-      if (!offRow) {
-        const res = ctx.slots.register({
-          name: 'sidebar.panellist',
-          id: SIDEBAR_PANEL_ID,
-          order: SIDEBAR_PANEL_ORDER,
-          label: () => ctx.locale.bind(ns)('settings.title'),
-          locale: ns,
-        }, (ownerProps: any) => React.createElement(AgencySidebarIcon, ownerProps))
-        offRow = typeof res === 'function' ? res : () => {}
+      if (sidebarSupported && !offRow) {
+        try {
+          const res = ctx.slots.register({
+            name: 'sidebar.panellist',
+            id: SIDEBAR_PANEL_ID,
+            order: SIDEBAR_PANEL_ORDER,
+            label: () => ctx.locale.bind(ns)('settings.title'),
+            locale: ns,
+          }, (ownerProps: any) => React.createElement(AgencySidebarIcon, ownerProps))
+          offRow = typeof res === 'function' ? res : () => {}
+        } catch {}
       }
     } else {
       if (layoutService?.panelInfo && typeof layoutService.selectPanel === 'function') {
@@ -237,7 +242,7 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
     try {
       await callApi('/api/michengai/dsh-agency-agents/sidebar-entry', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'x-michengai-client': '1' },
         body: JSON.stringify({ enabled: next }),
       })
       return next
@@ -266,7 +271,7 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
     try {
       await callApi('/api/michengai/dsh-agency-agents/online-update', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'x-michengai-client': '1' },
         body: JSON.stringify({ enabled: next }),
       })
       if (currentEpoch === updateEpoch && typeof options.onOnlineUpdateChange === 'function') {
@@ -316,10 +321,33 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
     })
   }
 
-  ctx.slots.inject('sidebar.panellist', () => {
+  if (typeof ctx.slots.inject === 'function') {
+    ctx.slots.inject('main', () => {
+      mainSupported = true
+      sync()
+      return () => {
+        mainSupported = false
+        if (offPanel) {
+          try { offPanel() } catch {}
+          offPanel = null
+        }
+      }
+    })
+    ctx.slots.inject('sidebar.panellist', () => {
+      sidebarSupported = true
+      sync()
+      return () => {
+        sidebarSupported = false
+        if (offRow) {
+          try { offRow() } catch {}
+          offRow = null
+        }
+      }
+    })
+  } else {
+    mainSupported = true
     sidebarSupported = true
-    sync()
-  })
+  }
 
   ctx.slots.inject('plugins.bundle.config', () => {
     return ctx.slots.register({
