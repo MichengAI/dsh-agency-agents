@@ -35,6 +35,9 @@ import { ROSTER } from './roster.js'
 import { zh, en, type AgencyKey } from './locales.js'
 import { TYPERT_REMOTE, type AgencyAgentsEnabledState, type AgencyAgentsPrompt } from './remote.js'
 import { observePluginUpdate, type PluginUpdateIconName } from './plugin-update-ui.js'
+import { setupSidebarEntry } from './bundle-config.js'
+import { resolveApiUrl } from '../api-base.js'
+export { resolveApiUrl }
 import { DEFAULT_EXPERT_EMOJI, type CustomExpertInput, type CatalogSnapshot } from '../expert-contract.js'
 import { CustomExpertEditor, CustomDeleteDialog, CUSTOM_EDITOR_CSS } from './custom-editor.js'
 import { acceptEnabled, acceptCatalog, catalogState, refreshCatalog, subscribeCatalog } from './catalog.js'
@@ -562,9 +565,19 @@ export const CARD_SETTINGS_CSS = `
 @container (max-width:430px){.aag-card-body{grid-template-columns:40px minmax(0,1fr);column-gap:10px}.aag-expert-avatar{width:40px;height:40px}.aag-card-name{font-size:16px;line-height:22px}}
 `
 
+const BUNDLE_CONFIG_CSS = `
+.aag-bundle-card{display:flex;flex-direction:column;gap:12px;padding:4px 0}
+.aag-bundle-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid var(--dsw-alias-border-l3,rgba(128,128,128,0.15))}
+.aag-bundle-row:last-child{border-bottom:none}
+.aag-bundle-label-box{display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-width:0}
+.aag-bundle-title{font-size:13px;font-weight:500;color:var(--dsw-alias-label-primary,#ffffff);line-height:18px}
+.aag-bundle-desc{font-size:12px;color:var(--dsw-alias-label-tertiary,#8c8c8c);line-height:16px}
+.aag-main-panel{max-width:960px;margin:0 auto;width:100%;box-sizing:border-box;padding:24px 16px}
+`
+
 import { PLUGIN_UI_CSS } from './plugin-ui.js'
 
-export const CSS = PLUGIN_UI_CSS + TEAM_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS + DISCOVERY_CSS
+export const CSS = PLUGIN_UI_CSS + TEAM_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS + DISCOVERY_CSS + BUNDLE_CONFIG_CSS
   + MENU_NAME_OVERRIDE + `{${EXPERT_MENU_NAME_STYLE}}`
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
@@ -1429,15 +1442,6 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   // 注册双语词条；t 为稳定引用（调用时读取当前 locale），locale 切换由
   // framework 以 (namespace, revision) 重新派生注入的 t 并触发重渲染。
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'agency-agents: dictionaries')
-  ctx.effect(() => observePluginUpdate({
-    endpoint: '/api/michengai/dsh-agency-agents/update',
-    packageName: '@michengai/dsh-agency-agents',
-    titleRowSelector: '.aag-title-row',
-    linksSelector: '.aag-settings-links',
-    zhName: '专家',
-    enName: 'Experts',
-    createIcon: createPluginUpdateIcon,
-  }), 'agency-agents: plugin update ui')
   const t = ctx.locale.bind(NS)
   const getActive = (): 'zh' | 'en' => ctx.locale.getSnapshot().active === 'en' ? 'en' : 'zh'
   installSettingsNavIcon(ctx)
@@ -1448,6 +1452,58 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   const disposeRemote = await ctx.remote.$mount(TYPERT_REMOTE)
   const remote = ctx.get('remote.agencyAgents') as AgencyAgentsRemoteApi | undefined
   if (remote === undefined) throw new Error(teamText(getActive(), 'agency-agents Remote 挂载后不可用'))
+
+  const callApi = async (path: string, options?: RequestInit): Promise<any> => {
+    const url = resolveApiUrl(path)
+    const res = await fetch(url, options)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return res.json()
+  }
+
+  const sidebarController = setupSidebarEntry(ctx, {
+    callApi,
+    renderPanel: (ownerProps: any) => React.createElement(AgencySettingsPanel, {
+      ...ownerProps,
+      remote,
+      getActive,
+      onEnabledChange: updateEnabledForMentions,
+      prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
+    }),
+    ns: NS,
+    injectProps: () => ({
+      remote,
+      getActive,
+      onEnabledChange: updateEnabledForMentions,
+      prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
+    }),
+    onOnlineUpdateChange: () => {
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('aag-update-toggle'))
+    },
+  })
+  ctx.effect(() => () => { sidebarController.destroy() }, 'agency-agents: sidebar entry')
+
+  ctx.effect(() => {
+    const cleanup = observePluginUpdate({
+      endpoint: '/api/michengai/dsh-agency-agents/update',
+      packageName: '@michengai/dsh-agency-agents',
+      titleRowSelector: '.aag-title-row',
+      linksSelector: '.aag-settings-links',
+      zhName: '专家',
+      enName: 'Experts',
+      createIcon: createPluginUpdateIcon,
+      isEnabled: () => sidebarController.isOnlineUpdateEnabled(),
+    })
+    const onToggle = () => {
+      window.requestAnimationFrame(() => {
+        window.dispatchEvent(new Event('resize'))
+      })
+    }
+    window.addEventListener('aag-update-toggle', onToggle)
+    return () => {
+      window.removeEventListener('aag-update-toggle', onToggle)
+      cleanup()
+    }
+  }, 'agency-agents: plugin update ui')
 
   let enabledForMentions: ReadonlySet<string> | undefined
   const lexiconListeners = new Set<() => void>()
@@ -1667,5 +1723,8 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     }
   }, 'agency-agents: @ menu sources')
 
-  return () => { void disposeRemote() }
+  return () => {
+    sidebarController.destroy()
+    void disposeRemote()
+  }
 }

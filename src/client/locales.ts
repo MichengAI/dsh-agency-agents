@@ -71,6 +71,13 @@ export const zh = {
   'division.support': ZH_DIVISION.support,
   'division.supply-chain': ZH_DIVISION['supply-chain'],
   'division.testing': ZH_DIVISION.testing,
+  'bundle.sidebar.title': '侧边栏入口',
+  'bundle.sidebar.desc': '在宿主左侧导航栏显示专家团队常驻入口，并在主工作区以 960px 完整面板展开。',
+  'bundle.sidebar.toggle': '开启侧边栏入口',
+  'bundle.update.title': '在线更新',
+  'bundle.update.desc': '允许在线检查并安装专家团队的新版本。',
+  'bundle.update.toggle': '允许在线更新',
+  'bundle.update.locked': '已由宿主配置锁定',
 } satisfies Record<string, string>
 
 /** agency 命名空间词条 key 联合。 */
@@ -141,4 +148,11 @@ export const en = {
   'division.support': EN_DIVISION.support,
   'division.supply-chain': EN_DIVISION['supply-chain'],
   'division.testing': EN_DIVISION.testing,
+  'bundle.sidebar.title': 'Sidebar Entry',
+  'bundle.sidebar.desc': 'Display a persistent Agency Experts entry in the primary sidebar and open in full 960px workspace view.',
+  'bundle.sidebar.toggle': 'Enable sidebar entry',
+  'bundle.update.title': 'Online Updates',
+  'bundle.update.desc': 'Allow checking and installing new versions online.',
+  'bundle.update.toggle': 'Allow online updates',
+  'bundle.update.locked': 'Locked by host configuration',
 } satisfies Record<AgencyKey, string>

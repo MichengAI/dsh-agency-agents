@@ -8,6 +8,7 @@ export const TEAM_EN = {
   '更新进程退出码 {0}。': 'The update process exited with code {0}.',
   '更新暂不可用。': 'Updates are temporarily unavailable.',
   '更新失败，请查看服务端日志。': 'The update failed. Check the server logs.',
+  '在线更新已被禁用。': 'Online updates have been disabled.',
   '已拒绝非本机同源更新请求。': 'Update request rejected: a local same-origin request is required.',
   '当前插件正在更新，请稍候。': 'This plugin is being updated. Please wait.',
   '暂时无法获取最新版本。': 'The latest version is temporarily unavailable.',

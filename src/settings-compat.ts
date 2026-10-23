@@ -120,12 +120,18 @@ export function readAgencySettings(config: object, locale: 'zh' | 'en' = 'zh'): 
     customExperts?: unknown
     customTeams?: unknown
     enabledTeams?: unknown
+    sidebarEntry?: unknown
+    onlineUpdate?: unknown
   }
+  const rawSidebar = unwrapLive(record.sidebarEntry)
+  const rawUpdate = unwrapLive(record.onlineUpdate)
   const value: AgencySettings = {
     enabled: stringList(unwrapLive(record.enabled)),
     customExperts: objectList(unwrapLive(record.customExperts)) as AgencySettings['customExperts'],
     customTeams: objectList(unwrapLive(record.customTeams)) as AgencySettings['customTeams'],
     enabledTeams: stringList(unwrapLive(record.enabledTeams)),
+    sidebarEntry: typeof rawSidebar === 'boolean' ? rawSidebar : undefined,
+    onlineUpdate: typeof rawUpdate === 'boolean' ? rawUpdate : undefined,
   }
   validateAgencySettings(value, locale)
   try {
@@ -256,4 +262,32 @@ export async function recoverImportedAgencySettings(
       { op: 'set', path: ['enabledTeams'], value: section.enabledTeams ?? [] },
     ], revision)
   })
+}
+
+export async function setAgencySidebarEntry(ctx: Context, namespace: string, enabled: boolean): Promise<boolean> {
+  if (typeof enabled !== 'boolean') throw new TypeError('enabled must be a boolean')
+  const settings = (ctx as { settings?: LiveSettingsWriter }).settings
+  const revision = settings?.describe?.().find((item) => item.ns === namespace)?.revision
+  await writeLiveSettings(ctx, async () => {
+    if (typeof settings?.mutate === 'function') {
+      await settings.mutate(namespace, [{ op: 'set', path: ['sidebarEntry'], value: enabled }], revision)
+    } else if (typeof settings?.update === 'function') {
+      await settings.update(namespace, { sidebarEntry: enabled }, revision)
+    }
+  })
+  return enabled
+}
+
+export async function setAgencyOnlineUpdate(ctx: Context, namespace: string, enabled: boolean): Promise<boolean> {
+  if (typeof enabled !== 'boolean') throw new TypeError('enabled must be a boolean')
+  const settings = (ctx as { settings?: LiveSettingsWriter }).settings
+  const revision = settings?.describe?.().find((item) => item.ns === namespace)?.revision
+  await writeLiveSettings(ctx, async () => {
+    if (typeof settings?.mutate === 'function') {
+      await settings.mutate(namespace, [{ op: 'set', path: ['onlineUpdate'], value: enabled }], revision)
+    } else if (typeof settings?.update === 'function') {
+      await settings.update(namespace, { onlineUpdate: enabled }, revision)
+    }
+  })
+  return enabled
 }

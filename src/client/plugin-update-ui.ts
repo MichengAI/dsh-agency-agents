@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { Button as PrimitiveButton } from '@deepseek-ai/dsh-client-ui-primitives'
 import { Button, Modal, documentUiLocale } from './plugin-ui.js'
 import { useEscapeLayer } from './escape-layer.js'
+import { resolveApiUrl } from '../api-base.js'
 
 export type PluginUpdateUiOptions = {
   readonly endpoint: string
@@ -12,6 +13,7 @@ export type PluginUpdateUiOptions = {
   readonly zhName: string
   readonly enName: string
   readonly createIcon: (name: PluginUpdateIconName) => HTMLElement
+  readonly isEnabled?: () => boolean
 }
 
 export type PluginUpdateIconName = 'refresh' | 'download' | 'copy' | 'close'
@@ -79,7 +81,8 @@ function validPayload(value: unknown): value is UpdatePayload {
 
 async function requestStatus(endpoint: string, method: 'GET' | 'POST', signal?: AbortSignal): Promise<UpdatePayload> {
   const signalOption = signal === undefined ? {} : { signal }
-  const response = await fetch(endpoint, method === 'GET' ? { cache: 'no-store', ...signalOption } : {
+  const url = resolveApiUrl(endpoint)
+  const response = await fetch(url, method === 'GET' ? { cache: 'no-store', ...signalOption } : {
     method: 'POST', headers: { 'content-type': 'application/json', [UPDATE_HEADER]: '1' }, body: '{}', ...signalOption,
   })
   const value = await response.json() as UpdatePayload & { error?: unknown }
@@ -207,6 +210,26 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
     const row = document.querySelector<HTMLElement>(options.titleRowSelector)
     if (row === null) return
     const heading = row.querySelector<HTMLElement>('h1,h2')
+    const links = row.querySelector<HTMLElement>(options.linksSelector)
+
+    if (options.isEnabled && !options.isEnabled()) {
+      if (dialogRoot !== undefined) closeDialog()
+      if (links !== null) {
+        const existing = links.querySelector<HTMLElement>(`[data-mpi-check="${options.packageName}"]`)
+        if (existing !== null) {
+          unmountCheck()
+          existing.remove()
+        }
+      }
+      if (heading !== null) {
+        const version = heading.querySelector<HTMLElement>(`.mpi-version[data-package="${options.packageName}"]`)
+        if (version !== null) {
+          version.remove()
+        }
+      }
+      return
+    }
+
     if (heading !== null && payload !== undefined) {
       let version = heading.querySelector<HTMLElement>(`.mpi-version[data-package="${options.packageName}"]`)
       if (version === null) {
@@ -219,7 +242,6 @@ export function observePluginUpdate(options: PluginUpdateUiOptions): () => void 
       if (version.textContent !== versionLabel) version.textContent = versionLabel
     }
     if (buttonHost !== undefined && !buttonHost.isConnected) unmountCheck()
-    const links = row.querySelector<HTMLElement>(options.linksSelector)
     if (links === null) return
     const existing = links.querySelector<HTMLElement>(`[data-mpi-check="${options.packageName}"]`)
     if (existing !== null) {

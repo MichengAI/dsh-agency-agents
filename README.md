@@ -146,10 +146,35 @@ dsh --profile web --dump-config
 To pin a release, replace `@latest` with a version such as `@1.0.1`.
 
 The configuration output should contain `agency-agents` and `agency-agents-remote`. Restart DSH Web and hard-refresh the browser. Do not copy client files manually: the Settings page needs the mounted Remote service.
+- **Reverse proxy deployment**: Supports hosting DSH behind prefix-stripping reverse proxies (e.g. `/app/dsh/`). API and update endpoints automatically resolve against the page base URI (`document.baseURI`), preventing 404 errors caused by lost prefix segments.
 
-## Updates
+## Plugin Configuration & Toggles
 
-The settings title shows the installed version and a **Check for updates** button. When a newer release is available, **Update automatically** runs only when the DSH CLI or Desktop update service is available; otherwise, the dialog provides a profile-specific manual command to copy and run.
+The plugin follows standard DSH bundle configuration conventions. Options are located at:
+> **Sidebar → Plugins → Click `@michengai/dsh-agency-agents`** (the host's `plugins.bundle.config` slot).
+
+Two native switches are available:
+
+### 1. Sidebar Entry (`sidebarEntry`)
+- **Default**: Disabled (`false`)
+- **Description**: Displays a persistent **Agency Experts** navigation icon in the host's left primary sidebar.
+- **Effect**:
+  - When enabled, clicking the sidebar icon opens the expert and team management page directly in the primary workspace with a **960px centered container** (matching host plugin manager conventions). This eliminates vertical scrolling constraints in narrow settings dialogs;
+  - When disabled, unregisters the sidebar entry cleanly (and resets active panel gracefully if currently viewing the panel, preventing blank views);
+  - The standard **Settings → Experts** view remains active either way, and state is synchronized live across both entry points.
+
+### 2. Online Updates (`onlineUpdate` / `updater`)
+- **Default**: Enabled (`true`)
+- **Description**: Controls whether the plugin checks for and installs updates from npm.
+- **Effect**:
+  - **Dynamic UI Sync**: Disabling the toggle hides the **Check for updates** button and version badge in the header immediately without requiring a full page reload;
+  - **Endpoint Guard**: When disabled, the update API route returns `HTTP 403` for all check and install requests, preventing unreviewed updates;
+  - **Host / Platform Lock**: For curated plugin indexes (such as VibeDev) or restricted enterprise environments, this can be locked directly via Cordis configuration (bundle patch) without needing UI interaction:
+    ```yaml
+    updater: false # or onlineUpdate: false
+    ```
+    Once configured, the built-in updater is disabled at startup and the update action stays hidden.
+  - **Update Modes**: When a newer release is available, **Update automatically** runs only when the DSH CLI or Desktop update service is available; otherwise, the dialog provides a profile-specific manual command to copy and run.
 
 ## Usage
 

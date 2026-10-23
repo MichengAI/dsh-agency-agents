@@ -46,7 +46,7 @@ import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { createHostLocaleReader, formatHost, localizedExpertDescription, localizedExpertName, matchDivision, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
-import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
+import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat, setAgencySidebarEntry, setAgencyOnlineUpdate } from './settings-compat.js'
 import { registerPluginUpdater } from './plugin-updater.js'
 import { AGENCY_LIBRARY_SERVICE, createExpertLibrary, type AgencySettings } from './expert-library.js'
 
@@ -201,6 +201,9 @@ export interface Config {
   divisions: string[]
   /** 可选的正整数绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
   maxDepth?: number
+  updater?: boolean
+  onlineUpdate?: boolean
+  sidebarEntry?: boolean
 }
 
 /** 未在配置中显式提供 `root` 时，先读取该环境变量，再使用随包发布的智能体目录。 */
@@ -236,6 +239,9 @@ const configFields: Record<string, unknown> = {
   divisions: schema.array(schema.string()).default(DEFAULT_DIVISIONS),
   // schemastery 没有 .optional()：未调用 .required() 的字段本身即可选，缺省不参与校验
   maxDepth: schema.natural().min(1),
+  updater: schema.boolean(),
+  onlineUpdate: schema.boolean(),
+  sidebarEntry: schema.boolean(),
 }
 for (const [key, field] of [
   ['enabled', schema.array(schema.string()).default([])],
@@ -547,16 +553,27 @@ export function resolveExpert<T extends { readonly slug: string; readonly name: 
   throw new Error(formatHost(locale, 'error.expertMissing', { query: String(query) }))
 }
 
-export function apply(ctx: Context, config: Config): void {
-  if (typeof (ctx as Context & { webServer?: { register?: unknown } }).webServer?.register === 'function') {
-    const mountUpdater = () => registerPluginUpdater(ctx, {
-      endpoint: '/api/michengai/dsh-agency-agents/update',
-      packageName: '@michengai/dsh-agency-agents',
-      manifestUrl: new URL('../package.json', import.meta.url),
+async function readJsonBody(request: { on(event: string, listener: (...args: unknown[]) => void): void }): Promise<unknown> {
+  return new Promise((resolvePromise, rejectPromise) => {
+    let body = ''
+    request.on('data', (chunk: unknown) => {
+      body += String(chunk)
+      if (body.length > 64 * 1024) rejectPromise(new Error('body too large'))
     })
-    if (typeof ctx.effect === 'function') ctx.effect(mountUpdater, 'agency-agents: plugin updater')
-    else mountUpdater()
-  }
+    request.on('end', () => {
+      try {
+        resolvePromise(body ? JSON.parse(body) : {})
+      } catch (err) {
+        rejectPromise(err)
+      }
+    })
+    request.on('error', rejectPromise)
+  })
+}
+
+export function apply(ctx: Context, config: Config): void {
+  const hostUpdateDisabled = (config as { updater?: unknown; onlineUpdate?: unknown }).updater === false
+    || (config as { updater?: unknown; onlineUpdate?: unknown }).onlineUpdate === false
   const maxDepth = normalizeMaxDepth(config.maxDepth)
   const settingsNamespace = settingsNamespaceCompat('agency-agents')
   let settingsSource: () => AgencySettings = () => ({ enabled: [], customExperts: [] })
@@ -616,6 +633,98 @@ export function apply(ctx: Context, config: Config): void {
   }
   settingsSource = () => readAgencySettings(config, activeLocale())
   retryCleanup()
+
+  const webServer = (ctx as Context & { webServer?: { register?: (route: any) => () => void } }).webServer
+  if (typeof webServer?.register === 'function') {
+    const mountUpdater = () => registerPluginUpdater(ctx, {
+      endpoint: '/api/michengai/dsh-agency-agents/update',
+      packageName: '@michengai/dsh-agency-agents',
+      manifestUrl: new URL('../package.json', import.meta.url),
+      isEnabled: async () => !hostUpdateDisabled && settingsSource().onlineUpdate !== false,
+    })
+    if (typeof ctx.effect === 'function') ctx.effect(mountUpdater, 'agency-agents: plugin updater')
+    else mountUpdater()
+
+    const registerApiRoutes = () => {
+      const disposers: Array<() => void> = []
+      disposers.push(webServer.register!({
+        kind: 'exact',
+        path: '/api/michengai/dsh-agency-agents/sidebar-entry',
+        handler: async (request: any, response: any) => {
+          if (request.method === 'GET' || request.method === 'HEAD') {
+            response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
+            response.end(request.method === 'HEAD' ? undefined : JSON.stringify({ ok: true, enabled: settingsSource().sidebarEntry === true }))
+            return
+          }
+          if (request.method === 'POST') {
+            try {
+              const body = await readJsonBody(request) as { enabled?: unknown }
+              if (!body || typeof body.enabled !== 'boolean') {
+                response.writeHead(400, { 'content-type': 'application/json; charset=utf-8' })
+                response.end(JSON.stringify({ ok: false, error: 'enabled 必须是布尔值' }))
+                return
+              }
+              await setAgencySidebarEntry(ctx, settingsNamespace, body.enabled)
+              response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: true, enabled: body.enabled }))
+            } catch (err) {
+              response.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: false, error: String(err) }))
+            }
+            return
+          }
+          response.writeHead(405, { allow: 'GET, HEAD, POST' })
+          response.end()
+        },
+      }))
+
+      disposers.push(webServer.register!({
+        kind: 'exact',
+        path: '/api/michengai/dsh-agency-agents/online-update',
+        handler: async (request: any, response: any) => {
+          if (request.method === 'GET' || request.method === 'HEAD') {
+            response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
+            response.end(request.method === 'HEAD' ? undefined : JSON.stringify({
+              ok: true,
+              enabled: !hostUpdateDisabled && settingsSource().onlineUpdate !== false,
+              locked: hostUpdateDisabled,
+            }))
+            return
+          }
+          if (request.method === 'POST') {
+            if (hostUpdateDisabled) {
+              response.writeHead(403, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: false, error: '在线更新已被宿主配置锁定禁用' }))
+              return
+            }
+            try {
+              const body = await readJsonBody(request) as { enabled?: unknown }
+              if (!body || typeof body.enabled !== 'boolean') {
+                response.writeHead(400, { 'content-type': 'application/json; charset=utf-8' })
+                response.end(JSON.stringify({ ok: false, error: 'enabled 必须是布尔值' }))
+                return
+              }
+              await setAgencyOnlineUpdate(ctx, settingsNamespace, body.enabled)
+              response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: true, enabled: body.enabled }))
+            } catch (err) {
+              response.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: false, error: String(err) }))
+            }
+            return
+          }
+          response.writeHead(405, { allow: 'GET, HEAD, POST' })
+          response.end()
+        },
+      }))
+
+      return () => {
+        for (const dispose of disposers) dispose()
+      }
+    }
+    if (typeof ctx.effect === 'function') ctx.effect(registerApiRoutes, 'agency-agents: bundle config routes')
+    else registerApiRoutes()
+  }
   const settingsApi = ctx.settings as { configure?: (policy: { auto?: boolean }, owner?: unknown) => () => void }
   const fiber = (ctx as { fiber?: object }).fiber
   if (typeof ctx.effect === 'function' && fiber !== undefined && typeof settingsApi.configure === 'function') {

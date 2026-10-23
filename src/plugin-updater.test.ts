@@ -154,3 +154,26 @@ it('查询版本期间拒绝第二次更新，失败后允许重试', async () =
     expect(runPlugin).toHaveBeenCalledTimes(1)
   } finally { vi.unstubAllGlobals() }
 })
+
+it('isEnabled 返回 false 时拦截 GET 与 POST 请求并返回 403', async () => {
+  let handler!: (request: unknown, response: unknown) => Promise<void>
+  const ctx = {
+    get: () => undefined,
+    webServer: { register: (route: { handler: typeof handler }) => { handler = route.handler; return () => {} } },
+    logger: { warn: vi.fn() },
+  } as unknown as Context
+  registerPluginUpdater(ctx, {
+    endpoint: '/test-disabled',
+    packageName: 'test-package',
+    manifestUrl: new URL('../package.json', import.meta.url),
+    isEnabled: () => false,
+  })
+  const response = () => ({ writeHead: vi.fn(), end: vi.fn() })
+  const getRes = response()
+  await handler({ method: 'GET' }, getRes)
+  expect(getRes.writeHead).toHaveBeenCalledWith(403, expect.any(Object))
+
+  const postRes = response()
+  await handler({ method: 'POST', headers: { [PLUGIN_UPDATE_HEADER]: '1' } }, postRes)
+  expect(postRes.writeHead).toHaveBeenCalledWith(403, expect.any(Object))
+})

@@ -61,6 +61,9 @@ interface Config {
   divisions: string[];
   /** 可选的正整数绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
   maxDepth?: number;
+  updater?: boolean;
+  onlineUpdate?: boolean;
+  sidebarEntry?: boolean;
 }
 declare const AGENCY_PERSONA_SERVICE = "agencyAgentsPersona";
 /** 仅当宿主 schemastery 提供 volatile() 时，把字段标成可实时更新。插件自己的新版本不能代替宿主判断。 */

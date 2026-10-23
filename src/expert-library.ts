@@ -8,7 +8,14 @@ import { CUSTOM_EXPERT_LIMIT, CUSTOM_EXPERT_SLUG, customError, customExpertInput
 import { ZH_DIVISION } from './names.js'
 
 export const AGENCY_LIBRARY_SERVICE = 'agencyAgentsLibrary'
-export interface AgencySettings { enabled: string[]; customExperts?: CustomExpert[]; customTeams?: ExpertTeam[]; enabledTeams?: string[] }
+export interface AgencySettings {
+  enabled: string[]
+  customExperts?: CustomExpert[]
+  customTeams?: ExpertTeam[]
+  enabledTeams?: string[]
+  sidebarEntry?: boolean
+  onlineUpdate?: boolean
+}
 
 /** 兼容只有 enabled 的旧配置；内容与启用状态在同一 namespace 原子持久化。 */
 export const agencySettingsSchema = schema.object({
@@ -16,6 +23,8 @@ export const agencySettingsSchema = schema.object({
   customExperts: schema.array(schema.any()).default([]),
   customTeams: schema.array(schema.any()).default([]),
   enabledTeams: schema.array(schema.string()).default([]),
+  sidebarEntry: schema.boolean(),
+  onlineUpdate: schema.boolean(),
 })
 
 export function validateAgencySettings(value: AgencySettings, locale: 'zh' | 'en' = 'zh'): void {
