@@ -4,6 +4,10 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.12 - 2026-10-24
+
+- Support DeepSeek Harness `0.2.1-rc.3` while retaining all existing supported versions.
+
 ## 1.2.11 - 2026-10-23
 
 - **Add dedicated primary sidebar entry**: Support enabling a persistent sidebar entry via **Plugins → @michengai/dsh-agency-agents** config card (disabled by default). Clicking the sidebar entry opens the full 331-expert roster and team collaboration editor in a spacious 960px centered workspace view, removing viewport scrolling constraints in narrow settings dialogs. Safely reverts to default views when disabled.

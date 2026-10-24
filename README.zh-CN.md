@@ -15,7 +15,7 @@
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm 下载量](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH 支持至 0.2.1-rc.2](https://img.shields.io/badge/DSH-up%20to%200.2.1--rc.2-2563eb.svg)](#前置条件)
+  [![DSH 支持至 0.2.1-rc.3](https://img.shields.io/badge/DSH-up%20to%200.2.1--rc.3-2563eb.svg)](#前置条件)
 </div>
 
 > DSH Agency Agents 是社区维护的 DeepSeek Harness（DSH）插件，并非 DeepSeek AI 官方产品。
@@ -71,7 +71,7 @@
 - 团队配置保存在宿主 `agency-agents` 命名空间。编辑冲突保留草稿并提示核对最新配置；停用或删除团队不会停用专家，也不会删除历史会话。
 - 专家不得继续召唤专家或自动追加分析轮次。取消会停止未启动任务；已有结果和失败原因分别报告。
 
-> 本 README 描述 1.2.11。**这是破坏性升级：不再支持 DeepSeek Harness 0.1.x。** 在旧宿主上安装会被版本门拒绝。正式发行以 npm 和 GitHub Releases 为准。完整边界见[更新日志](CHANGELOG.zh-CN.md)。专家和专家团配置仍保留；回退 1.0.x 前先备份设置。
+> 本 README 描述 1.2.12。**这是破坏性升级：不再支持 DeepSeek Harness 0.1.x。** 在旧宿主上安装会被版本门拒绝。正式发行以 npm 和 GitHub Releases 为准。完整边界见[更新日志](CHANGELOG.zh-CN.md)。专家和专家团配置仍保留；回退 1.0.x 前先备份设置。
 ## 界面预览
 
 以下为 1.0.0 中文界面截图，专家与专家团共用同一个设置页面。
@@ -122,7 +122,7 @@ DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块�
 
 ## 安装
 
-**破坏性升级。** 1.2.0 只支持 DeepSeek Harness `0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-rc.1`、`0.2.1-rc.2`。`0.1.x` 和 `0.2.1-alpha.1` 到 `0.2.1-alpha.5` 安装或启用本版本会被版本门拒绝，插件不会运行。请先把宿主升到上面四个 RC 之一，再安装。专家和专家团配置仍保留，不需要重新录入。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装；后续宿主版本需另行验证兼容性。
+**破坏性升级。** 1.2.0 只支持 DeepSeek Harness `0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-rc.1`、`0.2.1-rc.2`、`0.2.1-rc.3`。`0.1.x` 和 `0.2.1-alpha.1` 到 `0.2.1-alpha.5` 安装或启用本版本会被版本门拒绝，插件不会运行。请先把宿主升到上面 RC 之一，再安装。专家和专家团配置仍保留，不需要重新录入。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装；后续宿主版本需另行验证兼容性。
 
 以下安装命令使用官方 npm 源。
 

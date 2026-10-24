@@ -15,7 +15,7 @@
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm downloads](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20downloads)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH supported through 0.2.1-rc.2](https://img.shields.io/badge/DSH-up%20to%200.2.1--rc.2-2563eb.svg)](#prerequisites)
+  [![DSH supported through 0.2.1-rc.3](https://img.shields.io/badge/DSH-up%20to%200.2.1--rc.3-2563eb.svg)](#prerequisites)
 </div>
 
 > DSH Agency Agents is a community-maintained DeepSeek Harness (DSH) plugin, not an official DeepSeek AI product.
@@ -71,7 +71,7 @@ Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_t
 - Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
 - Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
 
-> This README describes version 1.2.11. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
+> This README describes version 1.2.12. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
 ## Screenshots
 
 The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.
@@ -122,7 +122,7 @@ DSH `dsh.client.inject` controls browser module loading order. Missing graph ent
 
 ## Installation
 
-**Breaking upgrade.** 1.2.0 supports only DeepSeek Harness `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-rc.1`, and `0.2.1-rc.2`. Installing or enabling this version on a `0.1.x` host, or on `0.2.1-alpha.1` through `0.2.1-alpha.5`, is rejected by the version gate, and the plugin will not run. Upgrade the host to one of those four release candidates first. Expert and team settings are retained and do not need to be entered again. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
+**Breaking upgrade.** 1.2.0 supports only DeepSeek Harness `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-rc.1`, `0.2.1-rc.2`, and `0.2.1-rc.3`. Installing or enabling this version on a `0.1.x` host, or on `0.2.1-alpha.1` through `0.2.1-alpha.5`, is rejected by the version gate, and the plugin will not run. Upgrade the host to one of those release candidates first. Expert and team settings are retained and do not need to be entered again. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
 
 The installation commands below use the official npm registry.
 
