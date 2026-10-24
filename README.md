@@ -71,7 +71,7 @@ Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_t
 - Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
 - Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
 
-> This README describes version 1.2.12. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
+> This README describes version 1.2.13. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
 ## Screenshots
 
 The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.
@@ -122,7 +122,7 @@ DSH `dsh.client.inject` controls browser module loading order. Missing graph ent
 
 ## Installation
 
-**Breaking upgrade.** 1.2.0 supports only DeepSeek Harness `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-rc.1`, `0.2.1-rc.2`, and `0.2.1-rc.3`. Installing or enabling this version on a `0.1.x` host, or on `0.2.1-alpha.1` through `0.2.1-alpha.5`, is rejected by the version gate, and the plugin will not run. Upgrade the host to one of those release candidates first. Expert and team settings are retained and do not need to be entered again. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy. Future host versions require separate compatibility validation.
+Host compatibility: Full DeepSeek Harness `0.2.x` line (`>=0.2.0-rc.1 <0.3.0-0`), verified with `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-rc.1`, `0.2.1-rc.2`, and `0.2.1-rc.3`, and forwards-compatible with subsequent `0.2.x` releases, alphas, and RCs without requiring routine plugin version bumps. Legacy versions and breaking changes in the `0.3.0` generation are rejected by the version gate. Expert and team settings are retained and do not need to be entered again. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy.
 
 The installation commands below use the official npm registry.
 

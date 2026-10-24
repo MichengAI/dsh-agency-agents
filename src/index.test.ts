@@ -1386,8 +1386,9 @@ describe('专家库目标稿样式契约', () => {
 })
 
 describe('@ 菜单分组标题本地化', () => {
-  it("DSH peer 只枚举已验证的 0.2.x 宿主版本", () => {
-    const range = "0.2.0-rc.1 || 0.2.0-rc.2 || 0.2.1-rc.1 || 0.2.1-rc.2 || 0.2.1-rc.3";
+  it("DSH peer 与 engines 开放 0.2.x 宿主代际范围", () => {
+    const range = ">=0.2.0-rc.1 <0.3.0-0";
+    expect((PACKAGE_MANIFEST.engines as any)?.dsh).toBe(range);
     const peers = PACKAGE_MANIFEST.peerDependencies;
     expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
     expect(PACKAGE_MANIFEST.peerDependenciesMeta?.["@deepseek-ai/dsh"]?.optional).toBe(true);
@@ -1413,13 +1414,13 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 0.2.1-rc.2', () => {
+  it('DSH 开发依赖固定为 0.2.1-rc.3', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.2.1-rc.2')
+        expect(version).toBe('0.2.1-rc.3')
       }
     }
-    expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.1-rc.2')
+    expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.1-rc.3')
   })
 
   it('设置标题提供 GitHub 与问题反馈两个入口', () => {
