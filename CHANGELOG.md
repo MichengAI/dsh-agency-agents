@@ -4,6 +4,15 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.14 - 2026-10-26
+
+- **Native bulk action dropdown menu in Experts settings**: Introduce a compact native "Batch actions" dropdown menu in the filter bar (Issue #16), dynamically linked with source, category, status, and search filters:
+  - Support precise "Enable filtered (N) / Disable filtered (M)" for matching results, seamlessly transitioning to "Enable all (N) / Disable all" when unfiltered;
+  - Provide confirmation dialogs displaying affected expert counts and reversible operation notes;
+  - Adopt atomic execution scheduling and dynamic roster resolution (`performBulkCommit`) to completely eliminate silent overwrites caused by concurrent writes during confirmation dialog review.
+- **Restore vertical scrollbar in sidebar workspace panel**: Add full height and `overflow-y: auto` styling to `.aag-main-panel`, restoring the primary workspace vertical scrollbar and preventing card truncation at the bottom of the viewport.
+- **Optimize filter toolbar horizontal layout**: Compact wide action buttons into a native dropdown menu, reclaiming 140px+ of horizontal space and resolving search input compression collisions in compact settings dialogs.
+
 ## 1.2.13 - 2026-10-24
 
 - Upgrade host admission policy: Declare `engines.dsh: ">=0.2.0-rc.1 <0.3.0-0"` to support the entire DeepSeek Harness `0.2.x` line (including `0.2.0-rc.1` onwards, future alphas, RCs, and stable releases) without requiring routine plugin version bumps.
