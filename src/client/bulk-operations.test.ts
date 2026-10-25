@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
 import { bulkEnableTargets, bulkDisableTargets, resolveBulkNextEnabled, performBulkCommit, type BulkOperationPlan } from './index.js'
 import { zh, en } from './locales.js'
 import { BulkActionMenu } from './bulk-action-menu.js'
@@ -224,6 +223,51 @@ describe('performBulkCommit 生产执行调度器与并发安全契约', () => {
     expect(result).toBeNull()
     expect(optimisticCalled).toBe(false)
     expect(writeCalled).toBe(false)
+  })
+
+  it('状态源必须为动态获取最新名册的 getter (如 fresh)：若传入陈旧静态闭包快照则并发写入被漏掉', async () => {
+    let internalStore = {
+      revision: 1,
+      enabled: new Set(['expert-0']),
+      experts: [],
+    }
+    const dynamicFreshGetter = () => internalStore
+    const staleClosureSnapshot = internalStore
+    const staleClosureGetter = () => staleClosureSnapshot
+
+    const plan: BulkOperationPlan = {
+      type: 'enable',
+      targets: [{ slug: 'expert-1' }],
+    }
+
+    // 弹窗打开后，后台状态发生并发写入：
+    internalStore = {
+      revision: 2,
+      enabled: new Set(['expert-0', 'expert-concurrent']),
+      experts: [],
+    }
+
+    // 1. 若使用陈旧闭包快照 getter：
+    let staleSubmittedNext!: Set<string>
+    await performBulkCommit(staleClosureGetter, plan, {
+      onOptimistic: () => undefined,
+      write: async (next, revision) => {
+        staleSubmittedNext = next
+        return { revision, enabled: next, experts: [] }
+      },
+    })
+    expect(staleSubmittedNext.has('expert-concurrent')).toBe(false) // 证明静态闭包必定复现缺陷
+
+    // 2. 若使用动态 fresh getter（生产组件所采用的实现）：
+    let freshSubmittedNext!: Set<string>
+    await performBulkCommit(dynamicFreshGetter, plan, {
+      onOptimistic: () => undefined,
+      write: async (next, revision) => {
+        freshSubmittedNext = next
+        return { revision, enabled: next, experts: [] }
+      },
+    })
+    expect(freshSubmittedNext.has('expert-concurrent')).toBe(true) // 证明动态 getter 成功守护并发
   })
 
   it('差分证明：resolveBulkNextEnabled 基于最新基线计算，有效消除旧快照导致的并发写入丢失', () => {
