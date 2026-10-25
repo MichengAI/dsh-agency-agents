@@ -1,7 +1,7 @@
 import { Button, Input } from './plugin-ui.js'
 import * as primitives from '@deepseek-ai/dsh-client-ui-primitives'
 import { SegmentedControl, SegmentedTabs } from '@deepseek-ai/dsh-client-ui-primitives'
-import { LibraryCard } from './library-ui.js'
+import { LibraryCard, LibraryConfirm } from './library-ui.js'
 import { IconPlus } from './team-shared.js'
 import { Button as PrimitiveButton, type ButtonVariant } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { AgencyTeamsRemote } from './remote.js'
@@ -323,6 +323,41 @@ export function sortExpertsByOrder<T extends { readonly slug: string }>(
     const rightPosition = positions.get(right.slug) ?? Number.MAX_SAFE_INTEGER
     return leftPosition - rightPosition
   })
+}
+
+/** 批量启用指定目标中未启用且非冲突的专家，返回新的启用集合与受影响数量。 */
+export function bulkEnableTargets<T extends { readonly slug: string; readonly conflict?: boolean }>(
+  currentEnabled: ReadonlySet<string>,
+  targets: ReadonlyArray<T>,
+): { nextEnabled: Set<string>; affectedCount: number } {
+  const next = new Set(currentEnabled)
+  let affectedCount = 0
+  for (const target of targets) {
+    if (target.conflict) continue
+    if (!next.has(target.slug)) {
+      next.add(target.slug)
+      affectedCount++
+    }
+  }
+  return { nextEnabled: next, affectedCount }
+}
+
+/** 批量停用指定目标中的已启用专家，返回新的启用集合与受影响数量。 */
+export function bulkDisableTargets<T extends { readonly slug: string }>(
+  currentEnabled: ReadonlySet<string>,
+  targets: ReadonlyArray<T>,
+): { nextEnabled: Set<string>; affectedCount: number } {
+  const targetSlugs = new Set(targets.map((item) => item.slug))
+  const next = new Set<string>()
+  let affectedCount = 0
+  for (const slug of currentEnabled) {
+    if (targetSlugs.has(slug)) {
+      affectedCount++
+    } else {
+      next.add(slug)
+    }
+  }
+  return { nextEnabled: next, affectedCount }
 }
 
 /** 根据 slug 稳定分配复用头像；空头像池安全回退为第 0 项。 */
@@ -1137,6 +1172,13 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   const [editor, setEditor] = React.useState<{ expert?: CustomExpertInput; enabled: boolean; revision: number } | null>(null)
   const [deleting, setDeleting] = React.useState<ExpertView | null>(null)
   const [deleteError, setDeleteError] = React.useState<string | null>(null)
+  const [bulkConfirm, setBulkConfirm] = React.useState<{
+    mode: 'enable' | 'disable'
+    isFiltered: boolean
+    count: number
+    next: Set<string>
+  } | null>(null)
+  const [bulkError, setBulkError] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
 
   const accept = (catalog: CatalogSnapshot): void => {
@@ -1190,6 +1232,39 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
         const message = cause instanceof Error ? cause.message : String(cause)
         setDeleteError(message)
       }).finally(() => { saving.current = false; setIsSaving(false) })
+  }
+  const executeBulkAction = (): void => {
+    const current = fresh()
+    if (current === null || bulkConfirm === null || saving.current) return
+    saving.current = true
+    setIsSaving(true)
+    setBulkError(null)
+    const next = bulkConfirm.next
+    setState({ ...current, enabled: next })
+    props.onEnabledChange?.(next)
+    void writeEnabled(props.remote, next, current.revision)
+      .then((refreshed) => {
+        setState(refreshed)
+        setError(null)
+        props.onEnabledChange?.(refreshed.enabled)
+        setBulkConfirm(null)
+      })
+      .catch(async (err: unknown) => {
+        try {
+          const refreshed = await readEnabled(props.remote)
+          setState(refreshed)
+          props.onEnabledChange?.(refreshed.enabled)
+          setBulkError(writeErrorMessage(err, { refreshed: true, t: props.t }))
+        } catch {
+          setState(current)
+          props.onEnabledChange?.(current.enabled)
+          setBulkError(writeErrorMessage(err, { refreshed: false, t: props.t }))
+        }
+      })
+      .finally(() => {
+        saving.current = false
+        setIsSaving(false)
+      })
   }
 
   React.useEffect(() => {
@@ -1283,8 +1358,36 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     const enabledCount = state.enabled.size
     const total = state.experts.length
     if (state.experts.some(expert => expert.conflict)) nodes.push(React.createElement('div', { key: 'conflicts', className: 'aag-error', role: 'alert' }, props.t('custom.nameConflictHint')))
-    const hasFilter = normalizeExpertQuery(query) !== '' || division !== '' || status !== ''
+    const hasFilter = normalizeExpertQuery(query) !== '' || division !== '' || status !== '' || source !== 'all'
     const resetFilters = (): void => { setSource('all'); setQuery(''); setDivision(''); setStatus('') }
+    const { nextEnabled: bulkEnableNext, affectedCount: pendingEnableCount } = bulkEnableTargets(state.enabled, filtered)
+    const { nextEnabled: bulkDisableNext, affectedCount: pendingDisableCount } = bulkDisableTargets(state.enabled, filtered)
+    const handleBulkEnable = (): void => {
+      if (pendingEnableCount === 0 || isSaving) return
+      setBulkError(null)
+      setBulkConfirm({
+        mode: 'enable',
+        isFiltered: hasFilter,
+        count: pendingEnableCount,
+        next: bulkEnableNext,
+      })
+    }
+    const handleBulkDisable = (): void => {
+      if (pendingDisableCount === 0 || isSaving) return
+      setBulkError(null)
+      setBulkConfirm({
+        mode: 'disable',
+        isFiltered: hasFilter,
+        count: pendingDisableCount,
+        next: bulkDisableNext,
+      })
+    }
+    const enableButtonLabel = hasFilter
+      ? props.t('settings.bulk.enableFiltered', { count: pendingEnableCount })
+      : props.t('settings.bulk.enableAll', { count: pendingEnableCount })
+    const disableButtonLabel = hasFilter
+      ? props.t('settings.bulk.disableFiltered', { count: pendingDisableCount })
+      : props.t('settings.bulk.disableAll')
     if (!props.sharedHeader) nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
       React.createElement('div', { className: 'aag-title-row' },
         React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')),
@@ -1297,6 +1400,19 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           props.t('summary.enabledPrefix'),
           React.createElement('strong', null, enabledCount)))))
     const filterActions = React.createElement('div', { className: 'aag-filter-actions' },
+      React.createElement(Button, {
+        size: 'small',
+        disabled: isSaving || pendingEnableCount === 0,
+        title: enableButtonLabel,
+        onClick: handleBulkEnable,
+      }, enableButtonLabel),
+      React.createElement(Button, {
+        size: 'small',
+        danger: true,
+        disabled: isSaving || pendingDisableCount === 0,
+        title: disableButtonLabel,
+        onClick: handleBulkDisable,
+      }, disableButtonLabel),
       React.createElement(Button, {
         className: 'aag-icon-btn',
         size: 'small',
@@ -1395,6 +1511,24 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     }),
     openPrompt === null ? null : React.createElement(PromptDialog, {
       value: openPrompt, title: props.t('settings.promptTitle', { name: openPrompt.name }), closeLabel: props.t('settings.promptClose'), returnFocus: openPrompt.returnFocus, onClose: () => setOpenPrompt(null),
+    }),
+    bulkConfirm === null || state === null ? null : React.createElement(LibraryConfirm, {
+      title: props.t(
+        bulkConfirm.mode === 'enable'
+          ? (bulkConfirm.isFiltered ? 'settings.bulk.enableFilteredTitle' : 'settings.bulk.enableAllTitle')
+          : (bulkConfirm.isFiltered ? 'settings.bulk.disableFilteredTitle' : 'settings.bulk.disableAllTitle')
+      ),
+      description: props.t(
+        bulkConfirm.mode === 'enable' ? 'settings.bulk.enableConfirm' : 'settings.bulk.disableConfirm',
+        { count: bulkConfirm.count, enabled: state.enabled.size }
+      ),
+      danger: bulkConfirm.mode === 'disable',
+      confirmLabel: props.t('settings.bulk.confirm'),
+      cancelLabel: props.t('settings.bulk.cancel'),
+      busy: isSaving,
+      error: bulkError,
+      close: () => { if (!isSaving) setBulkConfirm(null) },
+      confirm: executeBulkAction,
     }))
 }
 
