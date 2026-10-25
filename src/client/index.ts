@@ -385,17 +385,22 @@ export function resolveBulkNextEnabled(
 }
 
 /**
- * 纯调度函数：在执行批量提交时原子获取最新状态并执行决议，提供具备真正差分证明力的行为契约。
+ * 纯调度函数：在执行批量提交时原子获取最新状态、计算最新集合、执行乐观更新并提交远程接口。
+ * 生产路径与测试均 100% 依赖此调度器，消除测试与生产脱节的死代码。
  */
 export async function performBulkCommit(
   getFreshState: () => EnabledState | null,
   plan: BulkOperationPlan,
-  write: (next: ReadonlySet<string>, revision: number) => Promise<EnabledState>,
+  handlers: {
+    onOptimistic(current: EnabledState, next: Set<string>): void
+    write(next: Set<string>, revision: number): Promise<EnabledState>
+  },
 ): Promise<EnabledState | null> {
   const current = getFreshState()
   if (current === null) return null
   const next = resolveBulkNextEnabled(current.enabled, plan)
-  return write(next, current.revision)
+  handlers.onOptimistic(current, next)
+  return handlers.write(next, current.revision)
 }
 
 /** 根据 slug 稳定分配复用头像；空头像池安全回退为第 0 项。 */
@@ -1274,16 +1279,23 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       }).finally(() => { saving.current = false; setIsSaving(false) })
   }
   const executeBulkAction = (): void => {
-    const current = fresh()
-    if (current === null || bulkConfirm === null || saving.current) return
-    const next = resolveBulkNextEnabled(current.enabled, bulkConfirm.plan)
+    if (bulkConfirm === null || saving.current) return
     saving.current = true
     setIsSaving(true)
     setBulkError(null)
-    setState({ ...current, enabled: next })
-    props.onEnabledChange?.(next)
-    void writeEnabled(props.remote, next, current.revision)
+    void performBulkCommit(
+      fresh,
+      bulkConfirm.plan,
+      {
+        onOptimistic: (current, next) => {
+          setState({ ...current, enabled: next })
+          props.onEnabledChange?.(next)
+        },
+        write: (next, revision) => writeEnabled(props.remote, next, revision),
+      },
+    )
       .then((refreshed) => {
+        if (refreshed === null) return
         setState(refreshed)
         setError(null)
         props.onEnabledChange?.(refreshed.enabled)
@@ -1296,8 +1308,11 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           props.onEnabledChange?.(refreshed.enabled)
           setBulkError(writeErrorMessage(err, { refreshed: true, t: props.t }))
         } catch {
-          setState(current)
-          props.onEnabledChange?.(current.enabled)
+          const current = fresh()
+          if (current !== null) {
+            setState(current)
+            props.onEnabledChange?.(current.enabled)
+          }
           setBulkError(writeErrorMessage(err, { refreshed: false, t: props.t }))
         }
       })

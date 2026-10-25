@@ -148,15 +148,82 @@ describe('BulkActionMenu 批量操作下拉菜单组件', () => {
   })
 })
 
-describe('并发写入安全与防静默覆盖机制 (差分验证与防退化)', () => {
-  it('组件代码防退化：bulkConfirm 状态严禁冻结 next 快照，且 executeBulkAction 必须基于 resolveBulkNextEnabled 动态计算', () => {
-    const clientIndex = readFileSync(new URL('./index.ts', import.meta.url), 'utf8')
-    // 1. 状态定义防退化：bulkConfirm 状态类型严禁包含 next 集合
-    expect(clientIndex).not.toMatch(/bulkConfirm[^{]*\{[^}]*next:\s*(Set|ReadonlySet)/s)
-    // 2. 调度赋值防退化：handleSelectBulkAction 严禁向 bulkConfirm 写入 next 字段
-    expect(clientIndex).not.toMatch(/setBulkConfirm\(\{[^}]*next:/s)
-    // 3. 执行时动态重算：executeBulkAction 必须调用 resolveBulkNextEnabled(current.enabled, bulkConfirm.plan)
-    expect(clientIndex).toMatch(/resolveBulkNextEnabled\(\s*current\.enabled\s*,\s*bulkConfirm\.plan\s*\)/)
+describe('performBulkCommit 生产执行调度器与并发安全契约', () => {
+  it('验证并发新写入在乐观更新与最终提交时均被完整保留，彻底消除静默覆盖', async () => {
+    const staleState = {
+      revision: 1,
+      enabled: new Set(['expert-0', 'expert-1']),
+      experts: [],
+    }
+    const plan: BulkOperationPlan = {
+      type: 'enable',
+      targets: [{ slug: 'expert-2' }, { slug: 'expert-3' }],
+    }
+
+    // 模拟弹窗停留期间，并发写入了 expert-concurrent，revision 升为 2
+    const concurrentLatestState = {
+      revision: 2,
+      enabled: new Set(['expert-0', 'expert-1', 'expert-concurrent']),
+      experts: [],
+    }
+
+    let optimisticNext!: Set<string>
+    let optimisticCurrentRevision!: number
+    let submittedNext!: Set<string>
+    let submittedRevision!: number
+
+    const result = await performBulkCommit(
+      () => concurrentLatestState,
+      plan,
+      {
+        onOptimistic: (current, next) => {
+          optimisticCurrentRevision = current.revision
+          optimisticNext = next
+        },
+        write: async (next, revision) => {
+          submittedNext = next
+          submittedRevision = revision
+          return { revision, enabled: next, experts: [] }
+        },
+      },
+    )
+
+    // 1. 乐观更新校验
+    expect(optimisticCurrentRevision).toBe(2)
+    expect(optimisticNext.has('expert-0')).toBe(true)
+    expect(optimisticNext.has('expert-2')).toBe(true)
+    expect(optimisticNext.has('expert-concurrent')).toBe(true)
+
+    // 2. 最终提交远程接口校验
+    expect(submittedRevision).toBe(2)
+    expect(submittedNext.has('expert-0')).toBe(true)
+    expect(submittedNext.has('expert-1')).toBe(true)
+    expect(submittedNext.has('expert-2')).toBe(true)
+    expect(submittedNext.has('expert-3')).toBe(true)
+    expect(submittedNext.has('expert-concurrent')).toBe(true)
+    expect(result?.revision).toBe(2)
+
+    // 3. 差分证据：若按旧实现向 write 交付打开弹窗时的旧快照，并发写入必定丢失
+    const simulatedOldSnapshotNext = resolveBulkNextEnabled(staleState.enabled, plan)
+    expect(simulatedOldSnapshotNext.has('expert-concurrent')).toBe(false)
+  })
+
+  it('当名册状态尚未就绪 (null) 时，调度器安全退出，不触发乐观更新与提交', async () => {
+    let optimisticCalled = false
+    let writeCalled = false
+
+    const result = await performBulkCommit(
+      () => null,
+      { type: 'disable-all' },
+      {
+        onOptimistic: () => { optimisticCalled = true },
+        write: async () => { writeCalled = true; return { revision: 1, enabled: new Set(), experts: [] } },
+      },
+    )
+
+    expect(result).toBeNull()
+    expect(optimisticCalled).toBe(false)
+    expect(writeCalled).toBe(false)
   })
 
   it('差分证明：resolveBulkNextEnabled 基于最新基线计算，有效消除旧快照导致的并发写入丢失', () => {
@@ -182,45 +249,6 @@ describe('并发写入安全与防静默覆盖机制 (差分验证与防退化)'
     expect(freshResolvedNext.has('expert-2')).toBe(true)
     expect(freshResolvedNext.has('expert-3')).toBe(true)
     expect(freshResolvedNext.has('expert-concurrent')).toBe(true)
-  })
-
-  it('performBulkCommit 调度行为差分测试：验证并发新写入被真实提交至远程接口，而不是被旧快照丢弃', async () => {
-    const staleState = {
-      revision: 1,
-      enabled: new Set(['expert-0', 'expert-1']),
-      experts: [],
-    }
-    const plan: BulkOperationPlan = {
-      type: 'enable',
-      targets: [{ slug: 'expert-2' }, { slug: 'expert-3' }],
-    }
-
-    const concurrentLatestState = {
-      revision: 2,
-      enabled: new Set(['expert-0', 'expert-1', 'expert-concurrent']),
-      experts: [],
-    }
-
-    let submittedNext!: ReadonlySet<string>
-    let submittedRevision!: number
-    const mockWrite = async (next: ReadonlySet<string>, revision: number) => {
-      submittedNext = next
-      submittedRevision = revision
-      return { revision, enabled: next, experts: [] }
-    }
-
-    await performBulkCommit(() => concurrentLatestState, plan, mockWrite)
-
-    expect(submittedRevision).toBe(2)
-    expect(submittedNext.has('expert-0')).toBe(true)
-    expect(submittedNext.has('expert-1')).toBe(true)
-    expect(submittedNext.has('expert-2')).toBe(true)
-    expect(submittedNext.has('expert-3')).toBe(true)
-    expect(submittedNext.has('expert-concurrent')).toBe(true)
-
-    // 差分对比证明：若按旧实现的调度逻辑提交打开弹窗时的旧快照，并发写入必定丢失
-    const simulatedStaleWriteNext = resolveBulkNextEnabled(staleState.enabled, plan)
-    expect(simulatedStaleWriteNext.has('expert-concurrent')).toBe(false)
   })
 
   it('resolveBulkNextEnabled 覆盖停用筛选与停用全部模式', () => {
