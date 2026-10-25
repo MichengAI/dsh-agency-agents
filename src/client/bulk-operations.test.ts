@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { bulkEnableTargets, bulkDisableTargets } from './index.js'
+import { readFileSync } from 'node:fs'
+import { bulkEnableTargets, bulkDisableTargets, resolveBulkNextEnabled, type BulkOperationPlan } from './index.js'
 import { zh, en } from './locales.js'
 import { BulkActionMenu } from './bulk-action-menu.js'
 import React from 'react'
@@ -147,41 +148,64 @@ describe('BulkActionMenu 批量操作下拉菜单组件', () => {
   })
 })
 
-describe('并发写入安全与防静默覆盖机制', () => {
-  it('打开弹窗后有并发新专家写入时，确认执行基于最新状态重算并保留并发写入', () => {
-    // 模拟打开弹窗时的初始状态 (revision 1)
-    const initialEnabled = new Set(['expert-0', 'expert-1'])
-    const targetsToEnable = [{ slug: 'expert-2' }, { slug: 'expert-3' }]
-
-    // 打开弹窗期间，其他窗口并发写入了 expert-concurrent (revision 2)
-    const concurrentLatestEnabled = new Set([...initialEnabled, 'expert-concurrent'])
-
-    // 执行阶段不使用快照 next，而是基于最新的 current.enabled 重算
-    const { nextEnabled, affectedCount } = bulkEnableTargets(concurrentLatestEnabled, targetsToEnable)
-
-    expect(affectedCount).toBe(2)
-    expect(nextEnabled.has('expert-0')).toBe(true)
-    expect(nextEnabled.has('expert-1')).toBe(true)
-    expect(nextEnabled.has('expert-2')).toBe(true)
-    expect(nextEnabled.has('expert-3')).toBe(true)
-    // 关键保证：并发写入的 expert-concurrent 被完整保留，绝不丢失！
-    expect(nextEnabled.has('expert-concurrent')).toBe(true)
+describe('并发写入安全与防静默覆盖机制 (差分验证与防退化)', () => {
+  it('组件代码防退化：bulkConfirm 状态严禁冻结 next 快照，且 executeBulkAction 必须基于 resolveBulkNextEnabled 动态计算', () => {
+    const clientIndex = readFileSync(new URL('./index.ts', import.meta.url), 'utf8')
+    // 1. 状态定义防退化：bulkConfirm 状态类型绝不能再包含 next: Set<string>
+    expect(clientIndex).not.toMatch(/bulkConfirm[^{]*\{[^}]*next:\s*Set/s)
+    // 2. 调度赋值防退化：handleSelectBulkAction 严禁向 bulkConfirm 写入 next 字段
+    expect(clientIndex).not.toMatch(/setBulkConfirm\(\{[^}]*next:\s*bulk/s)
+    // 3. 执行时动态重算：executeBulkAction 必须调用 resolveBulkNextEnabled(current.enabled, bulkConfirm)
+    expect(clientIndex).toMatch(/resolveBulkNextEnabled\(\s*current\.enabled\s*,\s*bulkConfirm\s*\)/)
   })
 
-  it('针对筛选停用时，执行阶段基于最新状态重算，并发启用的无关专家不被误停用', () => {
-    const initialEnabled = new Set(['expert-0', 'expert-filter-1', 'expert-filter-2'])
-    const filterTargets = [{ slug: 'expert-filter-1' }, { slug: 'expert-filter-2' }]
+  it('差分证明：resolveBulkNextEnabled 基于最新基线计算，有效消除旧快照导致的并发写入丢失', () => {
+    const staleSnapshotEnabled = new Set(['expert-0', 'expert-1'])
+    const plan: BulkOperationPlan = {
+      mode: 'enable',
+      isFiltered: true,
+      targets: [{ slug: 'expert-2' }, { slug: 'expert-3' }],
+    }
 
-    // 弹窗期间并发启用了 expert-concurrent
-    const concurrentLatestEnabled = new Set([...initialEnabled, 'expert-concurrent'])
+    // 假设像旧代码那样在打开弹窗时预先算好并冻结快照：
+    const staleFrozenNext = resolveBulkNextEnabled(staleSnapshotEnabled, plan)
 
-    const { nextEnabled, affectedCount } = bulkDisableTargets(concurrentLatestEnabled, filterTargets)
+    // 弹窗停留期间，其他窗口并发写入了 expert-concurrent：
+    const concurrentLatestEnabled = new Set([...staleSnapshotEnabled, 'expert-concurrent'])
 
-    expect(affectedCount).toBe(2)
-    expect(nextEnabled.has('expert-0')).toBe(true)
-    expect(nextEnabled.has('expert-filter-1')).toBe(false)
-    expect(nextEnabled.has('expert-filter-2')).toBe(false)
-    // 关键保证：并发写入的 expert-concurrent 完整保留！
-    expect(nextEnabled.has('expert-concurrent')).toBe(true)
+    // 差分对比 1：如果提交旧快照，并发写入必然丢失（证明旧 bug 存在）：
+    expect(staleFrozenNext.has('expert-concurrent')).toBe(false)
+
+    // 差分对比 2：通过修复后的动态重算，新结果完整保留了并发写入：
+    const freshResolvedNext = resolveBulkNextEnabled(concurrentLatestEnabled, plan)
+    expect(freshResolvedNext.has('expert-0')).toBe(true)
+    expect(freshResolvedNext.has('expert-1')).toBe(true)
+    expect(freshResolvedNext.has('expert-2')).toBe(true)
+    expect(freshResolvedNext.has('expert-3')).toBe(true)
+    expect(freshResolvedNext.has('expert-concurrent')).toBe(true)
+  })
+
+  it('resolveBulkNextEnabled 覆盖停用筛选与停用全部模式', () => {
+    const concurrentLatest = new Set(['expert-0', 'expert-f1', 'expert-f2', 'expert-other'])
+    // 停用筛选
+    const filterDisablePlan: BulkOperationPlan = {
+      mode: 'disable',
+      isFiltered: true,
+      targets: [{ slug: 'expert-f1' }, { slug: 'expert-f2' }],
+    }
+    const filterResult = resolveBulkNextEnabled(concurrentLatest, filterDisablePlan)
+    expect(filterResult.has('expert-0')).toBe(true)
+    expect(filterResult.has('expert-other')).toBe(true)
+    expect(filterResult.has('expert-f1')).toBe(false)
+    expect(filterResult.has('expert-f2')).toBe(false)
+
+    // 停用全部
+    const disableAllPlan: BulkOperationPlan = {
+      mode: 'disable',
+      isFiltered: false,
+      targets: [],
+    }
+    const disableAllResult = resolveBulkNextEnabled(concurrentLatest, disableAllPlan)
+    expect(disableAllResult.size).toBe(0)
   })
 })

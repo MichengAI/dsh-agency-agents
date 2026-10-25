@@ -361,6 +361,29 @@ export function bulkDisableTargets<T extends { readonly slug: string }>(
   return { nextEnabled: next, affectedCount }
 }
 
+export interface BulkOperationPlan {
+  readonly mode: 'enable' | 'disable'
+  readonly isFiltered: boolean
+  readonly targets: ReadonlyArray<{ readonly slug: string; readonly conflict?: boolean }>
+}
+
+/**
+ * 在确认执行时刻，根据执行时的最新名册状态动态计算提交集合。
+ * 彻底消除在弹窗打开时冻结全量快照导致并发写入被静默覆盖的缺陷。
+ */
+export function resolveBulkNextEnabled(
+  currentEnabled: ReadonlySet<string>,
+  plan: BulkOperationPlan,
+): Set<string> {
+  if (plan.mode === 'enable') {
+    return bulkEnableTargets(currentEnabled, plan.targets).nextEnabled
+  }
+  if (plan.isFiltered) {
+    return bulkDisableTargets(currentEnabled, plan.targets).nextEnabled
+  }
+  return new Set<string>()
+}
+
 /** 根据 slug 稳定分配复用头像；空头像池安全回退为第 0 项。 */
 export function expertAvatarIndex(slug: string, avatarCount: number): number {
   if (avatarCount <= 0) return 0
@@ -1239,14 +1262,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   const executeBulkAction = (): void => {
     const current = fresh()
     if (current === null || bulkConfirm === null || saving.current) return
-    let next: Set<string>
-    if (bulkConfirm.mode === 'enable') {
-      next = bulkEnableTargets(current.enabled, bulkConfirm.targets).nextEnabled
-    } else if (bulkConfirm.isFiltered) {
-      next = bulkDisableTargets(current.enabled, bulkConfirm.targets).nextEnabled
-    } else {
-      next = new Set<string>()
-    }
+    const next = resolveBulkNextEnabled(current.enabled, bulkConfirm)
     saving.current = true
     setIsSaving(true)
     setBulkError(null)
