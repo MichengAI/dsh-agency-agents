@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { bulkEnableTargets, bulkDisableTargets } from './index.js'
 import { zh, en } from './locales.js'
+import { BulkActionMenu } from './bulk-action-menu.js'
+import React from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 
 describe('批量启停逻辑 (bulkEnableTargets & bulkDisableTargets)', () => {
   const dummyExperts = [
@@ -54,6 +57,7 @@ describe('批量启停逻辑 (bulkEnableTargets & bulkDisableTargets)', () => {
 
 describe('批量操作多语言词条对齐', () => {
   const bulkKeys = [
+    'settings.bulk.menu',
     'settings.bulk.enableFiltered',
     'settings.bulk.disableFiltered',
     'settings.bulk.enableAll',
@@ -121,5 +125,24 @@ describe('331位专家全量批量处理性能与无冲突保证', () => {
     expect(disabledResult.affectedCount).toBe(331 - 7)
     expect(disabledResult.nextEnabled.size).toBe(0)
     expect(elapsedDisable).toBeLessThan(10)
+  })
+})
+
+describe('BulkActionMenu 批量操作下拉菜单组件', () => {
+  it('正确渲染批量操作触发按钮与原生结构', () => {
+    const html = renderToStaticMarkup(React.createElement(BulkActionMenu, {
+      label: '批量操作',
+      items: [
+        { id: 'enable-filtered', label: '启用筛选 (5)' },
+        { id: 'disable-filtered', label: '停用筛选 (2)' },
+        { id: 'sep', label: '', separator: true },
+        { id: 'disable-all', label: '停用全部', danger: true },
+      ],
+      onSelect: () => undefined,
+    }))
+    expect(html).toContain('批量操作')
+    expect(html).toContain('aag-menu-select-trigger')
+    expect(html).toContain('aag-bulk-trigger')
+    expect(html).toContain('aag-select-wrap')
   })
 })

@@ -16,6 +16,7 @@ import type { ExpertTeam } from '../team-contract.js'
 import { PromptDialog } from "./prompt-dialog.js";
 import React from 'react'
 import { CategorySelect } from './category-select.js'
+import { BulkActionMenu, type BulkActionMenuItem } from './bulk-action-menu.js'
 import { ExpertDiscovery, DISCOVERY_CSS } from './expert-discovery.js'
 import { expertTaskExample } from './task-examples.js'
 import type { Context as CordisClientContext } from '@deepseek-ai/cordis'
@@ -607,7 +608,8 @@ const BUNDLE_CONFIG_CSS = `
 .aag-bundle-label-box{display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-width:0}
 .aag-bundle-title{font-size:13px;font-weight:500;color:var(--dsw-alias-label-primary,#ffffff);line-height:18px}
 .aag-bundle-desc{font-size:12px;color:var(--dsw-alias-label-tertiary,#8c8c8c);line-height:16px}
-.aag-main-panel{max-width:960px;margin:0 auto;width:100%;box-sizing:border-box;padding:24px 16px}
+.aag-main-panel{box-sizing:border-box;height:100%;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px}
+.aag-main-panel>*{width:100%;max-width:960px}
 `
 
 import { PLUGIN_UI_CSS } from './plugin-ui.js'
@@ -1360,34 +1362,82 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     if (state.experts.some(expert => expert.conflict)) nodes.push(React.createElement('div', { key: 'conflicts', className: 'aag-error', role: 'alert' }, props.t('custom.nameConflictHint')))
     const hasFilter = normalizeExpertQuery(query) !== '' || division !== '' || status !== '' || source !== 'all'
     const resetFilters = (): void => { setSource('all'); setQuery(''); setDivision(''); setStatus('') }
-    const { nextEnabled: bulkEnableNext, affectedCount: pendingEnableCount } = bulkEnableTargets(state.enabled, filtered)
-    const { nextEnabled: bulkDisableNext, affectedCount: pendingDisableCount } = bulkDisableTargets(state.enabled, filtered)
-    const handleBulkEnable = (): void => {
-      if (pendingEnableCount === 0 || isSaving) return
+    const { nextEnabled: bulkEnableFilteredNext, affectedCount: pendingEnableFilteredCount } = bulkEnableTargets(state.enabled, filtered)
+    const { nextEnabled: bulkDisableFilteredNext, affectedCount: pendingDisableFilteredCount } = bulkDisableTargets(state.enabled, filtered)
+    const { nextEnabled: bulkEnableAllNext, affectedCount: pendingEnableAllCount } = bulkEnableTargets(state.enabled, state.experts)
+
+    const menuItems: BulkActionMenuItem[] = hasFilter
+      ? [
+          {
+            id: 'enable-filtered',
+            label: props.t('settings.bulk.enableFiltered', { count: pendingEnableFilteredCount }),
+            disabled: isSaving || pendingEnableFilteredCount === 0,
+          },
+          {
+            id: 'disable-filtered',
+            label: props.t('settings.bulk.disableFiltered', { count: pendingDisableFilteredCount }),
+            disabled: isSaving || pendingDisableFilteredCount === 0,
+          },
+          { id: 'sep', label: '', separator: true },
+          {
+            id: 'disable-all',
+            label: props.t('settings.bulk.disableAll'),
+            danger: true,
+            disabled: isSaving || state.enabled.size === 0,
+          },
+        ]
+      : [
+          {
+            id: 'enable-all',
+            label: props.t('settings.bulk.enableAll', { count: pendingEnableAllCount }),
+            disabled: isSaving || pendingEnableAllCount === 0,
+          },
+          {
+            id: 'disable-all',
+            label: props.t('settings.bulk.disableAll'),
+            danger: true,
+            disabled: isSaving || state.enabled.size === 0,
+          },
+        ]
+
+    const handleSelectBulkAction = (actionId: string): void => {
+      if (isSaving) return
       setBulkError(null)
-      setBulkConfirm({
-        mode: 'enable',
-        isFiltered: hasFilter,
-        count: pendingEnableCount,
-        next: bulkEnableNext,
-      })
+      if (actionId === 'enable-filtered') {
+        if (pendingEnableFilteredCount === 0) return
+        setBulkConfirm({
+          mode: 'enable',
+          isFiltered: true,
+          count: pendingEnableFilteredCount,
+          next: bulkEnableFilteredNext,
+        })
+      } else if (actionId === 'disable-filtered') {
+        if (pendingDisableFilteredCount === 0) return
+        setBulkConfirm({
+          mode: 'disable',
+          isFiltered: true,
+          count: pendingDisableFilteredCount,
+          next: bulkDisableFilteredNext,
+        })
+      } else if (actionId === 'enable-all') {
+        if (pendingEnableAllCount === 0) return
+        setBulkConfirm({
+          mode: 'enable',
+          isFiltered: false,
+          count: pendingEnableAllCount,
+          next: bulkEnableAllNext,
+        })
+      } else if (actionId === 'disable-all') {
+        if (state.enabled.size === 0) return
+        setBulkConfirm({
+          mode: 'disable',
+          isFiltered: false,
+          count: state.enabled.size,
+          next: new Set<string>(),
+        })
+      }
     }
-    const handleBulkDisable = (): void => {
-      if (pendingDisableCount === 0 || isSaving) return
-      setBulkError(null)
-      setBulkConfirm({
-        mode: 'disable',
-        isFiltered: hasFilter,
-        count: pendingDisableCount,
-        next: bulkDisableNext,
-      })
-    }
-    const enableButtonLabel = hasFilter
-      ? props.t('settings.bulk.enableFiltered', { count: pendingEnableCount })
-      : props.t('settings.bulk.enableAll', { count: pendingEnableCount })
-    const disableButtonLabel = hasFilter
-      ? props.t('settings.bulk.disableFiltered', { count: pendingDisableCount })
-      : props.t('settings.bulk.disableAll')
+
     if (!props.sharedHeader) nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
       React.createElement('div', { className: 'aag-title-row' },
         React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')),
@@ -1400,19 +1450,12 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           props.t('summary.enabledPrefix'),
           React.createElement('strong', null, enabledCount)))))
     const filterActions = React.createElement('div', { className: 'aag-filter-actions' },
-      React.createElement(Button, {
-        size: 'small',
-        disabled: isSaving || pendingEnableCount === 0,
-        title: enableButtonLabel,
-        onClick: handleBulkEnable,
-      }, enableButtonLabel),
-      React.createElement(Button, {
-        size: 'small',
-        danger: true,
-        disabled: isSaving || pendingDisableCount === 0,
-        title: disableButtonLabel,
-        onClick: handleBulkDisable,
-      }, disableButtonLabel),
+      React.createElement(BulkActionMenu, {
+        label: props.t('settings.bulk.menu'),
+        disabled: isSaving || (hasFilter ? (pendingEnableFilteredCount === 0 && pendingDisableFilteredCount === 0 && state.enabled.size === 0) : (pendingEnableAllCount === 0 && state.enabled.size === 0)),
+        items: menuItems,
+        onSelect: handleSelectBulkAction,
+      }),
       React.createElement(Button, {
         className: 'aag-icon-btn',
         size: 'small',
