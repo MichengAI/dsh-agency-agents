@@ -1178,7 +1178,8 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     mode: 'enable' | 'disable'
     isFiltered: boolean
     count: number
-    next: Set<string>
+    initialEnabledCount: number
+    targets: ReadonlyArray<{ readonly slug: string; readonly conflict?: boolean }>
   } | null>(null)
   const [bulkError, setBulkError] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
@@ -1238,10 +1239,17 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   const executeBulkAction = (): void => {
     const current = fresh()
     if (current === null || bulkConfirm === null || saving.current) return
+    let next: Set<string>
+    if (bulkConfirm.mode === 'enable') {
+      next = bulkEnableTargets(current.enabled, bulkConfirm.targets).nextEnabled
+    } else if (bulkConfirm.isFiltered) {
+      next = bulkDisableTargets(current.enabled, bulkConfirm.targets).nextEnabled
+    } else {
+      next = new Set<string>()
+    }
     saving.current = true
     setIsSaving(true)
     setBulkError(null)
-    const next = bulkConfirm.next
     setState({ ...current, enabled: next })
     props.onEnabledChange?.(next)
     void writeEnabled(props.remote, next, current.revision)
@@ -1409,7 +1417,8 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           mode: 'enable',
           isFiltered: true,
           count: pendingEnableFilteredCount,
-          next: bulkEnableFilteredNext,
+          initialEnabledCount: state.enabled.size,
+          targets: filtered,
         })
       } else if (actionId === 'disable-filtered') {
         if (pendingDisableFilteredCount === 0) return
@@ -1417,7 +1426,8 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           mode: 'disable',
           isFiltered: true,
           count: pendingDisableFilteredCount,
-          next: bulkDisableFilteredNext,
+          initialEnabledCount: state.enabled.size,
+          targets: filtered,
         })
       } else if (actionId === 'enable-all') {
         if (pendingEnableAllCount === 0) return
@@ -1425,7 +1435,8 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           mode: 'enable',
           isFiltered: false,
           count: pendingEnableAllCount,
-          next: bulkEnableAllNext,
+          initialEnabledCount: state.enabled.size,
+          targets: state.experts,
         })
       } else if (actionId === 'disable-all') {
         if (state.enabled.size === 0) return
@@ -1433,7 +1444,8 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           mode: 'disable',
           isFiltered: false,
           count: state.enabled.size,
-          next: new Set<string>(),
+          initialEnabledCount: state.enabled.size,
+          targets: [],
         })
       }
     }
@@ -1563,7 +1575,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       ),
       description: props.t(
         bulkConfirm.mode === 'enable' ? 'settings.bulk.enableConfirm' : 'settings.bulk.disableConfirm',
-        { count: bulkConfirm.count, enabled: state.enabled.size }
+        { count: bulkConfirm.count, enabled: bulkConfirm.initialEnabledCount }
       ),
       danger: bulkConfirm.mode === 'disable',
       confirmLabel: props.t('settings.bulk.confirm'),

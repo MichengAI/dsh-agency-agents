@@ -146,3 +146,42 @@ describe('BulkActionMenu 批量操作下拉菜单组件', () => {
     expect(html).toContain('aag-select-wrap')
   })
 })
+
+describe('并发写入安全与防静默覆盖机制', () => {
+  it('打开弹窗后有并发新专家写入时，确认执行基于最新状态重算并保留并发写入', () => {
+    // 模拟打开弹窗时的初始状态 (revision 1)
+    const initialEnabled = new Set(['expert-0', 'expert-1'])
+    const targetsToEnable = [{ slug: 'expert-2' }, { slug: 'expert-3' }]
+
+    // 打开弹窗期间，其他窗口并发写入了 expert-concurrent (revision 2)
+    const concurrentLatestEnabled = new Set([...initialEnabled, 'expert-concurrent'])
+
+    // 执行阶段不使用快照 next，而是基于最新的 current.enabled 重算
+    const { nextEnabled, affectedCount } = bulkEnableTargets(concurrentLatestEnabled, targetsToEnable)
+
+    expect(affectedCount).toBe(2)
+    expect(nextEnabled.has('expert-0')).toBe(true)
+    expect(nextEnabled.has('expert-1')).toBe(true)
+    expect(nextEnabled.has('expert-2')).toBe(true)
+    expect(nextEnabled.has('expert-3')).toBe(true)
+    // 关键保证：并发写入的 expert-concurrent 被完整保留，绝不丢失！
+    expect(nextEnabled.has('expert-concurrent')).toBe(true)
+  })
+
+  it('针对筛选停用时，执行阶段基于最新状态重算，并发启用的无关专家不被误停用', () => {
+    const initialEnabled = new Set(['expert-0', 'expert-filter-1', 'expert-filter-2'])
+    const filterTargets = [{ slug: 'expert-filter-1' }, { slug: 'expert-filter-2' }]
+
+    // 弹窗期间并发启用了 expert-concurrent
+    const concurrentLatestEnabled = new Set([...initialEnabled, 'expert-concurrent'])
+
+    const { nextEnabled, affectedCount } = bulkDisableTargets(concurrentLatestEnabled, filterTargets)
+
+    expect(affectedCount).toBe(2)
+    expect(nextEnabled.has('expert-0')).toBe(true)
+    expect(nextEnabled.has('expert-filter-1')).toBe(false)
+    expect(nextEnabled.has('expert-filter-2')).toBe(false)
+    // 关键保证：并发写入的 expert-concurrent 完整保留！
+    expect(nextEnabled.has('expert-concurrent')).toBe(true)
+  })
+})
