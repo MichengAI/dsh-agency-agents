@@ -41,15 +41,19 @@ export function Menu(props: any) {
   return React.createElement('div', { className: 'dsh-primitives-menu' },
     props.anchor,
     props.open ? React.createElement('div', { role: 'menu' },
-      props.items?.map((item: any) =>
-        React.createElement('button', {
+      props.items?.map((item: any) => {
+        if (item.type === 'separator') {
+          return React.createElement('hr', { key: item.id, className: 'dsh-menu-separator' })
+        }
+        return React.createElement('button', {
           key: item.id,
           type: 'button',
           role: 'menuitem',
+          disabled: item.disabled,
           'aria-checked': props.selectedId === item.id,
-          onClick: () => props.onSelect?.(item.id),
+          onClick: () => { if (!item.disabled) props.onSelect?.(item.id) },
         }, item.label)
-      )
+      })
     ) : null
   )
 }

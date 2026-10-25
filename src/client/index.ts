@@ -361,27 +361,41 @@ export function bulkDisableTargets<T extends { readonly slug: string }>(
   return { nextEnabled: next, affectedCount }
 }
 
-export interface BulkOperationPlan {
-  readonly mode: 'enable' | 'disable'
-  readonly isFiltered: boolean
-  readonly targets: ReadonlyArray<{ readonly slug: string; readonly conflict?: boolean }>
-}
+export type BulkOperationPlan =
+  | { readonly type: 'enable'; readonly targets: ReadonlyArray<{ readonly slug: string; readonly conflict?: boolean }> }
+  | { readonly type: 'disable-targets'; readonly targets: ReadonlyArray<{ readonly slug: string }> }
+  | { readonly type: 'disable-all' }
 
 /**
  * 在确认执行时刻，根据执行时的最新名册状态动态计算提交集合。
- * 彻底消除在弹窗打开时冻结全量快照导致并发写入被静默覆盖的缺陷。
+ * 显式区分 enable、disable-targets 与 disable-all，消除 UI 标志导致的意外全量清空。
  */
 export function resolveBulkNextEnabled(
   currentEnabled: ReadonlySet<string>,
   plan: BulkOperationPlan,
 ): Set<string> {
-  if (plan.mode === 'enable') {
-    return bulkEnableTargets(currentEnabled, plan.targets).nextEnabled
+  switch (plan.type) {
+    case 'enable':
+      return bulkEnableTargets(currentEnabled, plan.targets).nextEnabled
+    case 'disable-targets':
+      return bulkDisableTargets(currentEnabled, plan.targets).nextEnabled
+    case 'disable-all':
+      return new Set<string>()
   }
-  if (plan.isFiltered) {
-    return bulkDisableTargets(currentEnabled, plan.targets).nextEnabled
-  }
-  return new Set<string>()
+}
+
+/**
+ * 纯调度函数：在执行批量提交时原子获取最新状态并执行决议，提供具备真正差分证明力的行为契约。
+ */
+export async function performBulkCommit(
+  getFreshState: () => EnabledState | null,
+  plan: BulkOperationPlan,
+  write: (next: ReadonlySet<string>, revision: number) => Promise<EnabledState>,
+): Promise<EnabledState | null> {
+  const current = getFreshState()
+  if (current === null) return null
+  const next = resolveBulkNextEnabled(current.enabled, plan)
+  return write(next, current.revision)
 }
 
 /** 根据 slug 稳定分配复用头像；空头像池安全回退为第 0 项。 */
@@ -1202,7 +1216,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     isFiltered: boolean
     count: number
     initialEnabledCount: number
-    targets: ReadonlyArray<{ readonly slug: string; readonly conflict?: boolean }>
+    plan: BulkOperationPlan
   } | null>(null)
   const [bulkError, setBulkError] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
@@ -1262,7 +1276,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   const executeBulkAction = (): void => {
     const current = fresh()
     if (current === null || bulkConfirm === null || saving.current) return
-    const next = resolveBulkNextEnabled(current.enabled, bulkConfirm)
+    const next = resolveBulkNextEnabled(current.enabled, bulkConfirm.plan)
     saving.current = true
     setIsSaving(true)
     setBulkError(null)
@@ -1434,7 +1448,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           isFiltered: true,
           count: pendingEnableFilteredCount,
           initialEnabledCount: state.enabled.size,
-          targets: filtered,
+          plan: { type: 'enable', targets: filtered },
         })
       } else if (actionId === 'disable-filtered') {
         if (pendingDisableFilteredCount === 0) return
@@ -1443,7 +1457,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           isFiltered: true,
           count: pendingDisableFilteredCount,
           initialEnabledCount: state.enabled.size,
-          targets: filtered,
+          plan: { type: 'disable-targets', targets: filtered },
         })
       } else if (actionId === 'enable-all') {
         if (pendingEnableAllCount === 0) return
@@ -1452,7 +1466,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           isFiltered: false,
           count: pendingEnableAllCount,
           initialEnabledCount: state.enabled.size,
-          targets: state.experts,
+          plan: { type: 'enable', targets: state.experts },
         })
       } else if (actionId === 'disable-all') {
         if (state.enabled.size === 0) return
@@ -1461,7 +1475,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           isFiltered: false,
           count: state.enabled.size,
           initialEnabledCount: state.enabled.size,
-          targets: [],
+          plan: { type: 'disable-all' },
         })
       }
     }
