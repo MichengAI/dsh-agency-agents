@@ -4,6 +4,15 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.16 - 2026-10-26
+
+- **Composer Task Recommendations**: Real-time expert and team recommendations above the chat input based on user draft semantics (Issue #27):
+  - **Zero-Token Local Scoring Engine**: Client-side stop-word extraction and lightweight scoring (< 3ms) with 250ms debounce, incurring zero LLM token costs and network overhead;
+  - **Native Styling and Centered Alignment**: Built with host primitives (`@deepseek-ai/dsh-client-ui-primitives` `Pill` / `Tooltip`) and aligned to composer CSS variables (`--dsh-composer-side-clearance`, `--dsh-composer-card-max-width`);
+  - **One-Click Mention and Deduplication**: Click recommendation chips to insert references directly into the input; already mentioned experts are automatically excluded; includes an "Ignore" action to dismiss current suggestions;
+  - **Configurable Toggle Switch (Default Off)**: Added dedicated toggle under plugin settings conforming to host volatile configuration rules for live hot-reload and persistence.
+- **Enhanced Test Guarding & Mutation Hardening**: Extracted `resolveRecommendInputs` and introduced regression tests ensuring `ref` priority over `source` and safe fallback handling.
+
 ## 1.2.15 - 2026-10-26
 
 - **Conversational creation for experts and expert teams**: Introduce dual \"Create with AI\" entry points next to creation actions in Experts and Expert Teams views (Issue #16):

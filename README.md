@@ -91,7 +91,16 @@ A native compact **Batch Actions** dropdown menu is available on the right of th
 - **Dynamic Filter Linkage**: Dynamically adapts based on active source, category, status, and search filters. Offers **Enable filtered (N) / Disable filtered (M)** when filters are active, and smoothly switches to **Enable all (331) / Disable all** when unfiltered;
 - **Confirmation & Conflict Protection**: Includes modal confirmation dialogs indicating affected expert counts, powered by atomic scheduling (`performBulkCommit`) to eliminate dirty writes caused by concurrent changes during review. Only affects availability and never auto-summons.
 
-> This README describes version 1.2.15. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
+### Composer Task Recommendations
+
+Real-time expert and expert team suggestions displayed directly above the chat composer based on draft semantics (Issue #27):
+
+- **Zero-Token Local Scoring Engine**: Client-side tokenizer, stop-word filtering, and lightweight scoring algorithm (< 3ms) debounced at 250ms, incurring zero network overhead and zero LLM token consumption;
+- **Native Visuals & Centered Clearance**: Built with host primitives (`@deepseek-ai/dsh-client-ui-primitives` `Pill` / `Tooltip`) and mapped to composer CSS clearance variables, guaranteeing horizontal alignment with the centered input box;
+- **One-Click Mention & Deduplication**: Click candidate chips to insert references directly into the input via host `insertReference`; already referenced experts are automatically filtered out from suggestions; includes an "Ignore" button to collapse suggestions;
+- **Dedicated Extension Toggle**: Toggle under **Settings → Plugins** (default off), supporting host volatile hot-reloading and persistence.
+
+> This README describes version 1.2.16. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
 ## Screenshots
 
 The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.
