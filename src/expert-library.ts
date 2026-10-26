@@ -15,6 +15,7 @@ export interface AgencySettings {
   enabledTeams?: string[]
   sidebarEntry?: boolean
   onlineUpdate?: boolean
+  composerRecommend?: boolean
 }
 
 /** 兼容只有 enabled 的旧配置；内容与启用状态在同一 namespace 原子持久化。 */
@@ -25,6 +26,7 @@ export const agencySettingsSchema = schema.object({
   enabledTeams: schema.array(schema.string()).default([]),
   sidebarEntry: schema.boolean(),
   onlineUpdate: schema.boolean(),
+  composerRecommend: schema.boolean().default(false),
 })
 
 export function validateAgencySettings(value: AgencySettings, locale: 'zh' | 'en' = 'zh'): void {

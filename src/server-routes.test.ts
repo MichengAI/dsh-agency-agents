@@ -12,7 +12,7 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
       enabledTeams: [],
     }
 
-    const VOLATILE_PATHS = new Set(['enabled', 'customExperts', 'customTeams', 'enabledTeams', 'sidebarEntry', 'onlineUpdate'])
+    const VOLATILE_PATHS = new Set(['enabled', 'customExperts', 'customTeams', 'enabledTeams', 'sidebarEntry', 'onlineUpdate', 'composerRecommend'])
 
     const mockCtx = {
       webServer: {
@@ -56,6 +56,7 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
       enabledTeams: { get: () => mockSettingsState.enabledTeams },
       sidebarEntry: { get: () => mockSettingsState.sidebarEntry },
       onlineUpdate: { get: () => mockSettingsState.onlineUpdate },
+      composerRecommend: { get: () => mockSettingsState.composerRecommend },
       ...configOverrides,
     }
 
@@ -206,6 +207,31 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
     await handler!(mockRequest('POST', { enabled: true }), postRes)
     expect(postRes.status).toBe(403)
     expect(postRes.json.ok).toBe(false)
+  })
+
+  it('composer-recommend GET 与 POST 默认关闭并支持持久化更新', async () => {
+    const { routes, mockSettingsState } = setupHarness()
+    const handler = routes.get('/api/michengai/dsh-agency-agents/composer-recommend')
+    expect(handler).toBeDefined()
+
+    // 1. GET 默认返回 enabled: false
+    const getRes = mockResponse()
+    await handler!(mockRequest('GET'), getRes)
+    expect(getRes.status).toBe(200)
+    expect(getRes.json).toEqual({ ok: true, enabled: false })
+
+    // 2. POST 开启 composerRecommend
+    const postRes = mockResponse()
+    await handler!(mockRequest('POST', { enabled: true }), postRes)
+    expect(postRes.status).toBe(200)
+    expect(postRes.json).toEqual({ ok: true, enabled: true })
+    expect(mockSettingsState.composerRecommend).toBe(true)
+
+    // 3. 再次 GET 验证已更新为 true
+    const getRes2 = mockResponse()
+    await handler!(mockRequest('GET'), getRes2)
+    expect(getRes2.status).toBe(200)
+    expect(getRes2.json).toEqual({ ok: true, enabled: true })
   })
 
   it('请求流中途异常 close 时立即终止不挂起', async () => {

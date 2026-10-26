@@ -48,7 +48,7 @@ import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { createHostLocaleReader, formatHost, localizedExpertDescription, localizedExpertName, matchDivision, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
-import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat, setAgencySidebarEntry, setAgencyOnlineUpdate } from './settings-compat.js'
+import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat, setAgencySidebarEntry, setAgencyOnlineUpdate, setAgencyComposerRecommend } from './settings-compat.js'
 import { registerPluginUpdater } from './plugin-updater.js'
 import { AGENCY_LIBRARY_SERVICE, createExpertLibrary, type AgencySettings } from './expert-library.js'
 
@@ -244,6 +244,7 @@ const configFields: Record<string, unknown> = {
   updater: schema.boolean(),
   onlineUpdate: schema.boolean(),
   sidebarEntry: schema.boolean(),
+  composerRecommend: schema.boolean(),
 }
 for (const [key, field] of [
   ['enabled', schema.array(schema.string()).default([])],
@@ -252,6 +253,7 @@ for (const [key, field] of [
   ['enabledTeams', schema.array(schema.string()).default([])],
   ['sidebarEntry', schema.boolean()],
   ['onlineUpdate', schema.boolean()],
+  ['composerRecommend', schema.boolean()],
 ] as Array<readonly [string, z<any>]>) {
   const live = markLiveFields ? liveSchemaField(field) : undefined
   if (live !== undefined) configFields[key] = live
@@ -778,6 +780,42 @@ export function apply(ctx: Context, config: Config): void {
               response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
               response.end(JSON.stringify({ ok: true, enabled: bodyRes.data.enabled }))
             } catch (err) {
+              response.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: false, error: String(err) }))
+            }
+            return
+          }
+          response.writeHead(405, { allow: 'GET, HEAD, POST' })
+          response.end()
+        },
+      }))
+
+      disposers.push(webServer.register!({
+        kind: 'exact',
+        path: '/api/michengai/dsh-agency-agents/composer-recommend',
+        handler: async (request: any, response: any) => {
+          if (!checkAuthAndMutation(request, response)) return
+          if (request.method === 'GET' || request.method === 'HEAD') {
+            response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
+            response.end(request.method === 'HEAD' ? undefined : JSON.stringify({
+              ok: true,
+              enabled: settingsSource().composerRecommend === true,
+            }))
+            return
+          }
+          if (request.method === 'POST') {
+            const bodyRes = await readJsonBody(request)
+            if (!bodyRes.ok || !bodyRes.data || typeof bodyRes.data.enabled !== 'boolean') {
+              response.writeHead(bodyRes.status ?? 400, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: false, error: bodyRes.error ?? 'enabled 必须是布尔值' }))
+              return
+            }
+            try {
+              await setAgencyComposerRecommend(ctx, settingsNamespace, bodyRes.data.enabled)
+              response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: true, enabled: bodyRes.data.enabled }))
+            } catch (err) {
+              console.error('[agency-agents] 后端写入 composerRecommend 失败：', err)
               response.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
               response.end(JSON.stringify({ ok: false, error: String(err) }))
             }

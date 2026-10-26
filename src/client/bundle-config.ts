@@ -31,6 +31,9 @@ export interface AgencyBundleConfigCardProps {
   onToggleOnlineUpdate?: (enabled: boolean) => void
   onlineUpdateDisabled?: boolean
   onlineUpdateLocked?: boolean
+  composerRecommendEnabled?: boolean
+  onToggleComposerRecommend?: (enabled: boolean) => void
+  composerRecommendDisabled?: boolean
 }
 
 export function AgencyBundleConfigCard(props: AgencyBundleConfigCardProps): React.ReactElement {
@@ -43,6 +46,9 @@ export function AgencyBundleConfigCard(props: AgencyBundleConfigCardProps): Reac
     onToggleOnlineUpdate,
     onlineUpdateDisabled = false,
     onlineUpdateLocked = false,
+    composerRecommendEnabled = false,
+    onToggleComposerRecommend,
+    composerRecommendDisabled = false,
   } = props
 
   const PrimitiveSwitch = primitives.Switch
@@ -63,6 +69,20 @@ export function AgencyBundleConfigCard(props: AgencyBundleConfigCardProps): Reac
           onChange: onToggle,
           disabled,
           label: t('bundle.sidebar.toggle'),
+        })
+        : null,
+    ),
+    typeof onToggleComposerRecommend === 'function' && React.createElement('div', { key: 'composer-recommend', className: 'aag-bundle-row' },
+      React.createElement('div', { className: 'aag-bundle-label-box' },
+        React.createElement('span', { className: 'aag-bundle-title' }, t('bundle.recommend.title')),
+        React.createElement('span', { className: 'aag-bundle-desc' }, t('bundle.recommend.desc')),
+      ),
+      PrimitiveSwitch
+        ? React.createElement(PrimitiveSwitch, {
+          checked: composerRecommendEnabled,
+          onChange: onToggleComposerRecommend,
+          disabled: composerRecommendDisabled,
+          label: t('bundle.recommend.toggle'),
         })
         : null,
     ),
@@ -90,6 +110,8 @@ export interface AgencyBundleConfigWrapperProps {
   getOnlineUpdateEnabled?: () => boolean
   getOnlineUpdateLocked?: () => boolean
   setOnlineUpdate?: (enabled: boolean) => Promise<boolean>
+  getComposerRecommendEnabled?: () => boolean
+  setComposerRecommend?: (enabled: boolean) => Promise<boolean>
   subscribe: (fn: () => void) => () => void
 }
 
@@ -97,17 +119,21 @@ export function AgencyBundleConfigCardWrapper(props: AgencyBundleConfigWrapperPr
   const [enabled, setEnabled] = React.useState(props.getEnabled)
   const [onlineUpdateEnabled, setOnlineUpdateEnabled] = React.useState(props.getOnlineUpdateEnabled ? props.getOnlineUpdateEnabled() : true)
   const [onlineUpdateLocked, setOnlineUpdateLocked] = React.useState(props.getOnlineUpdateLocked ? props.getOnlineUpdateLocked() : false)
+  const [composerRecommendEnabled, setComposerRecommendEnabled] = React.useState(props.getComposerRecommendEnabled ? props.getComposerRecommendEnabled() : false)
   const [savingSidebar, setSavingSidebar] = React.useState(false)
   const [savingUpdate, setSavingUpdate] = React.useState(false)
+  const [savingRecommend, setSavingRecommend] = React.useState(false)
 
   React.useEffect(() => {
     setEnabled(props.getEnabled())
     if (props.getOnlineUpdateEnabled) setOnlineUpdateEnabled(props.getOnlineUpdateEnabled())
     if (props.getOnlineUpdateLocked) setOnlineUpdateLocked(props.getOnlineUpdateLocked())
+    if (props.getComposerRecommendEnabled) setComposerRecommendEnabled(props.getComposerRecommendEnabled())
     return props.subscribe(() => {
       setEnabled(props.getEnabled())
       if (props.getOnlineUpdateEnabled) setOnlineUpdateEnabled(props.getOnlineUpdateEnabled())
       if (props.getOnlineUpdateLocked) setOnlineUpdateLocked(props.getOnlineUpdateLocked())
+      if (props.getComposerRecommendEnabled) setComposerRecommendEnabled(props.getComposerRecommendEnabled())
     })
   }, [props])
 
@@ -128,15 +154,29 @@ export function AgencyBundleConfigCardWrapper(props: AgencyBundleConfigWrapperPr
       .finally(() => setSavingUpdate(false))
   } : undefined
 
+  const onToggleComposerRecommend = props.setComposerRecommend ? (next: boolean) => {
+    setSavingRecommend(true)
+    setComposerRecommendEnabled(next)
+    props.setComposerRecommend!(next)
+      .catch((err) => {
+        console.error('[agency-agents] 设置任务智能推荐失败：', err)
+        setComposerRecommendEnabled(!next)
+      })
+      .finally(() => setSavingRecommend(false))
+  } : undefined
+
   return React.createElement(AgencyBundleConfigCard, {
     t: props.t,
     enabled,
-    disabled: savingSidebar,
     onToggle: onToggleSidebar,
+    disabled: savingSidebar,
     onlineUpdateEnabled,
+    onToggleOnlineUpdate,
     onlineUpdateDisabled: savingUpdate,
     onlineUpdateLocked,
-    onToggleOnlineUpdate,
+    composerRecommendEnabled,
+    onToggleComposerRecommend,
+    composerRecommendDisabled: savingRecommend,
   })
 }
 
@@ -146,6 +186,7 @@ export interface SetupSidebarOptions {
   ns: string
   injectProps?: (() => Record<string, unknown>) | Record<string, unknown>
   onOnlineUpdateChange?: (enabled: boolean) => void
+  onComposerRecommendChange?: (enabled: boolean) => void
 }
 
 export interface SidebarController {
@@ -155,6 +196,8 @@ export interface SidebarController {
   isOnlineUpdateEnabled: () => boolean
   isOnlineUpdateLocked: () => boolean
   setOnlineUpdate: (next: boolean) => Promise<boolean>
+  isComposerRecommendEnabled: () => boolean
+  setComposerRecommend: (next: boolean) => Promise<boolean>
   destroy: () => void
 }
 
@@ -167,6 +210,8 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
       isOnlineUpdateEnabled: () => true,
       isOnlineUpdateLocked: () => false,
       setOnlineUpdate: async () => false,
+      isComposerRecommendEnabled: () => false,
+      setComposerRecommend: async () => false,
       destroy: () => {},
     }
   }
@@ -259,6 +304,38 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
   let onlineUpdateEnabled = true
   let onlineUpdateLocked = false
   let updateEpoch = 0
+  let composerRecommendEnabled = false
+  let recommendEpoch = 0
+
+  const setComposerRecommend = async (next: boolean): Promise<boolean> => {
+    const currentEpoch = ++recommendEpoch
+    composerRecommendEnabled = next
+    notify()
+    if (typeof options.onComposerRecommendChange === 'function') {
+      try { options.onComposerRecommendChange(next) } catch {}
+    }
+    try {
+      await callApi('/api/michengai/dsh-agency-agents/composer-recommend', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-michengai-client': '1' },
+        body: JSON.stringify({ enabled: next }),
+      })
+      if (currentEpoch === recommendEpoch && typeof options.onComposerRecommendChange === 'function') {
+        options.onComposerRecommendChange(next)
+      }
+      return next
+    } catch (err) {
+      console.error('[agency-agents] 调用 composer-recommend 接口失败：', err)
+      if (currentEpoch === recommendEpoch) {
+        composerRecommendEnabled = !next
+        notify()
+        if (typeof options.onComposerRecommendChange === 'function') {
+          try { options.onComposerRecommendChange(!next) } catch {}
+        }
+      }
+      throw err
+    }
+  }
 
   const setOnlineUpdate = async (next: boolean): Promise<boolean> => {
     if (onlineUpdateLocked) return onlineUpdateEnabled
@@ -315,6 +392,19 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
     })
     .catch(() => {})
 
+  const loadRecommendEpoch = recommendEpoch
+  callApi('/api/michengai/dsh-agency-agents/composer-recommend')
+    .then((res: any) => {
+      if (recommendEpoch === loadRecommendEpoch && res && typeof res.enabled === 'boolean') {
+        composerRecommendEnabled = res.enabled
+        notify()
+        if (typeof options.onComposerRecommendChange === 'function') {
+          try { options.onComposerRecommendChange(composerRecommendEnabled) } catch {}
+        }
+      }
+    })
+    .catch(() => {})
+
   if (typeof ctx.inject === 'function') {
     ctx.inject(['layout'], (scoped: any) => {
       layoutService = scoped.layout
@@ -363,6 +453,8 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
         getOnlineUpdateEnabled: () => onlineUpdateEnabled,
         getOnlineUpdateLocked: () => onlineUpdateLocked,
         setOnlineUpdate,
+        getComposerRecommendEnabled: () => composerRecommendEnabled,
+        setComposerRecommend,
         subscribe: (fn: () => void) => {
           listeners.add(fn)
           return () => { listeners.delete(fn) }
@@ -378,6 +470,8 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
     isOnlineUpdateEnabled: () => onlineUpdateEnabled,
     isOnlineUpdateLocked: () => onlineUpdateLocked,
     setOnlineUpdate,
+    isComposerRecommendEnabled: () => composerRecommendEnabled,
+    setComposerRecommend,
     destroy: () => {
       listeners.clear()
       sidebarSupported = false

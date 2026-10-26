@@ -1897,6 +1897,9 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       name: 'conversation.input.dock', id: 'agency-agents-recommend', order: 50, locale: NS,
     },
     (props) => {
+      // 开关门禁：默认关闭；未开启时不渲染推荐栏
+      if (!sidebarController.isComposerRecommendEnabled()) return null
+
       const p = props as Record<string, any>
       const sessionId = p.sessionId ?? p.session?.id
       const target = resolveTarget(sessionId)

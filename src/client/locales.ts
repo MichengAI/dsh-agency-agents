@@ -91,6 +91,9 @@ export const zh = {
   'bundle.update.desc': '允许在线检查并安装专家团队的新版本。',
   'bundle.update.toggle': '允许在线更新',
   'bundle.update.locked': '已由宿主配置锁定',
+  'bundle.recommend.title': '任务智能推荐',
+  'bundle.recommend.desc': '输入任务草稿时，在输入框正上方推荐匹配的专家和专家团（本地零 Token 计算）。',
+  'bundle.recommend.toggle': '开启任务智能推荐',
 } satisfies Record<string, string>
 
 /** agency 命名空间词条 key 联合。 */
@@ -181,4 +184,7 @@ export const en = {
   'bundle.update.desc': 'Allow checking and installing new versions online.',
   'bundle.update.toggle': 'Allow online updates',
   'bundle.update.locked': 'Locked by host configuration',
+  'bundle.recommend.title': 'Task Expert Suggestions',
+  'bundle.recommend.desc': 'Suggest matching domain experts and teams above composer when typing task drafts (local zero-token inference).',
+  'bundle.recommend.toggle': 'Enable task suggestions',
 } satisfies Record<AgencyKey, string>

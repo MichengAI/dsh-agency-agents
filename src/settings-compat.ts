@@ -122,9 +122,11 @@ export function readAgencySettings(config: object, locale: 'zh' | 'en' = 'zh'): 
     enabledTeams?: unknown
     sidebarEntry?: unknown
     onlineUpdate?: unknown
+    composerRecommend?: unknown
   }
   const rawSidebar = unwrapLive(record.sidebarEntry)
   const rawUpdate = unwrapLive(record.onlineUpdate)
+  const rawRecommend = unwrapLive(record.composerRecommend)
   const value: AgencySettings = {
     enabled: stringList(unwrapLive(record.enabled)),
     customExperts: objectList(unwrapLive(record.customExperts)) as AgencySettings['customExperts'],
@@ -132,6 +134,7 @@ export function readAgencySettings(config: object, locale: 'zh' | 'en' = 'zh'): 
     enabledTeams: stringList(unwrapLive(record.enabledTeams)),
     sidebarEntry: typeof rawSidebar === 'boolean' ? rawSidebar : undefined,
     onlineUpdate: typeof rawUpdate === 'boolean' ? rawUpdate : undefined,
+    composerRecommend: typeof rawRecommend === 'boolean' ? rawRecommend : undefined,
   }
   validateAgencySettings(value, locale)
   try {
@@ -287,6 +290,20 @@ export async function setAgencyOnlineUpdate(ctx: Context, namespace: string, ena
       await settings.mutate(namespace, [{ op: 'set', path: ['onlineUpdate'], value: enabled }], revision)
     } else if (typeof settings?.update === 'function') {
       await settings.update(namespace, { onlineUpdate: enabled }, revision)
+    }
+  })
+  return enabled
+}
+
+export async function setAgencyComposerRecommend(ctx: Context, namespace: string, enabled: boolean): Promise<boolean> {
+  if (typeof enabled !== 'boolean') throw new TypeError('enabled must be a boolean')
+  const settings = (ctx as { settings?: LiveSettingsWriter }).settings
+  const revision = settings?.describe?.().find((item) => item.ns === namespace)?.revision
+  await writeLiveSettings(ctx, async () => {
+    if (typeof settings?.mutate === 'function') {
+      await settings.mutate(namespace, [{ op: 'set', path: ['composerRecommend'], value: enabled }], revision)
+    } else if (typeof settings?.update === 'function') {
+      await settings.update(namespace, { composerRecommend: enabled }, revision)
     }
   })
   return enabled
