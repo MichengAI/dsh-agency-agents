@@ -66,6 +66,9 @@ export function applyPrefillToDom(text: string): boolean {
     descriptor?.set?.call(seat, text)
     seat.dispatchEvent(new InputEvent('input', { bubbles: true }))
     seat.dispatchEvent(new Event('change', { bubbles: true }))
+    try {
+      seat.selectionStart = seat.selectionEnd = text.length
+    } catch {}
     return true
   }
 
