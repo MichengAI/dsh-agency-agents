@@ -1199,23 +1199,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
 
       const proposalId = proposalRegistry.save({ kind: 'expert', data: validation.value, confirmed: false })
       const actionLink = `#dsh-agency:apply-draft?id=${proposalId}`
-      const divisionName = ZH_DIVISION[validation.value.division] ?? validation.value.division
-      const markdown = [
-        `### 🧩 专家草案预览：${validation.value.emoji} ${validation.value.name}`,
-        `* **所属分类**：${divisionName}`,
-        `* **一句话简介**：${validation.value.description}`,
-        '',
-        '<details>',
-        '<summary>查看完整系统提示词（点击展开）</summary>',
-        '',
-        '```markdown',
-        validation.value.prompt,
-        '```',
-        '</details>',
-        '',
-        '> 💬 **这是专家草案预览**。你可以仔细阅读核对：如果需要修改（如调整名字、增删提示词规则），请直接在对话中告诉我；如果你觉得满意，请对我说「**确认打开弹窗**」，我将立刻为你唤起已全量填好的编辑抽屉！',
-      ].join('\n')
-
+      const markdown = renderExpertProposalMarkdown(proposalId, validation.value)
       return { proposalId, actionLink, markdown }
     },
   }))

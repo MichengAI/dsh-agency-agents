@@ -100,7 +100,7 @@ export function createProposalRegistry(): ProposalRegistry {
 export function renderExpertProposalMarkdown(id: string, expert: CustomExpertInput): string {
   const divisionName = ZH_DIVISION[expert.division] ?? expert.division
   return [
-    `### 🧩 已生成专家草案：${expert.emoji} ${expert.name}`,
+    `### 🧩 专家草案预览：${expert.emoji} ${expert.name}`,
     `* **所属分类**：${divisionName}`,
     `* **一句话简介**：${expert.description}`,
     '',
@@ -112,9 +112,9 @@ export function renderExpertProposalMarkdown(id: string, expert: CustomExpertInp
     '```',
     '</details>',
     '',
-    `👉 **[点击在弹窗中核对并保存草案](#dsh-agency:apply-draft?id=${id})**`,
+    `👉 **[点击直接在弹窗中核对并保存草案](#dsh-agency:apply-draft?id=${id})**`,
     '',
-    '> 💡 点击上方链接可直接在当前窗口呼出编辑抽屉，字段已自动填入反显，核对满意后点击「保存并启用」即可正式生效。',
+    '> 💬 **这是专家草案预览**。你可以仔细阅读核对：如果需要修改（如调整名字、增删提示词规则），请直接在对话中告诉我；如果你觉得满意，请对我说「**确认**」，我将弹出确认卡片并为您唤起全量填好的编辑抽屉！',
   ].join('\n')
 }
 
