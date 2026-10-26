@@ -21,6 +21,7 @@ describe('CreationDialog', () => {
       },
     })),
     getPendingProposal: vi.fn(async () => ({ ok: true as const, value: null })),
+    getLatestProposal: vi.fn(async () => ({ ok: true as const, value: null })),
   }
 
   it('renders initial expert dialog layout with prompt input and guide notice', () => {

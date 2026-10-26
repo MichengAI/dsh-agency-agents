@@ -75,4 +75,32 @@ describe('creation-tools', () => {
     expect(md).toContain('负责前端工程落地')
     expect(md).toContain('#dsh-agency:apply-draft?id=prop-5678')
   })
+
+  it('tracks latest proposal for auto-popup sensing', () => {
+    const registry = createProposalRegistry()
+    const proposal = {
+      kind: 'expert' as const,
+      data: {
+        name: '小红书运营专家',
+        description: '负责全流程运营',
+        division: 'marketing',
+        emoji: '📕',
+        prompt: '提示词正文...',
+        avatar: 0,
+      },
+    }
+
+    const t0 = Date.now() - 100
+    expect(registry.getLatest(t0)).toBeNull()
+
+    const id = registry.save(proposal)
+    const latest = registry.getLatest(t0)
+    expect(latest).not.toBeNull()
+    expect(latest?.id).toBe(id)
+    expect(latest?.proposal).toEqual(proposal)
+    expect(latest?.timestamp).toBeGreaterThanOrEqual(t0)
+
+    // 查询当前时间戳之后的，应为 null
+    expect(registry.getLatest(latest!.timestamp + 1000)).toBeNull()
+  })
 })

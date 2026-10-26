@@ -3,7 +3,7 @@ import type { InvocationDescriptor, InvocationParameterDescriptor, TypertCodec }
 import { z } from 'zod'
 import { CUSTOM_EXPERT_SLUG, catalogSnapshotSchema, customExpertInputSchema, expertEditSchema } from './expert-contract.js'
 import { creationRequestSchema, creationResponseSchema } from './creation-contract.js'
-import { storedProposalSchema } from './creation-tools.js'
+import { storedProposalSchema, latestProposalSchema } from './creation-tools.js'
 
 const enabledArraySchema = z.array(z.string())
 const enabledStateSchema = z.object({
@@ -114,5 +114,14 @@ export const AGENCY_AGENTS_DESCRIPTORS = [
     invocation: { kind: 'direct' },
     parameters: [jsonParameter('id', 'string', z.string().min(1).max(128))],
     result: strictCodec('PendingProposalResult', storedProposalSchema),
+  },
+  {
+    id: '@michengai/dsh-agency-agents#agencyAgents/getLatestProposal',
+    service: 'agencyAgents',
+    namespace: 'agencyAgents',
+    method: 'getLatestProposal',
+    invocation: { kind: 'direct' },
+    parameters: [jsonParameter('afterTimestamp', 'number', z.number())],
+    result: strictCodec('LatestProposalResult', latestProposalSchema),
   },
 ] as const satisfies readonly InvocationDescriptor[]

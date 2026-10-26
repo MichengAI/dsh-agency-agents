@@ -96,6 +96,7 @@ const remote: TeamRemote = {
   deleteCustomExpert: unsupported,
   generateDraft: unsupported,
   getPendingProposal: unsupported,
+  getLatestProposal: unsupported,
   saveTeam: async (input, enabled, revision) => {
     check(revision)
     const team = {

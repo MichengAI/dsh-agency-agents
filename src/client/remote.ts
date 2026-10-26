@@ -1,6 +1,6 @@
 import type { TeamInput, TeamSnapshot } from '../team-contract.js'
 import type { CreationRequest, CreationResponse } from '../creation-contract.js'
-import type { StoredProposal } from '../creation-tools.js'
+import type { StoredProposal, LatestProposal } from '../creation-tools.js'
 /**
  * 手写的 Typert Remote 贡献（等价 generator 的 typert.remote-client 产物）。
  * 本插件的名册、管理及启停方法采用手写贡献，避免依赖 monorepo
@@ -26,6 +26,7 @@ export interface AgencyCatalogRemote {
 export interface AgencyCreationRemote {
   generateDraft(request: CreationRequest): Promise<RemoteResult<CreationResponse>>
   getPendingProposal(id: string): Promise<RemoteResult<StoredProposal | null>>
+  getLatestProposal(afterTimestamp: number): Promise<RemoteResult<LatestProposal>>
 }
 
 export interface AgencyAgentsEnabledState {
@@ -57,6 +58,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     'agencyAgents/getPrompt': (slug: string, division: string) => Promise<RemoteResult<AgencyAgentsPrompt>>
     'agencyAgents/generateDraft': AgencyCreationRemote['generateDraft']
     'agencyAgents/getPendingProposal': AgencyCreationRemote['getPendingProposal']
+    'agencyAgents/getLatestProposal': AgencyCreationRemote['getLatestProposal']
   }
   interface TypertRemoteNamespaceMap {
     'agencyAgents': TypertRemoteNamespace$agencyAgents

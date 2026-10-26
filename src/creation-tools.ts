@@ -10,7 +10,7 @@ function generateProposalId(): string {
   return `prop-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`
 }
 
-export const storedProposalSchema = z.union([
+export const storedProposalItemSchema = z.union([
   z.object({
     kind: z.literal('expert'),
     data: customExpertInputSchema,
@@ -20,18 +20,30 @@ export const storedProposalSchema = z.union([
     data: teamInputSchema,
     memberReasons: z.record(z.string(), z.string()).optional(),
   }),
-]).nullable()
+])
 
-export type StoredProposal = NonNullable<z.infer<typeof storedProposalSchema>>
+export const storedProposalSchema = storedProposalItemSchema.nullable()
+
+export type StoredProposal = z.infer<typeof storedProposalItemSchema>
+
+export const latestProposalSchema = z.object({
+  id: z.string(),
+  proposal: storedProposalItemSchema,
+  timestamp: z.number(),
+}).nullable()
+
+export type LatestProposal = z.infer<typeof latestProposalSchema>
 
 export interface ProposalRegistry {
   save(proposal: StoredProposal): string
   get(id: string): StoredProposal | undefined
   delete(id: string): boolean
+  getLatest(afterTimestamp: number): LatestProposal
 }
 
 export function createProposalRegistry(): ProposalRegistry {
   const store = new Map<string, { proposal: StoredProposal; expiresAt: number }>()
+  let latest: { id: string; proposal: StoredProposal; timestamp: number } | null = null
 
   // 15 分钟有效期
   const TTL_MS = 15 * 60 * 1000
@@ -47,7 +59,9 @@ export function createProposalRegistry(): ProposalRegistry {
     save(proposal: StoredProposal): string {
       cleanup()
       const id = generateProposalId()
-      store.set(id, { proposal, expiresAt: Date.now() + TTL_MS })
+      const now = Date.now()
+      store.set(id, { proposal, expiresAt: now + TTL_MS })
+      latest = { id, proposal, timestamp: now }
       return id
     },
     get(id: string): StoredProposal | undefined {
@@ -56,6 +70,12 @@ export function createProposalRegistry(): ProposalRegistry {
     },
     delete(id: string): boolean {
       return store.delete(id)
+    },
+    getLatest(afterTimestamp: number): LatestProposal {
+      if (latest && latest.timestamp > afterTimestamp) {
+        return latest
+      }
+      return null
     },
   }
 }

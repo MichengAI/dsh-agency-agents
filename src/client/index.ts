@@ -2042,6 +2042,38 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     }
   }, 'agency-agents: global draft link listener')
 
+  ctx.effect(() => {
+    let lastHandledTimestamp = Date.now() - 3000
+    let disposed = false
+
+    const checkLatest = async () => {
+      if (disposed) return
+      try {
+        const res = await remote.getLatestProposal(lastHandledTimestamp)
+        if (res.ok && res.value && res.value.timestamp > lastHandledTimestamp) {
+          lastHandledTimestamp = res.value.timestamp
+          openGlobalDraftEditor({
+            proposal: res.value.proposal,
+            remote,
+            locale: getActive(),
+            t: t as any,
+            onSaved: () => {
+              void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
+            },
+          })
+        }
+      } catch {}
+    }
+
+    const timer = setInterval(() => { void checkLatest() }, 1000)
+    void checkLatest()
+
+    return () => {
+      disposed = true
+      clearInterval(timer)
+    }
+  }, 'agency-agents: auto popup sensing')
+
   return () => {
     sidebarController.destroy()
     void disposeRemote()

@@ -11,7 +11,7 @@ import { AGENCY_PERSONA_SERVICE, type AgencyPersonaSource } from './index.js'
 import { formatHost, readHostLocale } from './i18n.js'
 import { createCreationService } from './creation-service.js'
 import type { CreationRequest, CreationResponse } from './creation-contract.js'
-import type { ProposalRegistry, StoredProposal } from './creation-tools.js'
+import type { ProposalRegistry, StoredProposal, LatestProposal } from './creation-tools.js'
 import { settingsNamespaceCompat } from './settings-compat.js'
 import { AGENCY_LIBRARY_SERVICE, type AgencyExpertLibrary } from './expert-library.js'
 import type { CatalogSnapshot, CustomExpertInput } from './expert-contract.js'
@@ -144,5 +144,12 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
   async getPendingProposal(id: string): Promise<StoredProposal | null> {
     const registry = this.ctx.get('agencyProposalRegistry') as ProposalRegistry | undefined
     return registry?.get(id) ?? null
+  }
+
+  /** 获取自某时间戳之后产生的最新专家或专家团草案，支持前端自动呼出弹窗。 */
+  @Remote('getLatestProposal')
+  async getLatestProposal(afterTimestamp: number): Promise<LatestProposal> {
+    const registry = this.ctx.get('agencyProposalRegistry') as ProposalRegistry | undefined
+    return registry?.getLatest(afterTimestamp) ?? null
   }
 }
