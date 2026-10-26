@@ -25,9 +25,9 @@ declare const teamInputSchema: z.ZodObject<{
   coordinatorTemplateId: z.ZodEnum<{
     product: "product";
     research: "research";
+    content: "content";
     general: "general";
     technical: "technical";
-    content: "content";
     data: "data";
   }>;
   coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -57,9 +57,9 @@ declare const teamSnapshotSchema: z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
+      content: "content";
       general: "general";
       technical: "technical";
-      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -168,9 +168,9 @@ declare const creationResponseSchema: z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
+      content: "content";
       general: "general";
       technical: "technical";
-      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -179,6 +179,54 @@ declare const creationResponseSchema: z.ZodObject<{
   memberReasons: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
 }, z.core.$strip>;
 type CreationResponse = z.output<typeof creationResponseSchema>;
+//#endregion
+//#region src/creation-tools.d.ts
+declare const storedProposalSchema: z.ZodNullable<z.ZodUnion<readonly [z.ZodObject<{
+  kind: z.ZodLiteral<"expert">;
+  data: z.ZodObject<{
+    slug: z.ZodOptional<z.ZodString>;
+    name: z.ZodString;
+    description: z.ZodString;
+    division: z.ZodString;
+    emoji: z.ZodPipe<z.ZodDefault<z.ZodString>, z.ZodTransform<string, string>>;
+    avatar: z.ZodDefault<z.ZodNumber>;
+    prompt: z.ZodString;
+  }, z.core.$strict>;
+}, z.core.$strip>, z.ZodObject<{
+  kind: z.ZodLiteral<"team">;
+  data: z.ZodObject<{
+    id: z.ZodOptional<z.ZodString>;
+    builtin: z.ZodOptional<z.ZodBoolean>;
+    name: z.ZodString;
+    description: z.ZodString;
+    tags: z.ZodArray<z.ZodString>;
+    goal: z.ZodString;
+    constraints: z.ZodString;
+    deliveryRequirements: z.ZodString;
+    members: z.ZodArray<z.ZodObject<{
+      expertSlug: z.ZodString;
+      duty: z.ZodString;
+      instructions: z.ZodString;
+    }, z.core.$strict>>;
+    examples: z.ZodArray<z.ZodString>;
+    coordinatorMode: z.ZodEnum<{
+      custom: "custom";
+      template: "template";
+    }>;
+    coordinatorTemplateId: z.ZodEnum<{
+      product: "product";
+      research: "research";
+      content: "content";
+      general: "general";
+      technical: "technical";
+      data: "data";
+    }>;
+    coordinatorTemplateVersion: z.ZodLiteral<1>;
+    coordinatorPrompt: z.ZodString;
+  }, z.core.$strict>;
+  memberReasons: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+}, z.core.$strip>]>>;
+type StoredProposal = NonNullable<z.infer<typeof storedProposalSchema>>;
 //#endregion
 //#region src/remote.d.ts
 /** 供客户端读取和保存已启用专家的顶层 Host Remote 服务。 */
@@ -213,6 +261,8 @@ declare class AgencyAgentsRemote extends TypertRemoteService {
   }>;
   /** 通过自然语言对话生成专家或专家团配置草案。 */
   generateDraft(request: CreationRequest): Promise<CreationResponse>;
+  /** 获取暂存的专家或专家团提案，用于前端弹窗回显。 */
+  getPendingProposal(id: string): Promise<StoredProposal | null>;
 }
 //#endregion
 export { AgencyAgentsRemote as default, readExpertPrompt, readLocalizedExpertPrompt };

@@ -11,6 +11,7 @@ import { AGENCY_PERSONA_SERVICE, type AgencyPersonaSource } from './index.js'
 import { formatHost, readHostLocale } from './i18n.js'
 import { createCreationService } from './creation-service.js'
 import type { CreationRequest, CreationResponse } from './creation-contract.js'
+import type { ProposalRegistry, StoredProposal } from './creation-tools.js'
 import { settingsNamespaceCompat } from './settings-compat.js'
 import { AGENCY_LIBRARY_SERVICE, type AgencyExpertLibrary } from './expert-library.js'
 import type { CatalogSnapshot, CustomExpertInput } from './expert-contract.js'
@@ -136,5 +137,12 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
       locale: () => readHostLocale(this.ctx),
     })
     return service.generateDraft(request)
+  }
+
+  /** 获取暂存的专家或专家团提案，用于前端弹窗回显。 */
+  @Remote('getPendingProposal')
+  async getPendingProposal(id: string): Promise<StoredProposal | null> {
+    const registry = this.ctx.get('agencyProposalRegistry') as ProposalRegistry | undefined
+    return registry?.get(id) ?? null
   }
 }

@@ -6,6 +6,8 @@ import { createTeamLibrary, AGENCY_TEAM_SERVICE } from './team-library.js'
 import { effectiveCoordinator } from './team-contract.js'
 import { executeTeam, TEAM_TASK_MAX_CHARS, type TeamMemberRun } from './team-runtime.js'
 import { localizeTeam } from './team-content-en.js'
+import { createProposalRegistry, renderExpertProposalMarkdown, renderTeamProposalMarkdown } from './creation-tools.js'
+import { validateExpertProposal, validateTeamProposal } from './creation-contract.js'
 /**
  * Agency Experts — a summonable specialist roster for DSH.
  *
@@ -658,6 +660,8 @@ export function apply(ctx: Context, config: Config): void {
   }, activeLocale)
   ctx.reflect.provide(AGENCY_TEAM_SERVICE, teamLibrary)
   ctx.reflect.provide('agencyAgentsTeamEngine', () => resolveTeamEngine(ctx, undefined, maxDepth).status)
+  const proposalRegistry = createProposalRegistry()
+  ctx.reflect.provide('agencyProposalRegistry', proposalRegistry)
   ctx.on?.('tools/pre-execute', async (exec, next) => {
     if (blocksNativeDelegation(ctx.get('agentTeams'), exec.agent, exec.name)) return { kind: 'deny', reason: teamTx('专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。') }
     return next()
@@ -1156,6 +1160,98 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         return { report: JSON.stringify({ ...result, engine: engine.status }) };
     },
 }), activeLocale, [TEAM_TASK_MAX_CHARS]));
+
+  ctx.tools.register(defineTool({
+    name: 'propose_custom_expert',
+    description: 'Propose a new custom expert persona based on user requirements. Call this tool when the user asks to create, design, or customize an expert persona. This tool validates the specification, prepares a draft, and provides a clickable action link for the user to review and save in the UI dialog.',
+    parameters: {
+      name: { type: 'string', required: true, description: 'Expert name (1-40 chars), e.g. "Rust 并发安全专家".' },
+      division: { type: 'string', required: true, description: 'Division category. Must be one of the valid divisions: specialized, engineering, design, marketing, product, project-management, sales, operations, support, legal, finance, people, data, executive, strategy, security, devops, qa, content, research, translation, customer-success.' },
+      description: { type: 'string', required: true, description: 'Short summary (1-160 chars) of expertise and scope.' },
+      prompt: { type: 'string', required: true, description: 'Complete system prompt (at least 100 chars).' },
+      emoji: { type: 'string', description: 'Single emoji representing the expert (default: 🧩).' },
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: false, properties: { proposalId: { type: 'string', required: true }, markdown: { type: 'string', required: true } } },
+      render: (_args, value) => [{ type: 'text', text: value.markdown as string }],
+    },
+    async execute(args) {
+      const expertInput = {
+        name: String(args.name ?? '').trim(),
+        description: String(args.description ?? '').trim(),
+        division: String(args.division ?? '').trim(),
+        prompt: String(args.prompt ?? '').trim(),
+        emoji: args.emoji ? String(args.emoji).trim() : '🧩',
+        avatar: 0,
+      }
+      const validation = validateExpertProposal(expertInput)
+      if (!validation.ok) {
+        throw new Error(`专家草案校验失败：${validation.error}`)
+      }
+      const proposalId = proposalRegistry.save({ kind: 'expert', data: validation.value })
+      const markdown = renderExpertProposalMarkdown(proposalId, validation.value)
+      return { proposalId, markdown }
+    },
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'propose_expert_team',
+    description: 'Propose an expert team configuration based on user task. Call this tool when the user asks to assemble, design, or create an expert team. Members must be existing experts from The Agency roster.',
+    parameters: {
+      name: { type: 'string', required: true, description: 'Team name (1-40 chars).' },
+      description: { type: 'string', required: true, description: 'Team description (1-160 chars).' },
+      tags: { type: 'array', description: 'Tags (max 3).', items: { type: 'string' } },
+      goal: { type: 'string', required: true, description: 'Core mission goal.' },
+      deliveryRequirements: { type: 'string', required: true, description: 'Delivery and output criteria.' },
+      constraints: { type: 'string', description: 'General constraints.' },
+      examples: { type: 'array', required: true, items: { type: 'string' }, description: '1-3 trigger examples.' },
+      coordinatorTemplateId: { type: 'string', description: 'Coordinator template: "general" | "product" | "technical" | "content" | "data" | "research".' },
+      members: {
+        type: 'array',
+        required: true,
+        description: 'Team members (2-8 experts). Each item is an object with { expertSlug, duty, instructions, reason }.',
+        items: { type: 'json' },
+      },
+    },
+    output: {
+      schema: { type: 'object', additionalProperties: false, properties: { proposalId: { type: 'string', required: true }, markdown: { type: 'string', required: true } } },
+      render: (_args, value) => [{ type: 'text', text: value.markdown as string }],
+    },
+    async execute(args) {
+      const catalog = await library.catalog()
+      const allowedSlugs = new Set(catalog.experts.map(e => e.slug))
+      const membersRaw = Array.isArray(args.members) ? args.members : []
+      const members = membersRaw.map((m: any) => ({
+        expertSlug: String(m?.expertSlug ?? '').trim(),
+        duty: String(m?.duty ?? '').trim(),
+        instructions: String(m?.instructions ?? '').trim(),
+        ...(m?.reason ? { reason: String(m.reason).trim() } : {}),
+      }))
+
+      const rawTeam = {
+        name: String(args.name ?? '').trim(),
+        description: String(args.description ?? '').trim(),
+        tags: Array.isArray(args.tags) ? args.tags.map(String).filter(Boolean).slice(0, 3) : [],
+        goal: String(args.goal ?? '').trim(),
+        constraints: args.constraints ? String(args.constraints).trim() : undefined,
+        deliveryRequirements: String(args.deliveryRequirements ?? '').trim(),
+        members,
+        examples: Array.isArray(args.examples) ? args.examples.map(String).filter(Boolean).slice(0, 3) : ['任务示例'],
+        coordinatorMode: 'template' as const,
+        coordinatorTemplateId: (args.coordinatorTemplateId ?? 'general') as any,
+        coordinatorTemplateVersion: 1,
+        coordinatorPrompt: '',
+      }
+
+      const validation = validateTeamProposal(rawTeam, allowedSlugs)
+      if (!validation.ok) {
+        throw new Error(`专家团队方案校验失败：${validation.error}`)
+      }
+      const proposalId = proposalRegistry.save({ kind: 'team', data: validation.value, memberReasons: validation.memberReasons })
+      const markdown = renderTeamProposalMarkdown(proposalId, validation.value, validation.memberReasons)
+      return { proposalId, markdown }
+    },
+  }))
 ctx.systemPrompt.section({ name: 'agency:teams', order: 118, text: context => {
         const agent = (context as {
             agent?: {
@@ -1174,7 +1270,7 @@ ctx.systemPrompt.section({ name: 'agency:teams', order: 118, text: context => {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.\nWhen the user asks to create, design, or customize an expert persona (e.g. "我想创建一个专家..."), call propose_custom_expert with structured parameters. Do not tell the user to manually copy-paste or modify plugin files. When the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队..."), call propose_expert_team with existing expert slugs.'
     },
   })
 }

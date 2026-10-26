@@ -41,6 +41,7 @@ import { resolveApiUrl } from '../api-base.js'
 export { resolveApiUrl }
 import { DEFAULT_EXPERT_EMOJI, type CustomExpertInput, type CatalogSnapshot } from '../expert-contract.js'
 import { CustomExpertEditor, CustomDeleteDialog, CUSTOM_EDITOR_CSS } from './custom-editor.js'
+import { openGlobalDraftEditor } from './global-draft-dialog.js'
 import { CreationDialog } from './creation-dialog.js'
 import { CreateActionMenu } from './create-action-menu.js'
 import { triggerChatCreation, subscribeChatPrefill, takeChatPrefill, peekChatPrefill, applyPrefillToDom } from './prefill.js'
@@ -1999,6 +2000,47 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       disposeSources()
     }
   }, 'agency-agents: @ menu sources')
+
+  ctx.effect(() => {
+    const handleClick = async (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      const link = target?.closest('a[href*="#dsh-agency:apply-draft"]') as HTMLAnchorElement | null
+      if (!link) return
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      try {
+        const url = new URL(link.href, window.location.href)
+        const proposalId = url.searchParams.get('id') ?? new URLSearchParams(url.hash.split('?')[1] ?? '').get('id')
+        if (!proposalId) return
+
+        const res = await remote.getPendingProposal(proposalId)
+        if (!res.ok || !res.value) {
+          console.warn('[agency-agents] 草案已过期或不存在：', proposalId)
+          return
+        }
+        const proposal = res.value
+
+        openGlobalDraftEditor({
+          proposal,
+          remote,
+          locale: getActive(),
+          t: t as any,
+          onSaved: () => {
+            void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
+          },
+        })
+      } catch (err) {
+        console.error('[agency-agents] 打开草案弹窗失败：', err)
+      }
+    }
+
+    document.addEventListener('click', handleClick, true)
+    return () => {
+      document.removeEventListener('click', handleClick, true)
+    }
+  }, 'agency-agents: global draft link listener')
 
   return () => {
     sidebarController.destroy()
