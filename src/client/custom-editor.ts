@@ -95,6 +95,8 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
   const label = (text: string, control: React.ReactNode, required = false): React.ReactElement => h('label', { className: 'aag-custom-field' },
     h('span', null, text, required ? h('small', null, props.t('custom.required')) : null), control)
   const input = (key: 'name' | 'description', text: string, maxLength: number): React.ReactElement => h(Input, {
+    className: 'aag-custom-input',
+    style: { width: '100%' },
     value: draft[key], maxLength, required: true, disabled: busy,
     'aria-label': text, onChange: (event: React.ChangeEvent<HTMLInputElement>) => set(key, event.currentTarget.value),
     ...(key === 'name' ? { placeholder: props.t('custom.namePlaceholder') } : {}),
@@ -178,6 +180,7 @@ export const CUSTOM_EDITOR_CSS = `
 .aag-custom-field{display:block;margin:18px 0;font-size:14px}
 .aag-custom-field>span,.aag-custom-field>label{display:block;margin-bottom:8px}
 .aag-custom-field small{font-size:11px;opacity:.65;margin-left:8px}
+.aag-custom-field input,.aag-custom-input,.aag-custom-input input{box-sizing:border-box;width:100%!important;min-width:0}
 .aag-custom-avatars{border:0;padding:0;margin:20px 0;display:flex;gap:8px;flex-wrap:wrap}
 .aag-custom-avatars legend{margin-bottom:10px;font-size:13px}
 .aag-custom-avatars button{padding:3px;border:2px solid transparent;background:transparent;border-radius:var(--dsw-radius-md,12px);cursor:pointer}
