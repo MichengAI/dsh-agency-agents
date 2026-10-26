@@ -151,6 +151,29 @@ describe('creation-contract', () => {
       }
     })
 
+    it('resolves member expert by Chinese name or short slug to real slug', () => {
+      const mockCatalog = [
+        { slug: 'product-manager', name: '产品经理', nameEn: 'Product Manager' },
+        { slug: 'engineering-code-reviewer', name: '代码审查工程师', nameEn: 'Code Reviewer' },
+        { slug: 'engineering-software-architect', name: '软件架构师', nameEn: 'Software Architect' },
+      ]
+      const proposalWithNames = {
+        ...validTeamProposal,
+        members: [
+          { expertSlug: '产品经理', duty: '需求逻辑', instructions: '梳理逻辑' },
+          { expertSlug: 'code-reviewer', duty: '代码质量', instructions: '审查代码' },
+          { expertSlug: 'engineering-software-architect', duty: '架构技术', instructions: '架构评估' },
+        ],
+      }
+      const result = validateTeamProposal(proposalWithNames, mockCatalog)
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.members[0].expertSlug).toBe('product-manager')
+        expect(result.value.members[1].expertSlug).toBe('engineering-code-reviewer')
+        expect(result.value.members[2].expertSlug).toBe('engineering-software-architect')
+      }
+    })
+
     it('rejects member with nonexistent slug (hallucinated member)', () => {
       const invalidProposal = {
         ...validTeamProposal,

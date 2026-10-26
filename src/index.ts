@@ -1304,7 +1304,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         coordinatorPrompt: '',
       }
 
-      const validation = validateTeamProposal(rawTeam, allowedSlugs)
+      const validation = validateTeamProposal(rawTeam, catalog.experts)
       if (!validation.ok) {
         throw new Error(`专家团队方案校验失败：${validation.error}`)
       }

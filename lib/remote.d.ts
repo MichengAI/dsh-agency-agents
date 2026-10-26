@@ -25,9 +25,9 @@ declare const teamInputSchema: z.ZodObject<{
   coordinatorTemplateId: z.ZodEnum<{
     product: "product";
     research: "research";
+    content: "content";
     general: "general";
     technical: "technical";
-    content: "content";
     data: "data";
   }>;
   coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -57,9 +57,9 @@ declare const teamSnapshotSchema: z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
+      content: "content";
       general: "general";
       technical: "technical";
-      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -73,9 +73,9 @@ declare const teamSnapshotSchema: z.ZodObject<{
   revision: z.ZodNumber;
   engine: z.ZodOptional<z.ZodObject<{
     state: z.ZodEnum<{
+      enabled: "enabled";
       unsupported: "unsupported";
       disabled: "disabled";
-      enabled: "enabled";
     }>;
     mode: z.ZodEnum<{
       subagent: "subagent";
@@ -168,9 +168,9 @@ declare const creationResponseSchema: z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
+      content: "content";
       general: "general";
       technical: "technical";
-      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -217,9 +217,9 @@ declare const storedProposalItemSchema: z.ZodUnion<readonly [z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
+      content: "content";
       general: "general";
       technical: "technical";
-      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -267,9 +267,9 @@ declare const latestProposalSchema: z.ZodNullable<z.ZodObject<{
       coordinatorTemplateId: z.ZodEnum<{
         product: "product";
         research: "research";
+        content: "content";
         general: "general";
         technical: "technical";
-        content: "content";
         data: "data";
       }>;
       coordinatorTemplateVersion: z.ZodLiteral<1>;

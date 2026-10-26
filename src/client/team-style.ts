@@ -57,6 +57,7 @@ export const TEAM_CSS = `
 .agt-editor form{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 .agt-editor-scroll{flex:1;min-height:0;overflow:auto;padding-right:4px}
 .agt-editor-fields fieldset{border:0;padding:0;margin:0;min-width:0}
+.agt-editor input,.agt-editor .aag-custom-field input{box-sizing:border-box;width:100%!important;min-width:0}
 .agt-section{border-bottom:0.5px solid var(--dsw-alias-border-l2);padding:0 0 20px;margin-bottom:20px}
 .agt-section:last-child{border:0;margin-bottom:0}
 .agt-editor .agt-prompt{display:block;width:100%;min-height:300px;margin:12px 0 8px;font-size:13px;line-height:1.6}
