@@ -10,6 +10,7 @@ import type { ExpertSummary } from '../expert-contract.js';
 import type { AgencyCatalogRemote, AgencyTeamsRemote, AgencyCreationRemote } from './remote.js';
 import { TeamEditor } from './team-editor.js';
 import { CreationDialog } from './creation-dialog.js';
+import { CreateActionMenu } from './create-action-menu.js';
 import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconSparkles, IconCopy, IconSend, IconSearch, IconEye, IconTrash, } from './team-shared.js';
 export { TEAM_CSS } from './team-style.js';
 export type TeamRemote = AgencyCatalogRemote & AgencyTeamsRemote & AgencyCreationRemote;
@@ -302,23 +303,13 @@ export function TeamsPanel(props: {
           </div>
         </div>
         <div className="aag-filter-actions">
-          <Button
-            className="aag-icon-btn"
-            size="small"
+          <CreateActionMenu
+            label={tx("新建专家团")}
+            manualLabel={tx("人工创建")}
+            chatLabel={tx("通过对话创建")}
             disabled={!snapshot || busy}
-            aria-label={tx("通过对话创建专家团")}
-            title={tx("通过对话创建专家团")}
-            icon={<IconSparkles size={16} />}
-            onClick={() => setCreationChatOpen(true)}
-          />
-          <Button
-            className="aag-icon-btn"
-            size="small"
-            disabled={!snapshot || busy}
-            aria-label={tx("新建专家团")}
-            title={tx("新建专家团")}
-            icon={<IconPlus />}
-            onClick={() => setEditor({ enabled: false, revision: snapshot!.revision })}
+            onSelectManual={() => setEditor({ enabled: false, revision: snapshot!.revision })}
+            onSelectChat={() => setCreationChatOpen(true)}
           />
         </div>
       </div>

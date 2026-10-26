@@ -42,7 +42,7 @@ export { resolveApiUrl }
 import { DEFAULT_EXPERT_EMOJI, type CustomExpertInput, type CatalogSnapshot } from '../expert-contract.js'
 import { CustomExpertEditor, CustomDeleteDialog, CUSTOM_EDITOR_CSS } from './custom-editor.js'
 import { CreationDialog } from './creation-dialog.js'
-import { IconSparkles } from './team-shared.js'
+import { CreateActionMenu } from './create-action-menu.js'
 import { acceptEnabled, acceptCatalog, catalogState, refreshCatalog, subscribeCatalog } from './catalog.js'
 import { refreshTeams, teamState } from './team-cache.js'
 import { installNativeTeamNames } from './native-team-names.js'
@@ -1520,23 +1520,13 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
         items: menuItems,
         onSelect: handleSelectBulkAction,
       }),
-      React.createElement(Button, {
-        className: 'aag-icon-btn',
-        size: 'small',
+      React.createElement(CreateActionMenu, {
+        label: props.t('custom.new'),
+        manualLabel: props.t('custom.createManual'),
+        chatLabel: props.t('custom.createChat'),
         disabled: isSaving,
-        'aria-label': props.t('custom.createChat'),
-        title: props.t('custom.createChat'),
-        icon: React.createElement(IconSparkles, { size: 16, 'aria-hidden': true }),
-        onClick: () => setCreationChatOpen(true),
-      }),
-      React.createElement(Button, {
-        className: 'aag-icon-btn',
-        size: 'small',
-        disabled: isSaving,
-        'aria-label': props.t('custom.new'),
-        title: props.t('custom.new'),
-        icon: React.createElement(IconPlus, { 'aria-hidden': true }),
-        onClick: () => openEditor(),
+        onSelectManual: () => openEditor(),
+        onSelectChat: () => setCreationChatOpen(true),
       }))
     if (notice !== null) nodes.push(React.createElement('div', { key: 'notice', className: 'aag-custom-notice', role: 'status' }, notice))
     nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters aag-card-filters' },

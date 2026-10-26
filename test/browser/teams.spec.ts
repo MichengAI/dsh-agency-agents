@@ -52,6 +52,7 @@ test('未保存修改确认、主理人恢复模板与窄屏无溢出', async ({
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/?teams')
   await page.getByRole('button', { name: '新建专家团' }).click()
+  await page.getByRole('menuitem', { name: '人工创建' }).click()
   await page.getByLabel('团队名称', { exact: true }).fill('待保存团队')
   await page.getByRole('button', { name: '取消', exact: true }).click()
   await expect(page.getByRole('button', { name: '继续编辑' })).toBeVisible()
