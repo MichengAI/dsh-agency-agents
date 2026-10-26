@@ -44,7 +44,8 @@
     "CHANGELOG.md",
     "CHANGELOG.zh-CN.md",
     "LICENSE",
-    "NOTICE"
+    "NOTICE",
+    "assets/icon.webp"
   ],
   "scripts": {
     "build": "pnpm typecheck && tsdown",
@@ -150,5 +151,6 @@
     "tsdown": "^0.22.2",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
-  }
+  },
+  "icon": "assets/icon.webp"
 }
