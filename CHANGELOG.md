@@ -4,6 +4,19 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.15 - 2026-10-26
+
+- **Conversational creation for experts and expert teams**: Introduce dual \"Create with AI\" entry points next to creation actions in Experts and Expert Teams views (Issue #16):
+  - Automatically jump to main chat with conversational prompt prefix and cursor auto-focused at the end;
+  - Specialized tools (`propose_custom_expert` / `propose_expert_team`) render polished Markdown previews in chat with division categories, collapsed prompt blocks, and localized roster members with emojis;
+  - Support multi-turn revisions in chat while strictly suppressing premature modal popups during ideation;
+  - Trigger native host **Ask interaction card** for two-step confirmation upon explicit user confirmation;
+  - Dynamically mount native drawer/modal editor with all proposed fields pre-filled for final human-in-the-loop review and persistence.
+- **Fuzzy expert slug resolver for team assembly**: Introduce flexible multi-strategy alias resolution for team members, allowing LLMs to specify Chinese names, English display names, or short slugs, automatically resolving to valid in-repo expert slugs.
+- **Session-bound proposal lifecycle**: Bind proposal storage and client auto-sensing to `sessionId`, ensuring multi-window and multi-session concurrency without cross-window popup collisions.
+- **Enforce full width on single-line inputs**: Apply full container width styling across custom expert and team editor inputs, eliminating narrow 170px collapse and blank space.
+- **Robust error handling for draft dialog**: Unwrap Remote RPC responses to properly trap revision conflicts and prevent silent fake success or white screen errors.
+
 ## 1.2.14 - 2026-10-26
 
 - **Native bulk action dropdown menu in Experts settings**: Introduce a compact native "Batch actions" dropdown menu in the filter bar (Issue #16), dynamically linked with source, category, status, and search filters:
