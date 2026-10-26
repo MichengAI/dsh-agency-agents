@@ -25,9 +25,9 @@ declare const teamInputSchema: z.ZodObject<{
   coordinatorTemplateId: z.ZodEnum<{
     product: "product";
     research: "research";
-    content: "content";
     general: "general";
     technical: "technical";
+    content: "content";
     data: "data";
   }>;
   coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -57,9 +57,9 @@ declare const teamSnapshotSchema: z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
-      content: "content";
       general: "general";
       technical: "technical";
+      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -168,9 +168,9 @@ declare const creationResponseSchema: z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
-      content: "content";
       general: "general";
       technical: "technical";
+      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -216,9 +216,9 @@ declare const storedProposalSchema: z.ZodNullable<z.ZodUnion<readonly [z.ZodObje
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
-      content: "content";
       general: "general";
       technical: "technical";
+      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
