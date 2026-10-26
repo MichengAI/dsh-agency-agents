@@ -111,7 +111,10 @@ export const AGENCY_AGENTS_DESCRIPTORS = [
     namespace: 'agencyAgents',
     method: 'getLatestProposal',
     invocation: { kind: 'direct' },
-    parameters: [jsonParameter('afterTimestamp', 'number', z.number())],
+    parameters: [
+      jsonParameter('afterTimestamp', 'number', z.number()),
+      jsonParameter('sessionId', 'string?', z.string().optional()),
+    ],
     result: strictCodec('LatestProposalResult', latestProposalSchema),
   },
 ] as const satisfies readonly InvocationDescriptor[]

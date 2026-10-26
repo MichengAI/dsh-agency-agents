@@ -1183,7 +1183,8 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       },
       render: (_args, value) => [{ type: 'text', text: value.markdown as string }],
     },
-    async execute(args) {
+    async execute(args, exec) {
+      const sessionId = (exec as any)?.agent?.session?.id ?? (exec as any)?.agent?.session?.header?.id
       const expertInput = {
         name: String(args.name ?? '').trim(),
         description: String(args.description ?? '').trim(),
@@ -1197,7 +1198,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         throw new Error(`专家草案校验失败：${validation.error}`)
       }
 
-      const proposalId = proposalRegistry.save({ kind: 'expert', data: validation.value, confirmed: false })
+      const proposalId = proposalRegistry.save({ kind: 'expert', data: validation.value, confirmed: false }, sessionId)
       const actionLink = `#dsh-agency:apply-draft?id=${proposalId}`
       const markdown = renderExpertProposalMarkdown(proposalId, validation.value)
       return { proposalId, actionLink, markdown }
@@ -1221,7 +1222,8 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
     },
     async execute(_args, exec) {
       const userQuestions = (ctx as any).get?.('userQuestions', false) ?? (ctx as any).userQuestions
-      const latest = proposalRegistry.getLatest(0)
+      const sessionId = (exec as any)?.agent?.session?.id ?? (exec as any)?.agent?.session?.header?.id
+      const latest = proposalRegistry.getLatest(0, sessionId)
       if (!latest || latest.proposal.kind !== 'expert') {
         return { success: false, message: '当前没有待保存的专家草案，请先告诉我您想创建什么样的专家。' }
       }
@@ -1256,7 +1258,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         }
       }
 
-      const confirmed = proposalRegistry.confirmLatest()
+      const confirmed = proposalRegistry.confirmLatest(sessionId)
       if (!confirmed) {
         return { success: false, message: '当前没有待保存的专家草案，请先告诉我您想创建什么样的专家。' }
       }
@@ -1298,7 +1300,8 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       },
       render: (_args, value) => [{ type: 'text', text: value.markdown as string }],
     },
-    async execute(args) {
+    async execute(args, exec) {
+      const sessionId = (exec as any)?.agent?.session?.id ?? (exec as any)?.agent?.session?.header?.id
       const catalog = await library.catalog()
       const allowedSlugs = new Set(catalog.experts.map(e => e.slug))
       const membersRaw = Array.isArray(args.members) ? args.members : []
@@ -1337,7 +1340,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         }
       }
 
-      const proposalId = proposalRegistry.save({ kind: 'team', data: validation.value, memberReasons: validation.memberReasons, confirmed: false })
+      const proposalId = proposalRegistry.save({ kind: 'team', data: validation.value, memberReasons: validation.memberReasons, confirmed: false }, sessionId)
       const actionLink = `#dsh-agency:apply-draft?id=${proposalId}`
       const markdown = renderTeamProposalMarkdown(proposalId, validation.value, validation.memberReasons, expertMap)
       return { proposalId, actionLink, markdown }
@@ -1361,7 +1364,8 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
     },
     async execute(_args, exec) {
       const userQuestions = (ctx as any).get?.('userQuestions', false) ?? (ctx as any).userQuestions
-      const latest = proposalRegistry.getLatest(0)
+      const sessionId = (exec as any)?.agent?.session?.id ?? (exec as any)?.agent?.session?.header?.id
+      const latest = proposalRegistry.getLatest(0, sessionId)
       if (!latest || latest.proposal.kind !== 'team') {
         return { success: false, message: '当前没有待保存的专家团队草案，请先告诉我您想组建什么样的专家团队。' }
       }
@@ -1396,7 +1400,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         }
       }
 
-      const confirmed = proposalRegistry.confirmLatest()
+      const confirmed = proposalRegistry.confirmLatest(sessionId)
       if (!confirmed) {
         return { success: false, message: '当前没有待保存的专家团队草案，请先告诉我您想组建什么样的专家团队。' }
       }

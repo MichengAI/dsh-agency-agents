@@ -24,7 +24,7 @@ export interface AgencyCatalogRemote {
 
 export interface AgencyCreationRemote {
   getPendingProposal(id: string): Promise<RemoteResult<StoredProposal | null>>
-  getLatestProposal(afterTimestamp: number): Promise<RemoteResult<LatestProposal>>
+  getLatestProposal(afterTimestamp: number, sessionId?: string): Promise<RemoteResult<LatestProposal>>
 }
 
 export interface AgencyAgentsEnabledState {

@@ -2035,7 +2035,8 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     const checkLatest = async () => {
       if (disposed) return
       try {
-        const res = await remote.getLatestProposal(lastHandledTimestamp)
+        const targetSessionId = resolveTargetSessionId(ctx.sessions as unknown as ReferenceSessionAccess)
+        const res = await remote.getLatestProposal(lastHandledTimestamp, targetSessionId)
         if (res.ok && res.value && res.value.timestamp > lastHandledTimestamp) {
           lastHandledTimestamp = res.value.timestamp
           openGlobalDraftEditor({
@@ -2048,7 +2049,9 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
             },
           })
         }
-      } catch {}
+      } catch (err) {
+        console.debug?.('[agency-agents] auto popup poll error:', err)
+      }
     }
 
     const timer = setInterval(() => { void checkLatest() }, 1000)

@@ -15,12 +15,14 @@ export const storedProposalItemSchema = z.union([
     kind: z.literal('expert'),
     data: customExpertInputSchema,
     confirmed: z.boolean().optional(),
+    sessionId: z.string().optional(),
   }),
   z.object({
     kind: z.literal('team'),
     data: teamInputSchema,
     memberReasons: z.record(z.string(), z.string()).optional(),
     confirmed: z.boolean().optional(),
+    sessionId: z.string().optional(),
   }),
 ])
 
@@ -37,12 +39,12 @@ export const latestProposalSchema = z.object({
 export type LatestProposal = z.infer<typeof latestProposalSchema>
 
 export interface ProposalRegistry {
-  save(proposal: StoredProposal): string
+  save(proposal: StoredProposal, sessionId?: string): string
   get(id: string): StoredProposal | undefined
   delete(id: string): boolean
-  getLatest(afterTimestamp: number): LatestProposal
-  getLatestConfirmed(afterTimestamp: number): LatestProposal
-  confirmLatest(): LatestProposal
+  getLatest(afterTimestamp: number, sessionId?: string): LatestProposal
+  getLatestConfirmed(afterTimestamp: number, sessionId?: string): LatestProposal
+  confirmLatest(sessionId?: string): LatestProposal
 }
 
 interface ProposalEntry {
@@ -65,11 +67,20 @@ export function createProposalRegistry(): ProposalRegistry {
     }
   }
 
+  const matchSession = (entry: ProposalEntry, sessionId?: string): boolean => {
+    if (!sessionId) return true
+    if (!entry.proposal.sessionId) return true
+    return entry.proposal.sessionId === sessionId
+  }
+
   return {
-    save(proposal: StoredProposal): string {
+    save(proposal: StoredProposal, sessionId?: string): string {
       cleanup()
       const id = generateProposalId()
       const now = Date.now()
+      if (sessionId && !proposal.sessionId) {
+        proposal.sessionId = sessionId
+      }
       store.set(id, { id, proposal, timestamp: now, expiresAt: now + TTL_MS })
       return id
     },
@@ -80,11 +91,11 @@ export function createProposalRegistry(): ProposalRegistry {
     delete(id: string): boolean {
       return store.delete(id)
     },
-    getLatest(afterTimestamp: number): LatestProposal {
+    getLatest(afterTimestamp: number, sessionId?: string): LatestProposal {
       cleanup()
       let best: ProposalEntry | null = null
       for (const entry of store.values()) {
-        if (entry.timestamp > afterTimestamp) {
+        if (entry.timestamp > afterTimestamp && matchSession(entry, sessionId)) {
           if (!best || entry.timestamp > best.timestamp) {
             best = entry
           }
@@ -92,11 +103,11 @@ export function createProposalRegistry(): ProposalRegistry {
       }
       return best ? { id: best.id, proposal: best.proposal, timestamp: best.timestamp } : null
     },
-    getLatestConfirmed(afterTimestamp: number): LatestProposal {
+    getLatestConfirmed(afterTimestamp: number, sessionId?: string): LatestProposal {
       cleanup()
       let best: ProposalEntry | null = null
       for (const entry of store.values()) {
-        if (entry.proposal.confirmed === true && entry.timestamp > afterTimestamp) {
+        if (entry.proposal.confirmed === true && entry.timestamp > afterTimestamp && matchSession(entry, sessionId)) {
           if (!best || entry.timestamp > best.timestamp) {
             best = entry
           }
@@ -104,12 +115,14 @@ export function createProposalRegistry(): ProposalRegistry {
       }
       return best ? { id: best.id, proposal: best.proposal, timestamp: best.timestamp } : null
     },
-    confirmLatest(): LatestProposal {
+    confirmLatest(sessionId?: string): LatestProposal {
       cleanup()
       let best: ProposalEntry | null = null
       for (const entry of store.values()) {
-        if (!best || entry.timestamp > best.timestamp) {
-          best = entry
+        if (matchSession(entry, sessionId)) {
+          if (!best || entry.timestamp > best.timestamp) {
+            best = entry
+          }
         }
       }
       if (!best) return null

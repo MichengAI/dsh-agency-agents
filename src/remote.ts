@@ -135,8 +135,8 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
 
   /** 获取自某时间戳之后产生的最新已确认专家或专家团草案，支持前端自动呼出弹窗。草案打磨期不返回。 */
   @Remote('getLatestProposal')
-  async getLatestProposal(afterTimestamp: number): Promise<LatestProposal> {
+  async getLatestProposal(afterTimestamp: number, sessionId?: string): Promise<LatestProposal> {
     const registry = this.ctx.get('agencyProposalRegistry') as ProposalRegistry | undefined
-    return registry?.getLatestConfirmed(afterTimestamp) ?? null
+    return registry?.getLatestConfirmed(afterTimestamp, sessionId) ?? null
   }
 }

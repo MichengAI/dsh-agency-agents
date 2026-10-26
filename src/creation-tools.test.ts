@@ -202,4 +202,40 @@ describe('creation-tools', () => {
     registry.delete(id)
     expect(registry.getLatest(0)).toBeNull()
   })
+
+  it('filters proposals and confirmations by sessionId for cross-window isolation', () => {
+    const registry = createProposalRegistry()
+    const draftA = {
+      kind: 'expert' as const,
+      data: {
+        name: '会话A专家',
+        description: '属于会话A',
+        division: 'engineering' as const,
+        emoji: '🅰️',
+        prompt: '会话A提示词...',
+        avatar: 0,
+      },
+    }
+    const draftB = {
+      kind: 'expert' as const,
+      data: {
+        name: '会话B专家',
+        description: '属于会话B',
+        division: 'marketing' as const,
+        emoji: '🅱️',
+        prompt: '会话B提示词...',
+        avatar: 0,
+      },
+    }
+
+    registry.save(draftA, 'session-A')
+    registry.save(draftB, 'session-B')
+
+    expect(registry.getLatest(0, 'session-A')?.proposal.data.name).toBe('会话A专家')
+    expect(registry.getLatest(0, 'session-B')?.proposal.data.name).toBe('会话B专家')
+
+    registry.confirmLatest('session-A')
+    expect(registry.getLatestConfirmed(0, 'session-A')?.proposal.data.name).toBe('会话A专家')
+    expect(registry.getLatestConfirmed(0, 'session-B')).toBeNull()
+  })
 })

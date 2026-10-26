@@ -131,6 +131,7 @@ declare const storedProposalItemSchema: z.ZodUnion<readonly [z.ZodObject<{
     prompt: z.ZodString;
   }, z.core.$strict>;
   confirmed: z.ZodOptional<z.ZodBoolean>;
+  sessionId: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>, z.ZodObject<{
   kind: z.ZodLiteral<"team">;
   data: z.ZodObject<{
@@ -165,6 +166,7 @@ declare const storedProposalItemSchema: z.ZodUnion<readonly [z.ZodObject<{
   }, z.core.$strict>;
   memberReasons: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
   confirmed: z.ZodOptional<z.ZodBoolean>;
+  sessionId: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>]>;
 type StoredProposal = z.infer<typeof storedProposalItemSchema>;
 declare const latestProposalSchema: z.ZodNullable<z.ZodObject<{
@@ -181,6 +183,7 @@ declare const latestProposalSchema: z.ZodNullable<z.ZodObject<{
       prompt: z.ZodString;
     }, z.core.$strict>;
     confirmed: z.ZodOptional<z.ZodBoolean>;
+    sessionId: z.ZodOptional<z.ZodString>;
   }, z.core.$strip>, z.ZodObject<{
     kind: z.ZodLiteral<"team">;
     data: z.ZodObject<{
@@ -215,6 +218,7 @@ declare const latestProposalSchema: z.ZodNullable<z.ZodObject<{
     }, z.core.$strict>;
     memberReasons: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
     confirmed: z.ZodOptional<z.ZodBoolean>;
+    sessionId: z.ZodOptional<z.ZodString>;
   }, z.core.$strip>]>;
   timestamp: z.ZodNumber;
 }, z.core.$strip>>;
@@ -254,7 +258,7 @@ declare class AgencyAgentsRemote extends TypertRemoteService {
   /** 获取暂存的专家或专家团提案，用于前端弹窗回显。 */
   getPendingProposal(id: string): Promise<StoredProposal | null>;
   /** 获取自某时间戳之后产生的最新已确认专家或专家团草案，支持前端自动呼出弹窗。草案打磨期不返回。 */
-  getLatestProposal(afterTimestamp: number): Promise<LatestProposal>;
+  getLatestProposal(afterTimestamp: number, sessionId?: string): Promise<LatestProposal>;
 }
 //#endregion
 export { AgencyAgentsRemote as default, readExpertPrompt, readLocalizedExpertPrompt };
