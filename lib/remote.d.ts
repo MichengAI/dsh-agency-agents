@@ -25,9 +25,9 @@ declare const teamInputSchema: z.ZodObject<{
   coordinatorTemplateId: z.ZodEnum<{
     product: "product";
     research: "research";
-    content: "content";
     general: "general";
     technical: "technical";
+    content: "content";
     data: "data";
   }>;
   coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -57,9 +57,9 @@ declare const teamSnapshotSchema: z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
-      content: "content";
       general: "general";
       technical: "technical";
+      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -73,9 +73,9 @@ declare const teamSnapshotSchema: z.ZodObject<{
   revision: z.ZodNumber;
   engine: z.ZodOptional<z.ZodObject<{
     state: z.ZodEnum<{
+      enabled: "enabled";
       unsupported: "unsupported";
       disabled: "disabled";
-      enabled: "enabled";
     }>;
     mode: z.ZodEnum<{
       subagent: "subagent";
@@ -168,9 +168,9 @@ declare const creationResponseSchema: z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
-      content: "content";
       general: "general";
       technical: "technical";
+      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -192,6 +192,7 @@ declare const storedProposalItemSchema: z.ZodUnion<readonly [z.ZodObject<{
     avatar: z.ZodDefault<z.ZodNumber>;
     prompt: z.ZodString;
   }, z.core.$strict>;
+  confirmed: z.ZodOptional<z.ZodBoolean>;
 }, z.core.$strip>, z.ZodObject<{
   kind: z.ZodLiteral<"team">;
   data: z.ZodObject<{
@@ -216,15 +217,16 @@ declare const storedProposalItemSchema: z.ZodUnion<readonly [z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
-      content: "content";
       general: "general";
       technical: "technical";
+      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
     coordinatorPrompt: z.ZodString;
   }, z.core.$strict>;
   memberReasons: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+  confirmed: z.ZodOptional<z.ZodBoolean>;
 }, z.core.$strip>]>;
 type StoredProposal = z.infer<typeof storedProposalItemSchema>;
 declare const latestProposalSchema: z.ZodNullable<z.ZodObject<{
@@ -240,6 +242,7 @@ declare const latestProposalSchema: z.ZodNullable<z.ZodObject<{
       avatar: z.ZodDefault<z.ZodNumber>;
       prompt: z.ZodString;
     }, z.core.$strict>;
+    confirmed: z.ZodOptional<z.ZodBoolean>;
   }, z.core.$strip>, z.ZodObject<{
     kind: z.ZodLiteral<"team">;
     data: z.ZodObject<{
@@ -264,15 +267,16 @@ declare const latestProposalSchema: z.ZodNullable<z.ZodObject<{
       coordinatorTemplateId: z.ZodEnum<{
         product: "product";
         research: "research";
-        content: "content";
         general: "general";
         technical: "technical";
+        content: "content";
         data: "data";
       }>;
       coordinatorTemplateVersion: z.ZodLiteral<1>;
       coordinatorPrompt: z.ZodString;
     }, z.core.$strict>;
     memberReasons: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+    confirmed: z.ZodOptional<z.ZodBoolean>;
   }, z.core.$strip>]>;
   timestamp: z.ZodNumber;
 }, z.core.$strip>>;
@@ -313,7 +317,7 @@ declare class AgencyAgentsRemote extends TypertRemoteService {
   generateDraft(request: CreationRequest): Promise<CreationResponse>;
   /** 获取暂存的专家或专家团提案，用于前端弹窗回显。 */
   getPendingProposal(id: string): Promise<StoredProposal | null>;
-  /** 获取自某时间戳之后产生的最新专家或专家团草案，支持前端自动呼出弹窗。 */
+  /** 获取自某时间戳之后产生的最新已确认专家或专家团草案，支持前端自动呼出弹窗。草案打磨期不返回。 */
   getLatestProposal(afterTimestamp: number): Promise<LatestProposal>;
 }
 //#endregion

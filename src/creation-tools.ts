@@ -14,11 +14,13 @@ export const storedProposalItemSchema = z.union([
   z.object({
     kind: z.literal('expert'),
     data: customExpertInputSchema,
+    confirmed: z.boolean().optional(),
   }),
   z.object({
     kind: z.literal('team'),
     data: teamInputSchema,
     memberReasons: z.record(z.string(), z.string()).optional(),
+    confirmed: z.boolean().optional(),
   }),
 ])
 
@@ -39,6 +41,7 @@ export interface ProposalRegistry {
   get(id: string): StoredProposal | undefined
   delete(id: string): boolean
   getLatest(afterTimestamp: number): LatestProposal
+  getLatestConfirmed(afterTimestamp: number): LatestProposal
 }
 
 export function createProposalRegistry(): ProposalRegistry {
@@ -73,6 +76,12 @@ export function createProposalRegistry(): ProposalRegistry {
     },
     getLatest(afterTimestamp: number): LatestProposal {
       if (latest && latest.timestamp > afterTimestamp) {
+        return latest
+      }
+      return null
+    },
+    getLatestConfirmed(afterTimestamp: number): LatestProposal {
+      if (latest && latest.proposal.confirmed === true && latest.timestamp > afterTimestamp) {
         return latest
       }
       return null

@@ -103,4 +103,30 @@ describe('creation-tools', () => {
     // 查询当前时间戳之后的，应为 null
     expect(registry.getLatest(latest!.timestamp + 1000)).toBeNull()
   })
+
+  it('only returns confirmed proposals via getLatestConfirmed', () => {
+    const registry = createProposalRegistry()
+    const draft = {
+      kind: 'expert' as const,
+      data: {
+        name: '待打磨专家',
+        description: '仍在多轮修改中',
+        division: 'marketing',
+        emoji: '📕',
+        prompt: '正文...',
+        avatar: 0,
+      },
+      confirmed: false,
+    }
+    const t0 = Date.now() - 100
+    registry.save(draft)
+    expect(registry.getLatestConfirmed(t0)).toBeNull()
+
+    const confirmedProposal = { ...draft, confirmed: true }
+    const id = registry.save(confirmedProposal)
+    const latest = registry.getLatestConfirmed(t0)
+    expect(latest).not.toBeNull()
+    expect(latest?.id).toBe(id)
+    expect(latest?.proposal.confirmed).toBe(true)
+  })
 })

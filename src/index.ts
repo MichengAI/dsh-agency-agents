@@ -1163,13 +1163,14 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
 
   ctx.tools.register(defineTool({
     name: 'propose_custom_expert',
-    description: 'Create, design, or propose a new custom expert persona. ALWAYS call this tool when the user asks to create, add, or customize an expert (e.g. "创建小红书运营专家", "我想创建一个专家..."). Do NOT search codebase, read project source, or write documentation files to docs/. This tool validates the specification and returns { proposalId, actionLink, markdown }. IMPORTANT: In your assistant reply, you MUST provide this exact clickable link: `👉 [点击在弹窗中核对并保存草案](${actionLink})` so the user can click it directly in the message.',
+    description: 'Create, design, or propose a new custom expert persona. ALWAYS call this tool when the user asks to create, add, or customize an expert (e.g. "创建小红书运营专家", "我想创建一个专家..."). In initial turns, it presents a preview in chat and asks the user for confirmation via interactive Ask card. The editor dialog will ONLY open after user confirmation.',
     parameters: {
       name: { type: 'string', required: true, description: 'Expert name (1-40 chars), e.g. "Rust 并发安全专家".' },
       division: { type: 'string', required: true, description: 'Division category. Must be one of the valid divisions: specialized, engineering, design, marketing, product, project-management, sales, operations, support, legal, finance, people, data, executive, strategy, security, devops, qa, content, research, translation, customer-success.' },
       description: { type: 'string', required: true, description: 'Short summary (1-160 chars) of expertise and scope.' },
       prompt: { type: 'string', required: true, description: 'Complete system prompt (at least 100 chars).' },
       emoji: { type: 'string', description: 'Single emoji representing the expert (default: 🧩).' },
+      confirmed: { type: 'boolean', description: 'Set to true ONLY if the user explicitly confirmed to open the modal (e.g. "确认", "打开弹窗"). Set to false during drafts and revisions.' },
     },
     output: {
       schema: {
@@ -1183,7 +1184,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       },
       render: (_args, value) => [{ type: 'text', text: value.markdown as string }],
     },
-    async execute(args) {
+    async execute(args, exec) {
       const expertInput = {
         name: String(args.name ?? '').trim(),
         description: String(args.description ?? '').trim(),
@@ -1196,16 +1197,76 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       if (!validation.ok) {
         throw new Error(`专家草案校验失败：${validation.error}`)
       }
-      const proposalId = proposalRegistry.save({ kind: 'expert', data: validation.value })
+
+      let isConfirmed = Boolean(args.confirmed)
+      const userQuestions = (ctx as any).get?.('userQuestions', false) ?? (ctx as any).userQuestions
+
+      if (!isConfirmed && userQuestions && typeof userQuestions.ask === 'function' && (exec as any)?.agent) {
+        try {
+          const askResult = await userQuestions.ask({
+            agent: (exec as any).agent,
+            signal: (exec as any).signal,
+            questions: [{
+              id: 'confirm-expert-creation',
+              header: '🧩 专家草案已就绪',
+              question: `已为您设计专家「${validation.value.emoji} ${validation.value.name}」（${validation.value.description}）。是否现在打开编辑窗口核对并写入？`,
+              options: [
+                { label: '✅ 立即打开编辑窗口反显写入', description: '在右侧弹窗中全自动回填所有字段，供你审查并保存' },
+                { label: '✏️ 留在当前对话继续修改调整', description: '不打开窗口，继续在对话中补充或修改要求' },
+              ],
+            }],
+          })
+          const answer = askResult?.answers?.find((a: any) => a.id === 'confirm-expert-creation')
+          const selected = answer?.selected?.[0]
+          if (selected === '✅ 立即打开编辑窗口反显写入') {
+            isConfirmed = true
+          } else if (answer?.custom?.trim()) {
+            return {
+              proposalId: '',
+              actionLink: '',
+              markdown: `已收到您的修改需求：「${answer.custom.trim()}」。请继续在对话中提出调整意见，满意确认前不会打开弹窗。`,
+            }
+          }
+        } catch {
+          isConfirmed = false
+        }
+      }
+
+      const proposalId = proposalRegistry.save({ kind: 'expert', data: validation.value, confirmed: isConfirmed })
       const actionLink = `#dsh-agency:apply-draft?id=${proposalId}`
-      const markdown = renderExpertProposalMarkdown(proposalId, validation.value)
+
+      if (isConfirmed) {
+        return {
+          proposalId,
+          actionLink,
+          markdown: `✅ 已为您打开专家「${validation.value.name}」的编辑窗口，所有字段已全自动回填，请在右侧抽屉中核对后点击「保存并启用」。`,
+        }
+      }
+
+      const divisionName = ZH_DIVISION[validation.value.division] ?? validation.value.division
+      const markdown = [
+        `### 🧩 专家草案预览：${validation.value.emoji} ${validation.value.name}`,
+        `* **所属分类**：${divisionName}`,
+        `* **一句话简介**：${validation.value.description}`,
+        '',
+        '<details>',
+        '<summary>查看完整系统提示词（点击展开）</summary>',
+        '',
+        '```markdown',
+        validation.value.prompt,
+        '```',
+        '</details>',
+        '',
+        '> 💬 **当前仅为对话预览**。你可以继续提出修改意见（例如调整名称、增加约束）；满意后回复「确认打开弹窗」，我将为您自动唤起全量填好的编辑抽屉。',
+      ].join('\n')
+
       return { proposalId, actionLink, markdown }
     },
   }))
 
   ctx.tools.register(defineTool({
     name: 'propose_expert_team',
-    description: 'Assemble, design, or propose an expert team configuration. ALWAYS call this tool when the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"). Do NOT write markdown files to docs/. Members must be existing experts from The Agency roster. Returns { proposalId, actionLink, markdown }. IMPORTANT: In your assistant reply, you MUST provide this exact clickable link: `👉 [点击在弹窗中核对并保存草案](${actionLink})` so the user can click it directly.',
+    description: 'Assemble, design, or propose an expert team configuration. ALWAYS call this tool when the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"). Do NOT write markdown files to docs/. In initial turns, it presents a preview in chat and asks the user for confirmation via interactive Ask card. The editor dialog will ONLY open after user confirmation.',
     parameters: {
       name: { type: 'string', required: true, description: 'Team name (1-40 chars).' },
       description: { type: 'string', required: true, description: 'Team description (1-160 chars).' },
@@ -1215,6 +1276,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       constraints: { type: 'string', description: 'General constraints.' },
       examples: { type: 'array', required: true, items: { type: 'string' }, description: '1-3 trigger examples.' },
       coordinatorTemplateId: { type: 'string', description: 'Coordinator template: "general" | "product" | "technical" | "content" | "data" | "research".' },
+      confirmed: { type: 'boolean', description: 'Set to true ONLY if the user explicitly confirmed to open the modal. Set to false during drafts and revisions.' },
       members: {
         type: 'array',
         required: true,
@@ -1234,7 +1296,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       },
       render: (_args, value) => [{ type: 'text', text: value.markdown as string }],
     },
-    async execute(args) {
+    async execute(args, exec) {
       const catalog = await library.catalog()
       const allowedSlugs = new Set(catalog.experts.map(e => e.slug))
       const membersRaw = Array.isArray(args.members) ? args.members : []
@@ -1264,8 +1326,52 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       if (!validation.ok) {
         throw new Error(`专家团队方案校验失败：${validation.error}`)
       }
-      const proposalId = proposalRegistry.save({ kind: 'team', data: validation.value, memberReasons: validation.memberReasons })
+
+      let isConfirmed = Boolean(args.confirmed)
+      const userQuestions = (ctx as any).get?.('userQuestions', false) ?? (ctx as any).userQuestions
+
+      if (!isConfirmed && userQuestions && typeof userQuestions.ask === 'function' && (exec as any)?.agent) {
+        try {
+          const askResult = await userQuestions.ask({
+            agent: (exec as any).agent,
+            signal: (exec as any).signal,
+            questions: [{
+              id: 'confirm-team-creation',
+              header: '👥 专家团队方案已就绪',
+              question: `已为您规划专家团队「${validation.value.name}」（${validation.value.members.length}位成员）。是否现在打开编辑窗口核对并写入？`,
+              options: [
+                { label: '✅ 立即打开编辑窗口反显写入', description: '在弹窗中全自动回填团队配置与成员阵容，供你审查并保存' },
+                { label: '✏️ 留在当前对话继续修改调整', description: '不打开窗口，继续在对话中微调成员分工或目标' },
+              ],
+            }],
+          })
+          const answer = askResult?.answers?.find((a: any) => a.id === 'confirm-team-creation')
+          const selected = answer?.selected?.[0]
+          if (selected === '✅ 立即打开编辑窗口反显写入') {
+            isConfirmed = true
+          } else if (answer?.custom?.trim()) {
+            return {
+              proposalId: '',
+              actionLink: '',
+              markdown: `已收到您的团队调整需求：「${answer.custom.trim()}」。请继续在对话中指导修改，满意确认前不会打开弹窗。`,
+            }
+          }
+        } catch {
+          isConfirmed = false
+        }
+      }
+
+      const proposalId = proposalRegistry.save({ kind: 'team', data: validation.value, memberReasons: validation.memberReasons, confirmed: isConfirmed })
       const actionLink = `#dsh-agency:apply-draft?id=${proposalId}`
+
+      if (isConfirmed) {
+        return {
+          proposalId,
+          actionLink,
+          markdown: `✅ 已为您打开专家团队「${validation.value.name}」的编辑窗口，成员阵容与分工已全自动回填，请在弹窗中核对后点击「保存并启用」。`,
+        }
+      }
+
       const markdown = renderTeamProposalMarkdown(proposalId, validation.value, validation.memberReasons)
       return { proposalId, actionLink, markdown }
     },
@@ -1288,7 +1394,7 @@ ctx.systemPrompt.section({ name: 'agency:teams', order: 118, text: context => {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.\nWhen the user asks to create, design, or customize an expert persona (e.g. "我想创建一个专家...", "创建小红书运营专家", "新建专家"), call propose_custom_expert with structured parameters. In your assistant reply, you MUST prominently display the clickable link: 👉 [点击在弹窗中核对并保存草案](#dsh-agency:apply-draft?id=...) so the user can click it directly in the message bubble. Do NOT tell the user to manually copy-paste, do NOT search codebase or read project source files, and do NOT write markdown files to docs/. When the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"), call propose_expert_team with existing expert slugs and also output the clickable action link.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.\nWhen the user asks to create, design, or customize an expert persona (e.g. "我想创建一个专家...", "创建小红书运营专家", "新建专家"), call propose_custom_expert. In initial turns, keep confirmed=false to let the user preview and iteratively refine the draft in chat. The tool or user will provide an interactive Ask confirmation. Only set confirmed=true after the user explicitly confirms (e.g. via Ask card or saying "确认"/"打开弹窗"). Do NOT pop up the modal prematurely, do NOT tell the user to manually copy-paste, and do NOT write markdown files to docs/. When the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"), call propose_expert_team following the same preview -> confirm -> modal flow.'
     },
   })
 }
