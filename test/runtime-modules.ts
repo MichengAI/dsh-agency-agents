@@ -31,6 +31,18 @@ export function SegmentedControl({ id, value, options, onChange, label, disabled
     }, option.label)),
   )
 }
+export function Pill({ active, className, children, onClick, ...rest }: any) {
+  const classes = ['dsh-primitives-pill', active ? 'is-active' : '', className].filter(Boolean).join(' ')
+  return onClick
+    ? React.createElement('button', { ...rest, type: 'button', className: classes, onClick }, children)
+    : React.createElement('span', { ...rest, className: classes }, children)
+}
+
+export function Tooltip({ label, children, ...rest }: any) {
+  const title = typeof label === 'function' ? label() : label
+  return React.cloneElement(children, { title: children.props?.title || title, ...rest })
+}
+
 export function Button(props: any) {
   const variantClass = props.variant ? `dsh-button-${props.variant}` : ''
   const classes = [props.className, variantClass].filter(Boolean).join(' ')

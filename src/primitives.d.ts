@@ -88,4 +88,19 @@ declare module '@deepseek-ai/dsh-client-ui-primitives' {
     compact?: boolean
     className?: string
   }): ReactElement
+
+  export function Pill(props: {
+    active?: boolean
+    className?: string | undefined
+    children?: ReactNode
+    onClick?: () => void
+  } & ButtonHTMLAttributes<HTMLButtonElement>): ReactElement
+
+  export function Tooltip(props: {
+    label: string | (() => string)
+    side?: 'top' | 'bottom' | 'left' | 'right'
+    delayMs?: number
+    disabled?: boolean
+    children?: ReactNode
+  }): ReactElement
 }

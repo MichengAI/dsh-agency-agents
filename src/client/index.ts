@@ -566,6 +566,8 @@ const MENU_NAME_OVERRIDE = EXPERT_MENU_ITEM_SELECTORS
   .map((selector) => `${selector} span:last-child`)
   .join(',')
 const EXPERT_MENU_NAME_STYLE = 'flex:1 1 auto;max-width:none;min-width:0'
+import { RecommendBar } from './recommend-bar.js'
+
 export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inline-flex;flex:0 0 auto}.aag-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 8px;white-space:nowrap;border:none;border-radius:999px;corner-shape:round;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover,.aag-btn[aria-expanded="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-btn:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}.aag-btn>svg{flex:none}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100dvh - 24px);overflow-y:auto;border:0;border-radius:var(--dsw-radius-panel,16px);background:var(--dsw-alias-bg-layer-2);--dsw-elevation-stroke-color:var(--dsw-alias-border-l1);box-shadow:var(--dsw-elevation-prominent);z-index:10000}.aag-menu[data-placement="below"]{top:calc(100% + 4px);bottom:auto}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:var(--dsw-radius-md,10px);background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}'
 // 设置页版式对齐 dsh-skills-manager：工具栏 + 汇总条 + 分组卡片 + 行内启停按钮。
 export const SETTINGS_CSS = `
@@ -657,9 +659,24 @@ const BUNDLE_CONFIG_CSS = `
 .aag-main-panel>*{width:100%;max-width:960px}
 `
 
+const RECOMMEND_BAR_CSS = `
+.aag-recommend-dock{box-sizing:border-box;width:calc(100% - var(--dsh-composer-side-clearance, 20px) - var(--dsh-composer-side-clearance, 20px));max-width:var(--dsh-composer-card-max-width,768px);margin:0 auto;padding:4px 0 6px;display:flex;align-items:center;gap:8px;animation:aagFadeIn 160ms cubic-bezier(0,0,0.2,1)}
+@keyframes aagFadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.aag-recommend-lead{font-size:12px;font-weight:500;color:var(--dsw-alias-label-tertiary);white-space:nowrap;flex:0 0 auto}
+.aag-recommend-chips{display:flex;align-items:center;gap:6px;flex:1 1 auto;overflow-x:auto;scrollbar-width:none}
+.aag-recommend-chips::-webkit-scrollbar{display:none}
+.aag-recommend-pill{height:28px!important;padding:0 10px 0 6px!important;border-radius:999px!important;font-size:12.5px!important;display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;background:var(--dsw-alias-bg-layer-2)!important;border:1px solid var(--dsw-alias-border-l2)!important;color:var(--dsw-alias-label-primary)!important;transition:all 120ms ease}
+.aag-recommend-pill:hover{background:var(--dsw-alias-bg-layer-3)!important;border-color:var(--dsw-alias-brand-border,rgba(65,118,230,0.35))!important;color:var(--dsw-alias-label-primary)!important}
+.aag-pill-emoji{display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1}
+.aag-pill-name{font-weight:500;color:var(--dsw-alias-label-primary)}
+.aag-pill-tag{font-size:10.5px;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.06));padding:1px 4px;border-radius:3px}
+.aag-recommend-dismiss{background:transparent;border:none;color:var(--dsw-alias-label-tertiary);font-size:11.5px;cursor:pointer;padding:2px 6px;border-radius:4px;flex:0 0 auto;transition:color 120ms ease}
+.aag-recommend-dismiss:hover{color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.06))}
+`
+
 import { PLUGIN_UI_CSS } from './plugin-ui.js'
 
-export const CSS = PLUGIN_UI_CSS + TEAM_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS + DISCOVERY_CSS + BUNDLE_CONFIG_CSS
+export const CSS = PLUGIN_UI_CSS + TEAM_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD_SETTINGS_CSS + DISCOVERY_CSS + BUNDLE_CONFIG_CSS + RECOMMEND_BAR_CSS
   + MENU_NAME_OVERRIDE + `{${EXPERT_MENU_NAME_STYLE}}`
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
@@ -783,7 +800,7 @@ export interface ReferenceInsertionTarget {
     getSnapshot(): {
       readonly draft: string
       readonly draftRev: number
-      readonly occurrences?: ReadonlyArray<{ readonly source: string; readonly offset: number; readonly length?: number }>
+      readonly occurrences?: ReadonlyArray<{ readonly source: string; readonly ref?: string; readonly offset: number; readonly length?: number }>
     }
   }
   insertReference(reference: ReferenceInsert, span: TokenSpan): boolean
@@ -1873,6 +1890,45 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       ...({ inject: bindExpertInsertion } as Record<string, unknown>),
     },
     (props) => React.createElement(AgentsButton, { ...props, remote, getActive, onEnabledChange: updateEnabledForMentions }),
+  ))
+
+  ctx.slots.inject('conversation.input.dock', () => ctx.slots.register(
+    {
+      name: 'conversation.input.dock', id: 'agency-agents-recommend', order: 50, locale: NS,
+    },
+    (props) => {
+      const p = props as Record<string, any>
+      const sessionId = p.sessionId ?? p.session?.id
+      const target = resolveTarget(sessionId)
+      const inputSnapshot = p.input?.getSnapshot?.() ?? p.input ?? target?.state?.getSnapshot()
+      const draft = inputSnapshot?.draft ?? ''
+      const occurrences = (inputSnapshot?.occurrences ?? []).map((o: any) => o.ref ?? o.source)
+
+      const catalog = catalogState(remote)
+      const currentTeams = teamCache.length > 0 ? teamCache : (teamState(remote as TeamRemote)?.teams ?? [])
+
+      return React.createElement(RecommendBar, {
+        draft,
+        experts: catalog.experts,
+        teams: currentTeams,
+        enabledExpertSlugs: new Set(catalog.enabled),
+        enabledTeamIds: new Set(teamState(remote as TeamRemote)?.enabledTeams ?? []),
+        activeLocale: getActive(),
+        currentOccurrences: occurrences,
+        onSelect: (candidate) => {
+          if (!target) return
+          if (candidate.kind === 'expert') {
+            const expert = catalog.experts.find(e => e.slug === candidate.id)
+            if (expert) {
+              const active = getActive()
+              void insertTask(target, buildExpertReference(expert, active), sessionId)
+            }
+          } else if (candidate.kind === 'team' && candidate.team) {
+            void insertTeamTask(target, candidate.team, undefined, sessionId)
+          }
+        },
+      })
+    },
   ))
 
   const registerInputTriggerSources = (active: 'zh' | 'en'): (() => void) => {
