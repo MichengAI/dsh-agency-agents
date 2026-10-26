@@ -129,4 +129,31 @@ describe('creation-tools', () => {
     expect(latest?.id).toBe(id)
     expect(latest?.proposal.confirmed).toBe(true)
   })
+
+  it('confirms the latest draft via confirmLatest', () => {
+    const registry = createProposalRegistry()
+    const draft = {
+      kind: 'expert' as const,
+      data: {
+        name: '待打磨专家',
+        description: '多轮对话中',
+        division: 'marketing',
+        emoji: '📕',
+        prompt: '提示词正文...',
+        avatar: 0,
+      },
+      confirmed: false,
+    }
+    const t0 = Date.now() - 100
+    registry.save(draft)
+    expect(registry.getLatestConfirmed(t0)).toBeNull()
+
+    const confirmed = registry.confirmLatest()
+    expect(confirmed).not.toBeNull()
+    expect(confirmed?.proposal.confirmed).toBe(true)
+
+    const latest = registry.getLatestConfirmed(t0)
+    expect(latest).not.toBeNull()
+    expect(latest?.proposal.confirmed).toBe(true)
+  })
 })

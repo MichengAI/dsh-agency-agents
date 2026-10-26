@@ -42,6 +42,7 @@ export interface ProposalRegistry {
   delete(id: string): boolean
   getLatest(afterTimestamp: number): LatestProposal
   getLatestConfirmed(afterTimestamp: number): LatestProposal
+  confirmLatest(): LatestProposal
 }
 
 export function createProposalRegistry(): ProposalRegistry {
@@ -85,6 +86,13 @@ export function createProposalRegistry(): ProposalRegistry {
         return latest
       }
       return null
+    },
+    confirmLatest(): LatestProposal {
+      if (!latest) return null
+      latest.proposal.confirmed = true
+      latest.timestamp = Date.now()
+      store.set(latest.id, { proposal: latest.proposal, expiresAt: Date.now() + TTL_MS })
+      return latest
     },
   }
 }
