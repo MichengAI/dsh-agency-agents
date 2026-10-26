@@ -6,28 +6,6 @@ import {
 import { teamInputSchema, type TeamInput } from './team-contract.js'
 import { ZH_DIVISION } from './names.js'
 
-export const creationMessageSchema = z.object({
-  role: z.enum(['user', 'assistant']),
-  content: z.string().trim().min(1).max(4000),
-})
-export type CreationMessage = z.infer<typeof creationMessageSchema>
-
-export const creationRequestSchema = z.object({
-  kind: z.enum(['expert', 'team']),
-  prompt: z.string().trim().min(1).max(4000),
-  messages: z.array(creationMessageSchema).max(20).optional(),
-})
-export type CreationRequest = z.infer<typeof creationRequestSchema>
-
-export const creationResponseSchema = z.object({
-  ok: z.boolean(),
-  error: z.string().optional(),
-  expertDraft: customExpertInputSchema.optional(),
-  teamDraft: teamInputSchema.optional(),
-  memberReasons: z.record(z.string(), z.string()).optional(),
-})
-export type CreationResponse = z.output<typeof creationResponseSchema>
-
 export type ExpertValidationResult =
   | { ok: true; value: z.output<typeof customExpertInputSchema> }
   | { ok: false; error: string }

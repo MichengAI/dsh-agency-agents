@@ -25,9 +25,9 @@ declare const teamInputSchema: z.ZodObject<{
   coordinatorTemplateId: z.ZodEnum<{
     product: "product";
     research: "research";
-    content: "content";
     general: "general";
     technical: "technical";
+    content: "content";
     data: "data";
   }>;
   coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -57,9 +57,9 @@ declare const teamSnapshotSchema: z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
-      content: "content";
       general: "general";
       technical: "technical";
+      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -73,9 +73,9 @@ declare const teamSnapshotSchema: z.ZodObject<{
   revision: z.ZodNumber;
   engine: z.ZodOptional<z.ZodObject<{
     state: z.ZodEnum<{
+      enabled: "enabled";
       unsupported: "unsupported";
       disabled: "disabled";
-      enabled: "enabled";
     }>;
     mode: z.ZodEnum<{
       subagent: "subagent";
@@ -118,68 +118,6 @@ declare const catalogSnapshotSchema: z.ZodObject<{
 }, z.core.$strip>;
 type CatalogSnapshot = z.infer<typeof catalogSnapshotSchema>;
 //#endregion
-//#region src/creation-contract.d.ts
-declare const creationRequestSchema: z.ZodObject<{
-  kind: z.ZodEnum<{
-    expert: "expert";
-    team: "team";
-  }>;
-  prompt: z.ZodString;
-  messages: z.ZodOptional<z.ZodArray<z.ZodObject<{
-    role: z.ZodEnum<{
-      user: "user";
-      assistant: "assistant";
-    }>;
-    content: z.ZodString;
-  }, z.core.$strip>>>;
-}, z.core.$strip>;
-type CreationRequest = z.infer<typeof creationRequestSchema>;
-declare const creationResponseSchema: z.ZodObject<{
-  ok: z.ZodBoolean;
-  error: z.ZodOptional<z.ZodString>;
-  expertDraft: z.ZodOptional<z.ZodObject<{
-    slug: z.ZodOptional<z.ZodString>;
-    name: z.ZodString;
-    description: z.ZodString;
-    division: z.ZodString;
-    emoji: z.ZodPipe<z.ZodDefault<z.ZodString>, z.ZodTransform<string, string>>;
-    avatar: z.ZodDefault<z.ZodNumber>;
-    prompt: z.ZodString;
-  }, z.core.$strict>>;
-  teamDraft: z.ZodOptional<z.ZodObject<{
-    id: z.ZodOptional<z.ZodString>;
-    builtin: z.ZodOptional<z.ZodBoolean>;
-    name: z.ZodString;
-    description: z.ZodString;
-    tags: z.ZodArray<z.ZodString>;
-    goal: z.ZodString;
-    constraints: z.ZodString;
-    deliveryRequirements: z.ZodString;
-    members: z.ZodArray<z.ZodObject<{
-      expertSlug: z.ZodString;
-      duty: z.ZodString;
-      instructions: z.ZodString;
-    }, z.core.$strict>>;
-    examples: z.ZodArray<z.ZodString>;
-    coordinatorMode: z.ZodEnum<{
-      custom: "custom";
-      template: "template";
-    }>;
-    coordinatorTemplateId: z.ZodEnum<{
-      product: "product";
-      research: "research";
-      content: "content";
-      general: "general";
-      technical: "technical";
-      data: "data";
-    }>;
-    coordinatorTemplateVersion: z.ZodLiteral<1>;
-    coordinatorPrompt: z.ZodString;
-  }, z.core.$strict>>;
-  memberReasons: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
-}, z.core.$strip>;
-type CreationResponse = z.output<typeof creationResponseSchema>;
-//#endregion
 //#region src/creation-tools.d.ts
 declare const storedProposalItemSchema: z.ZodUnion<readonly [z.ZodObject<{
   kind: z.ZodLiteral<"expert">;
@@ -217,9 +155,9 @@ declare const storedProposalItemSchema: z.ZodUnion<readonly [z.ZodObject<{
     coordinatorTemplateId: z.ZodEnum<{
       product: "product";
       research: "research";
-      content: "content";
       general: "general";
       technical: "technical";
+      content: "content";
       data: "data";
     }>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -267,9 +205,9 @@ declare const latestProposalSchema: z.ZodNullable<z.ZodObject<{
       coordinatorTemplateId: z.ZodEnum<{
         product: "product";
         research: "research";
-        content: "content";
         general: "general";
         technical: "technical";
+        content: "content";
         data: "data";
       }>;
       coordinatorTemplateVersion: z.ZodLiteral<1>;
@@ -313,8 +251,6 @@ declare class AgencyAgentsRemote extends TypertRemoteService {
   getPrompt(slug: string, division: string): Promise<{
     prompt: string;
   }>;
-  /** 通过自然语言对话生成专家或专家团配置草案。 */
-  generateDraft(request: CreationRequest): Promise<CreationResponse>;
   /** 获取暂存的专家或专家团提案，用于前端弹窗回显。 */
   getPendingProposal(id: string): Promise<StoredProposal | null>;
   /** 获取自某时间戳之后产生的最新已确认专家或专家团草案，支持前端自动呼出弹窗。草案打磨期不返回。 */

@@ -42,7 +42,6 @@ export { resolveApiUrl }
 import { DEFAULT_EXPERT_EMOJI, type CustomExpertInput, type CatalogSnapshot } from '../expert-contract.js'
 import { CustomExpertEditor, CustomDeleteDialog, CUSTOM_EDITOR_CSS } from './custom-editor.js'
 import { openGlobalDraftEditor } from './global-draft-dialog.js'
-import { CreationDialog } from './creation-dialog.js'
 import { CreateActionMenu } from './create-action-menu.js'
 import { triggerChatCreation, subscribeChatPrefill, takeChatPrefill, peekChatPrefill, applyPrefillToDom } from './prefill.js'
 import { acceptEnabled, acceptCatalog, catalogState, refreshCatalog, subscribeCatalog } from './catalog.js'
@@ -1234,7 +1233,6 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   const [isSaving, setIsSaving] = React.useState(false)
   const [source, setSource] = React.useState<'all' | 'base' | 'custom'>('all')
   const [editor, setEditor] = React.useState<{ expert?: CustomExpertInput; enabled: boolean; revision: number } | null>(null)
-  const [creationChatOpen, setCreationChatOpen] = React.useState(false)
   const [deleting, setDeleting] = React.useState<ExpertView | null>(null)
   const [deleteError, setDeleteError] = React.useState<string | null>(null)
   const [bulkConfirm, setBulkConfirm] = React.useState<{
@@ -1623,18 +1621,6 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     }
   }
   return React.createElement('section', { className: 'aag-section', id: 'aag-expert-source-panel' }, nodes,
-    creationChatOpen ? React.createElement(CreationDialog, {
-      kind: 'expert',
-      locale: props.getActive(),
-      remote: props.remote,
-      t: props.t,
-      onApplyExpert: (draft: CustomExpertInput) => {
-        setCreationChatOpen(false)
-        openEditor(undefined, draft)
-      },
-      onApplyTeam: () => {},
-      onClose: () => setCreationChatOpen(false),
-    }) : null,
     editor === null || state === null ? null : React.createElement(CustomExpertEditor, {
       ...editor, remote: props.remote, t: props.t, locale: props.getActive(),
       divisions: [...new Set([...Object.keys(ZH_DIVISION), ...state.experts.map(expert => expert.division)])],

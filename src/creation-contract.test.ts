@@ -1,51 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
-  creationRequestSchema,
   validateExpertProposal,
   validateTeamProposal,
-  type CreationRequest,
 } from './creation-contract.js'
 
 describe('creation-contract', () => {
-  describe('creationRequestSchema', () => {
-    it('validates a basic creation request for expert', () => {
-      const request: CreationRequest = {
-        kind: 'expert',
-        prompt: '创建一个专门审查 Rust 异步并发安全性的专家',
-      }
-      const parsed = creationRequestSchema.safeParse(request)
-      expect(parsed.success).toBe(true)
-    })
-
-    it('validates a team creation request with history and previous draft', () => {
-      const request: CreationRequest = {
-        kind: 'team',
-        prompt: '去掉产品角色，增加一名安全审计员',
-        messages: [
-          { role: 'user', content: '组建一个电商重构团队' },
-          { role: 'assistant', content: '已为您推荐4人团队草案' },
-        ],
-      }
-      const parsed = creationRequestSchema.safeParse(request)
-      expect(parsed.success).toBe(true)
-    })
-
-    it('rejects empty or whitespace-only prompt', () => {
-      const parsed = creationRequestSchema.safeParse({
-        kind: 'expert',
-        prompt: '   ',
-      })
-      expect(parsed.success).toBe(false)
-    })
-
-    it('rejects prompt exceeding character limit', () => {
-      const parsed = creationRequestSchema.safeParse({
-        kind: 'expert',
-        prompt: 'a'.repeat(4001),
-      })
-      expect(parsed.success).toBe(false)
-    })
-  })
 
   describe('validateExpertProposal', () => {
     it('accepts valid expert proposal and normalizes defaults', () => {

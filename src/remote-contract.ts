@@ -2,7 +2,6 @@ import { teamInputSchema, teamSnapshotSchema } from './team-contract.js'
 import type { InvocationDescriptor, InvocationParameterDescriptor, TypertCodec } from '@deepseek-ai/dsh-typert-protocol'
 import { z } from 'zod'
 import { CUSTOM_EXPERT_SLUG, catalogSnapshotSchema, customExpertInputSchema, expertEditSchema } from './expert-contract.js'
-import { creationRequestSchema, creationResponseSchema } from './creation-contract.js'
 import { storedProposalSchema, latestProposalSchema } from './creation-tools.js'
 
 const enabledArraySchema = z.array(z.string())
@@ -96,15 +95,6 @@ export const AGENCY_AGENTS_DESCRIPTORS = [
       jsonParameter('division', 'string', z.string().min(1).max(64)),
     ],
     result: strictCodec('AgencyAgentsPrompt', expertPromptSchema),
-  },
-  {
-    id: '@michengai/dsh-agency-agents#agencyAgents/generateDraft',
-    service: 'agencyAgents',
-    namespace: 'agencyAgents',
-    method: 'generateDraft',
-    invocation: { kind: 'direct' },
-    parameters: [jsonParameter('request', 'CreationRequest', creationRequestSchema)],
-    result: strictCodec('CreationResponse', creationResponseSchema),
   },
   {
     id: '@michengai/dsh-agency-agents#agencyAgents/getPendingProposal',

@@ -9,10 +9,9 @@ import { effectiveCoordinator, type ExpertTeam, type TeamInput, type TeamSnapsho
 import type { ExpertSummary } from '../expert-contract.js';
 import type { AgencyCatalogRemote, AgencyTeamsRemote, AgencyCreationRemote } from './remote.js';
 import { TeamEditor } from './team-editor.js';
-import { CreationDialog } from './creation-dialog.js';
 import { CreateActionMenu } from './create-action-menu.js';
 import { triggerChatCreation } from './prefill.js';
-import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconSparkles, IconCopy, IconSend, IconSearch, IconEye, IconTrash, } from './team-shared.js';
+import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconTrash, } from './team-shared.js';
 export { TEAM_CSS } from './team-style.js';
 export type TeamRemote = AgencyCatalogRemote & AgencyTeamsRemote & AgencyCreationRemote;
 export async function unwrap<T>(promise: Promise<{
@@ -142,7 +141,6 @@ export function TeamsPanel(props: {
         enabled: boolean;
         revision: number;
     } | null>(null);
-    const [creationChatOpen, setCreationChatOpen] = React.useState(false);
     const [confirm, setConfirm] = React.useState<{
         team: ExpertTeam;
         action: 'enable' | 'delete' | 'select';
@@ -360,22 +358,6 @@ export function TeamsPanel(props: {
                     setDetails(null);
                 }
                 : undefined} onDelete={!details.builtin ? () => void change(details, 'delete') : undefined}/>)}
-      {creationChatOpen && (<CreationDialog
-        kind="team"
-        locale={locale}
-        remote={props.remote}
-        t={tx}
-        onApplyExpert={() => {}}
-        onApplyTeam={(draft) => {
-          setCreationChatOpen(false);
-          setEditor({
-            value: draft,
-            enabled: false,
-            revision: snapshot!.revision,
-          });
-        }}
-        onClose={() => setCreationChatOpen(false)}
-      />)}
       {editor && (<TeamEditor initial={editor.value} experts={experts} enabled={editor.enabled} enabledExperts={snapshot!.enabledExperts} close={() => setEditor(null)} refresh={async () => {
                 const latest = await unwrap(props.remote.getTeams());
                 accept(latest);
