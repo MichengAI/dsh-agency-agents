@@ -73,9 +73,9 @@ declare const teamSnapshotSchema: z.ZodObject<{
   revision: z.ZodNumber;
   engine: z.ZodOptional<z.ZodObject<{
     state: z.ZodEnum<{
-      enabled: "enabled";
       unsupported: "unsupported";
       disabled: "disabled";
+      enabled: "enabled";
     }>;
     mode: z.ZodEnum<{
       subagent: "subagent";

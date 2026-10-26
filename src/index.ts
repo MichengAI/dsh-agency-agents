@@ -1163,7 +1163,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
 
   ctx.tools.register(defineTool({
     name: 'propose_custom_expert',
-    description: 'Create, design, or propose a new custom expert persona. ALWAYS call this tool when the user asks to create, add, or customize an expert (e.g. "创建小红书运营专家", "我想创建一个专家..."). Do NOT search codebase, read project source, or write documentation files to docs/. This tool validates the specification, prepares a draft, and provides a clickable action link for the user to review and save in the UI dialog.',
+    description: 'Create, design, or propose a new custom expert persona. ALWAYS call this tool when the user asks to create, add, or customize an expert (e.g. "创建小红书运营专家", "我想创建一个专家..."). Do NOT search codebase, read project source, or write documentation files to docs/. This tool validates the specification and returns { proposalId, actionLink, markdown }. IMPORTANT: In your assistant reply, you MUST provide this exact clickable link: `👉 [点击在弹窗中核对并保存草案](${actionLink})` so the user can click it directly in the message.',
     parameters: {
       name: { type: 'string', required: true, description: 'Expert name (1-40 chars), e.g. "Rust 并发安全专家".' },
       division: { type: 'string', required: true, description: 'Division category. Must be one of the valid divisions: specialized, engineering, design, marketing, product, project-management, sales, operations, support, legal, finance, people, data, executive, strategy, security, devops, qa, content, research, translation, customer-success.' },
@@ -1172,7 +1172,15 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       emoji: { type: 'string', description: 'Single emoji representing the expert (default: 🧩).' },
     },
     output: {
-      schema: { type: 'object', additionalProperties: false, properties: { proposalId: { type: 'string', required: true }, markdown: { type: 'string', required: true } } },
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          proposalId: { type: 'string', required: true },
+          actionLink: { type: 'string', required: true },
+          markdown: { type: 'string', required: true },
+        },
+      },
       render: (_args, value) => [{ type: 'text', text: value.markdown as string }],
     },
     async execute(args) {
@@ -1189,14 +1197,15 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         throw new Error(`专家草案校验失败：${validation.error}`)
       }
       const proposalId = proposalRegistry.save({ kind: 'expert', data: validation.value })
+      const actionLink = `#dsh-agency:apply-draft?id=${proposalId}`
       const markdown = renderExpertProposalMarkdown(proposalId, validation.value)
-      return { proposalId, markdown }
+      return { proposalId, actionLink, markdown }
     },
   }))
 
   ctx.tools.register(defineTool({
     name: 'propose_expert_team',
-    description: 'Assemble, design, or propose an expert team configuration. ALWAYS call this tool when the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"). Do NOT write markdown files to docs/. Members must be existing experts from The Agency roster.',
+    description: 'Assemble, design, or propose an expert team configuration. ALWAYS call this tool when the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"). Do NOT write markdown files to docs/. Members must be existing experts from The Agency roster. Returns { proposalId, actionLink, markdown }. IMPORTANT: In your assistant reply, you MUST provide this exact clickable link: `👉 [点击在弹窗中核对并保存草案](${actionLink})` so the user can click it directly.',
     parameters: {
       name: { type: 'string', required: true, description: 'Team name (1-40 chars).' },
       description: { type: 'string', required: true, description: 'Team description (1-160 chars).' },
@@ -1214,7 +1223,15 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       },
     },
     output: {
-      schema: { type: 'object', additionalProperties: false, properties: { proposalId: { type: 'string', required: true }, markdown: { type: 'string', required: true } } },
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          proposalId: { type: 'string', required: true },
+          actionLink: { type: 'string', required: true },
+          markdown: { type: 'string', required: true },
+        },
+      },
       render: (_args, value) => [{ type: 'text', text: value.markdown as string }],
     },
     async execute(args) {
@@ -1248,8 +1265,9 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         throw new Error(`专家团队方案校验失败：${validation.error}`)
       }
       const proposalId = proposalRegistry.save({ kind: 'team', data: validation.value, memberReasons: validation.memberReasons })
+      const actionLink = `#dsh-agency:apply-draft?id=${proposalId}`
       const markdown = renderTeamProposalMarkdown(proposalId, validation.value, validation.memberReasons)
-      return { proposalId, markdown }
+      return { proposalId, actionLink, markdown }
     },
   }))
 ctx.systemPrompt.section({ name: 'agency:teams', order: 118, text: context => {
@@ -1270,7 +1288,7 @@ ctx.systemPrompt.section({ name: 'agency:teams', order: 118, text: context => {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.\nWhen the user asks to create, design, or customize an expert persona (e.g. "我想创建一个专家...", "创建小红书运营专家", "新建专家"), call propose_custom_expert with structured parameters. Do NOT tell the user to manually copy-paste, do NOT search codebase or read project source files, and do NOT write markdown files to docs/. When the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"), call propose_expert_team with existing expert slugs.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.\nWhen the user asks to create, design, or customize an expert persona (e.g. "我想创建一个专家...", "创建小红书运营专家", "新建专家"), call propose_custom_expert with structured parameters. In your assistant reply, you MUST prominently display the clickable link: 👉 [点击在弹窗中核对并保存草案](#dsh-agency:apply-draft?id=...) so the user can click it directly in the message bubble. Do NOT tell the user to manually copy-paste, do NOT search codebase or read project source files, and do NOT write markdown files to docs/. When the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"), call propose_expert_team with existing expert slugs and also output the clickable action link.'
     },
   })
 }
