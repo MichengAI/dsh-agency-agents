@@ -49,24 +49,31 @@ describe('creation-service', () => {
     expect(result.error).toContain('模型服务不可用')
   })
 
-  it('successfully generates expert draft with mock llm response', async () => {
+  it('successfully generates expert draft with mock llm response matching host contract', async () => {
+    let capturedConfig: any
+    let capturedStreamArgs: any
+
     const mockLlm = {
       listProviders: () => [{ id: 'mock-provider', name: 'Mock' }],
       listModels: async () => [{ id: 'mock-model', name: 'Mock Model' }],
-      prepareCall: async () => ({
-        stream: async function* () {
-          yield {
-            type: 'content',
-            delta: JSON.stringify({
-              name: 'React 性能优化专家',
-              description: '专注大体积单页应用渲染性能优化',
-              division: 'engineering',
-              emoji: '⚡',
-              prompt: '你是一位顶尖的 React 性能优化工程师...',
-            }),
-          }
-        },
-      }),
+      prepareCall: async (config: any) => {
+        capturedConfig = config
+        return {
+          stream: async function* (streamArgs: any) {
+            capturedStreamArgs = streamArgs
+            yield {
+              type: 'text-delta',
+              text: JSON.stringify({
+                name: 'React 性能优化专家',
+                description: '专注大体积单页应用渲染性能优化',
+                division: 'engineering',
+                emoji: '⚡',
+                prompt: '你是一位顶尖的 React 性能优化工程师...'.repeat(5),
+              }),
+            }
+          },
+        }
+      },
     }
 
     const service = createCreationService({
@@ -79,6 +86,9 @@ describe('creation-service', () => {
       prompt: '需要一位优化 React 渲染耗时的专家',
     })
 
+    expect(capturedConfig).toEqual({ provider: 'mock-provider', model: 'mock-model' })
+    expect(Array.isArray(capturedStreamArgs.messages[0].content)).toBe(true)
+    expect(capturedStreamArgs.messages[0].content[0].type).toBe('text')
     expect(result.ok).toBe(true)
     expect(result.expertDraft?.name).toBe('React 性能优化专家')
     expect(result.expertDraft?.division).toBe('engineering')

@@ -184,4 +184,22 @@ describe('creation-tools', () => {
     expect(latest).not.toBeNull()
     expect(latest?.proposal.confirmed).toBe(true)
   })
+
+  it('clears latest pointer when proposal is deleted', () => {
+    const registry = createProposalRegistry()
+    const id = registry.save({
+      kind: 'expert',
+      data: {
+        name: '待删除专家',
+        description: '测试删除',
+        division: 'engineering',
+        emoji: '🧪',
+        prompt: '提示词',
+        avatar: 0,
+      },
+    })
+    expect(registry.getLatest(0)).not.toBeNull()
+    registry.delete(id)
+    expect(registry.getLatest(0)).toBeNull()
+  })
 })

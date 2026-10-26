@@ -1166,7 +1166,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
     description: 'Design or update a custom expert draft. ALWAYS call this tool during ideation and iterative revisions in chat. This tool generates a full preview in chat and stores the draft WITHOUT opening any UI modal.',
     parameters: {
       name: { type: 'string', required: true, description: 'Expert name (1-40 chars), e.g. "Rust 并发安全专家".' },
-      division: { type: 'string', required: true, description: 'Division category. Must be one of the valid divisions: specialized, engineering, design, marketing, product, project-management, sales, operations, support, legal, finance, people, data, executive, strategy, security, devops, qa, content, research, translation, customer-success.' },
+      division: { type: 'string', required: true, description: 'Division category. Must be one of the valid divisions: ' + Object.keys(ZH_DIVISION).join(', ') + '.' },
       description: { type: 'string', required: true, description: 'Short summary (1-160 chars) of expertise and scope.' },
       prompt: { type: 'string', required: true, description: 'Complete system prompt (at least 100 chars).' },
       emoji: { type: 'string', description: 'Single emoji representing the expert (default: 🧩).' },
@@ -1257,6 +1257,9 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       }
 
       const confirmed = proposalRegistry.confirmLatest()
+      if (!confirmed) {
+        return { success: false, message: '当前没有待保存的专家草案，请先告诉我您想创建什么样的专家。' }
+      }
       return {
         success: true,
         message: `✅ 已为您打开专家「${expert.name}」的编辑窗口，所有字段已全自动回填，请在右侧抽屉中核对后点击「保存并启用」。`,
@@ -1394,6 +1397,9 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       }
 
       const confirmed = proposalRegistry.confirmLatest()
+      if (!confirmed) {
+        return { success: false, message: '当前没有待保存的专家团队草案，请先告诉我您想组建什么样的专家团队。' }
+      }
       return {
         success: true,
         message: `✅ 已为您打开专家团队「${team.name}」的编辑窗口，成员阵容与分工已全自动回填，请在弹窗中核对后点击「保存并启用」。`,

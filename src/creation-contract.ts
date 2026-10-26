@@ -50,7 +50,7 @@ export function validateExpertProposal(input: unknown): ExpertValidationResult {
   delete raw.slug
 
   // 校验 division 是否属于有效内置分区
-  if (typeof raw.division === 'string' && !(raw.division in ZH_DIVISION)) {
+  if (typeof raw.division === 'string' && !Object.hasOwn(ZH_DIVISION, raw.division)) {
     return { ok: false, error: `专家分类「${raw.division}」不存在。` }
   }
 

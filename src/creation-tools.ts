@@ -45,9 +45,15 @@ export interface ProposalRegistry {
   confirmLatest(): LatestProposal
 }
 
+interface ProposalEntry {
+  readonly id: string
+  readonly proposal: StoredProposal
+  timestamp: number
+  expiresAt: number
+}
+
 export function createProposalRegistry(): ProposalRegistry {
-  const store = new Map<string, { proposal: StoredProposal; expiresAt: number }>()
-  let latest: { id: string; proposal: StoredProposal; timestamp: number } | null = null
+  const store = new Map<string, ProposalEntry>()
 
   // 15 分钟有效期
   const TTL_MS = 15 * 60 * 1000
@@ -64,8 +70,7 @@ export function createProposalRegistry(): ProposalRegistry {
       cleanup()
       const id = generateProposalId()
       const now = Date.now()
-      store.set(id, { proposal, expiresAt: now + TTL_MS })
-      latest = { id, proposal, timestamp: now }
+      store.set(id, { id, proposal, timestamp: now, expiresAt: now + TTL_MS })
       return id
     },
     get(id: string): StoredProposal | undefined {
@@ -76,23 +81,42 @@ export function createProposalRegistry(): ProposalRegistry {
       return store.delete(id)
     },
     getLatest(afterTimestamp: number): LatestProposal {
-      if (latest && latest.timestamp > afterTimestamp) {
-        return latest
+      cleanup()
+      let best: ProposalEntry | null = null
+      for (const entry of store.values()) {
+        if (entry.timestamp > afterTimestamp) {
+          if (!best || entry.timestamp > best.timestamp) {
+            best = entry
+          }
+        }
       }
-      return null
+      return best ? { id: best.id, proposal: best.proposal, timestamp: best.timestamp } : null
     },
     getLatestConfirmed(afterTimestamp: number): LatestProposal {
-      if (latest && latest.proposal.confirmed === true && latest.timestamp > afterTimestamp) {
-        return latest
+      cleanup()
+      let best: ProposalEntry | null = null
+      for (const entry of store.values()) {
+        if (entry.proposal.confirmed === true && entry.timestamp > afterTimestamp) {
+          if (!best || entry.timestamp > best.timestamp) {
+            best = entry
+          }
+        }
       }
-      return null
+      return best ? { id: best.id, proposal: best.proposal, timestamp: best.timestamp } : null
     },
     confirmLatest(): LatestProposal {
-      if (!latest) return null
-      latest.proposal.confirmed = true
-      latest.timestamp = Date.now()
-      store.set(latest.id, { proposal: latest.proposal, expiresAt: Date.now() + TTL_MS })
-      return latest
+      cleanup()
+      let best: ProposalEntry | null = null
+      for (const entry of store.values()) {
+        if (!best || entry.timestamp > best.timestamp) {
+          best = entry
+        }
+      }
+      if (!best) return null
+      best.proposal.confirmed = true
+      best.timestamp = Date.now()
+      best.expiresAt = best.timestamp + TTL_MS
+      return { id: best.id, proposal: best.proposal, timestamp: best.timestamp }
     },
   }
 }

@@ -86,6 +86,20 @@ describe('creation-contract', () => {
       expect(result.ok).toBe(false)
     })
 
+    it('rejects prototype properties like constructor as division', () => {
+      const result = validateExpertProposal({
+        name: '测试专家',
+        description: '测试简介',
+        division: 'constructor',
+        emoji: '🧪',
+        prompt: '测试提示词...至少有一百个字符...'.repeat(10),
+      })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('专家分类「constructor」不存在')
+      }
+    })
+
     it('rejects name or description exceeding length bounds', () => {
       const result = validateExpertProposal({
         name: 'a'.repeat(41),

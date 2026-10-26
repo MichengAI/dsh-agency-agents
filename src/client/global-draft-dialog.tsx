@@ -4,6 +4,7 @@ import type { StoredProposal } from '../creation-tools.js'
 import { CustomExpertEditor } from './custom-editor.js'
 import { TeamEditor } from './team-editor.js'
 import { TeamLocaleContext } from './team-locale.js'
+import { unwrap } from './team-ui.js'
 import { ZH_DIVISION } from '../names.js'
 import type { CatalogSnapshot } from '../expert-contract.js'
 import type { TeamSnapshot } from '../team-contract.js'
@@ -38,10 +39,9 @@ export function openGlobalDraftEditor(options: GlobalDraftDialogOptions): void {
 
     React.useEffect(() => {
       let active = true
-      options.remote.getCatalog()
-        .then((res: any) => {
+      unwrap<CatalogSnapshot>(options.remote.getCatalog())
+        .then((data) => {
           if (!active) return
-          const data = res?.value ?? res
           setCatalog(data)
           setLoading(false)
         })
@@ -77,12 +77,10 @@ export function openGlobalDraftEditor(options: GlobalDraftDialogOptions): void {
     const [loading, setLoading] = React.useState(true)
 
     const fetchAll = React.useCallback(async () => {
-      const [catRes, teamRes] = await Promise.all([
-        options.remote.getCatalog(),
-        options.remote.getTeams(),
+      const [catalogData, teamData] = await Promise.all([
+        unwrap<CatalogSnapshot>(options.remote.getCatalog()),
+        unwrap<TeamSnapshot>(options.remote.getTeams()),
       ])
-      const catalogData = catRes?.value ?? catRes
-      const teamData = teamRes?.value ?? teamRes
       setData({ catalog: catalogData, teams: teamData })
       setLoading(false)
       return teamData
@@ -110,7 +108,7 @@ export function openGlobalDraftEditor(options: GlobalDraftDialogOptions): void {
           refresh={fetchAll}
           save={async (value, enabled, revision) => {
             const rev = revision ?? data.teams.revision
-            await options.remote.saveTeam(value, enabled, rev)
+            await unwrap(options.remote.saveTeam(value, enabled, rev))
             options.onSaved?.()
             cleanup()
           }}

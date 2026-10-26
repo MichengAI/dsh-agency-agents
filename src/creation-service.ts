@@ -120,21 +120,21 @@ export function createCreationService(options: CreationServiceOptions): Creation
         ].join('\n')
       }
 
-      const messages: Array<{ role: string; content: string }> = [
-        { role: 'system', content: systemPrompt },
+      const messages = [
+        { role: 'system', content: [{ type: 'text', text: systemPrompt }] },
+        ...(request.messages ?? []).map(m => ({
+          role: m.role,
+          content: [{ type: 'text', text: m.content }],
+        })),
+        { role: 'user', content: [{ type: 'text', text: request.prompt }] },
       ]
-
-      if (request.messages && request.messages.length > 0) {
-        for (const m of request.messages) {
-          messages.push({ role: m.role, content: m.content })
-        }
-      }
-
-      messages.push({ role: 'user', content: request.prompt })
 
       let fullContent = ''
       try {
-        const call = await llm.prepareCall(targetProvider, targetModel)
+        const call = await llm.prepareCall({
+          provider: targetProvider,
+          model: targetModel,
+        })
         const stream = call.stream({
           provider: targetProvider,
           model: targetModel,
@@ -142,7 +142,9 @@ export function createCreationService(options: CreationServiceOptions): Creation
         })
 
         for await (const chunk of stream) {
-          if (chunk.type === 'content' && typeof chunk.delta === 'string') {
+          if (chunk.type === 'text-delta' && typeof chunk.text === 'string') {
+            fullContent += chunk.text
+          } else if (chunk.type === 'content' && typeof chunk.delta === 'string') {
             fullContent += chunk.delta
           } else if (chunk.type === 'text' && typeof chunk.text === 'string') {
             fullContent += chunk.text
