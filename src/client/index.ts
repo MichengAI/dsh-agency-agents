@@ -1215,6 +1215,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   remote: AgencyAgentsRemoteApi
   getActive: () => 'zh' | 'en'
   onEnabledChange?: (enabled: ReadonlySet<string>) => void
+  closeSettings?: () => void
 }): React.ReactElement {
   const cached = catalogState(props.remote)
   const [state, setState] = React.useState<EnabledState | null>(cached.revision < 0 ? null : cached)
@@ -1542,7 +1543,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
         chatLabel: props.t('custom.createChat'),
         disabled: isSaving,
         onSelectManual: () => openEditor(),
-        onSelectChat: () => triggerChatCreation(props.t('custom.chatPrompt'), (props as { close?: () => void }).close),
+        onSelectChat: () => triggerChatCreation(props.t('custom.chatPrompt'), props.closeSettings ?? (props as { close?: () => void }).close),
       }))
     if (notice !== null) nodes.push(React.createElement('div', { key: 'notice', className: 'aag-custom-notice', role: 'status' }, notice))
     nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters aag-card-filters' },
@@ -1666,7 +1667,10 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     }))
 }
 
-export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCardsSettings> & { prepareTeamSelection(): (team: ExpertTeam, example?: string) => boolean | Promise<boolean> }) {
+export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCardsSettings> & {
+  closeSettings?: () => void
+  prepareTeamSelection(): (team: ExpertTeam, example?: string) => boolean | Promise<boolean>
+}) {
   const tx = (key: string) => teamText(props.getActive(), key)
   const [view, setView] = React.useState<'experts' | 'teams'>('experts')
   const [expertSummary, setExpertSummary] = React.useState({ total: 0, enabled: 0 })
@@ -1690,9 +1694,10 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
     React.createElement('header', { className: 'aag-toolbar' }, React.createElement('div', { className: 'aag-title-row' },
       React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')), settingsGithubLinks(props.t))),
     React.createElement('div', { className: 'aag-library-navigation' }, navigation),
-    React.createElement('div', { id: 'aag-library-panel-experts', hidden: view !== 'experts' }, React.createElement(ExpertCardsSettings, { ...props, sharedHeader: true, onSummary: setExpertSummary })),
+    React.createElement('div', { id: 'aag-library-panel-experts', hidden: view !== 'experts' }, React.createElement(ExpertCardsSettings, { ...props, closeSettings: props.closeSettings ?? (props as { close?: () => void }).close, sharedHeader: true, onSummary: setExpertSummary })),
     React.createElement('div', { id: 'aag-library-panel-teams', hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
       remote: props.remote as TeamRemote, sharedHeader: true, onSummary: setTeamSummary, prepareSelect: props.prepareTeamSelection,
+      closeSettings: props.closeSettings ?? (props as { close?: () => void }).close,
       onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) },
     }))))
 }
@@ -1735,6 +1740,12 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     callApi,
     renderPanel: (ownerProps: any) => React.createElement(AgencySettingsPanel, {
       ...ownerProps,
+      closeSettings: () => {
+        const layout = ctx.get('layout') as any
+        if (typeof layout?.selectPanel === 'function') {
+          layout.selectPanel(null)
+        }
+      },
       remote,
       getActive,
       onEnabledChange: updateEnabledForMentions,
@@ -1859,7 +1870,14 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       name: 'settings.section', id: 'agency-agents', order: 20, label: () => t('settings.nav'), locale: NS,
       ...({ icon: 'expert' } as Record<string, unknown>),
     },
-    (props) => React.createElement(AgencySettingsPanel, { ...props, remote, getActive, onEnabledChange: updateEnabledForMentions, prepareTeamSelection: bindExpertInsertion().prepareTeamSelection }),
+    (props) => React.createElement(AgencySettingsPanel, {
+      ...props,
+      closeSettings: (props as { close?: () => void }).close,
+      remote,
+      getActive,
+      onEnabledChange: updateEnabledForMentions,
+      prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
+    }),
   ))
 
   ctx.slots.inject('conversation.input.left', () => ctx.slots.register(

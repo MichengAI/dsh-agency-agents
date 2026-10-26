@@ -117,6 +117,7 @@ export function TeamsPanel(props: {
         enabled: number;
     }) => void;
     title?: string;
+    closeSettings?: () => void;
 }) {
     const { locale, tx } = useTeamLocale();
 
@@ -310,7 +311,7 @@ export function TeamsPanel(props: {
             chatLabel={tx("通过对话创建")}
             disabled={!snapshot || busy}
             onSelectManual={() => setEditor({ enabled: false, revision: snapshot!.revision })}
-            onSelectChat={() => triggerChatCreation(tx('我要组建一个专家团，团队名称【团队名称】，任务目标【任务目标与交付要求】，需要【2~5位专业角色】'), (props as { close?: () => void }).close)}
+            onSelectChat={() => triggerChatCreation(tx('我要组建一个专家团，团队名称【团队名称】，任务目标【任务目标与交付要求】，需要【2~5位专业角色】'), props.closeSettings ?? (props as { close?: () => void }).close)}
           />
         </div>
       </div>
