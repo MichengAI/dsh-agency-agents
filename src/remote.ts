@@ -9,6 +9,8 @@ import type {} from '@deepseek-ai/dsh-typert-registry'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
 import { AGENCY_PERSONA_SERVICE, type AgencyPersonaSource } from './index.js'
 import { formatHost, readHostLocale } from './i18n.js'
+import { createCreationService } from './creation-service.js'
+import type { CreationRequest, CreationResponse } from './creation-contract.js'
 import { settingsNamespaceCompat } from './settings-compat.js'
 import { AGENCY_LIBRARY_SERVICE, type AgencyExpertLibrary } from './expert-library.js'
 import type { CatalogSnapshot, CustomExpertInput } from './expert-contract.js'
@@ -123,5 +125,16 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
   @Remote('getPrompt')
   async getPrompt(slug: string, division: string): Promise<{ prompt: string }> {
     return personaSource(this.ctx).getPrompt(slug, division, readHostLocale(this.ctx))
+  }
+
+  /** 通过自然语言对话生成专家或专家团配置草案。 */
+  @Remote('generateDraft')
+  async generateDraft(request: CreationRequest): Promise<CreationResponse> {
+    const service = createCreationService({
+      getCatalog: () => this.library().catalog(),
+      getLlmRuntime: () => this.ctx.get('llm'),
+      locale: () => readHostLocale(this.ctx),
+    })
+    return service.generateDraft(request)
   }
 }

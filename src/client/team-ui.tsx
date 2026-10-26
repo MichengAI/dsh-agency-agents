@@ -7,11 +7,12 @@ import { CategorySelect } from './category-select.js';
 import React from 'react';
 import { effectiveCoordinator, type ExpertTeam, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
-import type { AgencyCatalogRemote, AgencyTeamsRemote } from './remote.js';
+import type { AgencyCatalogRemote, AgencyTeamsRemote, AgencyCreationRemote } from './remote.js';
 import { TeamEditor } from './team-editor.js';
-import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconTrash, } from './team-shared.js';
+import { CreationDialog } from './creation-dialog.js';
+import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconSparkles, IconCopy, IconSend, IconSearch, IconEye, IconTrash, } from './team-shared.js';
 export { TEAM_CSS } from './team-style.js';
-export type TeamRemote = AgencyCatalogRemote & AgencyTeamsRemote;
+export type TeamRemote = AgencyCatalogRemote & AgencyTeamsRemote & AgencyCreationRemote;
 export async function unwrap<T>(promise: Promise<{
     ok: true;
     value: T;
@@ -138,6 +139,7 @@ export function TeamsPanel(props: {
         enabled: boolean;
         revision: number;
     } | null>(null);
+    const [creationChatOpen, setCreationChatOpen] = React.useState(false);
     const [confirm, setConfirm] = React.useState<{
         team: ExpertTeam;
         action: 'enable' | 'delete' | 'select';
@@ -304,6 +306,15 @@ export function TeamsPanel(props: {
             className="aag-icon-btn"
             size="small"
             disabled={!snapshot || busy}
+            aria-label={tx("通过对话创建专家团")}
+            title={tx("通过对话创建专家团")}
+            icon={<IconSparkles size={16} />}
+            onClick={() => setCreationChatOpen(true)}
+          />
+          <Button
+            className="aag-icon-btn"
+            size="small"
+            disabled={!snapshot || busy}
             aria-label={tx("新建专家团")}
             title={tx("新建专家团")}
             icon={<IconPlus />}
@@ -356,6 +367,22 @@ export function TeamsPanel(props: {
                     setDetails(null);
                 }
                 : undefined} onDelete={!details.builtin ? () => void change(details, 'delete') : undefined}/>)}
+      {creationChatOpen && (<CreationDialog
+        kind="team"
+        locale={locale}
+        remote={props.remote}
+        t={tx}
+        onApplyExpert={() => {}}
+        onApplyTeam={(draft) => {
+          setCreationChatOpen(false);
+          setEditor({
+            value: draft,
+            enabled: false,
+            revision: snapshot!.revision,
+          });
+        }}
+        onClose={() => setCreationChatOpen(false)}
+      />)}
       {editor && (<TeamEditor initial={editor.value} experts={experts} enabled={editor.enabled} enabledExperts={snapshot!.enabledExperts} close={() => setEditor(null)} refresh={async () => {
                 const latest = await unwrap(props.remote.getTeams());
                 accept(latest);

@@ -1,4 +1,5 @@
 import type { TeamInput, TeamSnapshot } from '../team-contract.js'
+import type { CreationRequest, CreationResponse } from '../creation-contract.js'
 /**
  * 手写的 Typert Remote 贡献（等价 generator 的 typert.remote-client 产物）。
  * 本插件的名册、管理及启停方法采用手写贡献，避免依赖 monorepo
@@ -21,6 +22,10 @@ export interface AgencyCatalogRemote {
   deleteCustomExpert(slug: string, expectedRevision: number): Promise<RemoteResult<CatalogSnapshot>>
 }
 
+export interface AgencyCreationRemote {
+  generateDraft(request: CreationRequest): Promise<RemoteResult<CreationResponse>>
+}
+
 export interface AgencyAgentsEnabledState {
   readonly enabled: string[]
   readonly revision: number
@@ -31,7 +36,7 @@ export interface AgencyAgentsPrompt {
 }
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
-  interface TypertRemoteNamespace$agencyAgents extends AgencyCatalogRemote, AgencyTeamsRemote {
+  interface TypertRemoteNamespace$agencyAgents extends AgencyCatalogRemote, AgencyTeamsRemote, AgencyCreationRemote {
     getEnabled: () => Promise<RemoteResult<AgencyAgentsEnabledState>>
     setEnabled: (enabled: string[], expectedRevision: number) => Promise<RemoteResult<AgencyAgentsEnabledState>>
     getPrompt: (slug: string, division: string) => Promise<RemoteResult<AgencyAgentsPrompt>>
@@ -48,6 +53,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     'agencyAgents/getEnabled': () => Promise<RemoteResult<AgencyAgentsEnabledState>>
     'agencyAgents/setEnabled': (enabled: string[], expectedRevision: number) => Promise<RemoteResult<AgencyAgentsEnabledState>>
     'agencyAgents/getPrompt': (slug: string, division: string) => Promise<RemoteResult<AgencyAgentsPrompt>>
+    'agencyAgents/generateDraft': AgencyCreationRemote['generateDraft']
   }
   interface TypertRemoteNamespaceMap {
     'agencyAgents': TypertRemoteNamespace$agencyAgents

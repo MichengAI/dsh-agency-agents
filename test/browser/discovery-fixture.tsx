@@ -35,7 +35,7 @@ const remote: React.ComponentProps<typeof AgentsButton>['remote'] = {
     snapshot = { ...snapshot, enabled, revision: snapshot.revision + 1 }
     return { ok: true, value: { enabled, revision: snapshot.revision } }
   },
-  getPrompt: unsupported, getCustomExpert: unsupported, saveCustomExpert: unsupported, deleteCustomExpert: unsupported,
+  getPrompt: unsupported, getCustomExpert: unsupported, saveCustomExpert: unsupported, deleteCustomExpert: unsupported, generateDraft: unsupported,
 }
 Object.assign(window, { discoveryState: () => ({ snapshot, writes }) })
 

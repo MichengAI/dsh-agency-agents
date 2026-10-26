@@ -41,11 +41,13 @@ import { resolveApiUrl } from '../api-base.js'
 export { resolveApiUrl }
 import { DEFAULT_EXPERT_EMOJI, type CustomExpertInput, type CatalogSnapshot } from '../expert-contract.js'
 import { CustomExpertEditor, CustomDeleteDialog, CUSTOM_EDITOR_CSS } from './custom-editor.js'
+import { CreationDialog } from './creation-dialog.js'
+import { IconSparkles } from './team-shared.js'
 import { acceptEnabled, acceptCatalog, catalogState, refreshCatalog, subscribeCatalog } from './catalog.js'
 import { refreshTeams, teamState } from './team-cache.js'
 import { installNativeTeamNames } from './native-team-names.js'
 import { installSettingsNavIcon } from './settings-nav-icon.js'
-import type { AgencyCatalogRemote } from './remote.js'
+import type { AgencyCatalogRemote, AgencyCreationRemote } from './remote.js'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -660,7 +662,7 @@ export const CSS = PLUGIN_UI_CSS + TEAM_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD
   + MENU_NAME_OVERRIDE + `{${EXPERT_MENU_NAME_STYLE}}`
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
-interface AgencyAgentsRemoteApi extends AgencyCatalogRemote, Partial<AgencyTeamsRemote> {
+interface AgencyAgentsRemoteApi extends AgencyCatalogRemote, Partial<AgencyTeamsRemote>, AgencyCreationRemote {
   getEnabled(): Promise<RemoteResult<AgencyAgentsEnabledState>>
   setEnabled(enabled: string[], expectedRevision: number): Promise<RemoteResult<AgencyAgentsEnabledState>>
   getPrompt(slug: string, division: string): Promise<RemoteResult<AgencyAgentsPrompt>>
@@ -1214,6 +1216,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   const [isSaving, setIsSaving] = React.useState(false)
   const [source, setSource] = React.useState<'all' | 'base' | 'custom'>('all')
   const [editor, setEditor] = React.useState<{ expert?: CustomExpertInput; enabled: boolean; revision: number } | null>(null)
+  const [creationChatOpen, setCreationChatOpen] = React.useState(false)
   const [deleting, setDeleting] = React.useState<ExpertView | null>(null)
   const [deleteError, setDeleteError] = React.useState<string | null>(null)
   const [bulkConfirm, setBulkConfirm] = React.useState<{
@@ -1237,9 +1240,13 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     const latest = catalogState(props.remote)
     return latest.revision >= state.revision ? latest : state
   }
-  const openEditor = (expert?: ExpertView): void => {
+  const openEditor = (expert?: ExpertView, initialInput?: CustomExpertInput): void => {
     const current = fresh()
     if (current === null || isSaving || promptLock.current) return
+    if (initialInput !== undefined) {
+      setEditor({ expert: initialInput, enabled: false, revision: current.revision })
+      return
+    }
     if (expert === undefined) { setEditor({ enabled: false, revision: current.revision }); return }
     const revision = current.revision
     const enabled = current.enabled.has(expert.slug)
@@ -1517,6 +1524,15 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
         className: 'aag-icon-btn',
         size: 'small',
         disabled: isSaving,
+        'aria-label': props.t('custom.createChat'),
+        title: props.t('custom.createChat'),
+        icon: React.createElement(IconSparkles, { size: 16, 'aria-hidden': true }),
+        onClick: () => setCreationChatOpen(true),
+      }),
+      React.createElement(Button, {
+        className: 'aag-icon-btn',
+        size: 'small',
+        disabled: isSaving,
         'aria-label': props.t('custom.new'),
         title: props.t('custom.new'),
         icon: React.createElement(IconPlus, { 'aria-hidden': true }),
@@ -1599,6 +1615,18 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     }
   }
   return React.createElement('section', { className: 'aag-section', id: 'aag-expert-source-panel' }, nodes,
+    creationChatOpen ? React.createElement(CreationDialog, {
+      kind: 'expert',
+      locale: props.getActive(),
+      remote: props.remote,
+      t: props.t,
+      onApplyExpert: (draft: CustomExpertInput) => {
+        setCreationChatOpen(false)
+        openEditor(undefined, draft)
+      },
+      onApplyTeam: () => {},
+      onClose: () => setCreationChatOpen(false),
+    }) : null,
     editor === null || state === null ? null : React.createElement(CustomExpertEditor, {
       ...editor, remote: props.remote, t: props.t, locale: props.getActive(),
       divisions: [...new Set([...Object.keys(ZH_DIVISION), ...state.experts.map(expert => expert.division)])],

@@ -131,6 +131,17 @@ export const TEAM_EN = {
   '示例追加失败，草稿已保留。': 'Could not append the example. Your draft is preserved.',
   '已移除团队（请重新选择）': 'Removed team (select again)', '团队已停用或成员失效，请修复后再发送。': 'The team is disabled or has unavailable members. Fix it before sending.',
   '建议在插件页开启 Agent Team 的 Host 与 Web 层，并重新加载会话；未开启也可继续使用普通专家团。': 'Enable the Host and Web layers of Agent Team in Plugins, then reload the conversation. Standard expert teams also work without it.',
+  '人工创建': 'Manual',
+  '通过对话创建': 'Create with AI',
+  '通过对话创建专家团': 'Create Team with AI',
+  '描述你的任务目标、关注重点或期望的专业搭配……': 'Describe your mission, focus areas, or desired team roles…',
+  '生成草案': 'Generate draft',
+  '正在构思草案…': 'Thinking…',
+  '使用草稿并编辑': 'Use draft and edit',
+  '生成过程由宿主大模型驱动，确认草案前不会写入任何配置或创建子代理。': 'Generation is powered by host LLM. No settings are saved or subagents spawned until you explicitly save in the editor.',
+  '重新生成': 'Regenerate',
+  '入选理由': 'Selection Reason',
+  '覆盖成员': 'Team Roster',
 } as const
 
 export type TeamLocale = 'zh' | 'en'

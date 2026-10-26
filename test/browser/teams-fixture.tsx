@@ -94,6 +94,7 @@ const remote: TeamRemote = {
     return { ok: true, value: { experts: catalogExperts(), enabled: [...snapshot.enabledExperts], revision: snapshot.revision } }
   } : unsupported,
   deleteCustomExpert: unsupported,
+  generateDraft: unsupported,
   saveTeam: async (input, enabled, revision) => {
     check(revision)
     const team = {
