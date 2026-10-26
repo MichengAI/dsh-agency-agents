@@ -25,6 +25,8 @@
 Choose a specialist in DSH for code review, design, operations, or research. All 331 experts are bundled and ready to use after installation.
 
 - **Dual-surface access & wide layout**: Access management from **Settings → Experts** or enable the persistent primary sidebar entry to open in a dedicated 960px centered workspace view.
+- **Conversational creation with AI**: Dual-mode creation via \"Create with AI\" jumps to main chat with auto-prefilled prompts. Agents render structured Markdown previews in chat with multi-turn revisions, followed by a native host Ask interaction confirmation before pre-filling into editor modals/drawers for human-in-the-loop review.
+- **Smart bulk batch actions**: Compact native dropdown menu in the filter bar with dynamic filter linkage for \"Enable filtered (N) / Disable filtered (M)\" and \"Enable all (331) / Disable all\", protected by confirmation dialogs and atomic scheduling.
 - **Complete roster of 331 domain experts**: Covers 22 standard divisions from engineering, product, and design to marketing, sales, and legal, with instant prefix matching.
 - **Multi-agent team collaboration**: 5 high-impact built-in review teams and support for up to 100 custom teams with automated handoffs, parallel execution, or debate modes.
 - **Fast invocation in composer**: Summon specialists or teams via the `@` trigger or composer picker button, instantly inserting task examples without accidental sends.
@@ -70,6 +72,24 @@ Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_t
 - Confirm team replacement or example insertion. If the draft changes during confirmation, stop insertion and retain the new text, attachments, and references.
 - Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
 - Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
+
+### Conversational Creation with AI
+
+Create custom experts and teams directly through natural language in chat via the **Create with AI** entry:
+
+1. **Auto-jump with Prompt Prefixes**: Clicking \"Create with AI\" from the creation menu automatically closes the settings drawer and navigates to the main chat, injecting a natural prompt prefix (e.g. `I want to create an expert specializing in ` or `Assemble an expert team for this mission: `) with cursor auto-focused at the end;
+2. **In-Chat Structured Preview**: Specialized tools (`propose_custom_expert` / `propose_expert_team`) generate Markdown preview cards containing division categories, collapsed prompt blocks, and localized roster members with emojis, physically preventing disruptive popups during drafting;
+3. **Fuzzy Expert Slug Resolution**: When assembling teams, the model can specify Chinese names, English names, or short slugs (e.g. `code-reviewer`), which are automatically resolved to valid in-repo expert slugs without schema validation errors;
+4. **Interactive Ask Confirmation**: Once satisfied, the user replies \"confirm\" in chat. The agent triggers a native host **Ask interaction card** for two-step human confirmation;
+5. **Global Pre-filled Modal Launch**: After user submission, the full editor modal or drawer opens with all proposed fields pre-filled and inputs styled to 100% full container width for final human-in-the-loop review and saving;
+6. **Session-Bound Concurrency**: Proposal states are strictly bound to `sessionId`, ensuring multiple concurrent sessions or windows never cross-trigger popups.
+
+### Bulk Batch Actions
+
+A native compact **Batch Actions** dropdown menu is available on the right of the filter toolbar:
+
+- **Dynamic Filter Linkage**: Dynamically adapts based on active source, category, status, and search filters. Offers **Enable filtered (N) / Disable filtered (M)** when filters are active, and smoothly switches to **Enable all (331) / Disable all** when unfiltered;
+- **Confirmation & Conflict Protection**: Includes modal confirmation dialogs indicating affected expert counts, powered by atomic scheduling (`performBulkCommit`) to eliminate dirty writes caused by concurrent changes during review. Only affects availability and never auto-summons.
 
 > This README describes version 1.2.15. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
 ## Screenshots
