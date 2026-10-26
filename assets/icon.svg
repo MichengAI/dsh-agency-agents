@@ -1,0 +1,20 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dsh_svg_agency_g" x1="6" y1="6" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#EC4899"/>
+    </linearGradient>
+  </defs>
+  <!-- Tri-Agent Connection Network -->
+  <path d="M18 9L8 25H28L18 9Z" stroke="url(#dsh_svg_agency_g)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Central Hub Links -->
+  <line x1="18" y1="9" x2="18" y2="19" stroke="url(#dsh_svg_agency_g)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="8" y1="25" x2="18" y2="19" stroke="url(#dsh_svg_agency_g)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="28" y1="25" x2="18" y2="19" stroke="url(#dsh_svg_agency_g)" stroke-width="2" stroke-linecap="round"/>
+  <!-- Outer Agent Nodes -->
+  <circle cx="18" cy="9" r="3.2" fill="#8B5CF6" stroke="#FFFFFF" stroke-width="1.8"/>
+  <circle cx="8" cy="25" r="3.2" fill="#EC4899" stroke="#FFFFFF" stroke-width="1.8"/>
+  <circle cx="28" cy="25" r="3.2" fill="#EC4899" stroke="#FFFFFF" stroke-width="1.8"/>
+  <!-- Central Coordinator Core -->
+  <rect x="15.5" y="16.5" width="5" height="5" rx="1.2" transform="rotate(45 18 19)" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="1.5"/>
+</svg>
