@@ -1235,14 +1235,47 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       },
       render: (_args, value) => [{ type: 'text', text: value.message as string }],
     },
-    async execute() {
-      const confirmed = proposalRegistry.confirmLatest()
-      if (!confirmed) {
+    async execute(_args, exec) {
+      const userQuestions = (ctx as any).get?.('userQuestions', false) ?? (ctx as any).userQuestions
+      const latest = proposalRegistry.getLatest(0)
+      if (!latest || latest.proposal.kind !== 'expert') {
         return { success: false, message: '当前没有待保存的专家草案，请先告诉我您想创建什么样的专家。' }
       }
+
+      const expert = latest.proposal.data as any
+
+      if (userQuestions && typeof userQuestions.ask === 'function' && (exec as any)?.agent) {
+        try {
+          const askResult = await userQuestions.ask({
+            agent: (exec as any).agent,
+            signal: (exec as any).signal,
+            questions: [{
+              id: 'confirm-open-expert-dialog',
+              header: '🧩 专家草案确认',
+              question: `您已审阅专家「${expert.emoji} ${expert.name}」的草案。是否现在打开编辑窗口进行最终核对并保存？`,
+              options: [
+                { label: '✅ 立即打开编辑窗口反显写入', description: '在右侧弹窗中全自动回填所有字段，供你审查并保存' },
+                { label: '✏️ 留在当前对话继续修改调整', description: '不打开窗口，继续在对话中补充或修改要求' },
+              ],
+            }],
+          })
+          const answer = askResult?.answers?.find((a: any) => a.id === 'confirm-open-expert-dialog')
+          const selected = answer?.selected?.[0]
+          if (selected !== '✅ 立即打开编辑窗口反显写入') {
+            return {
+              success: false,
+              message: `已收到您的反馈：继续在对话中调整。当前不会打开弹窗，请继续告诉我修改要求。`,
+            }
+          }
+        } catch {
+          return { success: false, message: '已取消打开编辑窗口，您可以继续在对话中调整草案。' }
+        }
+      }
+
+      const confirmed = proposalRegistry.confirmLatest()
       return {
         success: true,
-        message: `✅ 已为您打开专家「${(confirmed.proposal.data as any).name}」的编辑窗口，所有字段已全自动回填，请在右侧抽屉中核对后点击「保存并启用」。`,
+        message: `✅ 已为您打开专家「${expert.name}」的编辑窗口，所有字段已全自动回填，请在右侧抽屉中核对后点击「保存并启用」。`,
       }
     },
   }))
@@ -1309,9 +1342,17 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         throw new Error(`专家团队方案校验失败：${validation.error}`)
       }
 
+      const expertMap: Record<string, { name: string; emoji?: string }> = {}
+      for (const e of catalog.experts) {
+        expertMap[e.slug] = {
+          name: localizedExpertName(e, activeLocale()),
+          emoji: e.emoji,
+        }
+      }
+
       const proposalId = proposalRegistry.save({ kind: 'team', data: validation.value, memberReasons: validation.memberReasons, confirmed: false })
       const actionLink = `#dsh-agency:apply-draft?id=${proposalId}`
-      const markdown = renderTeamProposalMarkdown(proposalId, validation.value, validation.memberReasons)
+      const markdown = renderTeamProposalMarkdown(proposalId, validation.value, validation.memberReasons, expertMap)
       return { proposalId, actionLink, markdown }
     },
   }))
@@ -1331,14 +1372,47 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
       },
       render: (_args, value) => [{ type: 'text', text: value.message as string }],
     },
-    async execute() {
-      const confirmed = proposalRegistry.confirmLatest()
-      if (!confirmed) {
+    async execute(_args, exec) {
+      const userQuestions = (ctx as any).get?.('userQuestions', false) ?? (ctx as any).userQuestions
+      const latest = proposalRegistry.getLatest(0)
+      if (!latest || latest.proposal.kind !== 'team') {
         return { success: false, message: '当前没有待保存的专家团队草案，请先告诉我您想组建什么样的专家团队。' }
       }
+
+      const team = latest.proposal.data as any
+
+      if (userQuestions && typeof userQuestions.ask === 'function' && (exec as any)?.agent) {
+        try {
+          const askResult = await userQuestions.ask({
+            agent: (exec as any).agent,
+            signal: (exec as any).signal,
+            questions: [{
+              id: 'confirm-open-team-dialog',
+              header: '👥 专家团队配置确认',
+              question: `您已审阅专家团队「${team.name}」（共 ${team.members.length} 位专家）的配置方案。是否现在打开编辑窗口进行最终核对并保存？`,
+              options: [
+                { label: '✅ 立即打开编辑窗口反显写入', description: '在弹窗中全自动回填团队配置与成员阵容，供你审查并保存' },
+                { label: '✏️ 留在当前对话继续修改调整', description: '不打开窗口，继续在对话中微调成员分工或目标' },
+              ],
+            }],
+          })
+          const answer = askResult?.answers?.find((a: any) => a.id === 'confirm-open-team-dialog')
+          const selected = answer?.selected?.[0]
+          if (selected !== '✅ 立即打开编辑窗口反显写入') {
+            return {
+              success: false,
+              message: `已收到您的反馈：继续在对话中调整。当前不会打开弹窗，请继续告诉我修改要求。`,
+            }
+          }
+        } catch {
+          return { success: false, message: '已取消打开编辑窗口，您可以继续在对话中调整配置。' }
+        }
+      }
+
+      const confirmed = proposalRegistry.confirmLatest()
       return {
         success: true,
-        message: `✅ 已为您打开专家团队「${(confirmed.proposal.data as any).name}」的编辑窗口，成员阵容与分工已全自动回填，请在弹窗中核对后点击「保存并启用」。`,
+        message: `✅ 已为您打开专家团队「${team.name}」的编辑窗口，成员阵容与分工已全自动回填，请在弹窗中核对后点击「保存并启用」。`,
       }
     },
   }))
@@ -1360,7 +1434,7 @@ ctx.systemPrompt.section({ name: 'agency:teams', order: 118, text: context => {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.\nWhen the user asks to create, design, or customize an expert persona (e.g. "我想创建一个专家...", "创建小红书运营专家", "新建专家"), call propose_custom_expert. You MUST ALWAYS present a full, polished preview in your response text (name, division, description, and detailed system prompt breakdown) so the user can read and review it first. Invite the user to suggest modifications in chat. Only when the user explicitly confirms (e.g. says "确认", "就按这个", "打开弹窗", "满意"), call open_custom_expert_editor to open the modal. Do NOT tell the user to manually copy-paste, and do NOT write markdown files to docs/. When the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"), call propose_expert_team for preview and open_expert_team_editor upon user confirmation.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.\nWhen the user asks to create, design, or customize an expert persona (e.g. "我想创建一个专家...", "创建小红书运营专家", "新建专家"), call propose_custom_expert. You MUST ALWAYS present a full, polished preview in your response text (name, division, description, and detailed system prompt breakdown) so the user can read and review it first. Invite the user to suggest modifications in chat. Only when the user explicitly confirms (e.g. says "确认", "就按这个", "打开弹窗", "满意"), call open_custom_expert_editor to open the modal. Do NOT tell the user to manually copy-paste, and do NOT write markdown files to docs/. When the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"), call propose_expert_team. Always present team members using their localized names (e.g. 中文名如「产品经理」、「代码审查工程师」) alongside their slug, duties, and reasons in your chat preview. Do NOT tell the user to click non-existent links; instead, inform them that they can review the draft and say "确认" when satisfied. When the user explicitly confirms (e.g. says "确认", "就按这个", "满意", "打开弹窗"), call open_expert_team_editor (or open_custom_expert_editor), which will present an interactive confirmation card before popping up the full editor dialog.'
     },
   })
 }

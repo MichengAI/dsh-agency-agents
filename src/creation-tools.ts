@@ -118,21 +118,30 @@ export function renderExpertProposalMarkdown(id: string, expert: CustomExpertInp
   ].join('\n')
 }
 
+export interface LocalizedExpertInfo {
+  readonly name: string
+  readonly emoji?: string
+}
+
 export function renderTeamProposalMarkdown(
   id: string,
   team: TeamInput,
-  reasons: Record<string, string> = {}
+  reasons: Record<string, string> = {},
+  expertMap: Record<string, LocalizedExpertInfo | string> = {},
 ): string {
   const tagsStr = team.tags.length > 0 ? ` [${team.tags.join(' / ')}]` : ''
   const membersList = team.members
     .map(m => {
+      const info = expertMap[m.expertSlug]
+      const name = typeof info === 'object' ? info.name : typeof info === 'string' ? info : m.expertSlug
+      const emoji = typeof info === 'object' && info.emoji ? `${info.emoji} ` : ''
       const reason = reasons[m.expertSlug] ? `（*入选理由*：${reasons[m.expertSlug]}）` : ''
-      return `* **\`${m.expertSlug}\`**：${m.duty}${reason}\n  *分工*：${m.instructions}`
+      return `* ${emoji}**${name}**（\`${m.expertSlug}\`）：${m.duty}${reason}\n  *分工*：${m.instructions}`
     })
     .join('\n')
 
   return [
-    `### 👥 已生成专家团队方案：${team.name}${tagsStr}`,
+    `### 👥 专家团队草案预览：${team.name}${tagsStr}`,
     `* **定位简介**：${team.description}`,
     `* **团队目标**：${team.goal}`,
     `* **交付要求**：${team.deliveryRequirements}`,
@@ -141,8 +150,8 @@ export function renderTeamProposalMarkdown(
     '**团队成员阵容**：',
     membersList,
     '',
-    `👉 **[点击在弹窗中核对并保存草案](#dsh-agency:apply-draft?id=${id})**`,
+    `👉 **[点击直接在弹窗中核对并保存草案](#dsh-agency:apply-draft?id=${id})**`,
     '',
-    '> 💡 点击上方链接可直接在当前窗口呼出专家团编辑弹窗，成员与分工已自动填入反显，核对满意后点击「保存并启用」即可正式生效。',
+    '> 💬 **这是专家团队草案预览**。你可以仔细阅读核对成员分工与目标：如果需要修改（如增减成员、调整分工），请直接在对话中告诉我；如果你觉得满意，请对我说「**确认**」，我将弹出确认卡片并为您唤起全量填好的编辑弹窗！',
   ].join('\n')
 }

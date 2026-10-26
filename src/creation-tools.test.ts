@@ -74,6 +74,34 @@ describe('creation-tools', () => {
     expect(md).toContain('engineering-frontend-developer')
     expect(md).toContain('负责前端工程落地')
     expect(md).toContain('#dsh-agency:apply-draft?id=prop-5678')
+
+    const mdWithI18n = renderTeamProposalMarkdown(
+      'prop-5678',
+      {
+        name: '微前端架构重构团',
+        description: '负责单体微前端改造',
+        tags: ['架构重构'],
+        goal: '平滑拆解单体应用',
+        constraints: '不破坏主干',
+        deliveryRequirements: '输出重构蓝图',
+        members: [
+          {
+            expertSlug: 'engineering-frontend-developer',
+            duty: '子应用加载',
+            instructions: '沙箱隔离',
+          },
+        ],
+        examples: ['评估微前端改造'],
+        coordinatorMode: 'template',
+        coordinatorTemplateId: 'technical',
+        coordinatorTemplateVersion: 1,
+        coordinatorPrompt: '',
+      },
+      { 'engineering-frontend-developer': '负责前端工程落地' },
+      { 'engineering-frontend-developer': { name: '前端开发工程师', emoji: '💻' } }
+    )
+    expect(mdWithI18n).toContain('前端开发工程师')
+    expect(mdWithI18n).toContain('💻')
   })
 
   it('tracks latest proposal for auto-popup sensing', () => {
