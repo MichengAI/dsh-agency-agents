@@ -96,7 +96,7 @@ export function createProposalRegistry(): ProposalRegistry {
       let best: ProposalEntry | null = null
       for (const entry of store.values()) {
         if (entry.timestamp > afterTimestamp && matchSession(entry, sessionId)) {
-          if (!best || entry.timestamp > best.timestamp) {
+          if (!best || entry.timestamp >= best.timestamp) {
             best = entry
           }
         }
@@ -108,7 +108,7 @@ export function createProposalRegistry(): ProposalRegistry {
       let best: ProposalEntry | null = null
       for (const entry of store.values()) {
         if (entry.proposal.confirmed === true && entry.timestamp > afterTimestamp && matchSession(entry, sessionId)) {
-          if (!best || entry.timestamp > best.timestamp) {
+          if (!best || entry.timestamp >= best.timestamp) {
             best = entry
           }
         }
@@ -120,7 +120,7 @@ export function createProposalRegistry(): ProposalRegistry {
       let best: ProposalEntry | null = null
       for (const entry of store.values()) {
         if (matchSession(entry, sessionId)) {
-          if (!best || entry.timestamp > best.timestamp) {
+          if (!best || entry.timestamp >= best.timestamp) {
             best = entry
           }
         }
