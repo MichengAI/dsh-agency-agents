@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Pill, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import { recommendExpertsForTask, type RecommendCandidate } from '../recommend-engine.js'
-import type { ExpertSearchable } from './index.js'
+import type { ExpertSearchable, ReferenceInsertionTarget } from './index.js'
 import type { ExpertTeam } from '../team-contract.js'
 
 export interface RecommendBarProps {
@@ -20,6 +20,22 @@ export interface RecommendBarProps {
  * 纯客户端防抖计算（250ms），零模型 Token 损耗；
  * 采用宿主原生 Pill / Tooltip 与 CSS 变量构建。
  */
+/**
+ * 从宿主 input.dock 插槽 props 或 fallbackTarget 中统一提取推荐所需输入。
+ * 确保已选引用精准提取实体标识 `ref`（而非插件源名 `source`），防范装配层回归。
+ */
+export function resolveRecommendInputs(
+  props: unknown,
+  fallbackTarget?: ReferenceInsertionTarget,
+): { sessionId?: string; draft: string; occurrences: string[] } {
+  const p = (props && typeof props === 'object' ? props : {}) as Record<string, any>
+  const sessionId = p.sessionId ?? p.session?.id
+  const inputSnapshot = p.input?.getSnapshot?.() ?? p.input ?? fallbackTarget?.state?.getSnapshot()
+  const draft = String(inputSnapshot?.draft ?? '')
+  const occurrences = (inputSnapshot?.occurrences ?? []).map((o: any) => String(o.ref ?? o.source ?? ''))
+  return { sessionId, draft, occurrences }
+}
+
 export function RecommendBar(props: RecommendBarProps): React.ReactElement | null {
   const {
     draft,

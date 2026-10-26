@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { extractTaskKeywords, recommendExpertsForTask } from './recommend-engine.js'
+import { resolveRecommendInputs } from './client/recommend-bar.js'
 import type { ExpertSearchable } from './client/index.js'
 import type { ExpertTeam } from './team-contract.js'
 
@@ -110,20 +111,48 @@ describe('recommend-engine 本地极速推荐引擎', () => {
     })
     expect(results4.length).toBe(0)
 
-    // 场景 5：occurrence 中取出的 ref 能够准确排除已选专家
-    const rawOccurrences = [
-      { occurrenceId: 1, source: '@michengai/dsh-agency-agents', ref: 'security-appsec-engineer' }
-    ]
-    const extractedRefs = new Set(rawOccurrences.map((o: any) => o.ref ?? o.source))
+    // 场景 5：测试装配层 resolveRecommendInputs 真正提取的是 ref 字段，确保装配与去重严格守住
+    const mockHostProps = {
+      sessionId: 'sess-1',
+      input: {
+        draft: '检查登录接口安全与越权',
+        occurrences: [
+          { occurrenceId: 1, source: '@michengai/dsh-agency-agents', ref: 'security-appsec-engineer' }
+        ]
+      }
+    }
+    const resolved = resolveRecommendInputs(mockHostProps)
+    expect(resolved.sessionId).toBe('sess-1')
+    expect(resolved.draft).toBe('检查登录接口安全与越权')
+    // 关键断言：必须提取出实体 ref（'security-appsec-engineer'），绝不能降级成 source
+    expect(resolved.occurrences).toContain('security-appsec-engineer')
+    expect(resolved.occurrences).not.toContain('@michengai/dsh-agency-agents')
+
     const results5 = recommendExpertsForTask({
-      draft: '检查登录接口安全与越权',
+      draft: resolved.draft,
       experts: mockExperts,
       teams: mockTeams,
       enabledExpertSlugs: new Set(['security-appsec-engineer']),
       enabledTeamIds: new Set([]),
       activeLocale: 'zh',
-      excludeSlugs: extractedRefs,
+      excludeSlugs: new Set(resolved.occurrences),
     })
     expect(results5.length).toBe(0)
+  })
+
+  it('装配层回退策略：支持从 fallbackTarget 读取 draft 与 occurrences', () => {
+    const fallbackTarget = {
+      state: {
+        getSnapshot: () => ({
+          draft: '重构技术方案',
+          draftRev: 1,
+          occurrences: [{ source: '@michengai/dsh-agency-agents', ref: 'engineering-software-architect', offset: 0 }],
+        }),
+      },
+      insertReference: () => true,
+    }
+    const resolved = resolveRecommendInputs({}, fallbackTarget as any)
+    expect(resolved.draft).toBe('重构技术方案')
+    expect(resolved.occurrences).toEqual(['engineering-software-architect'])
   })
 })
