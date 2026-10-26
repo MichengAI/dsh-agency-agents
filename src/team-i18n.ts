@@ -142,6 +142,7 @@ export const TEAM_EN = {
   '重新生成': 'Regenerate',
   '入选理由': 'Selection Reason',
   '覆盖成员': 'Team Roster',
+  '我要组建一个专家团，团队名称【团队名称】，任务目标【任务目标与交付要求】，需要【2~5位专业角色】': 'I want to assemble an expert team named [Team Name], with the goal [Goal and Deliverables], needing [2-5 expert roles]',
 } as const
 
 export type TeamLocale = 'zh' | 'en'

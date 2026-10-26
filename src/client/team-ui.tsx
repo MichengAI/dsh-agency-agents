@@ -11,6 +11,7 @@ import type { AgencyCatalogRemote, AgencyTeamsRemote, AgencyCreationRemote } fro
 import { TeamEditor } from './team-editor.js';
 import { CreationDialog } from './creation-dialog.js';
 import { CreateActionMenu } from './create-action-menu.js';
+import { triggerChatCreation } from './prefill.js';
 import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconSparkles, IconCopy, IconSend, IconSearch, IconEye, IconTrash, } from './team-shared.js';
 export { TEAM_CSS } from './team-style.js';
 export type TeamRemote = AgencyCatalogRemote & AgencyTeamsRemote & AgencyCreationRemote;
@@ -309,7 +310,7 @@ export function TeamsPanel(props: {
             chatLabel={tx("通过对话创建")}
             disabled={!snapshot || busy}
             onSelectManual={() => setEditor({ enabled: false, revision: snapshot!.revision })}
-            onSelectChat={() => setCreationChatOpen(true)}
+            onSelectChat={() => triggerChatCreation(tx('我要组建一个专家团，团队名称【团队名称】，任务目标【任务目标与交付要求】，需要【2~5位专业角色】'), (props as { close?: () => void }).close)}
           />
         </div>
       </div>

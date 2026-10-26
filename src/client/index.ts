@@ -43,6 +43,7 @@ import { DEFAULT_EXPERT_EMOJI, type CustomExpertInput, type CatalogSnapshot } fr
 import { CustomExpertEditor, CustomDeleteDialog, CUSTOM_EDITOR_CSS } from './custom-editor.js'
 import { CreationDialog } from './creation-dialog.js'
 import { CreateActionMenu } from './create-action-menu.js'
+import { triggerChatCreation, subscribeChatPrefill, takeChatPrefill, peekChatPrefill, applyPrefillToDom } from './prefill.js'
 import { acceptEnabled, acceptCatalog, catalogState, refreshCatalog, subscribeCatalog } from './catalog.js'
 import { refreshTeams, teamState } from './team-cache.js'
 import { installNativeTeamNames } from './native-team-names.js'
@@ -952,6 +953,21 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
   }
   React.useEffect(() => () => { epoch.current++ }, [])
 
+  React.useEffect(() => {
+    const applyPrefill = (text: string | null): void => {
+      if (text === null || text === '') return
+      const actions = (props as { inputActions?: { setDraft(text: string): void } }).inputActions
+      if (actions !== undefined && typeof actions.setDraft === 'function') {
+        actions.setDraft(text)
+        takeChatPrefill()
+        return
+      }
+      if (applyPrefillToDom(text)) takeChatPrefill()
+    }
+    applyPrefill(peekChatPrefill())
+    return subscribeChatPrefill(applyPrefill)
+  }, [(props as { inputActions?: unknown }).inputActions])
+
   React.useLayoutEffect(() => {
     if (!open) return
     const updatePosition = (): void => {
@@ -1526,7 +1542,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
         chatLabel: props.t('custom.createChat'),
         disabled: isSaving,
         onSelectManual: () => openEditor(),
-        onSelectChat: () => setCreationChatOpen(true),
+        onSelectChat: () => triggerChatCreation(props.t('custom.chatPrompt'), (props as { close?: () => void }).close),
       }))
     if (notice !== null) nodes.push(React.createElement('div', { key: 'notice', className: 'aag-custom-notice', role: 'status' }, notice))
     nodes.push(React.createElement('div', { key: 'filters', className: 'aag-filters aag-card-filters' },
