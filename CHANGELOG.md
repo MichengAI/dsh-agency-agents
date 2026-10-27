@@ -4,6 +4,12 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.18 - 2026-10-27
+
+- **Align composer trigger typography and hover state with host toolbar primitives**:
+  - **Typography & Metrics Alignment**: Matched the composer bottom toolbar "Experts" trigger button metrics with host native controls (13px font size, 20px line height, 500 font weight, and 8px compact horizontal padding), eliminating font size and visual weight discrepancies;
+  - **Hover State Harmonization**: Kept the secondary label color tone (`var(--dsw-alias-label-secondary)`) upon hover, surfacing the native `var(--dsw-alias-interactive-bg-hover)` capsule backdrop without abruptly flashing to bold black text (`label-primary`).
+
 ## 1.2.17 - 2026-10-27
 
 - **Align expert recommendation UX with host Menu primitive and zero-occlusion upward expansion** (Issue #27 follow-up):
