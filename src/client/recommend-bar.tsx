@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Pill, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Menu } from '@deepseek-ai/dsh-client-ui-primitives'
 import { recommendExpertsForTask, type RecommendCandidate } from '../recommend-engine.js'
 import type { ExpertSearchable, ReferenceInsertionTarget } from './index.js'
 import type { ExpertTeam } from '../team-contract.js'
@@ -13,15 +13,58 @@ export interface RecommendBarProps {
   readonly activeLocale: 'zh' | 'en'
   readonly onSelect: (candidate: RecommendCandidate) => void
   readonly currentOccurrences?: readonly string[]
+  readonly target?: ReferenceInsertionTarget
+  readonly inDock?: boolean
 }
 
 /**
- * 输入框正上方的推荐条组件。
- * 纯客户端防抖计算（250ms），零模型 Token 损耗；
- * 采用宿主原生 Pill / Tooltip 与 CSS 变量构建。
+ * 极简向下箭头图标（12x12 SVG，对齐宿主 Chevron 规范）。
  */
+function ChevronDownIcon(): React.ReactElement {
+  return React.createElement(
+    'svg',
+    {
+      viewBox: '0 0 16 16',
+      width: 12,
+      height: 12,
+      fill: 'none',
+      stroke: 'currentColor',
+      strokeWidth: 1.5,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      className: 'aag-hero-recommend-chevron',
+      'aria-hidden': 'true',
+    },
+    React.createElement('path', { d: 'M4 6l4 4 4-4' }),
+  )
+}
+
 /**
- * 从宿主 input.dock 插槽 props 或 fallbackTarget 中统一提取推荐所需输入。
+ * 极简推荐闪烁星星图标（14x14 SVG）。
+ */
+function SparkleIcon(): React.ReactElement {
+  return React.createElement(
+    'svg',
+    {
+      viewBox: '0 0 16 16',
+      width: 14,
+      height: 14,
+      fill: 'none',
+      stroke: 'currentColor',
+      strokeWidth: 1.3,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      className: 'aag-hero-recommend-icon',
+      'aria-hidden': 'true',
+    },
+    React.createElement('path', {
+      d: 'M8 1.5l1.8 4.2 4.2 1.8-4.2 1.8L8 13.5l-1.8-4.2-4.2-1.8 4.2-1.8L8 1.5z',
+    }),
+  )
+}
+
+/**
+ * 从宿主插槽 props 或 fallbackTarget 中统一提取推荐所需输入。
  * 确保已选引用精准提取实体标识 `ref`（而非插件源名 `source`），防范装配层回归。
  */
 export function resolveRecommendInputs(
@@ -36,43 +79,78 @@ export function resolveRecommendInputs(
   return { sessionId, draft, occurrences }
 }
 
+/**
+ * 欢迎页工作区行右侧（conversation.hero.options）的专家推荐原生下拉控件。
+ * 1. 无输入或未命中时完全静默（返回 null），不占空间；
+ * 2. 输入命中时在「标准模式」右侧浮现带推荐计数的原生 Trigger Chip；
+ * 3. 点击展开宿主原生两行式 Menu 菜单（粗体名称 + 浅灰推荐理由），点击一键引用。
+ */
 export function RecommendBar(props: RecommendBarProps): React.ReactElement | null {
   const {
-    draft,
+    draft: propDraft,
     experts,
     teams,
     enabledExpertSlugs,
     enabledTeamIds,
     activeLocale,
     onSelect,
-    currentOccurrences = [],
+    currentOccurrences: propOccurrences = [],
+    target,
+    inDock = false,
   } = props
 
+  const [liveDraft, setLiveDraft] = useState<string>(propDraft)
+  const [liveOccurrences, setLiveOccurrences] = useState<readonly string[]>(propOccurrences)
   const [candidates, setCandidates] = useState<readonly RecommendCandidate[]>([])
-  const [dismissedKey, setDismissedKey] = useState<string | null>(null)
+  const [open, setOpen] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // 1. 同步上层传入的 prop 变化
+  useEffect(() => {
+    setLiveDraft(propDraft)
+    setLiveOccurrences(propOccurrences)
+  }, [propDraft, propOccurrences])
+
+  // 2. 深度订阅输入框真实状态（若宿主未全量传递 props，通过 target.state 实时响应输入）
+  useEffect(() => {
+    if (!target?.state?.getSnapshot) return
+    const readLiveSnapshot = (): void => {
+      const snap = target.state.getSnapshot()
+      if (!snap) return
+      setLiveDraft(String(snap.draft ?? ''))
+      const occs = (snap.occurrences ?? []).map((o: any) => String(o.ref ?? o.source ?? ''))
+      setLiveOccurrences(occs)
+    }
+
+    readLiveSnapshot()
+
+    const stateObj = target.state as any
+    if (typeof stateObj.subscribe === 'function') {
+      const unsubscribe = stateObj.subscribe(() => {
+        readLiveSnapshot()
+      })
+      return () => {
+        if (typeof unsubscribe === 'function') unsubscribe()
+      }
+    }
+  }, [target])
+
+  // 3. 防抖计算推荐候选列表（250ms 防抖，零模型 Token 损耗）
   useEffect(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
 
-    const trimmed = draft.trim()
+    const trimmed = liveDraft.trim()
     // 中文双字（如“安全”、“架构”）即为完整领域意图；纯英文保持 >= 3 字符防抖触发
     if (trimmed.length < 2 || (trimmed.length < 3 && !/[\u4e00-\u9fa5]/u.test(trimmed))) {
       setCandidates([])
+      setOpen(false)
       return
     }
 
-    // 防抖 250ms，避免用户快速键入时高频执行切词打分
     timerRef.current = setTimeout(() => {
-      // 如果当前草稿内容已被用户手动“忽略”，不再弹起
-      if (dismissedKey === trimmed) {
-        setCandidates([])
-        return
-      }
-
-      const excludeSlugs = new Set(currentOccurrences)
+      const excludeSlugs = new Set(liveOccurrences)
       const list = recommendExpertsForTask({
         draft: trimmed,
         experts,
@@ -80,78 +158,86 @@ export function RecommendBar(props: RecommendBarProps): React.ReactElement | nul
         enabledExpertSlugs,
         enabledTeamIds,
         activeLocale,
-        maxCount: 3,
+        maxCount: 4,
         excludeSlugs,
       })
 
       setCandidates(list)
+      if (list.length === 0) {
+        setOpen(false)
+      }
     }, 250)
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [draft, experts, teams, enabledExpertSlugs, enabledTeamIds, activeLocale, dismissedKey, currentOccurrences])
+  }, [liveDraft, liveOccurrences, experts, teams, enabledExpertSlugs, enabledTeamIds, activeLocale])
 
-  // 无命中或分数不足时保持平滑静默
+  // 4. 无输入或无命中时完全静默隐藏（满足“无输入的时候就不显示”）
   if (candidates.length === 0) return null
 
   const isZh = activeLocale === 'zh'
-  const titleText = isZh ? '推荐：' : 'Suggestions:'
-  const dismissText = isZh ? '忽略' : 'Dismiss'
+  const triggerLabel = isZh ? '推荐专家' : 'Suggestions'
+
+  // 5. 映射为宿主原生的两行式 Menu 项
+  const items = candidates.map(cand => ({
+    id: cand.id,
+    label: React.createElement(
+      'span',
+      { className: 'aag-hero-menu-item' },
+      React.createElement(
+        'span',
+        { className: 'aag-hero-menu-item-row1' },
+        React.createElement('span', { className: 'aag-hero-menu-item-name' }, cand.name),
+        cand.kind === 'team'
+          ? React.createElement('span', { className: 'aag-hero-menu-item-tag' }, isZh ? '团队' : 'Team')
+          : null,
+      ),
+      React.createElement(
+        'span',
+        { className: 'aag-hero-menu-item-desc' },
+        cand.reason,
+      ),
+    ),
+  }))
+
+  // 6. 锚点按钮（Trigger Chip）：完全对齐宿主 AgentPreset 原生 Chip 风格
+  const anchor = React.createElement(
+    'button',
+    {
+      type: 'button',
+      className: 'aag-hero-recommend-seat',
+      'aria-haspopup': 'menu',
+      'aria-expanded': open,
+      title: isZh ? '查看任务匹配的专家与团队推荐' : 'View expert suggestions',
+      onClick: () => {
+        setOpen(prev => !prev)
+      },
+    },
+    React.createElement(SparkleIcon),
+    React.createElement('span', { className: 'aag-hero-recommend-label' }, triggerLabel),
+    React.createElement('span', { className: 'aag-hero-recommend-badge' }, String(candidates.length)),
+    React.createElement(ChevronDownIcon),
+  )
 
   return React.createElement(
     'div',
-    {
-      className: 'aag-recommend-dock',
-      role: 'region',
-      'aria-label': isZh ? '任务专家推荐' : 'Expert suggestions',
-    },
-    React.createElement(
-      'span',
-      { className: 'aag-recommend-lead' },
-      titleText,
-    ),
-    React.createElement(
-      'div',
-      { className: 'aag-recommend-chips' },
-      candidates.map((cand) =>
-        React.createElement(
-          Tooltip,
-          {
-            key: cand.id,
-            label: cand.reason,
-            side: 'top',
-            delayMs: 200,
-          },
-          React.createElement(
-            Pill,
-            {
-              className: 'aag-recommend-pill',
-              onClick: () => {
-                onSelect(cand)
-              },
-            },
-            React.createElement('span', { className: 'aag-pill-emoji' }, cand.emoji),
-            React.createElement('span', { className: 'aag-pill-name' }, cand.name),
-            cand.kind === 'team'
-              ? React.createElement('span', { className: 'aag-pill-tag' }, isZh ? '团队' : 'Team')
-              : null,
-          ),
-        ),
-      ),
-    ),
-    React.createElement(
-      'button',
-      {
-        type: 'button',
-        className: 'aag-recommend-dismiss',
-        title: isZh ? '忽略当前推荐' : 'Dismiss suggestions',
-        onClick: () => {
-          setDismissedKey(draft.trim())
-          setCandidates([])
-        },
+    { className: inDock ? 'aag-dock-right-recommend' : 'aag-hero-options-recommend' },
+    React.createElement(Menu, {
+      open,
+      onClose: () => {
+        setOpen(false)
       },
-      dismissText,
-    ),
+      align: inDock ? 'end' : 'start',
+      side: inDock ? 'top' : 'bottom',
+      portal: !inDock,
+      items,
+      onSelect: (id: string) => {
+        setOpen(false)
+        const cand = candidates.find(c => c.id === id)
+        if (cand) onSelect(cand)
+      },
+      anchor,
+    }),
   )
 }

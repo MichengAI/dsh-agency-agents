@@ -155,4 +155,31 @@ describe('recommend-engine 本地极速推荐引擎', () => {
     expect(resolved.draft).toBe('重构技术方案')
     expect(resolved.occurrences).toEqual(['engineering-software-architect'])
   })
+
+  it('任务推荐生成候选结果能准确映射到宿主原生 Menu 数据项结构', () => {
+    const mockExperts: ExpertSearchable[] = [
+      {
+        slug: 'marketing-xiaohongshu-expert',
+        name: '小红书增长运营专家',
+        nameEn: 'Xiaohongshu Growth Expert',
+        division: 'marketing',
+        divisionZh: '市场',
+        divisionEn: 'Marketing',
+        description: '专精小红书爆款笔记结构与流量分发机制。',
+        descriptionEn: 'Xiaohongshu viral notes and growth.',
+      },
+    ]
+    const candidates = recommendExpertsForTask({
+      draft: '我想做小红书爆款笔记',
+      experts: mockExperts,
+      teams: [],
+      enabledExpertSlugs: new Set(['marketing-xiaohongshu-expert']),
+      enabledTeamIds: new Set([]),
+      activeLocale: 'zh',
+    })
+    expect(candidates.length).toBe(1)
+    expect(candidates[0].id).toBe('marketing-xiaohongshu-expert')
+    expect(candidates[0].name).toBe('小红书增长运营专家')
+    expect(candidates[0].reason).toContain('小红书')
+  })
 })

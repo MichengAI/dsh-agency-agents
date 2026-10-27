@@ -660,18 +660,22 @@ const BUNDLE_CONFIG_CSS = `
 `
 
 const RECOMMEND_BAR_CSS = `
-.aag-recommend-dock{box-sizing:border-box;width:calc(100% - var(--dsh-composer-side-clearance, 20px) - var(--dsh-composer-side-clearance, 20px));max-width:var(--dsh-composer-card-max-width,768px);margin:0 auto;padding:4px 0 6px;display:flex;align-items:center;gap:8px;animation:aagFadeIn 160ms cubic-bezier(0,0,0.2,1)}
-@keyframes aagFadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
-.aag-recommend-lead{font-size:12px;font-weight:500;color:var(--dsw-alias-label-tertiary);white-space:nowrap;flex:0 0 auto}
-.aag-recommend-chips{display:flex;align-items:center;gap:6px;flex:1 1 auto;overflow-x:auto;scrollbar-width:none}
-.aag-recommend-chips::-webkit-scrollbar{display:none}
-.aag-recommend-pill{height:28px!important;padding:0 10px 0 6px!important;border-radius:999px!important;font-size:12.5px!important;display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;background:var(--dsw-alias-bg-layer-2)!important;border:1px solid var(--dsw-alias-border-l2)!important;color:var(--dsw-alias-label-primary)!important;transition:all 120ms ease}
-.aag-recommend-pill:hover{background:var(--dsw-alias-bg-layer-3)!important;border-color:var(--dsw-alias-brand-border,rgba(65,118,230,0.35))!important;color:var(--dsw-alias-label-primary)!important}
-.aag-pill-emoji{display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1}
-.aag-pill-name{font-weight:500;color:var(--dsw-alias-label-primary)}
-.aag-pill-tag{font-size:10.5px;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.06));padding:1px 4px;border-radius:3px}
-.aag-recommend-dismiss{background:transparent;border:none;color:var(--dsw-alias-label-tertiary);font-size:11.5px;cursor:pointer;padding:2px 6px;border-radius:4px;flex:0 0 auto;transition:color 120ms ease}
-.aag-recommend-dismiss:hover{color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.06))}
+.aag-hero-options-recommend{display:inline-flex;align-items:center}
+.aag-dock-right-recommend{position:relative;box-sizing:border-box;width:calc(100% - var(--dsh-composer-side-clearance, 20px) - var(--dsh-composer-side-clearance, 20px));max-width:var(--dsh-composer-card-max-width,768px);margin:0 auto;display:flex;justify-content:flex-end;align-items:center;padding:2px 0 6px}
+.aag-dock-right-recommend > span{position:relative!important;display:inline-flex!important}
+.aag-dock-right-recommend [role="menu"]{position:absolute!important;top:auto!important;bottom:calc(100% + 6px)!important;left:auto!important;right:0!important;z-index:1100!important;max-height:min(380px, calc(100vh - 180px))!important;overflow-y:auto!important}
+.aag-hero-recommend-seat{border-radius:var(--dsw-radius-sm,6px);min-width:0;max-width:min(100%,240px);min-height:28px;color:var(--dsw-alias-label-primary);white-space:nowrap;cursor:pointer;background:0 0;border:none;align-items:center;gap:5px;padding:0 8px;font-size:13px;font-weight:500;line-height:20px;display:inline-flex;transition:background 120ms ease;animation:aagFadeIn 160ms cubic-bezier(0,0,0.2,1)}
+.aag-hero-recommend-seat:hover,.aag-hero-recommend-seat[aria-expanded=true]{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.08))}
+.aag-hero-recommend-icon{color:var(--dsw-alias-brand,#3b82f6);flex:none}
+.aag-hero-recommend-label{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}
+.aag-hero-recommend-badge{font-size:11px;font-weight:600;padding:0 5px;height:16px;border-radius:999px;background:var(--dsw-alias-brand-bg,rgba(37,99,235,0.25));color:var(--dsw-alias-brand,#60a5fa);display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.aag-hero-recommend-chevron{color:var(--dsw-alias-label-caption,#64748b);flex:none}
+.aag-hero-menu-item{display:flex;flex-direction:column;gap:3px;max-width:320px;padding:2px 0}
+.aag-hero-menu-item-row1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.aag-hero-menu-item-name{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary)}
+.aag-hero-menu-item-tag{font-size:10.5px;color:var(--dsw-alias-brand,#60a5fa);background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.06));padding:1px 5px;border-radius:4px}
+.aag-hero-menu-item-desc{font-size:12px;line-height:16px;color:var(--dsw-alias-label-caption,#9e9ea3);white-space:normal}
+@keyframes aagFadeIn{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
 `
 
 import { PLUGIN_UI_CSS } from './plugin-ui.js'
@@ -1902,9 +1906,9 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     (props) => React.createElement(AgentsButton, { ...props, remote, getActive, onEnabledChange: updateEnabledForMentions }),
   ))
 
-  ctx.slots.inject('conversation.input.dock', () => ctx.slots.register(
+  ctx.slots.inject('conversation.hero.options', () => ctx.slots.register(
     {
-      name: 'conversation.input.dock', id: 'agency-agents-recommend', order: 50, locale: NS,
+      name: 'conversation.hero.options', id: 'agency-agents-recommend', order: 10, locale: NS,
     },
     (props) => {
       // 开关门禁：默认关闭；未开启时不渲染推荐栏
@@ -1925,6 +1929,55 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
         enabledTeamIds: new Set(teamState(remote as TeamRemote)?.enabledTeams ?? []),
         activeLocale: getActive(),
         currentOccurrences: occurrences,
+        target,
+        inDock: false,
+        onSelect: (candidate) => {
+          if (!target) return
+          if (candidate.kind === 'expert') {
+            const expert = catalog.experts.find(e => e.slug === candidate.id)
+            if (expert) {
+              const active = getActive()
+              void insertTask(target, buildExpertReference(expert, active), sessionId as SessionId)
+            }
+          } else if (candidate.kind === 'team' && candidate.team) {
+            void insertTeamTask(target, candidate.team, undefined, sessionId as SessionId)
+          }
+        },
+      })
+    },
+  ))
+
+  // 已对过话的会话（hero 已卸载）：在输入框右上沿（conversation.input.dock 右对齐）接管渲染
+  ctx.slots.inject('conversation.input.dock', () => ctx.slots.register(
+    {
+      name: 'conversation.input.dock', id: 'agency-agents-recommend-dock', order: 50, locale: NS,
+    },
+    (props) => {
+      if (!sidebarController.isComposerRecommendEnabled()) return null
+
+      const fallbackTarget = resolveTarget((props as any)?.sessionId)
+      const { sessionId, draft, occurrences } = resolveRecommendInputs(props, fallbackTarget)
+
+      // 空白新会话已有 conversation.hero.options 负责渲染，dock 中直接静默跳过防重
+      const targetSessionId = resolveTargetSessionId(ctx.sessions as unknown as ReferenceSessionAccess, sessionId as SessionId)
+      const sessionSummary = targetSessionId ? (ctx.sessions as any)?.list?.getSnapshot?.()?.byId?.[targetSessionId] : undefined
+      const isBlank = (props as any)?.session?.blank ?? sessionSummary?.blank
+      if (isBlank === true) return null
+
+      const target = resolveTarget(sessionId as SessionId) ?? fallbackTarget
+      const catalog = catalogState(remote)
+      const currentTeams = teamCache.length > 0 ? teamCache : (teamState(remote as TeamRemote)?.teams ?? [])
+
+      return React.createElement(RecommendBar, {
+        draft,
+        experts: catalog.experts,
+        teams: currentTeams,
+        enabledExpertSlugs: new Set(catalog.enabled),
+        enabledTeamIds: new Set(teamState(remote as TeamRemote)?.enabledTeams ?? []),
+        activeLocale: getActive(),
+        currentOccurrences: occurrences,
+        target,
+        inDock: true,
         onSelect: (candidate) => {
           if (!target) return
           if (candidate.kind === 'expert') {
