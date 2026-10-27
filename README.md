@@ -93,11 +93,11 @@ A native compact **Batch Actions** dropdown menu is available on the right of th
 
 ### Composer Task Recommendations
 
-Real-time expert and expert team suggestions displayed directly above the chat composer based on draft semantics (Issue #27):
+Real-time expert and expert team suggestions displayed as a native dropdown at the top-right of the chat composer based on draft semantics (Issue #27):
 
 - **Zero-Token Local Scoring Engine**: Client-side tokenizer, stop-word filtering, and lightweight scoring algorithm (< 3ms) debounced at 250ms, incurring zero network overhead and zero LLM token consumption;
-- **Native Visuals & Centered Clearance**: Built with host primitives (`@deepseek-ai/dsh-client-ui-primitives` `Pill` / `Tooltip`) and mapped to composer CSS clearance variables, guaranteeing horizontal alignment with the centered input box;
-- **One-Click Mention & Deduplication**: Click candidate chips to insert references directly into the input via host `insertReference`; already referenced experts are automatically filtered out from suggestions; includes an "Ignore" button to collapse suggestions;
+- **Native Two-Line Menu & Zero Occlusion**: Built with host primitives (`@deepseek-ai/dsh-client-ui-primitives` `Menu`), aligned to the right in both new and existing sessions and popping upward (`side="top"`) to prevent blocking the input box and send button;
+- **One-Click Mention & Deduplication**: Click candidate items to insert references directly into the input via host `insertReference`; already referenced experts are automatically filtered out from suggestions, auto-dismissing on blur or empty input;
 - **Dedicated Extension Toggle**: Toggle under **Settings → Plugins** (default off), supporting host volatile hot-reloading and persistence.
 
 > This README describes version 1.2.16. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.

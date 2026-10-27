@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { extractTaskKeywords, recommendExpertsForTask } from './recommend-engine.js'
-import { resolveRecommendInputs } from './client/recommend-bar.js'
+import { resolveRecommendInputs, buildRecommendMenuItems } from './client/recommend-bar.js'
 import type { ExpertSearchable } from './client/index.js'
 import type { ExpertTeam } from './team-contract.js'
 
@@ -156,30 +156,51 @@ describe('recommend-engine 本地极速推荐引擎', () => {
     expect(resolved.occurrences).toEqual(['engineering-software-architect'])
   })
 
-  it('任务推荐生成候选结果能准确映射到宿主原生 Menu 数据项结构', () => {
-    const mockExperts: ExpertSearchable[] = [
+  it('buildRecommendMenuItems 准确将候选列表转换为宿主原生 Menu 两行式项并标记团队', () => {
+    const mockCandidates = [
       {
-        slug: 'marketing-xiaohongshu-expert',
+        id: 'marketing-xiaohongshu-expert',
+        kind: 'expert' as const,
         name: '小红书增长运营专家',
-        nameEn: 'Xiaohongshu Growth Expert',
+        emoji: '🧩',
         division: 'marketing',
-        divisionZh: '市场',
-        divisionEn: 'Marketing',
-        description: '专精小红书爆款笔记结构与流量分发机制。',
-        descriptionEn: 'Xiaohongshu viral notes and growth.',
+        reason: '精准命中「小红书」业务关键词，擅长爆款笔记打造。',
+        score: 100,
+      },
+      {
+        id: 'team-technical-review',
+        kind: 'team' as const,
+        name: '技术评审团',
+        emoji: '👥',
+        division: 'engineering',
+        reason: '涵盖架构、安全等多领域综合技术方案评估。',
+        score: 90,
       },
     ]
-    const candidates = recommendExpertsForTask({
-      draft: '我想做小红书爆款笔记',
-      experts: mockExperts,
-      teams: [],
-      enabledExpertSlugs: new Set(['marketing-xiaohongshu-expert']),
-      enabledTeamIds: new Set([]),
-      activeLocale: 'zh',
-    })
-    expect(candidates.length).toBe(1)
-    expect(candidates[0].id).toBe('marketing-xiaohongshu-expert')
-    expect(candidates[0].name).toBe('小红书增长运营专家')
-    expect(candidates[0].reason).toContain('小红书')
+
+    const itemsZh = buildRecommendMenuItems(mockCandidates, 'zh')
+    expect(itemsZh).toHaveLength(2)
+
+    // 专家项断言
+    const expertItem = itemsZh[0]
+    expect(expertItem.id).toBe('marketing-xiaohongshu-expert')
+    expect(expertItem.label.props.className).toBe('aag-hero-menu-item')
+    const expertRow1 = expertItem.label.props.children[0]
+    const expertDesc = expertItem.label.props.children[1]
+    expect(expertRow1.props.children[0].props.children).toBe('小红书增长运营专家')
+    expect(expertRow1.props.children[1]).toBeNull() // 个人专家无团队标签
+    expect(expertDesc.props.children).toBe('精准命中「小红书」业务关键词，擅长爆款笔记打造。')
+
+    // 团队项断言
+    const teamItem = itemsZh[1]
+    expect(teamItem.id).toBe('team-technical-review')
+    const teamRow1 = teamItem.label.props.children[0]
+    expect(teamRow1.props.children[0].props.children).toBe('技术评审团')
+    expect(teamRow1.props.children[1].props.children).toBe('团队')
+
+    // 英文 locale 断言
+    const itemsEn = buildRecommendMenuItems(mockCandidates, 'en')
+    const teamRow1En = itemsEn[1].label.props.children[0]
+    expect(teamRow1En.props.children[1].props.children).toBe('Team')
   })
 })

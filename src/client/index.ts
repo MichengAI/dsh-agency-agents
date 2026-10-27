@@ -661,9 +661,8 @@ const BUNDLE_CONFIG_CSS = `
 
 const RECOMMEND_BAR_CSS = `
 .aag-hero-options-recommend{display:inline-flex;align-items:center}
-.aag-dock-right-recommend{position:relative;box-sizing:border-box;width:calc(100% - var(--dsh-composer-side-clearance, 20px) - var(--dsh-composer-side-clearance, 20px));max-width:var(--dsh-composer-card-max-width,768px);margin:0 auto;display:flex;justify-content:flex-end;align-items:center;padding:2px 0 6px}
-.aag-dock-right-recommend > span{position:relative!important;display:inline-flex!important}
-.aag-dock-right-recommend [role="menu"]{position:absolute!important;top:auto!important;bottom:calc(100% + 6px)!important;left:auto!important;right:0!important;z-index:1100!important;max-height:min(380px, calc(100vh - 180px))!important;overflow-y:auto!important}
+.aag-dock-right-recommend{box-sizing:border-box;width:calc(100% - var(--dsh-composer-side-clearance, 20px) - var(--dsh-composer-side-clearance, 20px));max-width:var(--dsh-composer-card-max-width,768px);margin:0 auto;display:flex;justify-content:flex-end;align-items:center;padding:2px 0 6px}
+.aag-hero-options-recommend [role="menu"],.aag-dock-right-recommend [role="menu"]{max-height:min(380px, calc(100vh - 180px));overflow-y:auto}
 .aag-hero-recommend-seat{border-radius:var(--dsw-radius-sm,6px);min-width:0;max-width:min(100%,240px);min-height:28px;color:var(--dsw-alias-label-primary);white-space:nowrap;cursor:pointer;background:0 0;border:none;align-items:center;gap:5px;padding:0 8px;font-size:13px;font-weight:500;line-height:20px;display:inline-flex;transition:background 120ms ease;animation:aagFadeIn 160ms cubic-bezier(0,0,0.2,1)}
 .aag-hero-recommend-seat:hover,.aag-hero-recommend-seat[aria-expanded=true]{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.08))}
 .aag-hero-recommend-icon{color:var(--dsw-alias-brand,#3b82f6);flex:none}
@@ -1961,7 +1960,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       // 空白新会话已有 conversation.hero.options 负责渲染，dock 中直接静默跳过防重
       const targetSessionId = resolveTargetSessionId(ctx.sessions as unknown as ReferenceSessionAccess, sessionId as SessionId)
       const sessionSummary = targetSessionId ? (ctx.sessions as any)?.list?.getSnapshot?.()?.byId?.[targetSessionId] : undefined
-      const isBlank = (props as any)?.session?.blank ?? sessionSummary?.blank
+      const isBlank = sessionSummary?.blank ?? (props as any)?.session?.getSnapshot?.()?.blank
       if (isBlank === true) return null
 
       const target = resolveTarget(sessionId as SessionId) ?? fallbackTarget

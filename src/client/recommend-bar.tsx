@@ -80,10 +80,41 @@ export function resolveRecommendInputs(
 }
 
 /**
- * 欢迎页工作区行右侧（conversation.hero.options）的专家推荐原生下拉控件。
+ * 将任务推荐候选列表转换为宿主原生的两行式 Menu 项数据结构。
+ * 纯函数抽离，供组件渲染与单元测试严格守护。
+ */
+export function buildRecommendMenuItems(
+  candidates: readonly RecommendCandidate[],
+  activeLocale: 'zh' | 'en',
+): Array<{ id: string; label: React.ReactElement }> {
+  const isZh = activeLocale === 'zh'
+  return candidates.map(cand => ({
+    id: cand.id,
+    label: React.createElement(
+      'span',
+      { className: 'aag-hero-menu-item' },
+      React.createElement(
+        'span',
+        { className: 'aag-hero-menu-item-row1' },
+        React.createElement('span', { className: 'aag-hero-menu-item-name' }, cand.name),
+        cand.kind === 'team'
+          ? React.createElement('span', { className: 'aag-hero-menu-item-tag' }, isZh ? '团队' : 'Team')
+          : null,
+      ),
+      React.createElement(
+        'span',
+        { className: 'aag-hero-menu-item-desc' },
+        cand.reason,
+      ),
+    ),
+  }))
+}
+
+/**
+ * 欢迎页工作区行右侧（conversation.hero.options）及已有会话输入框顶栏的专家推荐原生下拉控件。
  * 1. 无输入或未命中时完全静默（返回 null），不占空间；
- * 2. 输入命中时在「标准模式」右侧浮现带推荐计数的原生 Trigger Chip；
- * 3. 点击展开宿主原生两行式 Menu 菜单（粗体名称 + 浅灰推荐理由），点击一键引用。
+ * 2. 输入命中时在右上沿浮现带推荐计数的原生 Trigger Chip；
+ * 3. 点击一律向上（side="top"）展开两行式 Menu，避免遮盖输入框与发送按钮。
  */
 export function RecommendBar(props: RecommendBarProps): React.ReactElement | null {
   const {
@@ -180,26 +211,7 @@ export function RecommendBar(props: RecommendBarProps): React.ReactElement | nul
   const triggerLabel = isZh ? '推荐专家' : 'Suggestions'
 
   // 5. 映射为宿主原生的两行式 Menu 项
-  const items = candidates.map(cand => ({
-    id: cand.id,
-    label: React.createElement(
-      'span',
-      { className: 'aag-hero-menu-item' },
-      React.createElement(
-        'span',
-        { className: 'aag-hero-menu-item-row1' },
-        React.createElement('span', { className: 'aag-hero-menu-item-name' }, cand.name),
-        cand.kind === 'team'
-          ? React.createElement('span', { className: 'aag-hero-menu-item-tag' }, isZh ? '团队' : 'Team')
-          : null,
-      ),
-      React.createElement(
-        'span',
-        { className: 'aag-hero-menu-item-desc' },
-        cand.reason,
-      ),
-    ),
-  }))
+  const items = buildRecommendMenuItems(candidates, activeLocale)
 
   // 6. 锚点按钮（Trigger Chip）：完全对齐宿主 AgentPreset 原生 Chip 风格
   const anchor = React.createElement(
@@ -228,9 +240,9 @@ export function RecommendBar(props: RecommendBarProps): React.ReactElement | nul
       onClose: () => {
         setOpen(false)
       },
-      align: inDock ? 'end' : 'start',
-      side: inDock ? 'top' : 'bottom',
-      portal: !inDock,
+      align: 'end',
+      side: 'top',
+      portal: false,
       items,
       onSelect: (id: string) => {
         setOpen(false)
