@@ -44,4 +44,8 @@ test('输入框专家按钮全面由宿主官方原语 Button 接管，彻底清
   assert.doesNotMatch(COMPOSER_CSS, /\.aag-btn\{/, '手写 .aag-btn 规则已彻底移除')
   assert.doesNotMatch(COMPOSER_CSS, /outline:/, '手写 outline 已移除')
   assert.doesNotMatch(COMPOSER_CSS, /border-radius:\s*999px/, '手写 999px 药丸圆角已移除')
+  assert.match(COMPOSER_CSS, /\.aag-btn-wrap button\{[^}]*color:var\(--dsw-alias-label-secondary\)/, '默认文字颜色对齐宿主底栏次级灰')
+  assert.match(COMPOSER_CSS, /\.aag-btn-wrap button\{[^}]*font-size:13px/, '字号对齐宿主底栏 13px 规范')
+  assert.match(COMPOSER_CSS, /\.aag-btn-wrap button\{[^}]*font-weight:500/, '字重对齐宿主底栏 500 规范')
+  assert.match(COMPOSER_CSS, /\.aag-btn-wrap button:hover:not\(:disabled\)[^}]*color:var\(--dsw-alias-label-secondary\)/, '悬浮态保持宿主底栏次级灰色阶，不突变为深色主色')
 })
