@@ -39,3 +39,9 @@ test('Switch 开关全面由宿主官方原语接管，彻底清空手写 CSS �
   assert.doesNotMatch(CARD_SETTINGS_CSS, /\.aag-enable-switch\{/, '手写开关规则已彻底移除')
   assert.match(CARD_SETTINGS_CSS, /\.aag-icon-btn\{[^}]*width:22px!important;min-width:22px!important;height:22px!important/, '纯图标按钮对齐技能插件 22px 描边规范')
 })
+
+test('输入框专家按钮全面由宿主官方原语 Button 接管，彻底清空手写胶囊 CSS', () => {
+  assert.doesNotMatch(COMPOSER_CSS, /\.aag-btn\{/, '手写 .aag-btn 规则已彻底移除')
+  assert.doesNotMatch(COMPOSER_CSS, /outline:/, '手写 outline 已移除')
+  assert.doesNotMatch(COMPOSER_CSS, /border-radius:\s*999px/, '手写 999px 药丸圆角已移除')
+})

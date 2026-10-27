@@ -568,7 +568,7 @@ const MENU_NAME_OVERRIDE = EXPERT_MENU_ITEM_SELECTORS
 const EXPERT_MENU_NAME_STYLE = 'flex:1 1 auto;max-width:none;min-width:0'
 import { RecommendBar, resolveRecommendInputs } from './recommend-bar.js'
 
-export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inline-flex;flex:0 0 auto}.aag-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 8px;white-space:nowrap;border:none;border-radius:999px;corner-shape:round;background:transparent;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;cursor:pointer}.aag-btn:hover,.aag-btn[aria-expanded="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-btn:focus-visible{outline:2px solid var(--dsw-alias-label-secondary);outline-offset:2px}.aag-btn>svg{flex:none}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100dvh - 24px);overflow-y:auto;border:0;border-radius:var(--dsw-radius-panel,16px);background:var(--dsw-alias-bg-layer-2);--dsw-elevation-stroke-color:var(--dsw-alias-border-l1);box-shadow:var(--dsw-elevation-prominent);z-index:10000}.aag-menu[data-placement="below"]{top:calc(100% + 4px);bottom:auto}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:var(--dsw-radius-md,10px);background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}'
+export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inline-flex;flex:0 0 auto}.aag-btn-wrap button[aria-expanded="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100dvh - 24px);overflow-y:auto;border:0;border-radius:var(--dsw-radius-panel,16px);background:var(--dsw-alias-bg-layer-2);--dsw-elevation-stroke-color:var(--dsw-alias-border-l1);box-shadow:var(--dsw-elevation-prominent);z-index:10000}.aag-menu[data-placement="below"]{top:calc(100% + 4px);bottom:auto}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:var(--dsw-radius-md,10px);background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}'
 // 设置页版式对齐 dsh-skills-manager：工具栏 + 汇总条 + 分组卡片 + 行内启停按钮。
 export const SETTINGS_CSS = `
 .aag-section{box-sizing:border-box;display:flex;min-width:0;width:100%;flex-direction:column;gap:16px;padding:0 0 32px;color:var(--dsw-alias-label-primary)}
@@ -1124,7 +1124,17 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     if (next instanceof Element && (event.currentTarget.contains(next) || next.closest('[role="dialog"], .dsh-primitives-menu, [role="menu"]'))) return
     if (next instanceof Node && !event.currentTarget.contains(next)) close()
   } },
-    React.createElement('span', { ref: triggerRef }, React.createElement('button', { type: 'button', className: 'aag-btn', title: props.t('button.title'), 'aria-expanded': open, 'aria-haspopup': 'dialog', 'aria-controls': open ? menuId : undefined, onMouseDown: keepComposerFocus, onClick }, expertIcon(), props.t('settings.nav'))),
+    React.createElement('span', { ref: triggerRef }, React.createElement(PrimitiveButton, {
+      variant: 'ghost',
+      size: 'sm',
+      title: props.t('button.title'),
+      'aria-expanded': open,
+      'aria-haspopup': 'dialog',
+      'aria-controls': open ? menuId : undefined,
+      onMouseDown: keepComposerFocus,
+      onClick,
+      icon: expertIcon(),
+    }, props.t('settings.nav'))),
     menu)
 }
 
