@@ -34,7 +34,7 @@ for (const theme of ['dark', 'light']) test(`${theme}：分类菜单和启用开
 
 test('聊天团队入口和异步确认使用英文词条与主题弹窗', async ({ page }) => {
   await page.goto('/?teams&menu&lang=en')
-  await page.locator('.aag-btn').click()
+  await page.locator('.aag-btn-wrap button').click()
   await page.getByRole('tab', { name: 'Expert teams', exact: true }).click()
   await page.getByRole('textbox', { name: 'Search teams', exact: true }).fill('Product')
   await expect(page.locator('.agt-compact')).toContainText('Product Review Team')
