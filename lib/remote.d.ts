@@ -3,6 +3,14 @@ import { z } from "zod";
 import { TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
 import { Context } from "@deepseek-ai/cordis";
 //#region src/team-contract.d.ts
+declare const COORDINATOR_MODES: readonly ["template", "custom"];
+type CoordinatorMode = (typeof COORDINATOR_MODES)[number];
+declare const COORDINATOR_TEMPLATE_IDS: readonly ["general", "product", "technical", "content", "data", "research"];
+type CoordinatorTemplateId = (typeof COORDINATOR_TEMPLATE_IDS)[number];
+declare const TEAM_ENGINE_STATES: readonly ["unsupported", "disabled", "enabled"];
+type TeamEngineState = (typeof TEAM_ENGINE_STATES)[number];
+declare const TEAM_ENGINE_MODES: readonly ["subagent", "native"];
+type TeamEngineMode = (typeof TEAM_ENGINE_MODES)[number];
 declare const teamInputSchema: z.ZodObject<{
   id: z.ZodOptional<z.ZodString>;
   builtin: z.ZodOptional<z.ZodBoolean>;
@@ -18,18 +26,8 @@ declare const teamInputSchema: z.ZodObject<{
     instructions: z.ZodString;
   }, z.core.$strict>>;
   examples: z.ZodArray<z.ZodString>;
-  coordinatorMode: z.ZodEnum<{
-    custom: "custom";
-    template: "template";
-  }>;
-  coordinatorTemplateId: z.ZodEnum<{
-    product: "product";
-    research: "research";
-    general: "general";
-    technical: "technical";
-    content: "content";
-    data: "data";
-  }>;
+  coordinatorMode: z.ZodType<CoordinatorMode>;
+  coordinatorTemplateId: z.ZodType<CoordinatorTemplateId>;
   coordinatorTemplateVersion: z.ZodLiteral<1>;
   coordinatorPrompt: z.ZodString;
 }, z.core.$strict>;
@@ -50,18 +48,8 @@ declare const teamSnapshotSchema: z.ZodObject<{
       instructions: z.ZodString;
     }, z.core.$strict>>;
     examples: z.ZodArray<z.ZodString>;
-    coordinatorMode: z.ZodEnum<{
-      custom: "custom";
-      template: "template";
-    }>;
-    coordinatorTemplateId: z.ZodEnum<{
-      product: "product";
-      research: "research";
-      general: "general";
-      technical: "technical";
-      content: "content";
-      data: "data";
-    }>;
+    coordinatorMode: z.ZodType<CoordinatorMode>;
+    coordinatorTemplateId: z.ZodType<CoordinatorTemplateId>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
     coordinatorPrompt: z.ZodString;
   }, z.core.$strict>, z.ZodObject<{
@@ -72,15 +60,8 @@ declare const teamSnapshotSchema: z.ZodObject<{
   enabledExperts: z.ZodArray<z.ZodString>;
   revision: z.ZodNumber;
   engine: z.ZodOptional<z.ZodObject<{
-    state: z.ZodEnum<{
-      enabled: "enabled";
-      unsupported: "unsupported";
-      disabled: "disabled";
-    }>;
-    mode: z.ZodEnum<{
-      subagent: "subagent";
-      native: "native";
-    }>;
+    state: z.ZodType<TeamEngineState>;
+    mode: z.ZodType<TeamEngineMode>;
     reason: z.ZodString;
     recommendation: z.ZodString;
   }, z.core.$strip>>;
@@ -149,18 +130,8 @@ declare const storedProposalItemSchema: z.ZodUnion<readonly [z.ZodObject<{
       instructions: z.ZodString;
     }, z.core.$strict>>;
     examples: z.ZodArray<z.ZodString>;
-    coordinatorMode: z.ZodEnum<{
-      custom: "custom";
-      template: "template";
-    }>;
-    coordinatorTemplateId: z.ZodEnum<{
-      product: "product";
-      research: "research";
-      general: "general";
-      technical: "technical";
-      content: "content";
-      data: "data";
-    }>;
+    coordinatorMode: z.ZodType<CoordinatorMode>;
+    coordinatorTemplateId: z.ZodType<CoordinatorTemplateId>;
     coordinatorTemplateVersion: z.ZodLiteral<1>;
     coordinatorPrompt: z.ZodString;
   }, z.core.$strict>;
@@ -201,18 +172,8 @@ declare const latestProposalSchema: z.ZodNullable<z.ZodObject<{
         instructions: z.ZodString;
       }, z.core.$strict>>;
       examples: z.ZodArray<z.ZodString>;
-      coordinatorMode: z.ZodEnum<{
-        custom: "custom";
-        template: "template";
-      }>;
-      coordinatorTemplateId: z.ZodEnum<{
-        product: "product";
-        research: "research";
-        general: "general";
-        technical: "technical";
-        content: "content";
-        data: "data";
-      }>;
+      coordinatorMode: z.ZodType<CoordinatorMode>;
+      coordinatorTemplateId: z.ZodType<CoordinatorTemplateId>;
       coordinatorTemplateVersion: z.ZodLiteral<1>;
       coordinatorPrompt: z.ZodString;
     }, z.core.$strict>;

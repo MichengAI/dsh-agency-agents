@@ -10,6 +10,26 @@ const text = (max: number) =>
     .refine((value) => Array.from(value).length <= max)
 export const TEAM_CUSTOM_ID =
   /^team-custom-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u
+export const COORDINATOR_MODES = ['template', 'custom'] as const
+export type CoordinatorMode = (typeof COORDINATOR_MODES)[number]
+
+export const COORDINATOR_TEMPLATE_IDS = [
+  'general',
+  'product',
+  'technical',
+  'content',
+  'data',
+  'research',
+] as const
+
+export type CoordinatorTemplateId = (typeof COORDINATOR_TEMPLATE_IDS)[number]
+
+export const TEAM_ENGINE_STATES = ['unsupported', 'disabled', 'enabled'] as const
+export type TeamEngineState = (typeof TEAM_ENGINE_STATES)[number]
+
+export const TEAM_ENGINE_MODES = ['subagent', 'native'] as const
+export type TeamEngineMode = (typeof TEAM_ENGINE_MODES)[number]
+
 export const teamMemberSchema = z
   .object({ expertSlug: text(128), duty: text(100), instructions: text(2000) })
   .strict()
@@ -35,15 +55,8 @@ export const teamInputSchema = z
           new Set(items.map((item) => item.expertSlug)).size === items.length,
       ),
     examples: z.array(text(1000)).min(1).max(3),
-    coordinatorMode: z.enum(['template', 'custom']),
-    coordinatorTemplateId: z.enum([
-      'general',
-      'product',
-      'technical',
-      'content',
-      'data',
-      'research',
-    ]),
+    coordinatorMode: z.enum(COORDINATOR_MODES) as z.ZodType<CoordinatorMode>,
+    coordinatorTemplateId: z.enum(COORDINATOR_TEMPLATE_IDS) as z.ZodType<CoordinatorTemplateId>,
     coordinatorTemplateVersion: z.literal(1),
     coordinatorPrompt: z
       .string()
@@ -61,8 +74,8 @@ export const teamSchema = teamInputSchema.and(
   z.object({ id: z.string(), builtin: z.boolean() }),
 )
 export const teamEngineStatusSchema = z.object({
-  state: z.enum(['unsupported', 'disabled', 'enabled']),
-  mode: z.enum(['subagent', 'native']),
+  state: z.enum(TEAM_ENGINE_STATES) as z.ZodType<TeamEngineState>,
+  mode: z.enum(TEAM_ENGINE_MODES) as z.ZodType<TeamEngineMode>,
   reason: z.string(),
   recommendation: z.string(),
 })
