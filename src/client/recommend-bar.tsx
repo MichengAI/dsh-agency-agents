@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Menu } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Menu, Button } from '@deepseek-ai/dsh-client-ui-primitives'
 import { recommendExpertsForTask, type RecommendCandidate } from '../recommend-engine.js'
 import type { ExpertSearchable, ReferenceInsertionTarget } from './index.js'
 import type { ExpertTeam } from '../team-contract.js'
@@ -213,11 +213,12 @@ export function RecommendBar(props: RecommendBarProps): React.ReactElement | nul
   // 5. 映射为宿主原生的两行式 Menu 项
   const items = buildRecommendMenuItems(candidates, activeLocale)
 
-  // 6. 锚点按钮（Trigger Chip）：完全对齐宿主 AgentPreset 原生 Chip 风格
+  // 6. 锚点按钮（Trigger Chip）：完全对齐宿主原生 Button variant="ghost" size="sm" 规范
   const anchor = React.createElement(
-    'button',
+    Button,
     {
-      type: 'button',
+      variant: 'ghost',
+      size: 'sm',
       className: 'aag-hero-recommend-seat',
       'aria-haspopup': 'menu',
       'aria-expanded': open,
@@ -225,8 +226,8 @@ export function RecommendBar(props: RecommendBarProps): React.ReactElement | nul
       onClick: () => {
         setOpen(prev => !prev)
       },
+      icon: React.createElement(SparkleIcon),
     },
-    React.createElement(SparkleIcon),
     React.createElement('span', { className: 'aag-hero-recommend-label' }, triggerLabel),
     React.createElement('span', { className: 'aag-hero-recommend-badge' }, String(candidates.length)),
     React.createElement(ChevronDownIcon),

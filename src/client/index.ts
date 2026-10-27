@@ -662,9 +662,8 @@ const BUNDLE_CONFIG_CSS = `
 const RECOMMEND_BAR_CSS = `
 .aag-hero-options-recommend{display:inline-flex;align-items:center}
 .aag-dock-right-recommend{box-sizing:border-box;width:calc(100% - var(--dsh-composer-side-clearance, 20px) - var(--dsh-composer-side-clearance, 20px));max-width:var(--dsh-composer-card-max-width,768px);margin:0 auto;display:flex;justify-content:flex-end;align-items:center;padding:2px 0 6px}
-.aag-hero-options-recommend [role="menu"],.aag-dock-right-recommend [role="menu"]{max-height:min(380px, calc(100vh - 180px));overflow-y:auto}
-.aag-hero-recommend-seat{border-radius:var(--dsw-radius-sm,6px);min-width:0;max-width:min(100%,240px);min-height:28px;color:var(--dsw-alias-label-primary);white-space:nowrap;cursor:pointer;background:0 0;border:none;align-items:center;gap:5px;padding:0 8px;font-size:13px;font-weight:500;line-height:20px;display:inline-flex;transition:background 120ms ease;animation:aagFadeIn 160ms cubic-bezier(0,0,0.2,1)}
-.aag-hero-recommend-seat:hover,.aag-hero-recommend-seat[aria-expanded=true]{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.08))}
+.aag-hero-options-recommend [role="menu"],.aag-dock-right-recommend [role="menu"]{max-height:min(380px, calc(100vh - 180px))}
+.aag-hero-recommend-seat{max-width:min(100%,240px);gap:5px;animation:aagFadeIn 160ms cubic-bezier(0,0,0.2,1)}
 .aag-hero-recommend-icon{color:var(--dsw-alias-brand,#3b82f6);flex:none}
 .aag-hero-recommend-label{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}
 .aag-hero-recommend-badge{font-size:11px;font-weight:600;padding:0 5px;height:16px;border-radius:999px;background:var(--dsw-alias-brand-bg,rgba(37,99,235,0.25));color:var(--dsw-alias-brand,#60a5fa);display:inline-flex;align-items:center;justify-content:center;line-height:1}

@@ -4,6 +4,15 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.17 - 2026-10-27
+
+- **Align expert recommendation UX with host Menu primitive and zero-occlusion upward expansion** (Issue #27 follow-up):
+  - **Unified Upward Expansion (Zero Occlusion)**: Standardized both hero workspace row and dock top layouts to `side="top"`, ensuring menu surfaces strictly expand upwards from the trigger anchor, completely eliminating occlusion over the composer input and send button;
+  - **Host Primitive Alignment & Style Cleanups**: Removed invasive `!important` absolute positioning overrides in favor of native `.sideTop` and `.alignEnd` rules in `@deepseek-ai/dsh-client-ui-primitives` `Menu`; replaced raw button anchor with native `Button variant="ghost" size="sm"` primitive;
+  - **Two-Line Menu Layout**: Display candidates with primary name, team badge tag, and contextual match reason in a structured two-line list that smoothly closes on outside clicks;
+  - **Double Scrollbar Prevention**: Omitted outer container `overflow-y: auto` to rely entirely on the host Menu primitive's internal `.scrollable .viewport` container;
+  - **Real Unit Test Guarding**: Extracted `buildRecommendMenuItems` pure function with full Vitest coverage and mutation validation for localized item structures and team tags.
+
 ## 1.2.16 - 2026-10-26
 
 - **Composer Task Recommendations**: Real-time expert and team recommendations above the chat input based on user draft semantics (Issue #27):
