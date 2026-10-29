@@ -6,6 +6,7 @@ import { TeamEditor } from './team-editor.js'
 import { TeamLocaleContext } from './team-locale.js'
 import { unwrap } from './team-ui.js'
 import { ZH_DIVISION } from '../names.js'
+import { acceptCatalog } from './catalog.js'
 import type { CatalogSnapshot } from '../expert-contract.js'
 import type { TeamSnapshot } from '../team-contract.js'
 
@@ -14,7 +15,7 @@ export interface GlobalDraftDialogOptions {
   remote: any
   locale: 'zh' | 'en'
   t: (key: string, params?: Record<string, string | number>) => string
-  onSaved?: () => void
+  onSaved?: (catalog?: CatalogSnapshot) => void
 }
 
 export function openGlobalDraftEditor(options: GlobalDraftDialogOptions): void {
@@ -64,8 +65,9 @@ export function openGlobalDraftEditor(options: GlobalDraftDialogOptions): void {
         t={options.t as any}
         locale={options.locale}
         onClose={cleanup}
-        onSaved={() => {
-          options.onSaved?.()
+        onSaved={(savedCatalog) => {
+          acceptCatalog(options.remote, savedCatalog)
+          options.onSaved?.(savedCatalog)
           cleanup()
         }}
       />

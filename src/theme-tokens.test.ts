@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'vitest'
 import { PLUGIN_UI_CSS } from '../src/client/plugin-ui.js'
-import { CARD_SETTINGS_CSS, COMPOSER_CSS, SETTINGS_CSS } from '../src/client/index.js'
+import { CARD_SETTINGS_CSS, COMPOSER_CSS, RECOMMEND_BAR_CSS, SETTINGS_CSS } from '../src/client/index.js'
 import { TEAM_CSS } from '../src/client/team-style.js'
 import { DISCOVERY_CSS } from '../src/client/expert-discovery.js'
 import { CUSTOM_EDITOR_CSS } from '../src/client/custom-editor.js'
@@ -47,5 +47,21 @@ test('输入框专家按钮全面由宿主官方原语 Button 接管，彻底清
   assert.match(COMPOSER_CSS, /\.aag-btn-wrap button\{[^}]*color:var\(--dsw-alias-label-secondary\)/, '默认文字颜色对齐宿主底栏次级灰')
   assert.match(COMPOSER_CSS, /\.aag-btn-wrap button\{[^}]*font-size:13px/, '字号对齐宿主底栏 13px 规范')
   assert.match(COMPOSER_CSS, /\.aag-btn-wrap button\{[^}]*font-weight:500/, '字重对齐宿主底栏 500 规范')
+  assert.match(COMPOSER_CSS, /\.aag-btn-wrap button\{[^}]*padding:0 4px 0 8px/, '内边距对齐宿主底栏带 Chevron 触发器规范')
   assert.match(COMPOSER_CSS, /\.aag-btn-wrap button:hover:not\(:disabled\)[^}]*color:var\(--dsw-alias-label-secondary\)/, '悬浮态保持宿主底栏次级灰色阶，不突变为深色主色')
+  assert.match(COMPOSER_CSS, /\.aag-btn-chevron\{[^}]*transition:transform 120ms ease/, 'Chevron 展开具备平滑过渡动效')
+  assert.match(COMPOSER_CSS, /transform:rotate\(180deg\)/, '展开态 Chevron 顺滑旋转 180 度')
+})
+
+test('专家推荐组件排版、色阶与展开动效全面与宿主模式规范统一', () => {
+  assert.match(RECOMMEND_BAR_CSS, /\.aag-hero-recommend-seat\{[^}]*font-size:13px/, '推荐按钮字号对齐 13px 规范')
+  assert.match(RECOMMEND_BAR_CSS, /\.aag-hero-recommend-seat\{[^}]*font-weight:500/, '推荐按钮字重对齐 500 规范')
+  assert.match(RECOMMEND_BAR_CSS, /\.aag-hero-recommend-seat\{[^}]*line-height:20px/, '推荐按钮行高对齐 20px 规范')
+  assert.match(RECOMMEND_BAR_CSS, /\.aag-hero-recommend-seat\{[^}]*padding:0 4px 0 8px/, '推荐按钮内边距对齐 0 4px 0 8px 规范')
+  assert.match(RECOMMEND_BAR_CSS, /\.aag-hero-recommend-seat\{[^}]*color:var\(--dsw-alias-label-secondary\)/, '推荐按钮文字默认收敛至次级灰')
+  assert.match(RECOMMEND_BAR_CSS, /\.aag-hero-recommend-seat:hover:not\(:disabled\)[^}]*color:var\(--dsw-alias-label-secondary\)/, '悬停保持次级灰')
+  assert.match(RECOMMEND_BAR_CSS, /\.aag-hero-recommend-chevron\{[^}]*transition:transform 120ms ease/, '推荐 Chevron 具备过渡动效')
+  assert.match(RECOMMEND_BAR_CSS, /transform:rotate\(180deg\)/, '展开态推荐 Chevron 旋转 180 度')
+  assert.match(RECOMMEND_BAR_CSS, /\.aag-hero-recommend-icon\{color:var\(--dsw-alias-brand,#3b82f6\)/, '保留智能推荐高亮星标特征')
+  assert.match(RECOMMEND_BAR_CSS, /\.aag-hero-recommend-badge\{[^}]*border-radius:999px/, '保留智能推荐胶囊数量徽标')
 })

@@ -1,4 +1,4 @@
-import { adoptSharedRevision, catalogState } from './catalog.js';
+import { adoptSharedRevision, catalogState, subscribeCatalog } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
@@ -160,10 +160,32 @@ export function TeamsPanel(props: {
             sequence.current++;
             setSnapshot(next);
         });
+        const unsubscribeCatalog = subscribeCatalog(props.remote, () => {
+            if (!alive.current)
+                return;
+            const known = catalogState(props.remote);
+            if (known.revision >= 0) {
+                setExperts([...known.experts]);
+                setSnapshot((prev) => prev ? {
+                    ...prev,
+                    enabledExperts: [...known.enabled],
+                    revision: Math.max(prev.revision, known.revision),
+                } : prev);
+                const current = teamState(props.remote);
+                if (current) {
+                    acceptTeams(props.remote, {
+                        ...current,
+                        enabledExperts: [...known.enabled],
+                        revision: Math.max(current.revision, known.revision),
+                    });
+                }
+            }
+        });
         return () => {
             alive.current = false;
             sequence.current++;
             unsubscribe();
+            unsubscribeCatalog();
         };
     }, [props.remote]);
     const load = async () => {

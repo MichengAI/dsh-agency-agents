@@ -568,7 +568,7 @@ const MENU_NAME_OVERRIDE = EXPERT_MENU_ITEM_SELECTORS
 const EXPERT_MENU_NAME_STYLE = 'flex:1 1 auto;max-width:none;min-width:0'
 import { RecommendBar, resolveRecommendInputs } from './recommend-bar.js'
 
-export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inline-flex;flex:0 0 auto}.aag-btn-wrap button{color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;padding:0 8px}.aag-btn-wrap button:hover:not(:disabled),.aag-btn-wrap button[aria-expanded="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100dvh - 24px);overflow-y:auto;border:0;border-radius:var(--dsw-radius-panel,16px);background:var(--dsw-alias-bg-layer-2);--dsw-elevation-stroke-color:var(--dsw-alias-border-l1);box-shadow:var(--dsw-elevation-prominent);z-index:10000}.aag-menu[data-placement="below"]{top:calc(100% + 4px);bottom:auto}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:var(--dsw-radius-md,10px);background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}'
+export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inline-flex;flex:0 0 auto}.aag-btn-wrap button{color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;padding:0 4px 0 8px}.aag-btn-wrap button:hover:not(:disabled),.aag-btn-wrap button[aria-expanded="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}.aag-btn-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.aag-btn-chevron{display:inline-flex;flex:0 0 auto;color:var(--dsw-alias-label-caption);transition:transform 120ms ease}.aag-btn-chevron-open,.aag-btn-wrap button[aria-expanded="true"] .aag-btn-chevron{transform:rotate(180deg)}.aag-menu{position:absolute;bottom:calc(100% + 4px);left:0;box-sizing:border-box;padding:4px;display:flex;flex-direction:column;gap:0;width:300px;max-width:360px;max-height:calc(100dvh - 24px);overflow-y:auto;border:0;border-radius:var(--dsw-radius-panel,16px);background:var(--dsw-alias-bg-layer-2);--dsw-elevation-stroke-color:var(--dsw-alias-border-l1);box-shadow:var(--dsw-elevation-prominent);z-index:10000}.aag-menu[data-placement="below"]{top:calc(100% + 4px);bottom:auto}.aag-menu-title{padding:8px 10px;font-size:12px;line-height:16px;color:var(--dsw-alias-label-tertiary)}.aag-menu-item{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:8px 10px;border:none;border-radius:var(--dsw-radius-md,10px);background:transparent;cursor:pointer;text-align:left;font-size:14px;line-height:22px;color:var(--dsw-alias-label-primary);box-sizing:border-box}.aag-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover)}.aag-menu-empty{padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:13px}'
 // 设置页版式对齐 dsh-skills-manager：工具栏 + 汇总条 + 分组卡片 + 行内启停按钮。
 export const SETTINGS_CSS = `
 .aag-section{box-sizing:border-box;display:flex;min-width:0;width:100%;flex-direction:column;gap:16px;padding:0 0 32px;color:var(--dsw-alias-label-primary)}
@@ -659,15 +659,17 @@ const BUNDLE_CONFIG_CSS = `
 .aag-main-panel>*{width:100%;max-width:960px}
 `
 
-const RECOMMEND_BAR_CSS = `
+export const RECOMMEND_BAR_CSS = `
 .aag-hero-options-recommend{display:inline-flex;align-items:center}
 .aag-dock-right-recommend{box-sizing:border-box;width:calc(100% - var(--dsh-composer-side-clearance, 20px) - var(--dsh-composer-side-clearance, 20px));max-width:var(--dsh-composer-card-max-width,768px);margin:0 auto;display:flex;justify-content:flex-end;align-items:center;padding:2px 0 6px}
 .aag-hero-options-recommend [role="menu"],.aag-dock-right-recommend [role="menu"]{max-height:min(380px, calc(100vh - 180px))}
-.aag-hero-recommend-seat{max-width:min(100%,240px);animation:aagFadeIn 160ms cubic-bezier(0,0,0.2,1)}
+.aag-hero-recommend-seat{max-width:min(100%,240px);color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;font-weight:500;padding:0 4px 0 8px;animation:aagFadeIn 160ms cubic-bezier(0,0,0.2,1)}
+.aag-hero-recommend-seat:hover:not(:disabled),.aag-hero-recommend-seat[aria-expanded="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}
 .aag-hero-recommend-icon{color:var(--dsw-alias-brand,#3b82f6);flex:none}
 .aag-hero-recommend-label{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}
 .aag-hero-recommend-badge{font-size:11px;font-weight:600;padding:0 5px;height:16px;border-radius:999px;background:var(--dsw-alias-brand-bg,rgba(37,99,235,0.25));color:var(--dsw-alias-brand,#60a5fa);display:inline-flex;align-items:center;justify-content:center;line-height:1}
-.aag-hero-recommend-chevron{color:var(--dsw-alias-label-caption,#64748b);flex:none}
+.aag-hero-recommend-chevron{display:inline-flex;flex:0 0 auto;color:var(--dsw-alias-label-caption,#64748b);transition:transform 120ms ease}
+.aag-hero-recommend-chevron-open,.aag-hero-recommend-seat[aria-expanded="true"] .aag-hero-recommend-chevron{transform:rotate(180deg)}
 .aag-hero-menu-item{display:flex;flex-direction:column;gap:3px;max-width:320px;padding:2px 0}
 .aag-hero-menu-item-row1{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .aag-hero-menu-item-name{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary)}
@@ -734,6 +736,22 @@ function expertIcon(): React.ReactElement {
   return React.createElement('svg', { viewBox: '0 0 16 16', width: 14, height: 14, fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
     React.createElement('path', { d: 'M8 2.5l1.15 2.35 2.35 1.15-2.35 1.15L8 9.5l-1.15-2.35L4.5 6l2.35-1.15z' }),
     React.createElement('path', { d: 'M12.75 10.25l.55 1.2 1.2.55-1.2.55-.55 1.2-.55-1.2-1.2-.55 1.2-.55z' }))
+}
+
+function chevronDownIcon(open?: boolean): React.ReactElement {
+  return React.createElement('span', {
+    className: `aag-btn-chevron${open ? ' aag-btn-chevron-open' : ''}`,
+    'aria-hidden': 'true',
+  }, React.createElement('svg', {
+    viewBox: '0 0 16 16',
+    width: 12,
+    height: 12,
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.5,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  }, React.createElement('path', { d: 'M4 6l4 4 4-4' })))
 }
 
 function teamTabIcon(): React.ReactElement {
@@ -1136,7 +1154,10 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
       onMouseDown: keepComposerFocus,
       onClick,
       icon: expertIcon(),
-    }, props.t('settings.nav'))),
+    },
+      React.createElement('span', { className: 'aag-btn-label' }, props.t('settings.nav')),
+      chevronDownIcon(open),
+    )),
     menu)
 }
 
@@ -2130,7 +2151,8 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
           remote,
           locale: getActive(),
           t: t as any,
-          onSaved: () => {
+          onSaved: (savedCatalog) => {
+            if (savedCatalog) acceptCatalog(remote, savedCatalog)
             void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
           },
         })
@@ -2161,7 +2183,8 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
             remote,
             locale: getActive(),
             t: t as any,
-            onSaved: () => {
+            onSaved: (savedCatalog) => {
+              if (savedCatalog) acceptCatalog(remote, savedCatalog)
               void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
             },
           })

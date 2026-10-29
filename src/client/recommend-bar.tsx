@@ -18,9 +18,9 @@ export interface RecommendBarProps {
 }
 
 /**
- * 极简向下箭头图标（12x12 SVG，对齐宿主 Chevron 规范）。
+ * 极简向下箭头图标（12x12 SVG，对齐宿主 Chevron 规范与展开旋转动效）。
  */
-function ChevronDownIcon(): React.ReactElement {
+function ChevronDownIcon({ open }: { open?: boolean }): React.ReactElement {
   return React.createElement(
     'svg',
     {
@@ -32,7 +32,7 @@ function ChevronDownIcon(): React.ReactElement {
       strokeWidth: 1.5,
       strokeLinecap: 'round',
       strokeLinejoin: 'round',
-      className: 'aag-hero-recommend-chevron',
+      className: `aag-hero-recommend-chevron${open ? ' aag-hero-recommend-chevron-open' : ''}`,
       'aria-hidden': 'true',
     },
     React.createElement('path', { d: 'M4 6l4 4 4-4' }),
@@ -230,7 +230,7 @@ export function RecommendBar(props: RecommendBarProps): React.ReactElement | nul
     },
     React.createElement('span', { className: 'aag-hero-recommend-label' }, triggerLabel),
     React.createElement('span', { className: 'aag-hero-recommend-badge' }, String(candidates.length)),
-    React.createElement(ChevronDownIcon),
+    React.createElement(ChevronDownIcon, { open }),
   )
 
   return React.createElement(

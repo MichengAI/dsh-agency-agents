@@ -1,4 +1,4 @@
-import { adoptSharedRevision, catalogState } from './catalog.js';
+import { adoptSharedRevision, catalogState, subscribeCatalog } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
 import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
 import React from 'react';
@@ -40,9 +40,17 @@ export function TeamMenu(props: {
             if (next)
                 setSnapshot(next);
         });
+        const unsubscribeCatalog = subscribeCatalog(props.remote, () => {
+            if (!alive.current)
+                return;
+            const known = catalogState(props.remote);
+            if (known.revision >= 0)
+                setExperts([...known.experts]);
+        });
         return () => {
             alive.current = false;
             unsubscribe();
+            unsubscribeCatalog();
         };
     }, [props.remote]);
     const load = async () => {
