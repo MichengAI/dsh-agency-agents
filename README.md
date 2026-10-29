@@ -100,7 +100,7 @@ Real-time expert and expert team suggestions displayed as a native dropdown at t
 - **One-Click Mention & Deduplication**: Click candidate items to insert references directly into the input via host `insertReference`; already referenced experts are automatically filtered out from suggestions, auto-dismissing on outside clicks or empty input;
 - **Dedicated Extension Toggle**: Toggle under **Settings → Plugins** (default off), supporting host volatile hot-reloading and persistence.
 
-> This README describes version 1.2.18. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
+> This README describes version 1.2.19. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
 ## Screenshots
 
 The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.

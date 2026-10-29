@@ -4,6 +4,13 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.19 - 2026-10-29
+
+- **Synchronize roster updates across expert and team settings panels** (Issue #33):
+  - **Live catalog cache subscription**: Subscribed `TeamsPanel` and `TeamMenu` to catalog events, immediately updating expert member candidates and enabled states when custom experts are added, edited, or removed in the same settings session without requiring a panel reload;
+  - **Global draft creation sync**: Propagated new catalog snapshots from in-chat AI draft confirmation dialogs to the shared client catalog state;
+  - **Unified dropdown chevron transitions**: Standardized chevron icons and 180° rotation animations between bottom toolbar triggers and composer recommendation chips.
+
 ## 1.2.18 - 2026-10-27
 
 - **Align composer trigger typography and hover state with host toolbar primitives**:
