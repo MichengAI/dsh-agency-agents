@@ -49,6 +49,7 @@ import { refreshTeams, teamState } from './team-cache.js'
 import { installNativeTeamNames } from './native-team-names.js'
 import { installSettingsNavIcon } from './settings-nav-icon.js'
 import type { AgencyCatalogRemote, AgencyCreationRemote } from './remote.js'
+import type { StoredProposal } from '../creation-tools.js'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -684,7 +685,7 @@ export const CSS = PLUGIN_UI_CSS + TEAM_CSS + COMPOSER_CSS + SETTINGS_CSS + CARD
   + MENU_NAME_OVERRIDE + `{${EXPERT_MENU_NAME_STYLE}}`
 
 /** 本插件 Remote 命名空间的 client 侧 face（ctx.remote.agencyAgents 的形状）。 */
-interface AgencyAgentsRemoteApi extends AgencyCatalogRemote, Partial<AgencyTeamsRemote>, AgencyCreationRemote {
+export interface AgencyAgentsRemoteApi extends AgencyCatalogRemote, Partial<AgencyTeamsRemote>, AgencyCreationRemote {
   getEnabled(): Promise<RemoteResult<AgencyAgentsEnabledState>>
   setEnabled(enabled: string[], expectedRevision: number): Promise<RemoteResult<AgencyAgentsEnabledState>>
   getPrompt(slug: string, division: string): Promise<RemoteResult<AgencyAgentsPrompt>>
@@ -1738,6 +1739,64 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
       onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) },
     }))))
 }
+
+/** 判断元素是否为 Ask 弹窗中代表“立即打开编辑窗口”的确认选项 */
+export function isAskConfirmElement(el: Element | null): boolean {
+  if (!el) return false
+  const target = el.closest('button, [data-option-row], [role="radio"], [role="checkbox"], div')
+  if (!target) return false
+  const text = (target.textContent ?? '').trim()
+  const ariaLabel = target.getAttribute('aria-label') ?? ''
+  return text.includes('立即打开编辑窗口') || ariaLabel.includes('立即打开编辑窗口')
+}
+
+let activeFetchInFlight = false
+
+/**
+ * 在用户明确点击确认或触发创建时，受控单次/短线拉取最新草案并打开编辑窗口。
+ * 彻底消除全局常驻 setInterval 轮询，避免同源 HTTP 连接耗尽。
+ */
+export async function triggerConfirmedProposalFetch(options: {
+  remote: AgencyAgentsRemoteApi
+  sessions: unknown
+  lastHandledTimestamp: number
+  onSuccess: (proposal: StoredProposal, timestamp: number) => void
+  maxAttempts?: number
+  delayMs?: number
+  timeoutMs?: number
+}): Promise<boolean> {
+  if (activeFetchInFlight) return false
+  activeFetchInFlight = true
+
+  const maxAttempts = options.maxAttempts ?? 3
+  const delayMs = options.delayMs ?? 350
+  const timeoutMs = options.timeoutMs ?? 5000
+
+  try {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs * (attempt + 1)))
+      try {
+        const targetSessionId = resolveTargetSessionId(options.sessions as unknown as ReferenceSessionAccess)
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+        const res = await options.remote.getLatestProposal(options.lastHandledTimestamp, targetSessionId)
+        clearTimeout(timer)
+
+        if (res.ok && res.value && res.value.timestamp > options.lastHandledTimestamp) {
+          options.onSuccess(res.value.proposal, res.value.timestamp)
+          return true
+        }
+      } catch (err) {
+        console.warn?.('[agency-agents] 获取已确认草案失败：', err)
+      }
+    }
+    return false
+  } finally {
+    activeFetchInFlight = false
+  }
+}
+
 export const inject = ['slots', 'inputTriggers', 'locale', 'remote', 'sessions', 'conversation']
 
 export async function apply(ctx: ClientContext): Promise<() => void> {
@@ -2126,60 +2185,31 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   }, 'agency-agents: @ menu sources')
 
   ctx.effect(() => {
+    let lastHandledTimestamp = Date.now() - 3000
+
     const handleClick = async (event: MouseEvent) => {
       const target = event.target as HTMLElement | null
+
+      // 1. 响应聊天消息中的 Markdown 动作链接：[点击在弹窗中核对并保存草案](#dsh-agency:apply-draft?id=...)
       const link = target?.closest('a[href*="#dsh-agency:apply-draft"]') as HTMLAnchorElement | null
-      if (!link) return
+      if (link) {
+        event.preventDefault()
+        event.stopPropagation()
 
-      event.preventDefault()
-      event.stopPropagation()
+        try {
+          const url = new URL(link.href, window.location.href)
+          const proposalId = url.searchParams.get('id') ?? new URLSearchParams(url.hash.split('?')[1] ?? '').get('id')
+          if (!proposalId) return
 
-      try {
-        const url = new URL(link.href, window.location.href)
-        const proposalId = url.searchParams.get('id') ?? new URLSearchParams(url.hash.split('?')[1] ?? '').get('id')
-        if (!proposalId) return
+          const res = await remote.getPendingProposal(proposalId)
+          if (!res.ok || !res.value) {
+            console.warn('[agency-agents] 草案已过期或不存在：', proposalId)
+            return
+          }
+          const proposal = res.value
 
-        const res = await remote.getPendingProposal(proposalId)
-        if (!res.ok || !res.value) {
-          console.warn('[agency-agents] 草案已过期或不存在：', proposalId)
-          return
-        }
-        const proposal = res.value
-
-        openGlobalDraftEditor({
-          proposal,
-          remote,
-          locale: getActive(),
-          t: t as any,
-          onSaved: (savedCatalog) => {
-            if (savedCatalog) acceptCatalog(remote, savedCatalog)
-            void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
-          },
-        })
-      } catch (err) {
-        console.error('[agency-agents] 打开草案弹窗失败：', err)
-      }
-    }
-
-    document.addEventListener('click', handleClick, true)
-    return () => {
-      document.removeEventListener('click', handleClick, true)
-    }
-  }, 'agency-agents: global draft link listener')
-
-  ctx.effect(() => {
-    let lastHandledTimestamp = Date.now() - 3000
-    let disposed = false
-
-    const checkLatest = async () => {
-      if (disposed) return
-      try {
-        const targetSessionId = resolveTargetSessionId(ctx.sessions as unknown as ReferenceSessionAccess)
-        const res = await remote.getLatestProposal(lastHandledTimestamp, targetSessionId)
-        if (res.ok && res.value && res.value.timestamp > lastHandledTimestamp) {
-          lastHandledTimestamp = res.value.timestamp
           openGlobalDraftEditor({
-            proposal: res.value.proposal,
+            proposal,
             remote,
             locale: getActive(),
             t: t as any,
@@ -2188,20 +2218,40 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
               void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
             },
           })
+        } catch (err) {
+          console.error('[agency-agents] 打开草案弹窗失败：', err)
         }
-      } catch (err) {
-        console.debug?.('[agency-agents] auto popup poll error:', err)
+        return
+      }
+
+      // 2. 方案1：精准响应宿主 ASK 卡片上的「立即打开编辑窗口」确认点击，秒级拉取并呼出弹窗（零轮询）
+      if (isAskConfirmElement(target)) {
+        void triggerConfirmedProposalFetch({
+          remote,
+          sessions: ctx.sessions,
+          lastHandledTimestamp,
+          onSuccess: (proposal, timestamp) => {
+            lastHandledTimestamp = timestamp
+            openGlobalDraftEditor({
+              proposal,
+              remote,
+              locale: getActive(),
+              t: t as any,
+              onSaved: (savedCatalog) => {
+                if (savedCatalog) acceptCatalog(remote, savedCatalog)
+                void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
+              },
+            })
+          },
+        })
       }
     }
 
-    const timer = setInterval(() => { void checkLatest() }, 1000)
-    void checkLatest()
-
+    document.addEventListener('click', handleClick, true)
     return () => {
-      disposed = true
-      clearInterval(timer)
+      document.removeEventListener('click', handleClick, true)
     }
-  }, 'agency-agents: auto popup sensing')
+  }, 'agency-agents: draft interaction listener')
 
   return () => {
     sidebarController.destroy()

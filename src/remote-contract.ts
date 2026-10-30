@@ -23,8 +23,14 @@ function strictCodec(typeSymbol: string, schema: BoundarySchema): TypertCodec {
   return { mode: 'strict', typeSymbol, create: () => schema, schema } as TypertCodec
 }
 
-function jsonParameter(name: string, typeSymbol: string, schema: BoundarySchema): InvocationParameterDescriptor {
-  return { name, wire: name, source: 'json', codec: strictCodec(typeSymbol, schema) }
+function jsonParameter(name: string, typeSymbol: string, schema: BoundarySchema, acceptsUndefined?: true): InvocationParameterDescriptor {
+  return {
+    name,
+    wire: name,
+    source: 'json',
+    codec: strictCodec(typeSymbol, schema),
+    ...(acceptsUndefined ? { acceptsUndefined: true } : {}),
+  }
 }
 
 /** 新接口仍沿用宿主 Typert 严格参数校验与既有鉴权入口。 */
@@ -113,7 +119,7 @@ export const AGENCY_AGENTS_DESCRIPTORS = [
     invocation: { kind: 'direct' },
     parameters: [
       jsonParameter('afterTimestamp', 'number', z.number()),
-      jsonParameter('sessionId', 'string?', z.string().optional()),
+      jsonParameter('sessionId', 'string?', z.string().optional(), true),
     ],
     result: strictCodec('LatestProposalResult', latestProposalSchema),
   },
