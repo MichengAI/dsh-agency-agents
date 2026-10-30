@@ -4,6 +4,14 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.20 - 2026-10-30
+
+- **Fix unthrottled client draft polling and eliminate origin connection exhaustion** (Issue #34):
+  - **Zero-Polling ASK Confirmation Architecture**: Replaced the continuous 1s `setInterval` polling on `getLatestProposal` with precise host ASK confirmation card tracking. The plugin now operates with zero background HTTP requests during normal usage;
+  - **Accurate Action Triggering**: Synchronized selection tracking with explicit primary submit button clicks and Enter key submissions within confirmed question cards (`isAskConfirmSubmitAction`), filtering out auxiliary controls (description toggles, cancel, skip, minimize);
+  - **Guaranteed Timeout Abort**: Wrapped RPC requests with `withTimeout` (`Promise.race`) hard timeout (5s) to guarantee lock release and eliminate `activeFetchInFlight` permanent deadlocks;
+  - **Descriptor Compatibility**: Declared `acceptsUndefined: true` on `sessionId` in Remote descriptors, resolving gateway strict argument validation errors when active sessions are absent.
+
 ## 1.2.19 - 2026-10-29
 
 - **Synchronize roster updates across expert and team settings panels** (Issue #33):
