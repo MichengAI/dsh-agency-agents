@@ -1776,18 +1776,31 @@ export function isAskConfirmOptionElement(el: Element | null): boolean {
  * 覆盖：
  * 1. 卡片底部的 Primary 提交/继续按钮
  * 2. 键盘回车或直接在确认选项上触发确认
+ * 显式排除折叠/展开详细说明、最小化、关闭和跳过等辅助动作，避免多余拉取。
  */
 export function isAskConfirmSubmitAction(el: Element | null, pendingCards: WeakSet<Element>): boolean {
   if (!el) return false
   const card = el.closest('[data-question-key], [role="dialog"], section, div[class*="frame"]')
   if (!card || !pendingCards.has(card)) return false
 
-  // 处于已选定卡片中，并且点击的是按钮（排除取消/跳过按钮）
   const button = el.closest('button')
   if (!button) return false
 
-  const btnText = (button.textContent ?? '').trim()
-  if (btnText.includes('跳过') || btnText.includes('取消') || btnText.includes('留在当前对话')) return false
+  // 排除折叠/展开详细说明小按钮（带有 aria-expanded 或相应文案）
+  if (typeof button.hasAttribute === 'function' && button.hasAttribute('aria-expanded')) return false
+
+  const label = (typeof button.getAttribute === 'function' ? (button.getAttribute('aria-label') ?? '') : '').toLowerCase()
+  const btnText = (button.textContent ?? '').trim().toLowerCase()
+
+  // 排除辅助动作：展开、收起、跳过、取消、关闭、最小化、微调
+  const isAuxiliary =
+    label.includes('expand') || label.includes('collapse') || label.includes('展开') || label.includes('收起') ||
+    label.includes('close') || label.includes('cancel') || label.includes('关闭') || label.includes('取消') ||
+    label.includes('minimize') || label.includes('最小化') ||
+    btnText.includes('跳过') || btnText.includes('取消') || btnText.includes('留在当前对话') ||
+    btnText.includes('展开') || btnText.includes('收起') || btnText.includes('skip') || btnText.includes('cancel')
+
+  if (isAuxiliary) return false
   return true
 }
 

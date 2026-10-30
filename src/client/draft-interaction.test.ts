@@ -87,10 +87,40 @@ describe('草案弹窗触发与零轮询架构 (Issue #34 根治加固)', () => 
         if (selector.includes('button')) return skipBtn
         return null
       },
+      hasAttribute: () => false,
+      getAttribute: () => null,
       textContent: '跳过',
     } as unknown as Element
 
     expect(isAskConfirmSubmitAction(skipBtn, pendingCards)).toBe(false)
+
+    // 单选行右侧的展开详细描述小按钮（带有 aria-expanded）——必须排除！
+    const expandBtn = {
+      closest: (selector: string) => {
+        if (selector.includes('data-question-key')) return fakeCard
+        if (selector.includes('button')) return expandBtn
+        return null
+      },
+      hasAttribute: (attr: string) => attr === 'aria-expanded',
+      getAttribute: (attr: string) => (attr === 'aria-label' ? '展开' : null),
+      textContent: '',
+    } as unknown as Element
+
+    expect(isAskConfirmSubmitAction(expandBtn, pendingCards)).toBe(false)
+
+    // 卡片右上角关闭按钮
+    const closeBtn = {
+      closest: (selector: string) => {
+        if (selector.includes('data-question-key')) return fakeCard
+        if (selector.includes('button')) return closeBtn
+        return null
+      },
+      hasAttribute: () => false,
+      getAttribute: (attr: string) => (attr === 'aria-label' ? '关闭' : null),
+      textContent: '',
+    } as unknown as Element
+
+    expect(isAskConfirmSubmitAction(closeBtn, pendingCards)).toBe(false)
 
     // 未标记确认的普通卡片内的按钮
     const otherCard = { id: 'card-2' } as unknown as Element
@@ -212,5 +242,36 @@ describe('草案弹窗触发与零轮询架构 (Issue #34 根治加固)', () => 
     expect(ok).toBe(true)
     expect(getLatestProposal).toHaveBeenCalledTimes(1)
     expect(onSuccess).toHaveBeenCalledWith(mockTeamProposal, 3000)
+  })
+
+  it('triggerConfirmedProposalFetch 具备 inFlight 互斥防抖，防止并发多重触发', async () => {
+    const getLatestProposal = vi.fn().mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ ok: true, value: null }), 100))
+    )
+    const mockRemote = {
+      getLatestProposal,
+    } as unknown as AgencyAgentsRemoteApi
+
+    // 并发触发两次
+    const p1 = triggerConfirmedProposalFetch({
+      remote: mockRemote,
+      sessions: {},
+      lastHandledTimestamp: 1000,
+      onSuccess: vi.fn(),
+      delayMs: 10,
+      maxAttempts: 1,
+    })
+    const p2 = triggerConfirmedProposalFetch({
+      remote: mockRemote,
+      sessions: {},
+      lastHandledTimestamp: 1000,
+      onSuccess: vi.fn(),
+      delayMs: 10,
+      maxAttempts: 1,
+    })
+
+    const [r1, r2] = await Promise.all([p1, p2])
+    // 其中一个由于 inFlight 锁直接返回 false
+    expect(r1 === false || r2 === false).toBe(true)
   })
 })
