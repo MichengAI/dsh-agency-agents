@@ -1740,14 +1740,55 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
     }))))
 }
 
-/** 判断元素是否为 Ask 弹窗中代表“立即打开编辑窗口”的确认选项 */
-export function isAskConfirmElement(el: Element | null): boolean {
+/**
+ * Promise 竞速超时包装，解决底层网络层未透传 AbortSignal 导致死锁的隐患。
+ */
+export async function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage = 'RPC_TIMEOUT'): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(errorMessage)), ms)
+  })
+  try {
+    return await Promise.race([promise, timeoutPromise])
+  } finally {
+    if (timer !== undefined) clearTimeout(timer)
+  }
+}
+
+/** 判断元素是否为 Ask 弹窗中代表“立即打开编辑窗口”的单选选项元素（精准匹配，不含多选项容器） */
+export function isAskConfirmOptionElement(el: Element | null): boolean {
   if (!el) return false
-  const target = el.closest('button, [data-option-row], [role="radio"], [role="checkbox"], div')
+  const target = el.closest('button, [data-option-row]')
   if (!target) return false
+
+  // 必须是选项行或按钮自身，排除包含全部选项的大卡片/容器
   const text = (target.textContent ?? '').trim()
   const ariaLabel = target.getAttribute('aria-label') ?? ''
+
+  // 避免命中包含“留在当前对话”的父级容器
+  if (text.includes('留在当前对话')) return false
+
   return text.includes('立即打开编辑窗口') || ariaLabel.includes('立即打开编辑窗口')
+}
+
+/**
+ * 判断是否在已被选中确认项的 Ask 卡片上点击了提交/确认动作。
+ * 覆盖：
+ * 1. 卡片底部的 Primary 提交/继续按钮
+ * 2. 键盘回车或直接在确认选项上触发确认
+ */
+export function isAskConfirmSubmitAction(el: Element | null, pendingCards: WeakSet<Element>): boolean {
+  if (!el) return false
+  const card = el.closest('[data-question-key], [role="dialog"], section, div[class*="frame"]')
+  if (!card || !pendingCards.has(card)) return false
+
+  // 处于已选定卡片中，并且点击的是按钮（排除取消/跳过按钮）
+  const button = el.closest('button')
+  if (!button) return false
+
+  const btnText = (button.textContent ?? '').trim()
+  if (btnText.includes('跳过') || btnText.includes('取消') || btnText.includes('留在当前对话')) return false
+  return true
 }
 
 let activeFetchInFlight = false
@@ -1755,6 +1796,7 @@ let activeFetchInFlight = false
 /**
  * 在用户明确点击确认或触发创建时，受控单次/短线拉取最新草案并打开编辑窗口。
  * 彻底消除全局常驻 setInterval 轮询，避免同源 HTTP 连接耗尽。
+ * 采用 withTimeout 竞速熔断，根除网络挂死导致的 activeFetchInFlight 永久锁死。
  */
 export async function triggerConfirmedProposalFetch(options: {
   remote: AgencyAgentsRemoteApi
@@ -1768,7 +1810,7 @@ export async function triggerConfirmedProposalFetch(options: {
   if (activeFetchInFlight) return false
   activeFetchInFlight = true
 
-  const maxAttempts = options.maxAttempts ?? 3
+  const maxAttempts = options.maxAttempts ?? 4
   const delayMs = options.delayMs ?? 350
   const timeoutMs = options.timeoutMs ?? 5000
 
@@ -1777,11 +1819,12 @@ export async function triggerConfirmedProposalFetch(options: {
       await new Promise((resolve) => setTimeout(resolve, delayMs * (attempt + 1)))
       try {
         const targetSessionId = resolveTargetSessionId(options.sessions as unknown as ReferenceSessionAccess)
-        const controller = new AbortController()
-        const timer = setTimeout(() => controller.abort(), timeoutMs)
 
-        const res = await options.remote.getLatestProposal(options.lastHandledTimestamp, targetSessionId)
-        clearTimeout(timer)
+        // 采用 withTimeout 进行竞速熔断，防止底层网络未接 AbortController 导致永久挂起
+        const res = await withTimeout(
+          options.remote.getLatestProposal(options.lastHandledTimestamp, targetSessionId),
+          timeoutMs
+        )
 
         if (res.ok && res.value && res.value.timestamp > options.lastHandledTimestamp) {
           options.onSuccess(res.value.proposal, res.value.timestamp)
@@ -2186,6 +2229,28 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
 
   ctx.effect(() => {
     let lastHandledTimestamp = Date.now() - 3000
+    const pendingConfirmCards = new WeakSet<Element>()
+
+    const handleAction = () => {
+      void triggerConfirmedProposalFetch({
+        remote,
+        sessions: ctx.sessions,
+        lastHandledTimestamp,
+        onSuccess: (proposal, timestamp) => {
+          lastHandledTimestamp = timestamp
+          openGlobalDraftEditor({
+            proposal,
+            remote,
+            locale: getActive(),
+            t: t as any,
+            onSaved: (savedCatalog) => {
+              if (savedCatalog) acceptCatalog(remote, savedCatalog)
+              void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
+            },
+          })
+        },
+      })
+    }
 
     const handleClick = async (event: MouseEvent) => {
       const target = event.target as HTMLElement | null
@@ -2224,32 +2289,34 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
         return
       }
 
-      // 2. 方案1：精准响应宿主 ASK 卡片上的「立即打开编辑窗口」确认点击，秒级拉取并呼出弹窗（零轮询）
-      if (isAskConfirmElement(target)) {
-        void triggerConfirmedProposalFetch({
-          remote,
-          sessions: ctx.sessions,
-          lastHandledTimestamp,
-          onSuccess: (proposal, timestamp) => {
-            lastHandledTimestamp = timestamp
-            openGlobalDraftEditor({
-              proposal,
-              remote,
-              locale: getActive(),
-              t: t as any,
-              onSaved: (savedCatalog) => {
-                if (savedCatalog) acceptCatalog(remote, savedCatalog)
-                void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
-              },
-            })
-          },
-        })
+      // 2. 捕获 ASK 卡片上的单选确认选项（更新待提交卡片，并作即选即提交兼容）
+      if (isAskConfirmOptionElement(target)) {
+        const card = target?.closest('[data-question-key], [role="dialog"], section, div[class*="frame"]')
+        if (card) pendingConfirmCards.add(card)
+        handleAction()
+        return
+      }
+
+      // 3. 捕获在已选定卡片上的提交动作（Primary 提交/继续按钮点击）
+      if (isAskConfirmSubmitAction(target, pendingConfirmCards)) {
+        handleAction()
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter') return
+      const target = event.target as HTMLElement | null
+      const card = target?.closest('[data-question-key], [role="dialog"], section, div[class*="frame"]')
+      if (card && pendingConfirmCards.has(card)) {
+        handleAction()
       }
     }
 
     document.addEventListener('click', handleClick, true)
+    document.addEventListener('keydown', handleKeyDown, true)
     return () => {
       document.removeEventListener('click', handleClick, true)
+      document.removeEventListener('keydown', handleKeyDown, true)
     }
   }, 'agency-agents: draft interaction listener')
 
