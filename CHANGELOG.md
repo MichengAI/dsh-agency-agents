@@ -4,6 +4,13 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.21 - 2026-11-01
+
+- **Improve settings responsive layout and eliminate overflow in mobile / narrow sidebars**:
+  - **Segmented tab overflow protection**: Enforced `nowrap` and ellipsis constraints on tab buttons, hiding redundant enabled labels on narrow screens to prevent Chinese characters from breaking across lines and overflowing borders;
+  - **Single-row compact filter alignment**: Eliminated multi-line stacking of filter dropdowns on narrow viewports by introducing a balanced single-row grid (`repeat(3, minmax(0, 1fr))` for experts, `repeat(2, minmax(0, 1fr))` for teams) with refined padding to prevent truncation;
+  - **Above-the-fold density reclamation**: Reduced vertical header consumption by over 50%, enabling 2.5 full cards visible above the fold on 375px viewports.
+
 ## 1.2.20 - 2026-10-30
 
 - **Fix unthrottled client draft polling and eliminate origin connection exhaustion** (Issue #34):
