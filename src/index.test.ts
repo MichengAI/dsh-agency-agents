@@ -1374,8 +1374,13 @@ describe('专家库目标稿样式契约', () => {
   it('筛选按内容宽度排列，搜索吃掉剩余空间', () => {
     expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters{align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:8px 12px;min-width:0}')
     expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters .aag-field-source,.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-status{flex:0 0 auto;width:auto;max-width:none}')
-    expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters .aag-field-search{flex:1 1 0;min-width:0}')
+    expect(CARD_SETTINGS_CSS).toContain('.aag-card-filters .aag-field-search{flex:1 1 0;min-width:0;width:100%}')
     expect(CARD_SETTINGS_CSS).not.toContain('.aag-field-category{flex:0 1 220px}')
+  })
+
+  it('移动端窄屏下筛选栏紧凑三等分网格，消除纵向空白拉伸', () => {
+    expect(CARD_SETTINGS_CSS).toContain('@media(max-width:560px){.aag-card-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))')
+    expect(CARD_SETTINGS_CSS).not.toContain('flex:1 1 120px')
   })
 
   it('卡片设置页使用宿主主题表面和边框颜色', () => {

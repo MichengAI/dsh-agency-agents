@@ -325,6 +325,44 @@ test('专家保留原标题工具栏与来源筛选，专家团采用同一结�
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(375)
+  // 当前正停留在「专家团」页签，验证专家团筛选控件高度适中（<=36px），无纵向拉伸
+  const teamSource = page.locator('#aag-team-source')
+  const teamStatus = page.locator('#aag-team-status')
+  await expect(teamSource).toBeVisible()
+  await expect(teamStatus).toBeVisible()
+  const teamSourceBox = await teamSource.boundingBox()
+  const teamStatusBox = await teamStatus.boundingBox()
+  expect(teamSourceBox!.height).toBeLessThanOrEqual(36)
+  expect(teamStatusBox!.height).toBeLessThanOrEqual(36)
+  // 切回「专家」页签，验证移动端下 3 个筛选下拉框在同一行 3 等分并排
+  await page.getByRole('tab', { name: '专家', exact: true }).click()
+  const sourceEl = page.locator('#aag-filter-source')
+  const catEl = page.locator('#aag-filter-category')
+  const statusEl = page.locator('#aag-filter-status')
+  await expect(sourceEl).toBeVisible()
+  await expect(catEl).toBeVisible()
+  await expect(statusEl).toBeVisible()
+  const sourceBox = await sourceEl.boundingBox()
+  const catBox = await catEl.boundingBox()
+  const statusBox = await statusEl.boundingBox()
+  expect(Math.abs(sourceBox!.y - catBox!.y)).toBeLessThanOrEqual(2)
+  expect(Math.abs(catBox!.y - statusBox!.y)).toBeLessThanOrEqual(2)
+  expect(sourceBox!.height).toBeLessThanOrEqual(36)
+  expect(catBox!.height).toBeLessThanOrEqual(36)
+  expect(statusBox!.height).toBeLessThanOrEqual(36)
+  // 检查搜索框和操作栏都在视口内展示
+  const searchInput = page.locator('#aag-filter-search')
+  const bulkMenu = page.locator('main .aag-card-filters:visible .aag-filter-actions')
+  await expect(searchInput).toBeVisible()
+  await expect(bulkMenu).toBeVisible()
+  // 验证分段器文本没有折行溢出
+  const tabExperts = page.getByRole('tab', { name: '专家', exact: true })
+  const tabTeams = page.getByRole('tab', { name: '专家团', exact: true })
+  const tabExpertsBox = await tabExperts.boundingBox()
+  const tabTeamsBox = await tabTeams.boundingBox()
+  expect(tabExpertsBox!.height).toBeLessThanOrEqual(32)
+  expect(tabTeamsBox!.height).toBeLessThanOrEqual(32)
+  await page.screenshot({ path: 'test-results/settings-mobile-compact.png' })
 })
 
 

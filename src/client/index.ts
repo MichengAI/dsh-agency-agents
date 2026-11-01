@@ -587,7 +587,7 @@ export const SETTINGS_CSS = `
 .aag-search-wrap{display:flex;align-items:center;width:100%;min-width:0;max-width:100%}
 .aag-search{box-sizing:border-box;width:100%;min-width:0;max-width:100%}
 .aag-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 16px;border:0.5px dashed var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md,12px);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;text-align:center}
-@media (max-width:560px){.aag-toolbar,.aag-title-row{flex-wrap:wrap}.aag-filters{flex-direction:column;align-items:stretch}.aag-field-category,.aag-field-search{flex:none}}
+@media (max-width:560px){.aag-toolbar,.aag-title-row{flex-wrap:wrap}.aag-filters:not(.aag-card-filters){flex-direction:column;align-items:stretch}.aag-filters:not(.aag-card-filters) .aag-field-category,.aag-filters:not(.aag-card-filters) .aag-field-search{flex:none}}
 `
 // 标题固定占两行。卡片高度必须和这个占位一致，虚拟列表不能再测量视口里的第一张卡。
 const EXPERT_CARD_GAP = 10
@@ -609,9 +609,9 @@ export const CARD_SETTINGS_CSS = `
 .aag-icon-btn svg{display:block;width:16px;height:16px}
 .aag-icon-btn:hover:not(:disabled):not(.is-danger){color:var(--dsw-alias-link)!important;border-color:var(--dsw-alias-link)!important;background:transparent!important}
 .aag-card-filters .aag-field-source,.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-status{flex:0 0 auto;width:auto;max-width:none}
-.aag-card-filters .aag-field-search{flex:1 1 0;min-width:0}
+.aag-card-filters .aag-field-search{flex:1 1 0;min-width:0;width:100%}
 .aag-card-filters .aag-field>span{display:inline-flex;width:auto;max-width:none}
-@media(max-width:560px){.aag-card-filters{align-items:stretch;gap:8px}.aag-card-filters .aag-field{flex:1 1 120px;width:auto}.aag-card-filters .aag-field-search{flex:1 1 100%}.aag-filter-actions{margin-left:0}}
+@media(max-width:560px){.aag-card-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:center}.aag-card-filters .aag-field{flex:none;width:100%;margin:0}.aag-card-filters .aag-field-source,.aag-card-filters .aag-field-category,.aag-card-filters .aag-field-status{width:100%}.aag-card-filters .aag-field-source .aag-select-wrap,.aag-card-filters .aag-field-category .aag-select-wrap,.aag-card-filters .aag-field-status .aag-select-wrap{display:block!important;width:100%}.aag-card-filters .aag-field-source .aag-menu-select-trigger,.aag-card-filters .aag-field-category .aag-menu-select-trigger,.aag-card-filters .aag-field-status .aag-menu-select-trigger{width:100%!important;min-height:32px;padding:0 6px!important}.aag-card-filters .aag-field-search{grid-column:1/-1;width:100%;min-width:0}.aag-card-filters .aag-field-search .aag-search-wrap{width:100%!important}.aag-card-filters .aag-field-search .aag-search{width:100%!important;max-width:100%!important;box-sizing:border-box}.aag-card-filters .aag-field-search input{width:100%!important;box-sizing:border-box}.aag-card-filters .aag-filter-actions{grid-column:1/-1;margin-left:0;display:flex;align-items:center;justify-content:flex-end;gap:8px;width:100%}}
 .aag-search-wrap{display:flex;align-items:center;width:100%;min-width:0;max-width:100%}
 .aag-search-wrap>.aag-search{width:100%;min-width:0;max-width:100%}
 .aag-search-wrap>.aag-search input::placeholder{color:var(--dsw-alias-label-dimmed)}
@@ -1717,7 +1717,7 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
     icon,
     name,
     React.createElement('span', { className: 'aag-tab-count', 'aria-hidden': true }, React.createElement('strong', null, total)),
-    React.createElement('span', { className: 'aag-tab-count', 'aria-hidden': true }, props.t('summary.enabledPrefix'), React.createElement('strong', null, enabled)),
+    React.createElement('span', { className: 'aag-tab-count aag-tab-enabled-count', 'aria-hidden': true }, props.t('summary.enabledPrefix'), React.createElement('strong', null, enabled)),
   )
   const navigation = React.createElement(SegmentedTabs, {
     className: 'aag-library-tabs', label: tx('专家库类型'), value: view,
