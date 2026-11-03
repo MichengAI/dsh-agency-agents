@@ -1,4 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { createScope } from '@deepseek-ai/dsh-scope'
@@ -412,73 +415,78 @@ describe('专家团宿主与远端集成', () => {
   })
 
   it('受管专家子代理调用召唤工具会被 tools/pre-execute 门禁双重拦截', async () => {
-    const settings = new TestSettings(new Context())
-    settings.register('locale', (value) => value)
-    settings.restore({ 'agency-agents': { enabled: ['engineering-code-reviewer'] }, locale: { preference: 'zh' } })
-    const services = new Map<string, unknown>()
-    const tools = new Map<string, { execute(args: unknown, exec?: unknown): Promise<unknown> }>()
-    let preExecuteHook: ((exec: any, next: () => any) => Promise<any>) | undefined
-    let createdListener: ((event: any) => any) | undefined
-    let spawnedChildId: string | undefined
+    const tempHome = await mkdtemp(join(tmpdir(), 'aag-team-home-'))
+    try {
+      const settings = new TestSettings(new Context())
+      settings.register('locale', (value) => value)
+      settings.restore({ 'agency-agents': { enabled: ['engineering-code-reviewer'] }, locale: { preference: 'zh' } })
+      const services = new Map<string, unknown>()
+      const tools = new Map<string, { execute(args: unknown, exec?: unknown): Promise<unknown> }>()
+      let preExecuteHook: ((exec: any, next: () => any) => Promise<any>) | undefined
+      let createdListener: ((event: any) => any) | undefined
+      let spawnedChildId: string | undefined
 
-    const ctx = {
-      settings,
-      effect: () => () => {},
-      inject: (_deps: unknown, callback: (ctx: unknown) => void) => callback(ctx),
-      reflect: { provide: (key: string, value: unknown) => services.set(key, value) },
-      get: (key: string) => services.get(key),
-      typert: { register: () => {} },
-      tools: {
-        register: (tool: { name: string; execute: (args: unknown, exec?: unknown) => Promise<unknown> }) =>
-          tools.set(tool.name, tool),
-      },
-      systemPrompt: { section: () => {} },
-      on: (event: string, cb: any) => {
-        if (event === 'tools/pre-execute') preExecuteHook = cb
-        if (event === 'agent/created') createdListener = cb
-        return () => {}
-      },
-      subagents: {
-        getProvider: () => ({ capabilities: { depthLimit: true } }),
-        startActivation: async (spec: any) => {
-          spawnedChildId = spec.childId
-          createdListener?.({ agent: { id: spec.childId, ctx: { tools: { restrict: () => {} } } }, source: 'startup' })
-          return {
-            childId: spec.childId,
-            result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
-            dispose: async () => {},
-          }
+      const ctx = {
+        settings,
+        effect: () => () => {},
+        inject: (_deps: unknown, callback: (ctx: unknown) => void) => callback(ctx),
+        reflect: { provide: (key: string, value: unknown) => services.set(key, value) },
+        get: (key: string) => key === 'profileContext' ? { home: tempHome } : services.get(key),
+        typert: { register: () => {} },
+        tools: {
+          register: (tool: { name: string; execute: (args: unknown, exec?: unknown) => Promise<unknown> }) =>
+            tools.set(tool.name, tool),
         },
-      },
-    } as unknown as Context
+        systemPrompt: { section: () => {} },
+        on: (event: string, cb: any) => {
+          if (event === 'tools/pre-execute') preExecuteHook = cb
+          if (event === 'agent/created') createdListener = cb
+          return () => {}
+        },
+        subagents: {
+          getProvider: () => ({ capabilities: { depthLimit: true } }),
+          startActivation: async (spec: any) => {
+            spawnedChildId = spec.childId
+            createdListener?.({ agent: { id: spec.childId, ctx: { tools: { restrict: () => {} } } }, source: 'startup' })
+            return {
+              childId: spec.childId,
+              result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
+              dispose: async () => {},
+            }
+          },
+        },
+      } as unknown as Context
 
-    apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS, ...volatileConfig(settings) } as never)
-    expect(preExecuteHook).toBeDefined()
+      apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS, ...volatileConfig(settings) } as never)
+      expect(preExecuteHook).toBeDefined()
 
-    // 正常主会话执行召唤工具：放行
-    const nextFn = vi.fn(async () => ({ kind: 'pass' }))
-    const parentExec = { agent: { id: 'parent-session' }, name: 'summon_expert' }
-    await expect(preExecuteHook!(parentExec, nextFn)).resolves.toEqual({ kind: 'pass' })
-    expect(nextFn).toHaveBeenCalledTimes(1)
+      // 正常主会话执行召唤工具：放行
+      const nextFn = vi.fn(async () => ({ kind: 'pass' }))
+      const parentExec = { agent: { id: 'parent-session' }, name: 'summon_expert' }
+      await expect(preExecuteHook!(parentExec, nextFn)).resolves.toEqual({ kind: 'pass' })
+      expect(nextFn).toHaveBeenCalledTimes(1)
 
-    // 启动一个专家子代理
-    await tools.get('summon_expert')!.execute({ expert: '代码审查工程师', task: 'check' }, { agent: {} })
-    expect(spawnedChildId).toBeDefined()
+      // 启动一个专家子代理
+      await tools.get('summon_expert')!.execute({ expert: '代码审查工程师', task: 'check' }, { agent: {} })
+      expect(spawnedChildId).toBeDefined()
 
-    // 该受管专家子代理在执行层尝试调用 summon_expert，pre-execute 拦截
-    const childExec = { agent: { id: spawnedChildId }, name: 'summon_expert' }
-    const blockedNext = vi.fn()
-    const result = await preExecuteHook!(childExec, blockedNext)
-    expect(result).toMatchObject({ kind: 'deny', reason: '专家成员不能继续召唤专家团。' })
-    expect(blockedNext).not.toHaveBeenCalled()
+      // 该受管专家子代理在执行层尝试调用 summon_expert，pre-execute 拦截
+      const childExec = { agent: { id: spawnedChildId }, name: 'summon_expert' }
+      const blockedNext = vi.fn()
+      const result = await preExecuteHook!(childExec, blockedNext)
+      expect(result).toMatchObject({ kind: 'deny', reason: '专家成员不能继续召唤专家团。' })
+      expect(blockedNext).not.toHaveBeenCalled()
 
-    // 验证即使超过 256 次调用淘汰最老条目的人设配置，基于 managedSubagentIds 的门禁依然坚不可摧
-    for (let i = 0; i < 260; i++) {
-      await tools.get('summon_expert')!.execute({ expert: '代码审查工程师', task: `check-${i}` }, { agent: {} })
+      // 验证即使超过 256 次调用淘汰最老条目的人设配置，基于 managedSubagentIds 的门禁依然坚不可摧
+      for (let i = 0; i < 260; i++) {
+        await tools.get('summon_expert')!.execute({ expert: '代码审查工程师', task: `check-${i}` }, { agent: {} })
+      }
+      const overflowBlockedNext = vi.fn()
+      const overflowResult = await preExecuteHook!(childExec, overflowBlockedNext)
+      expect(overflowResult).toMatchObject({ kind: 'deny', reason: '专家成员不能继续召唤专家团。' })
+      expect(overflowBlockedNext).not.toHaveBeenCalled()
+    } finally {
+      await rm(tempHome, { recursive: true, force: true })
     }
-    const overflowBlockedNext = vi.fn()
-    const overflowResult = await preExecuteHook!(childExec, overflowBlockedNext)
-    expect(overflowResult).toMatchObject({ kind: 'deny', reason: '专家成员不能继续召唤专家团。' })
-    expect(overflowBlockedNext).not.toHaveBeenCalled()
   })
 })

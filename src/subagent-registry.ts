@@ -1,5 +1,6 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs'
 import { join } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
 import { profileHome } from './settings-compat.js'
 
@@ -64,7 +65,9 @@ export function recordSubagentConfig(
       for (const [key, value] of memoryConfigs.entries()) {
         payload[key] = value
       }
-      writeFileSync(file, JSON.stringify(payload, null, 2), 'utf8')
+      const tmpFile = `${file}.${randomUUID()}.tmp`
+      writeFileSync(tmpFile, JSON.stringify(payload, null, 2), 'utf8')
+      renameSync(tmpFile, file)
     } catch (error) {
       console.warn('[agency-agents] 写入 agency-subagents.json 失败：', error)
     }

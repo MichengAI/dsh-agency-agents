@@ -4,6 +4,13 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.22 - 2026-11-03
+
+- **Fix expert subagent and native team lifecycle reliability and delegation boundaries** (Issue #35):
+  - **Subagent cold resume and restart state recovery**: Resolves an issue where expert subagents lost their specialized persona and tool restrictions after long conversation resumes or desktop application restarts. Restored subagents now retain their designated roles and tool restrictions seamlessly;
+  - **Native expert team creation reliability**: Resolves a blocker in Agent Team environments where summoning an expert team failed during member initialization due to a tool permission validation error;
+  - **Anti-recursion delegation enforcement**: Hardens collaboration boundaries so expert members and subagents cannot recursively spawn additional experts or expand teams. Workload gaps are cleanly redirected back to the lead coordinator to prevent uncontrolled cascade runs and resource bloat.
+
 ## 1.2.21 - 2026-11-01
 
 - **Improve settings responsive layout and eliminate overflow in mobile / narrow sidebars**:
