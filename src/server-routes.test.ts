@@ -12,7 +12,7 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
       enabledTeams: [],
     }
 
-    const VOLATILE_PATHS = new Set(['enabled', 'customExperts', 'customTeams', 'enabledTeams', 'sidebarEntry', 'onlineUpdate', 'composerRecommend'])
+    const VOLATILE_PATHS = new Set(['enabled', 'customExperts', 'customTeams', 'enabledTeams', 'sidebarEntry', 'entryLocation', 'onlineUpdate', 'composerRecommend'])
 
     const mockCtx = {
       webServer: {
@@ -54,6 +54,7 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
       customExperts: { get: () => mockSettingsState.customExperts },
       customTeams: { get: () => mockSettingsState.customTeams },
       enabledTeams: { get: () => mockSettingsState.enabledTeams },
+      entryLocation: { get: () => mockSettingsState.entryLocation },
       sidebarEntry: { get: () => mockSettingsState.sidebarEntry },
       onlineUpdate: { get: () => mockSettingsState.onlineUpdate },
       composerRecommend: { get: () => mockSettingsState.composerRecommend },
@@ -115,14 +116,20 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
     const getRes = mockResponse()
     await handler!(mockRequest('GET'), getRes)
     expect(getRes.status).toBe(200)
-    expect(getRes.json).toEqual({ ok: true, enabled: false })
+    expect(getRes.json).toEqual({ ok: true, location: 'settings', enabled: false })
 
     // 2. POST 开启
     const postRes1 = mockResponse()
     await handler!(mockRequest('POST', { enabled: true }), postRes1)
     expect(postRes1.status).toBe(200)
-    expect(postRes1.json).toEqual({ ok: true, enabled: true })
+    expect(postRes1.json).toEqual({ ok: true, location: 'both', enabled: true })
     expect(mockSettingsState.sidebarEntry).toBe(true)
+
+    // 2.1 POST location 切换为 sidebar
+    const postResLoc = mockResponse()
+    await handler!(mockRequest('POST', { location: 'sidebar' }), postResLoc)
+    expect(postResLoc.status).toBe(200)
+    expect(postResLoc.json).toEqual({ ok: true, location: 'sidebar', enabled: true })
 
     // 3. POST 非法参数校验
     const postResInvalid = mockResponse()
@@ -132,7 +139,7 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
     // 4. GET 确认最新值
     const getRes2 = mockResponse()
     await handler!(mockRequest('GET'), getRes2)
-    expect(getRes2.json).toEqual({ ok: true, enabled: true })
+    expect(getRes2.json).toEqual({ ok: true, location: 'sidebar', enabled: true })
   })
 
   it('online-update GET 与 POST 正常更新持久化', async () => {

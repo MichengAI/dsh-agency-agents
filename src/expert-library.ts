@@ -13,6 +13,7 @@ export interface AgencySettings {
   customExperts?: CustomExpert[]
   customTeams?: ExpertTeam[]
   enabledTeams?: string[]
+  entryLocation?: 'both' | 'sidebar' | 'settings'
   sidebarEntry?: boolean
   onlineUpdate?: boolean
   composerRecommend?: boolean
@@ -24,6 +25,7 @@ export const agencySettingsSchema = schema.object({
   customExperts: schema.array(schema.any()).default([]),
   customTeams: schema.array(schema.any()).default([]),
   enabledTeams: schema.array(schema.string()).default([]),
+  entryLocation: schema.string(),
   sidebarEntry: schema.boolean(),
   onlineUpdate: schema.boolean(),
   composerRecommend: schema.boolean().default(false),

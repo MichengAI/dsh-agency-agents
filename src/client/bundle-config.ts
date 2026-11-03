@@ -1,6 +1,7 @@
 import React from 'react'
 import * as primitives from '@deepseek-ai/dsh-client-ui-primitives'
 import { resolveApiUrl } from '../api-base.js'
+import type { EntryLocation } from '../settings-compat.js'
 
 export const BUNDLE_KEY = '@michengai/dsh-agency-agents'
 export const SIDEBAR_PANEL_ID = 'agency-agents'
@@ -24,8 +25,10 @@ export function AgencySidebarIcon(props?: { size?: number }): React.ReactElement
 
 export interface AgencyBundleConfigCardProps {
   t: (key: string) => string
-  enabled: boolean
-  onToggle: (enabled: boolean) => void
+  location?: EntryLocation
+  onLocationChange?: (location: EntryLocation) => void
+  enabled?: boolean
+  onToggle?: (enabled: boolean) => void
   disabled?: boolean
   onlineUpdateEnabled?: boolean
   onToggleOnlineUpdate?: (enabled: boolean) => void
@@ -39,7 +42,9 @@ export interface AgencyBundleConfigCardProps {
 export function AgencyBundleConfigCard(props: AgencyBundleConfigCardProps): React.ReactElement {
   const {
     t,
-    enabled,
+    location: propLocation,
+    onLocationChange,
+    enabled = false,
     onToggle,
     disabled = false,
     onlineUpdateEnabled = true,
@@ -52,25 +57,48 @@ export function AgencyBundleConfigCard(props: AgencyBundleConfigCardProps): Reac
   } = props
 
   const PrimitiveSwitch = primitives.Switch
+  const PrimitiveSegmented = primitives.SegmentedControl
+  const effectiveLocation: EntryLocation = propLocation ?? (enabled ? 'both' : 'settings')
+
+  const handleLocationChange = (next: string) => {
+    if (next === 'both' || next === 'sidebar' || next === 'settings') {
+      if (typeof onLocationChange === 'function') {
+        onLocationChange(next)
+      } else if (typeof onToggle === 'function') {
+        onToggle(next !== 'settings')
+      }
+    }
+  }
 
   const updateDesc = onlineUpdateLocked
     ? `${t('bundle.update.desc')} (${t('bundle.update.locked')})`
     : t('bundle.update.desc')
 
   return React.createElement('div', { className: 'aag-bundle-card' },
-    React.createElement('div', { key: 'sidebar-entry', className: 'aag-bundle-row' },
+    React.createElement('div', { key: 'entry-location', className: 'aag-bundle-row' },
       React.createElement('div', { className: 'aag-bundle-label-box' },
-        React.createElement('span', { className: 'aag-bundle-title' }, t('bundle.sidebar.title')),
-        React.createElement('span', { className: 'aag-bundle-desc' }, t('bundle.sidebar.desc')),
+        React.createElement('span', { className: 'aag-bundle-title' }, t('entry.location.title') || t('bundle.sidebar.title')),
+        React.createElement('span', { className: 'aag-bundle-desc' }, t('entry.location.desc') || t('bundle.sidebar.desc')),
       ),
-      PrimitiveSwitch
-        ? React.createElement(PrimitiveSwitch, {
-          checked: enabled,
-          onChange: onToggle,
+      PrimitiveSegmented
+        ? React.createElement(PrimitiveSegmented, {
+          id: 'aag-bundle-entry-location',
+          value: effectiveLocation,
+          onChange: handleLocationChange,
+          disabled,
+          label: t('entry.location.title') || t('bundle.sidebar.title'),
+          options: [
+            { value: 'both', label: t('entry.location.both') || '两边显示' },
+            { value: 'sidebar', label: t('entry.location.sidebar') || '仅侧边栏' },
+            { value: 'settings', label: t('entry.location.settings') || '仅设置' },
+          ],
+        })
+        : (PrimitiveSwitch ? React.createElement(PrimitiveSwitch, {
+          checked: effectiveLocation !== 'settings',
+          onChange: (next: boolean) => handleLocationChange(next ? 'both' : 'settings'),
           disabled,
           label: t('bundle.sidebar.toggle'),
-        })
-        : null,
+        }) : null),
     ),
     typeof onToggleComposerRecommend === 'function' && React.createElement('div', { key: 'composer-recommend', className: 'aag-bundle-row' },
       React.createElement('div', { className: 'aag-bundle-label-box' },
@@ -105,8 +133,10 @@ export function AgencyBundleConfigCard(props: AgencyBundleConfigCardProps): Reac
 
 export interface AgencyBundleConfigWrapperProps {
   t: (key: string) => string
-  getEnabled: () => boolean
-  setSidebar: (enabled: boolean) => Promise<boolean>
+  getLocation: () => EntryLocation
+  setLocation: (location: EntryLocation) => Promise<EntryLocation>
+  getEnabled?: () => boolean
+  setSidebar?: (enabled: boolean) => Promise<boolean>
   getOnlineUpdateEnabled?: () => boolean
   getOnlineUpdateLocked?: () => boolean
   setOnlineUpdate?: (enabled: boolean) => Promise<boolean>
@@ -116,33 +146,33 @@ export interface AgencyBundleConfigWrapperProps {
 }
 
 export function AgencyBundleConfigCardWrapper(props: AgencyBundleConfigWrapperProps): React.ReactElement {
-  const [enabled, setEnabled] = React.useState(props.getEnabled)
+  const [location, setLocation] = React.useState<EntryLocation>(props.getLocation)
   const [onlineUpdateEnabled, setOnlineUpdateEnabled] = React.useState(props.getOnlineUpdateEnabled ? props.getOnlineUpdateEnabled() : true)
   const [onlineUpdateLocked, setOnlineUpdateLocked] = React.useState(props.getOnlineUpdateLocked ? props.getOnlineUpdateLocked() : false)
   const [composerRecommendEnabled, setComposerRecommendEnabled] = React.useState(props.getComposerRecommendEnabled ? props.getComposerRecommendEnabled() : false)
-  const [savingSidebar, setSavingSidebar] = React.useState(false)
+  const [savingLocation, setSavingLocation] = React.useState(false)
   const [savingUpdate, setSavingUpdate] = React.useState(false)
   const [savingRecommend, setSavingRecommend] = React.useState(false)
 
   React.useEffect(() => {
-    setEnabled(props.getEnabled())
+    setLocation(props.getLocation())
     if (props.getOnlineUpdateEnabled) setOnlineUpdateEnabled(props.getOnlineUpdateEnabled())
     if (props.getOnlineUpdateLocked) setOnlineUpdateLocked(props.getOnlineUpdateLocked())
     if (props.getComposerRecommendEnabled) setComposerRecommendEnabled(props.getComposerRecommendEnabled())
     return props.subscribe(() => {
-      setEnabled(props.getEnabled())
+      setLocation(props.getLocation())
       if (props.getOnlineUpdateEnabled) setOnlineUpdateEnabled(props.getOnlineUpdateEnabled())
       if (props.getOnlineUpdateLocked) setOnlineUpdateLocked(props.getOnlineUpdateLocked())
       if (props.getComposerRecommendEnabled) setComposerRecommendEnabled(props.getComposerRecommendEnabled())
     })
   }, [props])
 
-  const onToggleSidebar = (next: boolean) => {
-    setSavingSidebar(true)
-    setEnabled(next)
-    props.setSidebar(next)
-      .catch(() => {})
-      .finally(() => setSavingSidebar(false))
+  const onLocationChange = (next: EntryLocation) => {
+    setSavingLocation(true)
+    setLocation(next)
+    props.setLocation(next)
+      .catch(() => { setLocation(props.getLocation()) })
+      .finally(() => setSavingLocation(false))
   }
 
   const onToggleOnlineUpdate = props.setOnlineUpdate ? (next: boolean) => {
@@ -167,9 +197,9 @@ export function AgencyBundleConfigCardWrapper(props: AgencyBundleConfigWrapperPr
 
   return React.createElement(AgencyBundleConfigCard, {
     t: props.t,
-    enabled,
-    onToggle: onToggleSidebar,
-    disabled: savingSidebar,
+    location,
+    onLocationChange,
+    disabled: savingLocation,
     onlineUpdateEnabled,
     onToggleOnlineUpdate,
     onlineUpdateDisabled: savingUpdate,
@@ -187,9 +217,13 @@ export interface SetupSidebarOptions {
   injectProps?: (() => Record<string, unknown>) | Record<string, unknown>
   onOnlineUpdateChange?: (enabled: boolean) => void
   onComposerRecommendChange?: (enabled: boolean) => void
+  onLocationChange?: (location: EntryLocation) => void
 }
 
 export interface SidebarController {
+  getLocation: () => EntryLocation
+  setLocation: (next: EntryLocation) => Promise<EntryLocation>
+  isSettingsSectionEnabled: () => boolean
   isEnabled: () => boolean
   isSupported: () => boolean
   setEnabled: (next: boolean) => Promise<boolean>
@@ -204,6 +238,9 @@ export interface SidebarController {
 export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): SidebarController {
   if (!ctx.locale) {
     return {
+      getLocation: () => 'both',
+      setLocation: async () => 'both',
+      isSettingsSectionEnabled: () => true,
       isEnabled: () => false,
       isSupported: () => false,
       setEnabled: async () => false,
@@ -217,7 +254,7 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
   }
 
   const { callApi, renderPanel, ns } = options
-  let sidebarEntryEnabled = false
+  let entryLocation: EntryLocation = 'settings'
   let sidebarSupported = false
   let mainSupported = false
   let offPanel: (() => void) | null = null
@@ -226,6 +263,9 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
   let layoutService: any
   const listeners = new Set<() => void>()
 
+  const isSidebarEnabled = () => entryLocation === 'both' || entryLocation === 'sidebar'
+  const isSettingsSectionEnabled = () => entryLocation === 'both' || entryLocation === 'settings'
+
   const notify = () => {
     for (const listener of listeners) {
       try { listener() } catch {}
@@ -233,7 +273,7 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
   }
 
   const sync = () => {
-    if (sidebarEntryEnabled) {
+    if (isSidebarEnabled()) {
       if (mainSupported && !offPanel) {
         try {
           const res = ctx.slots.register({
@@ -279,26 +319,38 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
     }
   }
 
-  const setEnabled = async (next: boolean): Promise<boolean> => {
+  const setLocation = async (next: EntryLocation): Promise<EntryLocation> => {
     const currentEpoch = ++epoch
-    sidebarEntryEnabled = next
+    const previous = entryLocation
+    entryLocation = next
     sync()
     notify()
+    if (typeof options.onLocationChange === 'function') {
+      try { options.onLocationChange(next) } catch {}
+    }
     try {
       await callApi('/api/michengai/dsh-agency-agents/sidebar-entry', {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-michengai-client': '1' },
-        body: JSON.stringify({ enabled: next }),
+        body: JSON.stringify({ location: next }),
       })
       return next
     } catch (err) {
       if (currentEpoch === epoch) {
-        sidebarEntryEnabled = !next
+        entryLocation = previous
         sync()
         notify()
+        if (typeof options.onLocationChange === 'function') {
+          try { options.onLocationChange(previous) } catch {}
+        }
       }
       throw err
     }
+  }
+
+  const setEnabled = async (next: boolean): Promise<boolean> => {
+    await setLocation(next ? 'both' : 'settings')
+    return isSidebarEnabled()
   }
 
   let onlineUpdateEnabled = true
@@ -351,8 +403,8 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
         headers: { 'content-type': 'application/json', 'x-michengai-client': '1' },
         body: JSON.stringify({ enabled: next }),
       })
-      if (currentEpoch === updateEpoch && typeof options.onOnlineUpdateChange === 'function') {
-        options.onOnlineUpdateChange(next)
+      if (typeof options.onOnlineUpdateChange === 'function') {
+        try { options.onOnlineUpdateChange(next) } catch {}
       }
       return next
     } catch (err) {
@@ -370,10 +422,17 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
   const loadEpoch = epoch
   callApi('/api/michengai/dsh-agency-agents/sidebar-entry')
     .then((res: any) => {
-      if (epoch === loadEpoch && res && typeof res.enabled === 'boolean') {
-        sidebarEntryEnabled = res.enabled
+      if (epoch === loadEpoch && res) {
+        if (res.location === 'both' || res.location === 'sidebar' || res.location === 'settings') {
+          entryLocation = res.location
+        } else if (typeof res.enabled === 'boolean') {
+          entryLocation = res.enabled ? 'both' : 'settings'
+        }
         sync()
         notify()
+        if (typeof options.onLocationChange === 'function') {
+          try { options.onLocationChange(entryLocation) } catch {}
+        }
       }
     })
     .catch(() => {})
@@ -399,19 +458,19 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
         composerRecommendEnabled = res.enabled
         notify()
         if (typeof options.onComposerRecommendChange === 'function') {
-          try { options.onComposerRecommendChange(composerRecommendEnabled) } catch {}
+          try { options.onComposerRecommendChange(res.enabled) } catch {}
         }
       }
     })
     .catch(() => {})
 
-  if (typeof ctx.inject === 'function') {
-    ctx.inject(['layout'], (scoped: any) => {
+  if (typeof (ctx as any).inject === 'function') {
+    (ctx as any).inject(['layout'], (scoped: any) => {
       layoutService = scoped.layout
     })
   }
 
-  if (typeof ctx.slots.inject === 'function') {
+  if (typeof ctx.slots?.inject === 'function') {
     ctx.slots.inject('main', () => {
       mainSupported = true
       sync()
@@ -448,7 +507,9 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
       if (ownerProps && ownerProps.view === 'summary') return null
       return React.createElement(AgencyBundleConfigCardWrapper, {
         t: ctx.locale.bind(ns),
-        getEnabled: () => sidebarEntryEnabled,
+        getLocation: () => entryLocation,
+        setLocation,
+        getEnabled: () => isSidebarEnabled(),
         setSidebar: setEnabled,
         getOnlineUpdateEnabled: () => onlineUpdateEnabled,
         getOnlineUpdateLocked: () => onlineUpdateLocked,
@@ -464,7 +525,10 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
   })
 
   return {
-    isEnabled: () => sidebarEntryEnabled,
+    getLocation: () => entryLocation,
+    setLocation,
+    isSettingsSectionEnabled,
+    isEnabled: () => isSidebarEnabled(),
     isSupported: () => sidebarSupported,
     setEnabled,
     isOnlineUpdateEnabled: () => onlineUpdateEnabled,

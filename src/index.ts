@@ -48,7 +48,7 @@ import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { createHostLocaleReader, formatHost, localizedExpertDescription, localizedExpertName, matchDivision, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
-import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat, setAgencySidebarEntry, setAgencyOnlineUpdate, setAgencyComposerRecommend } from './settings-compat.js'
+import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat, setAgencySidebarEntry, setAgencyOnlineUpdate, setAgencyComposerRecommend, getAgencyEntryLocation, setAgencyEntryLocation } from './settings-compat.js'
 import { registerPluginUpdater } from './plugin-updater.js'
 import { AGENCY_LIBRARY_SERVICE, createExpertLibrary, type AgencySettings } from './expert-library.js'
 
@@ -243,6 +243,7 @@ const configFields: Record<string, unknown> = {
   maxDepth: schema.natural().min(1),
   updater: schema.boolean(),
   onlineUpdate: schema.boolean(),
+  entryLocation: schema.string(),
   sidebarEntry: schema.boolean(),
   composerRecommend: schema.boolean(),
 }
@@ -251,6 +252,7 @@ for (const [key, field] of [
   ['customExperts', schema.array(schema.any()).default([])],
   ['customTeams', schema.array(schema.any()).default([])],
   ['enabledTeams', schema.array(schema.string()).default([])],
+  ['entryLocation', schema.string()],
   ['sidebarEntry', schema.boolean()],
   ['onlineUpdate', schema.boolean()],
   ['composerRecommend', schema.boolean()],
@@ -723,21 +725,39 @@ export function apply(ctx: Context, config: Config): void {
         handler: async (request: any, response: any) => {
           if (!checkAuthAndMutation(request, response)) return
           if (request.method === 'GET' || request.method === 'HEAD') {
+            const location = getAgencyEntryLocation(settingsSource())
             response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
-            response.end(request.method === 'HEAD' ? undefined : JSON.stringify({ ok: true, enabled: settingsSource().sidebarEntry === true }))
+            response.end(request.method === 'HEAD' ? undefined : JSON.stringify({ ok: true, location, enabled: location !== 'settings' }))
             return
           }
           if (request.method === 'POST') {
             const bodyRes = await readJsonBody(request)
-            if (!bodyRes.ok || !bodyRes.data || typeof bodyRes.data.enabled !== 'boolean') {
+            if (!bodyRes.ok || !bodyRes.data) {
               response.writeHead(bodyRes.status ?? 400, { 'content-type': 'application/json; charset=utf-8' })
-              response.end(JSON.stringify({ ok: false, error: bodyRes.error ?? 'enabled 必须是布尔值' }))
+              response.end(JSON.stringify({ ok: false, error: bodyRes.error ?? '请求体不能为空' }))
               return
             }
             try {
-              await setAgencySidebarEntry(ctx, settingsNamespace, bodyRes.data.enabled)
-              response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
-              response.end(JSON.stringify({ ok: true, enabled: bodyRes.data.enabled }))
+              if (typeof bodyRes.data.location === 'string') {
+                const loc = bodyRes.data.location
+                if (loc !== 'both' && loc !== 'sidebar' && loc !== 'settings') {
+                  response.writeHead(400, { 'content-type': 'application/json; charset=utf-8' })
+                  response.end(JSON.stringify({ ok: false, error: 'location 必须是 both、sidebar 或 settings' }))
+                  return
+                }
+                const location = await setAgencyEntryLocation(ctx, settingsNamespace, loc)
+                response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
+                response.end(JSON.stringify({ ok: true, location, enabled: location !== 'settings' }))
+                return
+              }
+              if (typeof bodyRes.data.enabled === 'boolean') {
+                const location = await setAgencyEntryLocation(ctx, settingsNamespace, bodyRes.data.enabled ? 'both' : 'settings')
+                response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
+                response.end(JSON.stringify({ ok: true, location, enabled: location !== 'settings' }))
+                return
+              }
+              response.writeHead(400, { 'content-type': 'application/json; charset=utf-8' })
+              response.end(JSON.stringify({ ok: false, error: '缺少合法的 location 或 enabled 参数' }))
             } catch (err) {
               response.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
               response.end(JSON.stringify({ ok: false, error: String(err) }))

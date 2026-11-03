@@ -1888,6 +1888,49 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     return res.json()
   }
 
+  let offSettingsSection: (() => void) | null = null
+  let settingsSectionSupported = false
+
+  const mountSettingsSection = () => {
+    if (!settingsSectionSupported || offSettingsSection) return
+    if (sidebarController && !sidebarController.isSettingsSectionEnabled()) return
+    try {
+      const unreg = ctx.slots.register(
+        {
+          name: 'settings.section', id: 'agency-agents', order: 20, label: () => t('settings.nav'), locale: NS,
+          ...({ icon: 'expert' } as Record<string, unknown>),
+        },
+        (props: any) => React.createElement(AgencySettingsPanel, {
+          ...props,
+          closeSettings: (props as { close?: () => void }).close,
+          remote,
+          getActive,
+          onEnabledChange: updateEnabledForMentions,
+          prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
+        }),
+      )
+      offSettingsSection = typeof unreg === 'function' ? unreg : () => {}
+    } catch (reason) {
+      console.warn('agency-agents: register settings.section failed:', reason)
+      offSettingsSection = null
+    }
+  }
+
+  const unmountSettingsSection = () => {
+    if (offSettingsSection) {
+      try { offSettingsSection() } catch {}
+      offSettingsSection = null
+    }
+  }
+
+  const syncSettingsSection = () => {
+    if (sidebarController?.isSettingsSectionEnabled?.() ?? true) {
+      mountSettingsSection()
+    } else {
+      unmountSettingsSection()
+    }
+  }
+
   const sidebarController = setupSidebarEntry(ctx, {
     callApi,
     renderPanel: (ownerProps: any) => React.createElement(AgencySettingsPanel, {
@@ -1914,7 +1957,10 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(PLUGIN_UPDATE_TOGGLE_EVENT))
     },
   })
-  ctx.effect(() => () => { sidebarController.destroy() }, 'agency-agents: sidebar entry')
+  ctx.effect(() => () => {
+    sidebarController.destroy()
+    unmountSettingsSection()
+  }, 'agency-agents: sidebar entry')
 
   ctx.effect(() => observePluginUpdate({
     endpoint: '/api/michengai/dsh-agency-agents/update',

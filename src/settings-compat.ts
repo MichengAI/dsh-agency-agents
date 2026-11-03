@@ -120,19 +120,25 @@ export function readAgencySettings(config: object, locale: 'zh' | 'en' = 'zh'): 
     customExperts?: unknown
     customTeams?: unknown
     enabledTeams?: unknown
+    entryLocation?: unknown
     sidebarEntry?: unknown
     onlineUpdate?: unknown
     composerRecommend?: unknown
   }
+  const rawLocation = unwrapLive(record.entryLocation)
   const rawSidebar = unwrapLive(record.sidebarEntry)
   const rawUpdate = unwrapLive(record.onlineUpdate)
   const rawRecommend = unwrapLive(record.composerRecommend)
+  const location = (rawLocation === 'both' || rawLocation === 'sidebar' || rawLocation === 'settings')
+    ? rawLocation
+    : (rawSidebar === true ? 'both' : 'settings')
   const value: AgencySettings = {
     enabled: stringList(unwrapLive(record.enabled)),
     customExperts: objectList(unwrapLive(record.customExperts)) as AgencySettings['customExperts'],
     customTeams: objectList(unwrapLive(record.customTeams)) as AgencySettings['customTeams'],
     enabledTeams: stringList(unwrapLive(record.enabledTeams)),
-    sidebarEntry: typeof rawSidebar === 'boolean' ? rawSidebar : undefined,
+    entryLocation: location,
+    sidebarEntry: typeof rawSidebar === 'boolean' ? rawSidebar : (location !== 'settings'),
     onlineUpdate: typeof rawUpdate === 'boolean' ? rawUpdate : undefined,
     composerRecommend: typeof rawRecommend === 'boolean' ? rawRecommend : undefined,
   }
@@ -267,17 +273,38 @@ export async function recoverImportedAgencySettings(
   })
 }
 
-export async function setAgencySidebarEntry(ctx: Context, namespace: string, enabled: boolean): Promise<boolean> {
-  if (typeof enabled !== 'boolean') throw new TypeError('enabled must be a boolean')
+export type EntryLocation = 'both' | 'sidebar' | 'settings'
+
+export function getAgencyEntryLocation(settings: { entryLocation?: unknown; sidebarEntry?: unknown }): EntryLocation {
+  const loc = unwrapLive(settings?.entryLocation)
+  if (loc === 'both' || loc === 'sidebar' || loc === 'settings') return loc
+  const side = unwrapLive(settings?.sidebarEntry)
+  return side === true ? 'both' : 'settings'
+}
+
+export async function setAgencyEntryLocation(ctx: Context, namespace: string, location: EntryLocation): Promise<EntryLocation> {
+  if (location !== 'both' && location !== 'sidebar' && location !== 'settings') {
+    throw new TypeError("location must be one of 'both', 'sidebar', or 'settings'")
+  }
   const settings = (ctx as { settings?: LiveSettingsWriter }).settings
   const revision = settings?.describe?.().find((item) => item.ns === namespace)?.revision
+  const sidebarEnabled = location !== 'settings'
   await writeLiveSettings(ctx, async () => {
     if (typeof settings?.mutate === 'function') {
-      await settings.mutate(namespace, [{ op: 'set', path: ['sidebarEntry'], value: enabled }], revision)
+      await settings.mutate(namespace, [
+        { op: 'set', path: ['entryLocation'], value: location },
+        { op: 'set', path: ['sidebarEntry'], value: sidebarEnabled },
+      ], revision)
     } else if (typeof settings?.update === 'function') {
-      await settings.update(namespace, { sidebarEntry: enabled }, revision)
+      await settings.update(namespace, { entryLocation: location, sidebarEntry: sidebarEnabled }, revision)
     }
   })
+  return location
+}
+
+export async function setAgencySidebarEntry(ctx: Context, namespace: string, enabled: boolean): Promise<boolean> {
+  if (typeof enabled !== 'boolean') throw new TypeError('enabled must be a boolean')
+  await setAgencyEntryLocation(ctx, namespace, enabled ? 'both' : 'settings')
   return enabled
 }
 
