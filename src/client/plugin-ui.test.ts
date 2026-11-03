@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { test } from 'vitest'
+import { test, expect } from 'vitest'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Input, Modal } from './plugin-ui.js'
@@ -40,6 +40,36 @@ test('专家选择浮层使用宿主模态窗口标准层级背景与面板圆�
   assert.match(clientIndex, /className:\s*'aag-menu aag-discovery'[^}]*role:\s*'dialog'[^}]*'aria-modal':\s*'true'/)
   assert.match(clientIndex, /createPortal/)
   assert.match(clientIndex, /document\.body/)
+})
+
+test('computeExpertMenuCoords 准确计算弹出菜单视口位置并自适应高度', async () => {
+  const { computeExpertMenuCoords } = await import('./index.js')
+  const mockElement = {
+    getBoundingClientRect: () => ({
+      top: 600,
+      bottom: 632,
+      left: 100,
+      right: 132,
+      width: 32,
+      height: 32,
+    }),
+  } as unknown as HTMLElement
+
+  const originalWindow = (globalThis as any).window
+  try {
+    (globalThis as any).window = {
+      innerHeight: 800,
+      innerWidth: 1200,
+    }
+    const result = computeExpertMenuCoords(mockElement)
+    expect(result.position.placement).toBe('above')
+    expect(result.coords.placement).toBe('above')
+    expect(result.coords.left).toBe(100)
+    expect(result.coords.bottom).toBe(800 - 600 + 4)
+    expect(result.coords.maxHeight).toBeLessThanOrEqual(360)
+  } finally {
+    (globalThis as any).window = originalWindow
+  }
 })
 
 test('输入框使用宿主原生 Input 原语，不污染 allowClear 属性到 DOM，不手写清除按钮', () => {

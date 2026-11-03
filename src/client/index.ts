@@ -968,6 +968,39 @@ type ButtonProps = PropsLocale<'agency'> & {
   readonly getActive: () => 'zh' | 'en'
 }
 
+export interface ExpertMenuLayoutCoords {
+  readonly menuLeft: number
+  readonly position: ExpertMenuPosition
+  readonly coords: {
+    readonly placement: 'above' | 'below'
+    readonly left: number
+    readonly top: number
+    readonly bottom: number
+    readonly maxHeight: number
+  }
+}
+
+export function computeExpertMenuCoords(root: HTMLElement): ExpertMenuLayoutCoords {
+  const rect = root.getBoundingClientRect()
+  const viewportHeight = typeof window !== 'undefined' ? (window.visualViewport?.height ?? window.innerHeight) : 800
+  const viewportWidth = typeof window !== 'undefined' ? (window.visualViewport?.width ?? window.innerWidth) : 1200
+  const next = resolveExpertMenuPosition(rect, viewportHeight)
+  const width = Math.min(340, viewportWidth - 24)
+  const left = Math.max(12, Math.min(rect.left, viewportWidth - 12 - width))
+  const maxHeight = Math.min(360, next.maxHeight)
+  return {
+    menuLeft: Math.max(12 - rect.left, Math.min(0, viewportWidth - 12 - width - rect.left)),
+    position: next,
+    coords: {
+      placement: next.placement,
+      left,
+      bottom: Math.max(0, Math.floor(viewportHeight - rect.top + 4)),
+      top: Math.max(0, Math.floor(rect.bottom + 4)),
+      maxHeight,
+    },
+  }
+}
+
 export function AgentsButton(props: ButtonProps): React.ReactElement {
   const [mode, setMode] = React.useState<'experts' | 'teams'>('experts')
   const [open, setOpen] = React.useState(false)
@@ -1020,26 +1053,17 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     const updatePosition = (): void => {
       const root = rootRef.current
       if (root === null) return
-      const viewportHeight = window.visualViewport?.height ?? window.innerHeight
-      const viewportWidth = window.visualViewport?.width ?? window.innerWidth
-      const rect = root.getBoundingClientRect()
-      const next = resolveExpertMenuPosition(rect, viewportHeight)
-      const width = Math.min(340, viewportWidth - 24)
-      const left = Math.max(12, Math.min(rect.left, viewportWidth - 12 - width))
-      const maxHeight = Math.min(360, next.maxHeight)
-      const bottom = Math.max(0, Math.floor(viewportHeight - rect.top + 4))
-      const top = Math.max(0, Math.floor(rect.bottom + 4))
-
-      setMenuLeft(Math.max(12 - rect.left, Math.min(0, viewportWidth - 12 - width - rect.left)))
-      setMenuPosition((current) => current?.placement === next.placement && current.maxHeight === next.maxHeight ? current : next)
+      const computed = computeExpertMenuCoords(root)
+      setMenuLeft(computed.menuLeft)
+      setMenuPosition((current) => current?.placement === computed.position.placement && current.maxHeight === computed.position.maxHeight ? current : computed.position)
       setMenuCoords((current) => (
-        current?.placement === next.placement &&
-        current?.left === left &&
-        current?.bottom === bottom &&
-        current?.top === top &&
-        current?.maxHeight === maxHeight
+        current?.placement === computed.coords.placement &&
+        current?.left === computed.coords.left &&
+        current?.bottom === computed.coords.bottom &&
+        current?.top === computed.coords.top &&
+        current?.maxHeight === computed.coords.maxHeight
           ? current
-          : { placement: next.placement, left, bottom, top, maxHeight }
+          : computed.coords
       ))
     }
     updatePosition()
@@ -1093,22 +1117,10 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     epoch.current++
     setQuery('')
     if (rootRef.current) {
-      const rect = rootRef.current.getBoundingClientRect()
-      const viewportHeight = window.visualViewport?.height ?? window.innerHeight
-      const viewportWidth = window.visualViewport?.width ?? window.innerWidth
-      const next = resolveExpertMenuPosition(rect, viewportHeight)
-      const width = Math.min(340, viewportWidth - 24)
-      const left = Math.max(12, Math.min(rect.left, viewportWidth - 12 - width))
-      const maxHeight = Math.min(360, next.maxHeight)
-      setMenuLeft(Math.max(12 - rect.left, Math.min(0, viewportWidth - 12 - width - rect.left)))
-      setMenuPosition(next)
-      setMenuCoords({
-        placement: next.placement,
-        left,
-        bottom: Math.max(0, Math.floor(viewportHeight - rect.top + 4)),
-        top: Math.max(0, Math.floor(rect.bottom + 4)),
-        maxHeight,
-      })
+      const computed = computeExpertMenuCoords(rootRef.current)
+      setMenuLeft(computed.menuLeft)
+      setMenuPosition(computed.position)
+      setMenuCoords(computed.coords)
     }
     setOpen(true)
     load()
@@ -1919,6 +1931,72 @@ export async function triggerConfirmedProposalFetch(options: {
   }
 }
 
+export interface RegisterSettingsSectionOptions {
+  readonly id?: string
+  readonly order?: number
+  readonly label: () => string
+  readonly locale: string
+  readonly icon?: string
+  readonly renderPanel: (props: any) => React.ReactElement
+  readonly renderIcon?: React.ComponentType<{ size?: number }>
+}
+
+export interface RegisterSettingsSectionResult {
+  readonly offSection: (() => void) | null
+  readonly offIcon: (() => void) | null
+}
+
+export function registerSettingsSection(
+  slots: {
+    spec?: (name: string) => unknown
+    specDynamic?: (name: string) => unknown
+    register: (options: Record<string, unknown>, component: unknown) => unknown
+  },
+  options: RegisterSettingsSectionOptions,
+): RegisterSettingsSectionResult {
+  let offSection: (() => void) | null = null
+  let offIcon: (() => void) | null = null
+
+  // 1. 优先注册面板正文，确保各代宿主下页面可用
+  try {
+    const unreg = slots.register(
+      {
+        name: 'settings.section',
+        id: options.id ?? 'agency-agents',
+        order: options.order ?? 20,
+        label: options.label,
+        locale: options.locale,
+        ...({ icon: options.icon ?? 'expert' } as Record<string, unknown>),
+      },
+      options.renderPanel,
+    )
+    offSection = typeof unreg === 'function' ? () => { (unreg as () => void)() } : () => {}
+  } catch (reason) {
+    console.warn('agency-agents: register settings.section failed:', reason)
+    return { offSection: null, offIcon: null }
+  }
+
+  // 2. 独立探测与注册图标：优先使用宿主 SlotRegistry 门面公开的 spec()，兼容回退 specDynamic()
+  if (options.renderIcon) {
+    try {
+      const probe = typeof slots.spec === 'function' ? slots.spec : slots.specDynamic
+      if (typeof probe === 'function' && probe.call(slots, 'settings.section.icon') !== undefined) {
+        const unregIcon = slots.register({
+          name: 'settings.section.icon',
+          id: options.id ?? 'agency-agents',
+          locale: options.locale,
+        }, options.renderIcon)
+        offIcon = typeof unregIcon === 'function' ? () => { (unregIcon as () => void)() } : null
+      }
+    } catch (reason) {
+      console.warn('agency-agents: register settings.section.icon failed:', reason)
+      offIcon = null
+    }
+  }
+
+  return { offSection, offIcon }
+}
+
 export const inject = ['slots', 'inputTriggers', 'locale', 'remote', 'sessions', 'conversation']
 
 export async function apply(ctx: ClientContext): Promise<() => void> {
@@ -2097,23 +2175,26 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   }
 
   let offSettingsSection: (() => void) | null = null
+  let offSettingsIcon: (() => void) | null = null
   let settingsSectionSupported = false
 
   const mountSettingsSection = () => {
     if (!settingsSectionSupported || offSettingsSection) return
     if (sidebarController && !sidebarController.isSettingsSectionEnabled()) return
-    try {
-      (ctx.slots.register as any)({
-        name: 'settings.section.icon',
+
+    const { offSection, offIcon } = registerSettingsSection(
+      ctx.slots as unknown as {
+        spec?: (name: string) => unknown
+        specDynamic?: (name: string) => unknown
+        register: (options: Record<string, unknown>, component: unknown) => unknown
+      },
+      {
         id: 'agency-agents',
+        order: 20,
+        label: () => t('settings.nav'),
         locale: NS,
-      }, AgentsNavIcon)
-      const unreg = ctx.slots.register(
-        {
-          name: 'settings.section', id: 'agency-agents', order: 20, label: () => t('settings.nav'), locale: NS,
-          ...({ icon: 'expert' } as Record<string, unknown>),
-        },
-        (props: any) => React.createElement(AgencySettingsPanel, {
+        icon: 'expert',
+        renderPanel: (props: any) => React.createElement(AgencySettingsPanel, {
           ...props,
           closeSettings: (props as { close?: () => void }).close,
           remote,
@@ -2121,18 +2202,21 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
           onEnabledChange: updateEnabledForMentions,
           prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
         }),
-      )
-      offSettingsSection = typeof unreg === 'function' ? unreg : () => {}
-    } catch (reason) {
-      console.warn('agency-agents: register settings.section failed:', reason)
-      offSettingsSection = null
-    }
+        renderIcon: AgentsNavIcon,
+      },
+    )
+    offSettingsSection = offSection
+    offSettingsIcon = offIcon
   }
 
   unmountSettingsSection = () => {
     if (offSettingsSection) {
       try { offSettingsSection() } catch {}
       offSettingsSection = null
+    }
+    if (offSettingsIcon) {
+      try { offSettingsIcon() } catch {}
+      offSettingsIcon = null
     }
   }
 

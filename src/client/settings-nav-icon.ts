@@ -84,9 +84,8 @@ export function applySettingsNavIcon(button: Element, wantedLabel: () => string)
   const isOwn = isOwnNavRow(button.textContent, wantedLabel())
   if (isOwn) {
     const hasSlotIcon = Array.from(button.children).some((child) =>
-      child.tagName === 'SPAN' &&
-      (child.className.includes('navIcon') || child.getAttribute('aria-hidden') === 'true')
-    ) || Boolean(button.querySelector?.('[class*="navIcon"]'))
+      child.tagName === 'SPAN' && child.className && String(child.className).includes('navIcon')
+    ) || Boolean(button.querySelector?.('span[class*="navIcon"]'))
     if (hasSlotIcon) {
       if (button.hasAttribute(NAV_ICON_MARKER)) {
         button.removeAttribute(NAV_ICON_MARKER)
@@ -138,13 +137,15 @@ export function installSettingsNavIcon(ctx: NavIconContext): void {
 
     const schedule = () => {
       if (scheduled || disposed) return
+      // 没有设置弹窗挂载时，不排队无效微任务，避免长对话流式输出时产生空转开销
+      if (!document.querySelector?.('[role="dialog"]')) return
       scheduled = true
       queueMicrotask(sync)
     }
 
     sync()
     const observer = new MutationObserver(schedule)
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true })
+    observer.observe(document.body, { childList: true, subtree: true })
 
     return () => {
       disposed = true

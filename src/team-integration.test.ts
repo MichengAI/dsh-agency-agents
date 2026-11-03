@@ -668,4 +668,57 @@ describe('专家团宿主与远端集成', () => {
       await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
     }
   })
+
+  it('达到上限淘汰时遵循 updatedAt 的真正 LRU 规则，保护近期被复用的老条目', async () => {
+    const tempHome = await mkdtemp(join(tmpdir(), 'aag-reg-lru-'))
+    try {
+      const ctx = { get: (name: string) => name === 'profileContext' ? { home: tempHome } : undefined } as unknown as Context
+      clearSubagentRegistryForTest()
+      // 先插入 50 条
+      for (let i = 0; i < 50; i++) {
+        recordSubagentConfig(`child-${i}`, { slug: `expert-${i % 4}`, persona: 'P' }, ctx)
+      }
+      // 将 child-5 进行复用更新，此时 size 为 50 未满，Map 顺序中 child-5 不会重新追加到末尾
+      recordSubagentConfig('child-5', { slug: 'expert-renewed', persona: 'P-NEW' }, ctx)
+      // 继续填充至 128 条满容
+      for (let i = 50; i < 128; i++) {
+        recordSubagentConfig(`child-${i}`, { slug: `expert-${i % 4}`, persona: 'P' }, ctx)
+      }
+      // 再连续插入两条新记录，触发淘汰
+      // 按照真正的 LRU：child-0、child-1 应该被淘汰，而更新过、时间更晚的 child-5 必须留存
+      recordSubagentConfig('child-128', { slug: 'expert-new1', persona: 'P' }, ctx)
+      recordSubagentConfig('child-129', { slug: 'expert-new2', persona: 'P' }, ctx)
+      flushSubagentRegistrySync(ctx)
+
+      expect(getSubagentConfig('child-5')).toBeDefined()
+      expect(getSubagentConfig('child-5')?.slug).toBe('expert-renewed')
+      expect(getSubagentConfig('child-0')).toBeUndefined()
+      expect(getSubagentConfig('child-1')).toBeUndefined()
+    } finally {
+      clearSubagentRegistryForTest()
+      await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
+    }
+  })
+
+  it('热文件损坏解析失败时备份为 .corrupt 文件，防止后续写回造成排查现场丢失', async () => {
+    const tempHome = await mkdtemp(join(tmpdir(), 'aag-reg-corrupt-backup-'))
+    try {
+      const ctx = { get: (name: string) => name === 'profileContext' ? { home: tempHome } : undefined } as unknown as Context
+      clearSubagentRegistryForTest()
+      const corruptData = '{"version":2,"children": INVALID_JSON_BROKEN'
+      await writeFile(join(tempHome, 'agency-subagents.json'), corruptData, 'utf8')
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      initSubagentRegistry(ctx)
+      warn.mockRestore()
+
+      const corruptBackup = join(tempHome, 'agency-subagents.json.corrupt')
+      const exists = await readFile(corruptBackup, 'utf8').then(() => true).catch(() => false)
+      expect(exists).toBe(true)
+      const content = await readFile(corruptBackup, 'utf8')
+      expect(content).toBe(corruptData)
+    } finally {
+      clearSubagentRegistryForTest()
+      await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
+    }
+  })
 })

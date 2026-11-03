@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, renameSync, unlinkSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync, renameSync, unlinkSync, copyFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
@@ -137,10 +137,17 @@ export function initSubagentRegistry(ctx?: Context): void {
   }
 
   // 3) 热文件：子代理条目（v2 引用格式 / v1 同文件格式 / 更早的平铺格式）
-  const childrenRead = readJsonFile(join(home, CHILDREN_FILE))
+  const childrenPath = join(home, CHILDREN_FILE)
+  const childrenRead = readJsonFile(childrenPath)
   if (childrenRead.state === 'unreadable') {
     // 热文件坏了：内存里 children 为空并不代表历史为空，本进程内暂停孤儿清理
     childrenUnreadable = true
+    try {
+      const corruptBackup = join(home, `${CHILDREN_FILE}.corrupt`)
+      if (!existsSync(corruptBackup) && existsSync(childrenPath)) {
+        copyFileSync(childrenPath, corruptBackup)
+      }
+    } catch {}
     return
   }
   if (childrenRead.state === 'missing') return
@@ -234,9 +241,22 @@ export function recordSubagentConfig(
     idsDirty = true
   }
 
-  if (childRecords.size >= MAX_PERSISTED_CHILDREN) {
-    const oldest = childRecords.keys().next().value
-    if (oldest !== undefined) childRecords.delete(oldest)
+  if (childRecords.size >= MAX_PERSISTED_CHILDREN && !childRecords.has(id)) {
+    let oldestKey: string | undefined
+    let oldestTime = Infinity
+    for (const [key, record] of childRecords.entries()) {
+      const time = record.updatedAt ?? 0
+      if (time < oldestTime) {
+        oldestTime = time
+        oldestKey = key
+      }
+    }
+    if (oldestKey !== undefined) {
+      childRecords.delete(oldestKey)
+    } else {
+      const oldest = childRecords.keys().next().value
+      if (oldest !== undefined) childRecords.delete(oldest)
+    }
   }
 
   if (config.slug && config.persona) {
