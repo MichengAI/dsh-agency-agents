@@ -15,7 +15,7 @@ import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 import { agencySettingsFromLegacyDocument, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
-import { clearSubagentRegistryForTest, getSubagentConfig, isManagedSubagentId, initSubagentRegistry } from './subagent-registry.js'
+import { clearSubagentRegistryForTest, getSubagentConfig, isManagedSubagentId, initSubagentRegistry, flushSubagentRegistrySync } from './subagent-registry.js'
 
 const PACKAGE_MANIFEST = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
   packageManager?: string
@@ -679,7 +679,8 @@ describe('summon_expert', () => {
       deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'],
     })
 
-    // 模拟跨进程重启：清空内存注册表，模拟完全不同的进程生命周期
+    // 模拟跨进程重启：落盘后清空内存注册表，模拟完全不同的进程生命周期
+    flushSubagentRegistrySync(ctx)
     clearSubagentRegistryForTest()
     expect(getSubagentConfig(activationSpec!.childId)).toBeUndefined()
     expect(isManagedSubagentId(activationSpec!.childId)).toBe(false)

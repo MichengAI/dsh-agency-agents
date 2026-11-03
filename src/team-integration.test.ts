@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
@@ -8,6 +8,13 @@ import { createScope } from '@deepseek-ai/dsh-scope'
 import type { NativeTeamService } from './team-engine.js'
 import { EXPERT_TOOL_DENY } from './team-engine.js'
 import { Context } from '@deepseek-ai/cordis'
+import {
+  clearSubagentRegistryForTest,
+  recordSubagentConfig,
+  flushSubagentRegistrySync,
+  getSubagentConfig,
+  initSubagentRegistry,
+} from './subagent-registry.js'
 import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import { apply, DEFAULT_DIVISIONS } from './index.js'
 import AgencyAgentsRemote from './remote.js'
@@ -486,7 +493,51 @@ describe('专家团宿主与远端集成', () => {
       expect(overflowResult).toMatchObject({ kind: 'deny', reason: '专家成员不能继续召唤专家团。' })
       expect(overflowBlockedNext).not.toHaveBeenCalled()
     } finally {
-      await rm(tempHome, { recursive: true, force: true })
+      clearSubagentRegistryForTest()
+      await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
+    }
+  })
+
+  it('子代理持久化注册表具备去重压缩与临时文件故障清理能力', async () => {
+    const tempHome = await mkdtemp(join(tmpdir(), 'aag-reg-unit-'))
+    try {
+      const fakeCtx = { get: (name: string) => name === 'profileContext' ? { home: tempHome } : undefined } as unknown as Context
+      clearSubagentRegistryForTest()
+      const largePersona = 'A'.repeat(10000)
+      for (let i = 0; i < 50; i++) {
+        recordSubagentConfig(`child-${i}`, { slug: 'reviewer', persona: largePersona, toolFilter: { deny: ['summon_expert'] } }, fakeCtx)
+      }
+      flushSubagentRegistrySync(fakeCtx)
+      const dataFile = join(tempHome, 'agency-subagents.json')
+      const raw = await readFile(dataFile, 'utf8')
+      const parsed = JSON.parse(raw)
+      expect(parsed.version).toBe(1)
+      expect(Object.keys(parsed.experts)).toEqual(['reviewer'])
+      expect(parsed.experts.reviewer).toBe(largePersona)
+      expect(Object.keys(parsed.children)).toHaveLength(50)
+      // 50 次同一专家的记录，去重后文件远小于 50 * 10KB = 500KB，实际只有 10KB 左右
+      expect(raw.length).toBeLessThan(20000)
+
+      // 验证跨进程重启恢复
+      clearSubagentRegistryForTest()
+      initSubagentRegistry(fakeCtx)
+      expect(getSubagentConfig('child-0')?.persona).toBe(largePersona)
+
+      // 验证写入失败时临时文件绝不残留
+      const badDir = join(tempHome, 'fail-target')
+      await mkdir(badDir, { recursive: true })
+      const badCtx = { get: (name: string) => name === 'profileContext' ? { home: badDir } : undefined } as unknown as Context
+      // 把同名路径创建为非空目录，使得 renameSync 必定失败
+      await mkdir(join(badDir, 'agency-subagents.json'), { recursive: true })
+      await writeFile(join(badDir, 'agency-subagents.json', 'blocker.txt'), 'block', 'utf8')
+      recordSubagentConfig('child-fail', { persona: 'test' }, badCtx)
+      flushSubagentRegistrySync(badCtx)
+      const badDirFiles = await readdir(badDir)
+      const tmpFiles = badDirFiles.filter(f => f.endsWith('.tmp'))
+      expect(tmpFiles).toHaveLength(0)
+    } finally {
+      clearSubagentRegistryForTest()
+      await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
     }
   })
 })

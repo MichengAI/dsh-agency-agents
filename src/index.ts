@@ -1012,6 +1012,7 @@ export function apply(ctx: Context, config: Config): void {
   }
 
   type ExpertSubagentStart = {
+    slug?: string
     label?: string
     prompt: SubagentStartRequest['prompt']
     parent: SubagentStartRequest['parent']
@@ -1022,7 +1023,7 @@ export function apply(ctx: Context, config: Config): void {
   }
 
   async function startSubagentRun(providerName: string, options: ExpertSubagentStart): Promise<SubagentRunHandle> {
-    const { persona, toolFilter, label, signal, prompt, parent, maxDepth } = options
+    const { slug, persona, toolFilter, label, signal, prompt, parent, maxDepth } = options
     const service = ctx.subagents as unknown as {
       start?: (name: string, request: SubagentStartRequest & { persona?: string; toolFilter?: { deny: string[] } }) => Promise<SubagentRun>
       startActivation?: (spec: {
@@ -1038,7 +1039,7 @@ export function apply(ctx: Context, config: Config): void {
     // DSH 0.2.1-rc.1+: 优先使用 startActivation，由持久注册表守护首次启动与后续冷恢复。
     if (typeof service.startActivation === 'function') {
       const childId = SessionId(randomUUID())
-      recordSubagentConfig(childId, { persona, toolFilter }, ctx)
+      recordSubagentConfig(childId, { slug, persona, toolFilter }, ctx)
       return await service.startActivation({
         provider: providerName,
         label: label ?? providerName,
@@ -1085,6 +1086,7 @@ export function apply(ctx: Context, config: Config): void {
     if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
     const { prompt: persona } = await personaSource.getPrompt(expert.slug, expert.division, locale)
     const run = await startSubagentRun(config.provider, {
+      slug: expert.slug,
       label: localizedExpertName(expert, locale),
       prompt: [{ type: 'text', text: taskText }],
       parent: exec.agent,
@@ -1225,7 +1227,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
             readPersona: async (expert) => (await personaSource.getPrompt(expert.slug, expert.division, locale)).prompt,
             run: async (member: TeamMemberRun) => {
                 exec.signal?.throwIfAborted();
-                const run = await startSubagentRun(config.provider, { label: member.name, parent: exec.agent!,
+                const run = await startSubagentRun(config.provider, { slug: member.slug, label: member.name, parent: exec.agent!,
                     prompt: [{ type: 'text', text: member.prompt }], persona: sanitize(member.persona),
                     toolFilter: { deny: [...EXPERT_TOOL_DENY] },
                     ...(maxDepth === undefined ? {} : { maxDepth }), signal: exec.signal });
