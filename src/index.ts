@@ -725,7 +725,7 @@ export function apply(ctx: Context, config: Config): void {
         handler: async (request: any, response: any) => {
           if (!checkAuthAndMutation(request, response)) return
           if (request.method === 'GET' || request.method === 'HEAD') {
-            const location = getAgencyEntryLocation(settingsSource())
+            const location = getAgencyEntryLocation(settingsSource(), ctx)
             response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
             response.end(request.method === 'HEAD' ? undefined : JSON.stringify({ ok: true, location, enabled: location !== 'settings' }))
             return

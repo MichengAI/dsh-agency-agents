@@ -1,7 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import { createRequire } from 'node:module'
-import { existsSync, realpathSync } from 'node:fs'
+import { existsSync, realpathSync, readFileSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { validateAgencySettings, type AgencySettings } from './expert-library.js'
@@ -275,7 +275,47 @@ export async function recoverImportedAgencySettings(
 
 export type EntryLocation = 'both' | 'sidebar' | 'settings'
 
-export function getAgencyEntryLocation(settings: { entryLocation?: unknown; sidebarEntry?: unknown }): EntryLocation {
+interface LocalAgencyState {
+  entryLocation?: EntryLocation
+  sidebarEntry?: boolean
+}
+
+let inMemoryState: LocalAgencyState = {}
+
+function getLocalStateFile(ctx?: Context): string | undefined {
+  const home = ctx ? profileHome(ctx) : undefined
+  if (!home) return undefined
+  return join(home, 'agency-settings.json')
+}
+
+export function readLocalAgencyState(ctx?: Context): LocalAgencyState {
+  const file = getLocalStateFile(ctx)
+  if (file && existsSync(file)) {
+    try {
+      const parsed = JSON.parse(readFileSync(file, 'utf8')) as LocalAgencyState
+      if (parsed && typeof parsed === 'object') {
+        inMemoryState = Object.assign({}, inMemoryState, parsed)
+      }
+    } catch {}
+  }
+  return inMemoryState
+}
+
+export function writeLocalAgencyState(ctx: Context | undefined, state: LocalAgencyState): void {
+  inMemoryState = Object.assign({}, inMemoryState, state)
+  const file = getLocalStateFile(ctx)
+  if (file) {
+    try {
+      writeFileSync(file, JSON.stringify(inMemoryState, null, 2), 'utf8')
+    } catch (err) {
+      console.warn('[agency-agents] 写入 agency-settings.json 失败：', err)
+    }
+  }
+}
+
+export function getAgencyEntryLocation(settings?: { entryLocation?: unknown; sidebarEntry?: unknown }, ctx?: Context): EntryLocation {
+  const local = readLocalAgencyState(ctx).entryLocation
+  if (local === 'both' || local === 'sidebar' || local === 'settings') return local
   const loc = unwrapLive(settings?.entryLocation)
   if (loc === 'both' || loc === 'sidebar' || loc === 'settings') return loc
   const side = unwrapLive(settings?.sidebarEntry)
@@ -286,19 +326,37 @@ export async function setAgencyEntryLocation(ctx: Context, namespace: string, lo
   if (location !== 'both' && location !== 'sidebar' && location !== 'settings') {
     throw new TypeError("location must be one of 'both', 'sidebar', or 'settings'")
   }
-  const settings = (ctx as { settings?: LiveSettingsWriter }).settings
-  const revision = settings?.describe?.().find((item) => item.ns === namespace)?.revision
   const sidebarEnabled = location !== 'settings'
-  await writeLiveSettings(ctx, async () => {
-    if (typeof settings?.mutate === 'function') {
-      await settings.mutate(namespace, [
-        { op: 'set', path: ['entryLocation'], value: location },
-        { op: 'set', path: ['sidebarEntry'], value: sidebarEnabled },
-      ], revision)
-    } else if (typeof settings?.update === 'function') {
-      await settings.update(namespace, { entryLocation: location, sidebarEntry: sidebarEnabled }, revision)
-    }
-  })
+  // 1. 本地存储先行落盘，保证状态永不丢失或回弹
+  writeLocalAgencyState(ctx, { entryLocation: location, sidebarEntry: sidebarEnabled })
+
+  // 2. 尽力向宿主 live settings 广播（带安全降级，不阻断主流程）
+  try {
+    const settings = (ctx as { settings?: LiveSettingsWriter }).settings
+    const revision = settings?.describe?.().find((item) => item.ns === namespace)?.revision
+    await writeLiveSettings(ctx, async () => {
+      if (typeof settings?.mutate === 'function') {
+        try {
+          await settings.mutate(namespace, [
+            { op: 'set', path: ['entryLocation'], value: location },
+            { op: 'set', path: ['sidebarEntry'], value: sidebarEnabled },
+          ], revision)
+        } catch {
+          await settings.mutate(namespace, [
+            { op: 'set', path: ['sidebarEntry'], value: sidebarEnabled },
+          ])
+        }
+      } else if (typeof settings?.update === 'function') {
+        try {
+          await settings.update(namespace, { entryLocation: location, sidebarEntry: sidebarEnabled }, revision)
+        } catch {
+          await settings.update(namespace, { sidebarEntry: sidebarEnabled })
+        }
+      }
+    })
+  } catch (err) {
+    console.warn('[agency-agents] 宿主 live settings 同步受阻，已通过本地配置持久化保持：', err)
+  }
   return location
 }
 

@@ -1883,8 +1883,16 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     const headers = Object.assign({
       'x-michengai-client': '1',
     }, options?.headers)
-    const res = await fetch(url, { ...options, headers })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const res = await fetch(url, { ...options, headers, credentials: 'same-origin', cache: 'no-store' })
+    if (!res.ok) {
+      let errText = `HTTP ${res.status}`
+      try {
+        const body = await res.json()
+        if (body?.error) errText = `${errText}: ${body.error}`
+      } catch {}
+      console.error('[agency-agents] API 请求失败：', url, errText)
+      throw new Error(errText)
+    }
     return res.json()
   }
 

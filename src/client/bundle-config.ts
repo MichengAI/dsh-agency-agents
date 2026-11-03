@@ -171,7 +171,10 @@ export function AgencyBundleConfigCardWrapper(props: AgencyBundleConfigWrapperPr
     setSavingLocation(true)
     setLocation(next)
     props.setLocation(next)
-      .catch(() => { setLocation(props.getLocation()) })
+      .catch((err) => {
+        console.error('[agency-agents] 设置入口展示位置失败：', err)
+        setLocation(props.getLocation())
+      })
       .finally(() => setSavingLocation(false))
   }
 
