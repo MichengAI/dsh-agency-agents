@@ -32,7 +32,7 @@ import { validateExpertProposal, validateTeamProposal } from './creation-contrac
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { resolveTeamEngine, dispatchNativeTeam, blocksNativeDelegation } from './team-engine.js'
+import { resolveTeamEngine, dispatchNativeTeam, blocksNativeDelegation, getNativeTeammateSetup, type NativeTeamService } from './team-engine.js'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
@@ -666,6 +666,45 @@ export function apply(ctx: Context, config: Config): void {
   ctx.reflect.provide('agencyAgentsTeamEngine', () => resolveTeamEngine(ctx, undefined, maxDepth).status)
   const proposalRegistry = createProposalRegistry()
   ctx.reflect.provide('agencyProposalRegistry', proposalRegistry)
+  const managedSubagentConfigs = new Map<string, { persona?: string; toolFilter?: { deny: string[] } }>()
+  ctx.on?.('agent/created', (event: { agent: { id: string; ctx: Context } }) => {
+    const agent = event.agent
+    let config = managedSubagentConfigs.get(agent.id)
+    if (!config) {
+      const agentTeams = ctx.get?.('agentTeams') as NativeTeamService | undefined
+      const membership = agentTeams?.tryMembership?.(agent)
+      if (membership?.role === 'teammate' && membership.name.startsWith('agency-')) {
+        const nativeSetup = getNativeTeammateSetup(membership.name)
+        config = {
+          persona: nativeSetup?.persona ?? '',
+          toolFilter: nativeSetup?.toolFilter ?? {
+            deny: [
+              'summon_expert',
+              'summon_experts',
+              'list_experts',
+              'list_expert_teams',
+              'get_expert_team',
+              'summon_expert_team',
+              'spawn_teammate',
+            ],
+          },
+        }
+      }
+    }
+    if (!config) return undefined
+    const childCtx = agent.ctx
+    if (childCtx?.systemPrompt && config.persona) {
+      childCtx.systemPrompt.section({
+        name: PERSONA_PREFIX_SECTION,
+        order: childCtx.systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA_PREFIX'),
+        text: config.persona,
+      })
+    }
+    if (childCtx?.tools && config.toolFilter) {
+      childCtx.tools.restrict(config.toolFilter)
+    }
+    return undefined
+  })
   ctx.on?.('tools/pre-execute', async (exec, next) => {
     if (blocksNativeDelegation(ctx.get('agentTeams'), exec.agent, exec.name)) return { kind: 'deny', reason: teamTx('专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。') }
     return next()
@@ -996,10 +1035,26 @@ export function apply(ctx: Context, config: Config): void {
         signal: AbortSignal
         delivery: 'parent' | 'caller'
       }) => Promise<SubagentRunHandle>
-      on?: Context['on']
     }
-    // DSH 0.2.0-rc.1 / 0.2.0-rc.2: start-time persona / toolFilter.
     const runSignal = signal ?? new AbortController().signal
+    // DSH 0.2.1-rc.1+: 优先使用 startActivation，由持久注册表守护首次启动与后续冷恢复。
+    if (typeof service.startActivation === 'function') {
+      const childId = SessionId(randomUUID())
+      managedSubagentConfigs.set(childId, { persona, toolFilter })
+      return await service.startActivation({
+        provider: providerName,
+        label: label ?? providerName,
+        childId,
+        request: {
+          parent,
+          prompt,
+          ...(maxDepth === undefined ? {} : { maxDepth }),
+        },
+        signal: runSignal,
+        delivery: 'caller',
+      })
+    }
+    // DSH 0.2.0-rc.1 / 0.2.0-rc.2: start-time persona / toolFilter 兜底。
     if (typeof service.start === 'function') {
       return service.start(providerName, {
         label,
@@ -1010,39 +1065,6 @@ export function apply(ctx: Context, config: Config): void {
         persona,
         toolFilter,
       })
-    }
-    // DSH 0.2.1-rc.1: startActivation + scoped persona / tools.restrict on agent/created.
-    if (typeof service.startActivation === 'function') {
-      const childId = SessionId(randomUUID())
-      const stopCreated = ctx.on('agent/created', (event: { agent: { id: string; ctx: Context } }) => {
-        if (event.agent.id !== childId) return undefined
-        const childCtx = event.agent.ctx
-        if (childCtx.systemPrompt) {
-          childCtx.systemPrompt.section({
-            name: PERSONA_PREFIX_SECTION,
-            order: childCtx.systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA_PREFIX'),
-            text: persona,
-          })
-        }
-        if (childCtx.tools) childCtx.tools.restrict(toolFilter)
-        return undefined
-      })
-      try {
-        return await service.startActivation({
-          provider: providerName,
-          label: label ?? providerName,
-          childId,
-          request: {
-            parent,
-            prompt,
-            ...(maxDepth === undefined ? {} : { maxDepth }),
-          },
-          signal: runSignal,
-          delivery: 'caller',
-        })
-      } finally {
-        stopCreated()
-      }
     }
     throw new Error(formatHost(activeLocale(), 'error.subagentsUnavailable'))
   }

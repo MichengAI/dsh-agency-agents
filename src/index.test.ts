@@ -589,6 +589,95 @@ describe('summon_expert', () => {
     expect(disposed).toBe(true)
   })
 
+  it('专家子代理通过 startActivation 首次启动与后续冷恢复均注入人格并限制召唤工具', async () => {
+    const tools: unknown[] = []
+    const listeners: Array<(event: any) => any> = []
+    let activationSpec: Record<string, any> | undefined
+    const startupSections: any[] = []
+    const startupRestrictions: any[] = []
+    const resumeSections: any[] = []
+    const resumeRestrictions: any[] = []
+
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities: { depthLimit: true } }),
+        startActivation: async (spec: Record<string, any>) => {
+          activationSpec = spec
+          // 模拟宿主创建子代理派发 agent/created (source: startup)
+          const startupCtx = {
+            systemPrompt: {
+              getSectionOrder: () => 100,
+              section: (sec: any) => { startupSections.push(sec) },
+            },
+            tools: {
+              restrict: (filter: any) => { startupRestrictions.push(filter) },
+            },
+          }
+          for (const listener of listeners) {
+            listener({ agent: { id: spec.childId, ctx: startupCtx }, source: 'startup' })
+          }
+          return {
+            childId: spec.childId,
+            result: Promise.resolve({ output: [{ type: 'text', text: 'expert answer' }], stopReason: 'completed' }),
+            dispose: async () => {},
+          }
+        },
+      },
+      systemPrompt: { section: () => undefined },
+      on: (event: string, cb: any) => {
+        if (event === 'agent/created') listeners.push(cb)
+        return () => {
+          const idx = listeners.indexOf(cb)
+          if (idx >= 0) listeners.splice(idx, 1)
+        }
+      },
+      settings: alphaSettings(['reviewer']),
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
+      execute: (args: unknown, exec: unknown) => Promise<unknown>
+    }
+
+    const answer = await summon.execute({ expert: 'reviewer', task: 'review code' }, { agent: {} })
+    expect(answer).toEqual({ expert: 'Reviewer', answer: 'expert answer' })
+
+    // 首次启动断言
+    expect(startupSections).toHaveLength(1)
+    expect(startupSections[0]).toMatchObject({ name: 'deployment:persona-prefix', text: 'body' })
+    expect(startupRestrictions).toHaveLength(1)
+    expect(startupRestrictions[0]).toEqual({
+      deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'],
+    })
+
+    // 模拟冷恢复 (source: resume)，重新派发同一个 childId
+    const resumeCtx = {
+      systemPrompt: {
+        getSectionOrder: () => 100,
+        section: (sec: any) => { resumeSections.push(sec) },
+      },
+      tools: {
+        restrict: (filter: any) => { resumeRestrictions.push(filter) },
+      },
+    }
+    for (const listener of [...listeners]) {
+      listener({ agent: { id: activationSpec!.childId, ctx: resumeCtx }, source: 'resume' })
+    }
+
+    // 冷恢复断言：应该同样重新注入人格和工具限制
+    expect(resumeSections).toHaveLength(1)
+    expect(resumeSections[0]).toMatchObject({ name: 'deployment:persona-prefix', text: 'body' })
+    expect(resumeRestrictions).toHaveLength(1)
+    expect(resumeRestrictions[0]).toEqual({
+      deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'],
+    })
+  })
+
   it('新版宿主在发布后收到父取消时立即 dispose 子代理', async () => {
     const tools: unknown[] = []
     const controller = new AbortController()

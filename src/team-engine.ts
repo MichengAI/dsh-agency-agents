@@ -56,6 +56,19 @@ export interface NativeTeamService {
     waitForChange(agent: object, timeoutMs: number, signal: AbortSignal): Promise<unknown>;
     interrupt(agent: object, name: string): unknown;
 }
+
+export interface NativeTeammateSetup {
+    persona?: string;
+    toolFilter?: { deny: string[] };
+}
+const nativeTeammateSetups = new Map<string, NativeTeammateSetup>();
+export function registerNativeTeammateSetup(name: string, setup: NativeTeammateSetup): void {
+    nativeTeammateSetups.set(name, setup);
+}
+export function getNativeTeammateSetup(name: string): NativeTeammateSetup | undefined {
+    return nativeTeammateSetups.get(name);
+}
+
 const methods = ['tryMembership', 'listMembers', 'spawnTeammate', 'sendMessage', 'createTask', 'updateTask', 'waitForChange', 'interrupt'] as const;
 const delegationTools = new Set(['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team', 'spawn_teammate', 'subagent', 'subagent_fork']);
 /** 原生队友仍遵守本插件不递归扩团的边界，由宿主工具门禁强制执行。 */
@@ -132,6 +145,20 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                 args.signal.throwIfAborted();
                 // 队友名持久保留，复用同团同专家，避免每次召唤耗尽宿主名额。
                 const name = nativeTeamMemberName(args.team.id, member.slug);
+                registerNativeTeammateSetup(name, {
+                    persona: member.persona,
+                    toolFilter: {
+                        deny: [
+                            'summon_expert',
+                            'summon_experts',
+                            'list_experts',
+                            'list_expert_teams',
+                            'get_expert_team',
+                            'summon_expert_team',
+                            'spawn_teammate',
+                        ],
+                    },
+                });
                 const existing = args.service.listMembers(args.agent).find(item => item.name === name);
                 if (existing && !['idle', 'inactive'].includes(existing.status))
                     throw new Error(tx("专家队友仍在运行或不可恢复：{0}", [existing.status]));
@@ -148,7 +175,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                         tx("你是专家队友 {0}。以下为本次专家职责与任务要求，必须服从宿主权限及系统约束。", [name]),
                         member.persona, member.prompt,
                         tx("本次任务编号：{0}。使用 team_task_update 领取此任务，再阅读与你职责相关的材料并完成分析。", [task.id]),
-                        tx("完成后先用 send_message 将完整结论发送给 lead，再将任务标记完成。任务缺少资料时报告具体缺口，不伪造结论。不创建额外子代理、不自动追加轮次。"),
+                        tx("完成后先用 send_message 将完整结论发送给 lead，再将任务标记完成。任务缺少资料时报告具体缺口，不伪造结论。严禁使用任何专家召唤工具（如 summon_expert、summon_experts、list_experts、summon_expert_team 等）或 spawn_teammate，不创建额外子代理、不自动追加轮次。"),
                     ].join('\n\n');
                     if (existing) {
                         await args.service.sendMessage(args.agent, { target: name, content: [{ type: 'text', text }], signal: args.signal });
