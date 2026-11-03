@@ -4,6 +4,14 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.23 - 2026-11-03
+
+- **Improve expert discovery menu overlay presentation and viewport positioning in composer toolbar**:
+  - **Docked scrolling and container clipping prevention**: Enhanced the overlay layering and anchoring of the expert menu spawned from the composer toolbar. During active conversation scrolling and docked composer states, the menu floats cleanly above surrounding containers without getting clipped or obscured;
+  - **Adaptive viewport height & boundary clamping**: Dynamically measures available viewport space relative to the trigger button, automatically calculating optimal max-height and scrolling bounds to prevent overflow on compact or short screens;
+  - **Accessible focus management and accurate restoration**: Ensures the search box receives immediate input focus upon opening, and pressing `Escape` or clicking outside smoothly closes the menu and accurately returns focus to the trigger button;
+  - **Cross-host fallback compatibility**: Maintains seamless presentation and graceful fallback rendering across legacy and modern host environments.
+
 ## 1.2.22 - 2026-11-03
 
 - **Fix expert subagent and native team lifecycle reliability and delegation boundaries** (Issue #35):
