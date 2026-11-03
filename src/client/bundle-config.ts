@@ -227,6 +227,7 @@ export interface SidebarController {
   getLocation: () => EntryLocation
   setLocation: (next: EntryLocation) => Promise<EntryLocation>
   isSettingsSectionEnabled: () => boolean
+  onLocationChange?: (fn: (location: EntryLocation) => void) => () => void
   isEnabled: () => boolean
   isSupported: () => boolean
   setEnabled: (next: boolean) => Promise<boolean>
@@ -244,6 +245,7 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
       getLocation: () => 'both',
       setLocation: async () => 'both',
       isSettingsSectionEnabled: () => true,
+      onLocationChange: () => () => {},
       isEnabled: () => false,
       isSupported: () => false,
       setEnabled: async () => false,
@@ -265,6 +267,7 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
   let epoch = 0
   let layoutService: any
   const listeners = new Set<() => void>()
+  const locationListeners = new Set<(location: EntryLocation) => void>()
 
   const isSidebarEnabled = () => entryLocation === 'both' || entryLocation === 'sidebar'
   const isSettingsSectionEnabled = () => entryLocation === 'both' || entryLocation === 'settings'
@@ -272,6 +275,9 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
   const notify = () => {
     for (const listener of listeners) {
       try { listener() } catch {}
+    }
+    for (const listener of locationListeners) {
+      try { listener(entryLocation) } catch {}
     }
   }
 
@@ -531,6 +537,10 @@ export function setupSidebarEntry(ctx: any, options: SetupSidebarOptions): Sideb
     getLocation: () => entryLocation,
     setLocation,
     isSettingsSectionEnabled,
+    onLocationChange: (fn: (loc: EntryLocation) => void) => {
+      locationListeners.add(fn)
+      return () => { locationListeners.delete(fn) }
+    },
     isEnabled: () => isSidebarEnabled(),
     isSupported: () => sidebarSupported,
     setEnabled,
