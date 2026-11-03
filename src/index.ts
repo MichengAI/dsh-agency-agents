@@ -32,7 +32,7 @@ import { validateExpertProposal, validateTeamProposal } from './creation-contrac
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { resolveTeamEngine, dispatchNativeTeam, blocksNativeDelegation, getNativeTeammateSetup, type NativeTeamService } from './team-engine.js'
+import { resolveTeamEngine, dispatchNativeTeam, blocksNativeDelegation, getNativeTeammateSetup, isAgencyTeammateName, EXPERT_TOOL_DENY, type NativeTeamService } from './team-engine.js'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
@@ -673,21 +673,10 @@ export function apply(ctx: Context, config: Config): void {
     if (!config) {
       const agentTeams = ctx.get?.('agentTeams') as NativeTeamService | undefined
       const membership = agentTeams?.tryMembership?.(agent)
-      if (membership?.role === 'teammate' && membership.name.startsWith('agency-')) {
+      if (membership?.role === 'teammate' && isAgencyTeammateName(membership.name)) {
         const nativeSetup = getNativeTeammateSetup(membership.name)
         config = {
-          persona: nativeSetup?.persona ?? '',
-          toolFilter: nativeSetup?.toolFilter ?? {
-            deny: [
-              'summon_expert',
-              'summon_experts',
-              'list_experts',
-              'list_expert_teams',
-              'get_expert_team',
-              'summon_expert_team',
-              'spawn_teammate',
-            ],
-          },
+          toolFilter: nativeSetup?.toolFilter ?? { deny: [...EXPERT_TOOL_DENY] },
         }
       }
     }
@@ -701,7 +690,11 @@ export function apply(ctx: Context, config: Config): void {
       })
     }
     if (childCtx?.tools && config.toolFilter) {
-      childCtx.tools.restrict(config.toolFilter)
+      try {
+        childCtx.tools.restrict(config.toolFilter)
+      } catch (error) {
+        console.warn?.('[agency-agents] tools.restrict failed for agent %s:', agent.id, error)
+      }
     }
     return undefined
   })
@@ -1091,7 +1084,7 @@ export function apply(ctx: Context, config: Config): void {
       prompt: [{ type: 'text', text: taskText }],
       parent: exec.agent,
       persona: sanitize(persona),
-      toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'] },
+      toolFilter: { deny: [...EXPERT_TOOL_DENY] },
       ...(maxDepth === undefined ? {} : { maxDepth }),
       signal: exec.signal,
     })
@@ -1229,7 +1222,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
                 exec.signal?.throwIfAborted();
                 const run = await startSubagentRun(config.provider, { label: member.name, parent: exec.agent!,
                     prompt: [{ type: 'text', text: member.prompt }], persona: sanitize(member.persona),
-                    toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'] },
+                    toolFilter: { deny: [...EXPERT_TOOL_DENY] },
                     ...(maxDepth === undefined ? {} : { maxDepth }), signal: exec.signal });
                 const value = await awaitSubagentRun(run, exec.signal);
                 if (value.stopReason !== 'completed')

@@ -57,8 +57,22 @@ export interface NativeTeamService {
     interrupt(agent: object, name: string): unknown;
 }
 
+export const EXPERT_TOOL_DENY = [
+    'summon_expert',
+    'summon_experts',
+    'list_experts',
+    'list_expert_teams',
+    'get_expert_team',
+    'summon_expert_team',
+] as const;
+
+export const AGENCY_TEAMMATE_NAME_PATTERN = /^agency-[a-z0-9-]+-[0-9a-f]{10}$/u;
+
+export function isAgencyTeammateName(name: string): boolean {
+    return AGENCY_TEAMMATE_NAME_PATTERN.test(name);
+}
+
 export interface NativeTeammateSetup {
-    persona?: string;
     toolFilter?: { deny: string[] };
 }
 const nativeTeammateSetups = new Map<string, NativeTeammateSetup>();
@@ -76,7 +90,7 @@ export function blocksNativeDelegation(service: unknown, agent: object | undefin
     if (!agent || !delegationTools.has(tool) || !isNativeTeamService(service))
         return false;
     const member = service.tryMembership(agent);
-    return member?.role === 'teammate' && /^agency-[a-z0-9-]+-[0-9a-f]{10}$/u.test(member.name);
+    return member?.role === 'teammate' && isAgencyTeammateName(member.name);
 }
 export function isNativeTeamService(value: unknown): value is NativeTeamService {
     return value !== null && typeof value === 'object' && methods.every(key => typeof (value as Record<string, unknown>)[key] === 'function');
@@ -146,18 +160,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                 // 队友名持久保留，复用同团同专家，避免每次召唤耗尽宿主名额。
                 const name = nativeTeamMemberName(args.team.id, member.slug);
                 registerNativeTeammateSetup(name, {
-                    persona: member.persona,
-                    toolFilter: {
-                        deny: [
-                            'summon_expert',
-                            'summon_experts',
-                            'list_experts',
-                            'list_expert_teams',
-                            'get_expert_team',
-                            'summon_expert_team',
-                            'spawn_teammate',
-                        ],
-                    },
+                    toolFilter: { deny: [...EXPERT_TOOL_DENY] },
                 });
                 const existing = args.service.listMembers(args.agent).find(item => item.name === name);
                 if (existing && !['idle', 'inactive'].includes(existing.status))

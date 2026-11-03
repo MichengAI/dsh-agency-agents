@@ -268,19 +268,81 @@ describe('专家团宿主与远端集成', () => {
       expect(call.text).toContain('严禁使用任何专家召唤工具')
     }
 
-    // 断言 2：队友在 agent/created 时被注入 tools.restrict（裁掉 6 个专家工具和 spawn_teammate）
+    // 断言 2：队友在 agent/created 时被注入 tools.restrict（严格裁掉 6 个全局召唤工具，坚决排除自身的 spawn_teammate）
     expect(injectedRestrictions).toHaveLength(3)
     for (const filter of injectedRestrictions) {
       expect(filter).toEqual({
-        deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team', 'spawn_teammate'],
+        deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'],
       })
     }
 
-    // 断言 3：队友在 agent/created 时被注入专家人设 section
-    expect(injectedSections).toHaveLength(3)
-    for (const sec of injectedSections) {
-      expect(sec).toMatchObject({ name: 'deployment:persona-prefix' })
-      expect(sec.text).toEqual(expect.any(String))
+    // 断言 3：队友的人设已完整且持久地嵌入首条任务 Prompt 中，不再重复叠加入易失的 systemPrompt.section 以免 Token 翻倍
+    expect(injectedSections).toHaveLength(0)
+  })
+
+  it('队友 tools.restrict 遇到未知工具抛错时会被静默安全隔离，不向外中断创建广播', async () => {
+    const settings = new TestSettings(new Context())
+    settings.register('locale', (value) => value)
+    settings.restore({ 'agency-agents': { enabled: [] }, locale: { preference: 'zh' } })
+    const services = new Map<string, unknown>()
+    const tools = new Map<string, { execute(args: unknown, exec?: unknown): Promise<unknown> }>()
+    let createdListener: ((event: any) => any) | undefined
+
+    const native: NativeTeamService = {
+      tryMembership: (agent: any) => ({ role: 'teammate', name: agent.mockName }),
+      listMembers: () => [],
+      spawnTeammate: vi.fn(async () => ({ member: { name: 'agency-pm-1234567890', status: 'running' } })),
+      sendMessage: async () => ({}),
+      createTask: async () => ({ id: '1', revision: 1 }),
+      updateTask: async () => ({}),
+      waitForChange: async () => ({}),
+      interrupt: () => {},
     }
+    services.set('agentTeams', native)
+
+    const ctx = {
+      settings,
+      effect: () => () => {},
+      inject: (_deps: unknown, callback: (ctx: unknown) => void) => callback(ctx),
+      reflect: { provide: (key: string, value: unknown) => services.set(key, value) },
+      get: (key: string) => services.get(key),
+      typert: { register: () => {} },
+      tools: {
+        register: (tool: { name: string; execute: (args: unknown, exec?: unknown) => Promise<unknown> }) =>
+          tools.set(tool.name, tool),
+      },
+      systemPrompt: { section: () => {} },
+      on: (event: string, cb: any) => {
+        if (event === 'agent/created') createdListener = cb
+        return () => {}
+      },
+      subagents: {
+        getProvider: () => ({ capabilities: { persona: true, toolFilter: true } }),
+        start: async () => ({ result: Promise.resolve({ output: [], stopReason: 'completed' }), dispose: async () => {} }),
+      },
+    } as unknown as Context
+
+    apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS, ...volatileConfig(settings) } as never)
+    expect(createdListener).toBeDefined()
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    // 模拟子代理的 tools.restrict 抛出类似于 unknown global tool 的异常
+    const brokenChildCtx = {
+      tools: {
+        restrict: () => {
+          throw new Error('tools.restrict() names unknown global tool "spawn_teammate"')
+        },
+      },
+    }
+    const fakeAgent = { id: 'child-err', mockName: 'agency-test-1234567890', ctx: brokenChildCtx }
+
+    // 必须安全返回 undefined，绝不把异常抛出
+    expect(() => createdListener!({ agent: fakeAgent, source: 'startup' })).not.toThrow()
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[agency-agents] tools.restrict failed for agent %s:'),
+      'child-err',
+      expect.any(Error),
+    )
+    warnSpy.mockRestore()
   })
 })
