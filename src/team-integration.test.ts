@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
+import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
+import { createScope } from '@deepseek-ai/dsh-scope'
 import type { NativeTeamService } from './team-engine.js'
+import { EXPERT_TOOL_DENY } from './team-engine.js'
 import { Context } from '@deepseek-ai/cordis'
 import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import { apply, DEFAULT_DIVISIONS } from './index.js'
@@ -344,5 +348,118 @@ describe('专家团宿主与远端集成', () => {
       expect.any(Error),
     )
     warnSpy.mockRestore()
+  })
+
+  it('验证 EXPERT_TOOL_DENY 在真实 dsh-tools 作用域下可成功 restrict 且阻断未知工具', async () => {
+    const root = new Context()
+    await root.plugin(SystemPrompt, {}).await()
+    await root.plugin(ToolRuntime, {}).await()
+    await new Promise((r) => setTimeout(r, 60))
+    const box: Record<string, any> = {}
+    await root
+      .plugin({
+        inject: ['tools', 'systemPrompt'],
+        apply(c: any) {
+          for (const name of [...EXPERT_TOOL_DENY, 'read_file']) {
+            c.tools.register(
+              defineTool({
+                name,
+                description: name,
+                parameters: {},
+                output: { schema: { type: 'object', additionalProperties: false, properties: {} }, render: () => [] },
+                execute: async () => ({}),
+              }),
+            )
+          }
+          const fakeTeammate = { id: 'agent-contract-check' }
+          const scoped = createScope(c, fakeTeammate)
+          box.teammate = scoped.ctx
+          scoped.ctx.tools.register(
+            defineTool({
+              name: 'send_message',
+              description: 'send_message',
+              parameters: {},
+              output: { schema: { type: 'object', additionalProperties: false, properties: {} }, render: () => [] },
+              execute: async () => ({}),
+            }),
+          )
+        },
+      })
+      .await()
+
+    await new Promise((r) => setTimeout(r, 50))
+    expect(box.teammate).toBeDefined()
+
+    // 正向断言：生产常量中的 6 个工具执行 restrict 不抛错
+    expect(() => {
+      box.teammate.tools.restrict({ deny: [...EXPERT_TOOL_DENY] })
+    }).not.toThrow()
+
+    // 哨兵断言：如果把 own 作用域工具混入 deny，真实 dsh-tools 必须直接抛错
+    expect(() => {
+      box.teammate.tools.restrict({ deny: [...EXPERT_TOOL_DENY, 'send_message'] })
+    }).toThrow(/names unknown global tool "send_message"/)
+  })
+
+  it('受管专家子代理调用召唤工具会被 tools/pre-execute 门禁双重拦截', async () => {
+    const settings = new TestSettings(new Context())
+    settings.register('locale', (value) => value)
+    settings.restore({ 'agency-agents': { enabled: ['engineering-code-reviewer'] }, locale: { preference: 'zh' } })
+    const services = new Map<string, unknown>()
+    const tools = new Map<string, { execute(args: unknown, exec?: unknown): Promise<unknown> }>()
+    let preExecuteHook: ((exec: any, next: () => any) => Promise<any>) | undefined
+    let createdListener: ((event: any) => any) | undefined
+    let spawnedChildId: string | undefined
+
+    const ctx = {
+      settings,
+      effect: () => () => {},
+      inject: (_deps: unknown, callback: (ctx: unknown) => void) => callback(ctx),
+      reflect: { provide: (key: string, value: unknown) => services.set(key, value) },
+      get: (key: string) => services.get(key),
+      typert: { register: () => {} },
+      tools: {
+        register: (tool: { name: string; execute: (args: unknown, exec?: unknown) => Promise<unknown> }) =>
+          tools.set(tool.name, tool),
+      },
+      systemPrompt: { section: () => {} },
+      on: (event: string, cb: any) => {
+        if (event === 'tools/pre-execute') preExecuteHook = cb
+        if (event === 'agent/created') createdListener = cb
+        return () => {}
+      },
+      subagents: {
+        getProvider: () => ({ capabilities: { depthLimit: true } }),
+        startActivation: async (spec: any) => {
+          spawnedChildId = spec.childId
+          createdListener?.({ agent: { id: spec.childId, ctx: { tools: { restrict: () => {} } } }, source: 'startup' })
+          return {
+            childId: spec.childId,
+            result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
+            dispose: async () => {},
+          }
+        },
+      },
+    } as unknown as Context
+
+    apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS, ...volatileConfig(settings) } as never)
+    expect(preExecuteHook).toBeDefined()
+
+    // 正常主会话执行召唤工具：放行
+    const nextFn = vi.fn(async () => ({ kind: 'pass' }))
+    const parentExec = { agent: { id: 'parent-session' }, name: 'summon_expert' }
+    await expect(preExecuteHook!(parentExec, nextFn)).resolves.toEqual({ kind: 'pass' })
+    expect(nextFn).toHaveBeenCalledTimes(1)
+
+    // 启动一个专家子代理
+    await tools.get('summon_expert')!.execute({ expert: '代码审查工程师', task: 'check' }, { agent: {} })
+    expect(spawnedChildId).toBeDefined()
+
+    // 该受管专家子代理在执行层尝试调用 summon_expert，pre-execute 拦截
+    const childExec = { agent: { id: spawnedChildId }, name: 'summon_expert' }
+    const blockedNext = vi.fn()
+    const result = await preExecuteHook!(childExec, blockedNext)
+    expect(result).toMatchObject({ kind: 'deny', reason: '专家成员不能继续召唤专家团。' })
+    expect(blockedNext).not.toHaveBeenCalled()
   })
 })

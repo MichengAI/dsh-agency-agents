@@ -666,7 +666,15 @@ export function apply(ctx: Context, config: Config): void {
   ctx.reflect.provide('agencyAgentsTeamEngine', () => resolveTeamEngine(ctx, undefined, maxDepth).status)
   const proposalRegistry = createProposalRegistry()
   ctx.reflect.provide('agencyProposalRegistry', proposalRegistry)
+  const MAX_MANAGED_SUBAGENTS = 256
   const managedSubagentConfigs = new Map<string, { persona?: string; toolFilter?: { deny: string[] } }>()
+  const recordSubagentConfig = (id: string, config: { persona?: string; toolFilter?: { deny: string[] } }): void => {
+    if (managedSubagentConfigs.size >= MAX_MANAGED_SUBAGENTS) {
+      const oldest = managedSubagentConfigs.keys().next().value
+      if (oldest !== undefined) managedSubagentConfigs.delete(oldest)
+    }
+    managedSubagentConfigs.set(id, config)
+  }
   ctx.on?.('agent/created', (event: { agent: { id: string; ctx: Context } }) => {
     const agent = event.agent
     let config = managedSubagentConfigs.get(agent.id)
@@ -700,6 +708,9 @@ export function apply(ctx: Context, config: Config): void {
   })
   ctx.on?.('tools/pre-execute', async (exec, next) => {
     if (blocksNativeDelegation(ctx.get('agentTeams'), exec.agent, exec.name)) return { kind: 'deny', reason: teamTx('专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。') }
+    if (exec.agent?.id && managedSubagentConfigs.has(exec.agent.id) && (EXPERT_TOOL_DENY as readonly string[]).includes(exec.name)) {
+      return { kind: 'deny', reason: teamTx('专家成员不能继续召唤专家团。') }
+    }
     return next()
   })
   const retryCleanup = (): void => {
@@ -1033,7 +1044,7 @@ export function apply(ctx: Context, config: Config): void {
     // DSH 0.2.1-rc.1+: 优先使用 startActivation，由持久注册表守护首次启动与后续冷恢复。
     if (typeof service.startActivation === 'function') {
       const childId = SessionId(randomUUID())
-      managedSubagentConfigs.set(childId, { persona, toolFilter })
+      recordSubagentConfig(childId, { persona, toolFilter })
       return await service.startActivation({
         provider: providerName,
         label: label ?? providerName,

@@ -75,8 +75,13 @@ export function isAgencyTeammateName(name: string): boolean {
 export interface NativeTeammateSetup {
     toolFilter?: { deny: string[] };
 }
+const MAX_NATIVE_SETUPS = 128;
 const nativeTeammateSetups = new Map<string, NativeTeammateSetup>();
 export function registerNativeTeammateSetup(name: string, setup: NativeTeammateSetup): void {
+    if (nativeTeammateSetups.size >= MAX_NATIVE_SETUPS) {
+        const oldest = nativeTeammateSetups.keys().next().value;
+        if (oldest !== undefined) nativeTeammateSetups.delete(oldest);
+    }
     nativeTeammateSetups.set(name, setup);
 }
 export function getNativeTeammateSetup(name: string): NativeTeammateSetup | undefined {
