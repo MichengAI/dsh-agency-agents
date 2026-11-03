@@ -668,7 +668,9 @@ export function apply(ctx: Context, config: Config): void {
   ctx.reflect.provide('agencyProposalRegistry', proposalRegistry)
   const MAX_MANAGED_SUBAGENTS = 256
   const managedSubagentConfigs = new Map<string, { persona?: string; toolFilter?: { deny: string[] } }>()
+  const managedSubagentIds = new Set<string>()
   const recordSubagentConfig = (id: string, config: { persona?: string; toolFilter?: { deny: string[] } }): void => {
+    managedSubagentIds.add(id)
     if (managedSubagentConfigs.size >= MAX_MANAGED_SUBAGENTS) {
       const oldest = managedSubagentConfigs.keys().next().value
       if (oldest !== undefined) managedSubagentConfigs.delete(oldest)
@@ -708,7 +710,8 @@ export function apply(ctx: Context, config: Config): void {
   })
   ctx.on?.('tools/pre-execute', async (exec, next) => {
     if (blocksNativeDelegation(ctx.get('agentTeams'), exec.agent, exec.name)) return { kind: 'deny', reason: teamTx('专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。') }
-    if (exec.agent?.id && managedSubagentConfigs.has(exec.agent.id) && (EXPERT_TOOL_DENY as readonly string[]).includes(exec.name)) {
+    const agentId = exec.agent?.id
+    if (agentId && managedSubagentIds.has(agentId) && (EXPERT_TOOL_DENY as readonly string[]).includes(exec.name)) {
       return { kind: 'deny', reason: teamTx('专家成员不能继续召唤专家团。') }
     }
     return next()

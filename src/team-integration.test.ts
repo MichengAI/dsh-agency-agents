@@ -356,11 +356,21 @@ describe('专家团宿主与远端集成', () => {
     await root.plugin(ToolRuntime, {}).await()
     await new Promise((r) => setTimeout(r, 60))
     const box: Record<string, any> = {}
+    // 冻结真实生产环境中注册在全局的工具名（独立字面量，不从 EXPERT_TOOL_DENY 派生，杜绝同义反复与假绿）
+    const PRODUCTION_GLOBAL_TOOLS = [
+      'summon_expert',
+      'summon_experts',
+      'list_experts',
+      'list_expert_teams',
+      'get_expert_team',
+      'summon_expert_team',
+      'read_file',
+    ] as const
     await root
       .plugin({
         inject: ['tools', 'systemPrompt'],
         apply(c: any) {
-          for (const name of [...EXPERT_TOOL_DENY, 'read_file']) {
+          for (const name of PRODUCTION_GLOBAL_TOOLS) {
             c.tools.register(
               defineTool({
                 name,
@@ -461,5 +471,14 @@ describe('专家团宿主与远端集成', () => {
     const result = await preExecuteHook!(childExec, blockedNext)
     expect(result).toMatchObject({ kind: 'deny', reason: '专家成员不能继续召唤专家团。' })
     expect(blockedNext).not.toHaveBeenCalled()
+
+    // 验证即使超过 256 次调用淘汰最老条目的人设配置，基于 managedSubagentIds 的门禁依然坚不可摧
+    for (let i = 0; i < 260; i++) {
+      await tools.get('summon_expert')!.execute({ expert: '代码审查工程师', task: `check-${i}` }, { agent: {} })
+    }
+    const overflowBlockedNext = vi.fn()
+    const overflowResult = await preExecuteHook!(childExec, overflowBlockedNext)
+    expect(overflowResult).toMatchObject({ kind: 'deny', reason: '专家成员不能继续召唤专家团。' })
+    expect(overflowBlockedNext).not.toHaveBeenCalled()
   })
 })
