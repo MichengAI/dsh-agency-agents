@@ -47,7 +47,7 @@ import { triggerChatCreation, subscribeChatPrefill, takeChatPrefill, peekChatPre
 import { acceptEnabled, acceptCatalog, catalogState, refreshCatalog, subscribeCatalog } from './catalog.js'
 import { refreshTeams, teamState } from './team-cache.js'
 import { installNativeTeamNames } from './native-team-names.js'
-import { installSettingsNavIcon } from './settings-nav-icon.js'
+import { AgentsNavIcon, installSettingsNavIcon } from './settings-nav-icon.js'
 import type { AgencyCatalogRemote, AgencyCreationRemote } from './remote.js'
 import type { StoredProposal } from '../creation-tools.js'
 
@@ -2037,6 +2037,11 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     if (!settingsSectionSupported || offSettingsSection) return
     if (sidebarController && !sidebarController.isSettingsSectionEnabled()) return
     try {
+      (ctx.slots.register as any)({
+        name: 'settings.section.icon',
+        id: 'agency-agents',
+        locale: NS,
+      }, AgentsNavIcon)
       const unreg = ctx.slots.register(
         {
           name: 'settings.section', id: 'agency-agents', order: 20, label: () => t('settings.nav'), locale: NS,

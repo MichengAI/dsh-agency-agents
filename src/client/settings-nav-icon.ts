@@ -1,3 +1,5 @@
+import React from 'react'
+
 /**
  * 专家管理器在 DSH 设置侧边导航栏中的专属图标。
  *
@@ -10,6 +12,24 @@
 
 export const NAV_ICON_MARKER = 'data-aag-nav-icon'
 export const NAV_ROW_SELECTOR = '[role="dialog"] nav button'
+
+/** 原生 settings.section.icon 插槽图标组件 */
+export function AgentsNavIcon({ size = 16 }: { size?: number }): React.ReactElement {
+  return React.createElement(
+    'svg',
+    {
+      xmlns: 'http://www.w3.org/2000/svg',
+      viewBox: '0 0 16 16',
+      width: size,
+      height: size,
+      fill: 'none',
+      stroke: 'currentColor',
+      strokeWidth: 1.3,
+    },
+    React.createElement('circle', { cx: 8, cy: 4.8, r: 3.2 }),
+    React.createElement('path', { d: 'M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5', strokeLinecap: 'round' }),
+  )
+}
 
 /** 100% 对齐 dsh-codex-ui 官方的专家/用户专属矢量路径（viewBox: 0 0 16 16） */
 export const EXPERT_PATHS = '<circle cx="8" cy="4.8" r="3.2" stroke="currentColor" stroke-width="1.3" fill="none"/>'
@@ -63,6 +83,17 @@ export function isOwnNavRow(rowText: string | null | undefined, wantedLabel: str
 export function applySettingsNavIcon(button: Element, wantedLabel: () => string): boolean {
   const isOwn = isOwnNavRow(button.textContent, wantedLabel())
   if (isOwn) {
+    const hasSlotIcon = Array.from(button.children).some((child) =>
+      child.tagName === 'SPAN' &&
+      (child.className.includes('navIcon') || child.getAttribute('aria-hidden') === 'true')
+    ) || Boolean(button.querySelector?.('[class*="navIcon"]'))
+    if (hasSlotIcon) {
+      if (button.hasAttribute(NAV_ICON_MARKER)) {
+        button.removeAttribute(NAV_ICON_MARKER)
+        return true
+      }
+      return false
+    }
     if (button.getAttribute(NAV_ICON_MARKER) === '') return false
     button.setAttribute(NAV_ICON_MARKER, '')
     return true
