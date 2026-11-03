@@ -4,7 +4,7 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
-## 1.2.24 - 2026-11-04
+## 1.2.25 - 2026-11-04
 
 - **Fix settings navigation icon and expert settings panel presentation across host versions**:
   - **Settings navigation icon presentation**: Eliminates an issue where the specialized expert icon in the settings navigation sidebar could fall back to a generic gear icon on certain client host versions, ensuring the dedicated icon displays consistently and accurately across all environments;
