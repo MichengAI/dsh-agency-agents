@@ -4,13 +4,18 @@
 
 This file records features and upgrade boundaries. npm and GitHub Releases remain the publication source of truth.
 
+## 1.2.24 - 2026-11-04
+
+- **Fix settings navigation icon and expert settings panel presentation across host versions**:
+  - **Settings navigation icon presentation**: Eliminates an issue where the specialized expert icon in the settings navigation sidebar could fall back to a generic gear icon on certain client host versions, ensuring the dedicated icon displays consistently and accurately across all environments;
+  - **Cross-host settings panel reliability**: Enhances entry registration across host versions so the expert settings section and navigation entries load and unmount smoothly without missing panels or visual regressions.
+
 ## 1.2.23 - 2026-11-03
 
 - **Improve expert discovery menu overlay presentation and viewport positioning in composer toolbar**:
   - **Docked scrolling and container clipping prevention**: Enhanced the overlay layering and anchoring of the expert menu spawned from the composer toolbar. During active conversation scrolling and docked composer states, the menu floats cleanly above surrounding containers without getting clipped or obscured;
   - **Adaptive viewport height & boundary clamping**: Dynamically measures available viewport space relative to the trigger button, automatically calculating optimal max-height and scrolling bounds to prevent overflow on compact or short screens;
-  - **Accessible focus management and accurate restoration**: Ensures the search box receives immediate input focus upon opening; pressing `Escape` cleanly closes the menu and accurately returns focus to the trigger button, while clicking outside dismisses without stealing target focus;
-  - **Entry location preferences & host compatibility**: Supports customizing entry placement across sidebar and settings center ("both / sidebar only / settings only"), while ensuring robust settings page registration across legacy and modern host versions.
+  - **Accessible focus management and accurate restoration**: Ensures the search box receives immediate input focus upon opening; pressing `Escape` cleanly closes the menu and accurately returns focus to the trigger button, while clicking outside dismisses without stealing target focus.
 
 ## 1.2.22 - 2026-11-03
 
