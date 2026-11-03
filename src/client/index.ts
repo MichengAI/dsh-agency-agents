@@ -15,6 +15,7 @@ import { teamText } from '../team-i18n.js'
 import type { ExpertTeam } from '../team-contract.js'
 import { PromptDialog } from "./prompt-dialog.js";
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { CategorySelect } from './category-select.js'
 import { BulkActionMenu, type BulkActionMenuItem } from './bulk-action-menu.js'
 import { ExpertDiscovery, DISCOVERY_CSS } from './expert-discovery.js'
@@ -976,9 +977,17 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
   const working = React.useRef(false)
   const epoch = React.useRef(0)
   const triggerRef = React.useRef<HTMLSpanElement | null>(null)
+  const menuRef = React.useRef<HTMLDivElement | null>(null)
   const menuId = React.useId()
   const [menuPosition, setMenuPosition] = React.useState<ExpertMenuPosition | undefined>()
   const [menuLeft, setMenuLeft] = React.useState(0)
+  const [menuCoords, setMenuCoords] = React.useState<{
+    placement: 'above' | 'below'
+    left: number
+    top?: number
+    bottom?: number
+    maxHeight: number
+  } | undefined>()
   const rootRef = React.useRef<HTMLDivElement | null>(null)
   const catalog = React.useSyncExternalStore(
     listener => subscribeCatalog(props.remote, listener),
@@ -1012,12 +1021,26 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
       const root = rootRef.current
       if (root === null) return
       const viewportHeight = window.visualViewport?.height ?? window.innerHeight
-      const next = resolveExpertMenuPosition(root.getBoundingClientRect(), viewportHeight)
-      const rect = root.getBoundingClientRect()
       const viewportWidth = window.visualViewport?.width ?? window.innerWidth
+      const rect = root.getBoundingClientRect()
+      const next = resolveExpertMenuPosition(rect, viewportHeight)
       const width = Math.min(340, viewportWidth - 24)
+      const left = Math.max(12, Math.min(rect.left, viewportWidth - 12 - width))
+      const maxHeight = Math.min(360, next.maxHeight)
+      const bottom = Math.max(0, Math.floor(viewportHeight - rect.top + 4))
+      const top = Math.max(0, Math.floor(rect.bottom + 4))
+
       setMenuLeft(Math.max(12 - rect.left, Math.min(0, viewportWidth - 12 - width - rect.left)))
       setMenuPosition((current) => current?.placement === next.placement && current.maxHeight === next.maxHeight ? current : next)
+      setMenuCoords((current) => (
+        current?.placement === next.placement &&
+        current?.left === left &&
+        current?.bottom === bottom &&
+        current?.top === top &&
+        current?.maxHeight === maxHeight
+          ? current
+          : { placement: next.placement, left, bottom, top, maxHeight }
+      ))
     }
     updatePosition()
     window.addEventListener('resize', updatePosition)
@@ -1041,6 +1064,7 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     const onPointerDown = (ev: PointerEvent): void => {
       const target = ev.target
       if (target instanceof Node && rootRef.current?.contains(target)) return
+      if (target instanceof Node && menuRef.current?.contains(target)) return
       if (target instanceof Element && target.closest('[role="dialog"], .dsh-primitives-menu, [role="menu"]')) return
       close()
     }
@@ -1068,6 +1092,24 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     if (working.current) return
     epoch.current++
     setQuery('')
+    if (rootRef.current) {
+      const rect = rootRef.current.getBoundingClientRect()
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+      const viewportWidth = window.visualViewport?.width ?? window.innerWidth
+      const next = resolveExpertMenuPosition(rect, viewportHeight)
+      const width = Math.min(340, viewportWidth - 24)
+      const left = Math.max(12, Math.min(rect.left, viewportWidth - 12 - width))
+      const maxHeight = Math.min(360, next.maxHeight)
+      setMenuLeft(Math.max(12 - rect.left, Math.min(0, viewportWidth - 12 - width - rect.left)))
+      setMenuPosition(next)
+      setMenuCoords({
+        placement: next.placement,
+        left,
+        bottom: Math.max(0, Math.floor(viewportHeight - rect.top + 4)),
+        top: Math.max(0, Math.floor(rect.bottom + 4)),
+        maxHeight,
+      })
+    }
     setOpen(true)
     load()
   }
@@ -1115,11 +1157,27 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
     return nameMatch(b) - nameMatch(a)
   })
   const results = searching ? matches.slice(0, 8) : groupByDivision(matches, props.getActive()).flatMap(group => group.experts)
+  const canPortal = typeof document !== 'undefined' && Boolean(document.body) && typeof createPortal === 'function'
+  const menuStyle: React.CSSProperties = canPortal
+    ? {
+        position: 'fixed',
+        zIndex: 10000,
+        left: `${menuCoords?.left ?? (rootRef.current ? Math.max(12, Math.min(rootRef.current.getBoundingClientRect().left, (window.visualViewport?.width ?? window.innerWidth) - 12 - Math.min(340, (window.visualViewport?.width ?? window.innerWidth) - 24))) : 12)}px`,
+        ...(menuCoords?.placement === 'below'
+          ? { top: `${menuCoords.top ?? (rootRef.current ? rootRef.current.getBoundingClientRect().bottom + 4 : 0)}px`, bottom: 'auto' }
+          : { bottom: `${menuCoords?.bottom ?? (rootRef.current ? Math.max(0, (window.visualViewport?.height ?? window.innerHeight) - rootRef.current.getBoundingClientRect().top + 4) : 0)}px`, top: 'auto' }),
+        maxHeight: `${menuCoords?.maxHeight ?? 360}px`,
+      }
+    : {
+        maxHeight: `${Math.min(360, menuPosition?.maxHeight ?? 360)}px`,
+        left: `${menuLeft}px`,
+      }
   const menu = open
     ? React.createElement('div', {
+      ref: menuRef,
       className: 'aag-menu aag-discovery', id: menuId, role: 'dialog', 'aria-modal': 'true', 'aria-label': props.t('settings.nav'),
-      'data-placement': menuPosition?.placement,
-      style: { maxHeight: `${Math.min(360, menuPosition?.maxHeight ?? 360)}px`, left: `${menuLeft}px` },
+      'data-placement': menuCoords?.placement ?? menuPosition?.placement,
+      style: menuStyle,
       onKeyDown: (event: React.KeyboardEvent) => {
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(true) }
       },
@@ -1140,26 +1198,34 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
         query, onQuery: setQuery, busy, hasMore: searching && matches.length > results.length, onPick: slug => { void pick(slug) } }))
     : null
 
-  return React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef, onBlur: (event: React.FocusEvent) => {
-    const next = event.relatedTarget
-    if (next instanceof Element && (event.currentTarget.contains(next) || next.closest('[role="dialog"], .dsh-primitives-menu, [role="menu"]'))) return
-    if (next instanceof Node && !event.currentTarget.contains(next)) close()
-  } },
-    React.createElement('span', { ref: triggerRef }, React.createElement(PrimitiveButton, {
-      variant: 'ghost',
-      size: 'sm',
-      title: props.t('button.title'),
-      'aria-expanded': open,
-      'aria-haspopup': 'dialog',
-      'aria-controls': open ? menuId : undefined,
-      onMouseDown: keepComposerFocus,
-      onClick,
-      icon: expertIcon(),
-    },
-      React.createElement('span', { className: 'aag-btn-label' }, props.t('settings.nav')),
-      chevronDownIcon(open),
-    )),
-    menu)
+  const renderedPortal = canPortal && menu ? createPortal(menu, document.body) : null
+
+  return React.createElement(React.Fragment, null,
+    React.createElement('div', { className: 'aag-btn-wrap', ref: rootRef, onBlur: (event: React.FocusEvent) => {
+      const next = event.relatedTarget
+      if (next instanceof Element && (
+        event.currentTarget.contains(next) ||
+        menuRef.current?.contains(next) ||
+        next.closest('[role="dialog"], .dsh-primitives-menu, [role="menu"]')
+      )) return
+      if (next instanceof Node && !event.currentTarget.contains(next) && !menuRef.current?.contains(next)) close()
+    } },
+      React.createElement('span', { ref: triggerRef }, React.createElement(PrimitiveButton, {
+        variant: 'ghost',
+        size: 'sm',
+        title: props.t('button.title'),
+        'aria-expanded': open,
+        'aria-haspopup': 'dialog',
+        'aria-controls': open ? menuId : undefined,
+        onMouseDown: keepComposerFocus,
+        onClick,
+        icon: expertIcon(),
+      },
+        React.createElement('span', { className: 'aag-btn-label' }, props.t('settings.nav')),
+        chevronDownIcon(open),
+      )),
+      canPortal ? null : menu),
+    renderedPortal)
 }
 
 interface OpenPrompt {

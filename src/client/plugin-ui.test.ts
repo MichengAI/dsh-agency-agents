@@ -38,6 +38,8 @@ test('专家选择浮层使用宿主模态窗口标准层级背景与面板圆�
   assert.doesNotMatch(COMPOSER_CSS, /\.aag-menu\{[^}]*backdrop-filter:/)
   const clientIndex = readFileSync(new URL('./index.ts', import.meta.url), 'utf8')
   assert.match(clientIndex, /className:\s*'aag-menu aag-discovery'[^}]*role:\s*'dialog'[^}]*'aria-modal':\s*'true'/)
+  assert.match(clientIndex, /createPortal/)
+  assert.match(clientIndex, /document\.body/)
 })
 
 test('输入框使用宿主原生 Input 原语，不污染 allowClear 属性到 DOM，不手写清除按钮', () => {
