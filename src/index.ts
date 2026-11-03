@@ -33,7 +33,7 @@ import { validateExpertProposal, validateTeamProposal } from './creation-contrac
 
 import type { Context } from '@deepseek-ai/cordis'
 import { resolveTeamEngine, dispatchNativeTeam, blocksNativeDelegation, getNativeTeammateSetup, isAgencyTeammateName, EXPERT_TOOL_DENY, type NativeTeamService } from './team-engine.js'
-import { initSubagentRegistry, recordSubagentConfig, getSubagentConfig, isManagedSubagentId } from './subagent-registry.js'
+import { initSubagentRegistry, recordSubagentConfig, getSubagentConfig, isManagedSubagentId, flushSubagentRegistrySync } from './subagent-registry.js'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
@@ -668,6 +668,10 @@ export function apply(ctx: Context, config: Config): void {
   const proposalRegistry = createProposalRegistry()
   ctx.reflect.provide('agencyProposalRegistry', proposalRegistry)
   initSubagentRegistry(ctx)
+  // 卸载/退出时把防抖窗口内未落盘的子代理配置写完，避免最后一条召唤的记录丢失
+  if (typeof ctx.effect === 'function') {
+    ctx.effect(() => () => flushSubagentRegistrySync(ctx), 'agency-agents: flush subagent registry')
+  }
   ctx.on?.('agent/created', (event: { agent: { id: string; ctx: Context } }) => {
     const agent = event.agent
     let config = getSubagentConfig(agent.id)

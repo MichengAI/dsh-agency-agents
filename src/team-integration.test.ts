@@ -509,19 +509,33 @@ describe('专家团宿主与远端集成', () => {
       }
       flushSubagentRegistrySync(fakeCtx)
       const dataFile = join(tempHome, 'agency-subagents.json')
+      const expertsFile = join(tempHome, 'agency-expert-personas.json')
       const raw = await readFile(dataFile, 'utf8')
       const parsed = JSON.parse(raw)
-      expect(parsed.version).toBe(1)
-      expect(Object.keys(parsed.experts)).toEqual(['reviewer'])
-      expect(parsed.experts.reviewer).toBe(largePersona)
+      const expertsDoc = JSON.parse(await readFile(expertsFile, 'utf8'))
+      // 热文件只留引用：不带专家正文，体积与 persona 长度无关
+      expect(parsed.version).toBe(2)
+      expect(parsed.experts).toBeUndefined()
       expect(Object.keys(parsed.children)).toHaveLength(50)
-      // 50 次同一专家的记录，去重后文件远小于 50 * 10KB = 500KB，实际只有 10KB 左右
-      expect(raw.length).toBeLessThan(20000)
+      expect(raw.length).toBeLessThan(12000)
+      // 冷文件按专家去重：50 次同一专家只存一份正文
+      expect(Object.keys(expertsDoc.experts)).toEqual(['reviewer'])
+      expect(expertsDoc.experts.reviewer).toBe(largePersona)
 
       // 验证跨进程重启恢复
       clearSubagentRegistryForTest()
       initSubagentRegistry(fakeCtx)
       expect(getSubagentConfig('child-0')?.persona).toBe(largePersona)
+
+      // 128 个「不同」专家：热文件必须仍然很小（这是本轮修掉的写放大残留）
+      clearSubagentRegistryForTest()
+      for (let i = 0; i < 128; i++) {
+        recordSubagentConfig(`distinct-${i}`, { slug: `expert-${i}`, persona: largePersona }, fakeCtx)
+      }
+      flushSubagentRegistrySync(fakeCtx)
+      const distinctRaw = await readFile(dataFile, 'utf8')
+      expect(distinctRaw.length).toBeLessThan(30000)
+      expect(Object.keys(JSON.parse(distinctRaw).children)).toHaveLength(128)
 
       // 验证写入失败时临时文件绝不残留
       const badDir = join(tempHome, 'fail-target')
