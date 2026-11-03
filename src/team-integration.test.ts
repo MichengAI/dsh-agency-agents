@@ -14,6 +14,7 @@ import {
   flushSubagentRegistrySync,
   getSubagentConfig,
   initSubagentRegistry,
+  isManagedSubagentId,
 } from './subagent-registry.js'
 import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import { apply, DEFAULT_DIVISIONS } from './index.js'
@@ -549,6 +550,119 @@ describe('专家团宿主与远端集成', () => {
       const badDirFiles = await readdir(badDir)
       const tmpFiles = badDirFiles.filter(f => f.endsWith('.tmp'))
       expect(tmpFiles).toHaveLength(0)
+    } finally {
+      clearSubagentRegistryForTest()
+      await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
+    }
+  })
+
+  it('冷文件写入失败时以内联正文兜底，重启后仍能恢复专家人格', async () => {
+    const tempHome = await mkdtemp(join(tmpdir(), 'aag-reg-fallback-'))
+    try {
+      const ctx = { get: (name: string) => name === 'profileContext' ? { home: tempHome } : undefined } as unknown as Context
+      clearSubagentRegistryForTest()
+      // 冷文件路径做成非空目录：冷写必失败，热写仍然成功
+      await mkdir(join(tempHome, 'agency-expert-personas.json'), { recursive: true })
+      await writeFile(join(tempHome, 'agency-expert-personas.json', 'blocker.txt'), 'block', 'utf8')
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      recordSubagentConfig('child-fallback', { slug: 'reviewer', persona: 'FALLBACK-PERSONA', toolFilter: { deny: ['summon_expert'] } }, ctx)
+      flushSubagentRegistrySync(ctx)
+      warn.mockRestore()
+
+      // 热文件必须内联正文，杜绝「热有引用、冷无正文」
+      const hot = JSON.parse(await readFile(join(tempHome, 'agency-subagents.json'), 'utf8'))
+      expect(hot.experts?.reviewer).toBe('FALLBACK-PERSONA')
+
+      // 现场仍不可写时重启：人格依然要能恢复
+      clearSubagentRegistryForTest()
+      const quiet = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      initSubagentRegistry(ctx)
+      quiet.mockRestore()
+      expect(getSubagentConfig('child-fallback')?.persona).toBe('FALLBACK-PERSONA')
+      expect(getSubagentConfig('child-fallback')?.toolFilter).toEqual({ deny: ['summon_expert'] })
+    } finally {
+      clearSubagentRegistryForTest()
+      await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
+    }
+  })
+
+  it('热文件损坏时不清空冷文件正文', async () => {
+    const tempHome = await mkdtemp(join(tmpdir(), 'aag-reg-corrupt-'))
+    try {
+      const ctx = { get: (name: string) => name === 'profileContext' ? { home: tempHome } : undefined } as unknown as Context
+      clearSubagentRegistryForTest()
+      await writeFile(join(tempHome, 'agency-expert-personas.json'),
+        JSON.stringify({ version: 1, experts: { a: 'PA', b: 'PB', c: 'PC' } }), 'utf8')
+      await writeFile(join(tempHome, 'agency-subagents.json'), '{"version":2,"children":{"x":', 'utf8')
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      initSubagentRegistry(ctx)
+      recordSubagentConfig('new-child', { slug: 'd', persona: 'PD' }, ctx)
+      flushSubagentRegistrySync(ctx)
+      warn.mockRestore()
+
+      const cold = JSON.parse(await readFile(join(tempHome, 'agency-expert-personas.json'), 'utf8'))
+      expect(Object.keys(cold.experts).sort()).toEqual(['a', 'b', 'c', 'd'])
+    } finally {
+      clearSubagentRegistryForTest()
+      await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
+    }
+  })
+
+  it('门禁 id 清单独立落盘：超出 128 条配置上限的子代理重启后仍受递归门禁保护', async () => {
+    const tempHome = await mkdtemp(join(tmpdir(), 'aag-reg-ids-'))
+    try {
+      const ctx = { get: (name: string) => name === 'profileContext' ? { home: tempHome } : undefined } as unknown as Context
+      clearSubagentRegistryForTest()
+      for (let i = 0; i < 130; i++) recordSubagentConfig(`c-${i}`, { slug: `expert-${i % 4}`, persona: 'P' }, ctx)
+      flushSubagentRegistrySync(ctx)
+      const idDoc = JSON.parse(await readFile(join(tempHome, 'agency-subagent-ids.json'), 'utf8'))
+      expect(idDoc.ids).toHaveLength(130)
+
+      // 重启：配置条目按 128 上限淘汰，但门禁身份必须完整保留
+      clearSubagentRegistryForTest()
+      initSubagentRegistry(ctx)
+      expect(getSubagentConfig('c-0')).toBeUndefined()
+      expect(isManagedSubagentId('c-0')).toBe(true)
+      expect(isManagedSubagentId('c-129')).toBe(true)
+    } finally {
+      clearSubagentRegistryForTest()
+      await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
+    }
+  })
+
+  it('召唤失败不会留下幻影子代理记录', async () => {
+    const tempHome = await mkdtemp(join(tmpdir(), 'aag-reg-fail-'))
+    try {
+      clearSubagentRegistryForTest()
+      const settings = new TestSettings(new Context())
+      settings.register('locale', (value) => value)
+      settings.restore({ 'agency-agents': { enabled: ['engineering-code-reviewer'] }, locale: { preference: 'zh' } })
+      const services = new Map<string, unknown>()
+      const tools = new Map<string, { execute(args: unknown, exec?: unknown): Promise<unknown> }>()
+      const ctx = {
+        settings,
+        effect: () => () => {},
+        inject: (_deps: unknown, callback: (ctx: unknown) => void) => callback(ctx),
+        reflect: { provide: (key: string, value: unknown) => services.set(key, value) },
+        get: (key: string) => key === 'profileContext' ? { home: tempHome } : services.get(key),
+        typert: { register: () => {} },
+        tools: { register: (tool: { name: string; execute: (args: unknown, exec?: unknown) => Promise<unknown> }) => tools.set(tool.name, tool) },
+        systemPrompt: { section: () => {} },
+        on: () => () => {},
+        subagents: {
+          getProvider: () => ({ capabilities: { depthLimit: true } }),
+          startActivation: async () => { throw new Error('spawn failed') },
+        },
+      } as unknown as Context
+
+      apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS, ...volatileConfig(settings) } as never)
+      await expect(
+        tools.get('summon_expert')!.execute({ expert: '代码审查工程师', task: 'check' }, { agent: {} }),
+      ).rejects.toThrow('spawn failed')
+
+      flushSubagentRegistrySync(ctx)
+      const hot = JSON.parse(await readFile(join(tempHome, 'agency-subagents.json'), 'utf8'))
+      expect(Object.keys(hot.children)).toHaveLength(0)
     } finally {
       clearSubagentRegistryForTest()
       await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })

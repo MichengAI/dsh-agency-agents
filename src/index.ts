@@ -33,7 +33,7 @@ import { validateExpertProposal, validateTeamProposal } from './creation-contrac
 
 import type { Context } from '@deepseek-ai/cordis'
 import { resolveTeamEngine, dispatchNativeTeam, blocksNativeDelegation, getNativeTeammateSetup, isAgencyTeammateName, EXPERT_TOOL_DENY, type NativeTeamService } from './team-engine.js'
-import { initSubagentRegistry, recordSubagentConfig, getSubagentConfig, isManagedSubagentId, flushSubagentRegistrySync } from './subagent-registry.js'
+import { initSubagentRegistry, recordSubagentConfig, forgetSubagentConfig, getSubagentConfig, isManagedSubagentId, flushSubagentRegistrySync } from './subagent-registry.js'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
@@ -1044,18 +1044,24 @@ export function apply(ctx: Context, config: Config): void {
     if (typeof service.startActivation === 'function') {
       const childId = SessionId(randomUUID())
       recordSubagentConfig(childId, { slug, persona, toolFilter }, ctx)
-      return await service.startActivation({
-        provider: providerName,
-        label: label ?? providerName,
-        childId,
-        request: {
-          parent,
-          prompt,
-          ...(maxDepth === undefined ? {} : { maxDepth }),
-        },
-        signal: runSignal,
-        delivery: 'caller',
-      })
+      try {
+        return await service.startActivation({
+          provider: providerName,
+          label: label ?? providerName,
+          childId,
+          request: {
+            parent,
+            prompt,
+            ...(maxDepth === undefined ? {} : { maxDepth }),
+          },
+          signal: runSignal,
+          delivery: 'caller',
+        })
+      } catch (error) {
+        // 创建失败时撤回记录：幻影条目会占住条目配额与门禁清单，把真实子代理更早挤出去
+        forgetSubagentConfig(childId, ctx)
+        throw error
+      }
     }
     // DSH 0.2.0-rc.1 / 0.2.0-rc.2: start-time persona / toolFilter 兜底。
     if (typeof service.start === 'function') {
