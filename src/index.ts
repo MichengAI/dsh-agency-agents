@@ -33,6 +33,7 @@ import { validateExpertProposal, validateTeamProposal } from './creation-contrac
 
 import type { Context } from '@deepseek-ai/cordis'
 import { resolveTeamEngine, dispatchNativeTeam, blocksNativeDelegation, getNativeTeammateSetup, isAgencyTeammateName, EXPERT_TOOL_DENY, type NativeTeamService } from './team-engine.js'
+import { initSubagentRegistry, recordSubagentConfig, getSubagentConfig, isManagedSubagentId } from './subagent-registry.js'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
@@ -666,20 +667,10 @@ export function apply(ctx: Context, config: Config): void {
   ctx.reflect.provide('agencyAgentsTeamEngine', () => resolveTeamEngine(ctx, undefined, maxDepth).status)
   const proposalRegistry = createProposalRegistry()
   ctx.reflect.provide('agencyProposalRegistry', proposalRegistry)
-  const MAX_MANAGED_SUBAGENTS = 256
-  const managedSubagentConfigs = new Map<string, { persona?: string; toolFilter?: { deny: string[] } }>()
-  const managedSubagentIds = new Set<string>()
-  const recordSubagentConfig = (id: string, config: { persona?: string; toolFilter?: { deny: string[] } }): void => {
-    managedSubagentIds.add(id)
-    if (managedSubagentConfigs.size >= MAX_MANAGED_SUBAGENTS) {
-      const oldest = managedSubagentConfigs.keys().next().value
-      if (oldest !== undefined) managedSubagentConfigs.delete(oldest)
-    }
-    managedSubagentConfigs.set(id, config)
-  }
+  initSubagentRegistry(ctx)
   ctx.on?.('agent/created', (event: { agent: { id: string; ctx: Context } }) => {
     const agent = event.agent
-    let config = managedSubagentConfigs.get(agent.id)
+    let config = getSubagentConfig(agent.id)
     if (!config) {
       const agentTeams = ctx.get?.('agentTeams') as NativeTeamService | undefined
       const membership = agentTeams?.tryMembership?.(agent)
@@ -711,7 +702,7 @@ export function apply(ctx: Context, config: Config): void {
   ctx.on?.('tools/pre-execute', async (exec, next) => {
     if (blocksNativeDelegation(ctx.get('agentTeams'), exec.agent, exec.name)) return { kind: 'deny', reason: teamTx('专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。') }
     const agentId = exec.agent?.id
-    if (agentId && managedSubagentIds.has(agentId) && (EXPERT_TOOL_DENY as readonly string[]).includes(exec.name)) {
+    if (agentId && isManagedSubagentId(agentId) && (EXPERT_TOOL_DENY as readonly string[]).includes(exec.name)) {
       return { kind: 'deny', reason: teamTx('专家成员不能继续召唤专家团。') }
     }
     return next()
@@ -1047,7 +1038,7 @@ export function apply(ctx: Context, config: Config): void {
     // DSH 0.2.1-rc.1+: 优先使用 startActivation，由持久注册表守护首次启动与后续冷恢复。
     if (typeof service.startActivation === 'function') {
       const childId = SessionId(randomUUID())
-      recordSubagentConfig(childId, { persona, toolFilter })
+      recordSubagentConfig(childId, { persona, toolFilter }, ctx)
       return await service.startActivation({
         provider: providerName,
         label: label ?? providerName,

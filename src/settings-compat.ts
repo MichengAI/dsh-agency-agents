@@ -164,7 +164,8 @@ export function agencySettingsFromLegacyDocument(document: unknown): AgencySetti
   }
 }
 
-function profileHome(ctx: Context): string | undefined {
+export function profileHome(ctx?: Context): string | undefined {
+  if (!ctx) return undefined
   try {
     const profile = (ctx as Context & { get?: (name: string) => unknown }).get?.('profileContext') as { home?: unknown } | undefined
     if (typeof profile?.home === 'string' && profile.home.trim() !== '') return profile.home

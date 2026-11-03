@@ -15,6 +15,7 @@ import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
 import { agencySettingsFromLegacyDocument, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
+import { clearSubagentRegistryForTest, getSubagentConfig, isManagedSubagentId, initSubagentRegistry } from './subagent-registry.js'
 
 const PACKAGE_MANIFEST = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
   packageManager?: string
@@ -632,6 +633,7 @@ describe('summon_expert', () => {
           if (idx >= 0) listeners.splice(idx, 1)
         }
       },
+      get: (name: string) => name === 'profileContext' ? { home: dir } : undefined,
       settings: alphaSettings(['reviewer']),
       inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
         cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
@@ -674,6 +676,38 @@ describe('summon_expert', () => {
     expect(resumeSections[0]).toMatchObject({ name: 'deployment:persona-prefix', text: 'body' })
     expect(resumeRestrictions).toHaveLength(1)
     expect(resumeRestrictions[0]).toEqual({
+      deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'],
+    })
+
+    // 模拟跨进程重启：清空内存注册表，模拟完全不同的进程生命周期
+    clearSubagentRegistryForTest()
+    expect(getSubagentConfig(activationSpec!.childId)).toBeUndefined()
+    expect(isManagedSubagentId(activationSpec!.childId)).toBe(false)
+
+    // 新进程启动：初始化注册表，从本地持久化中恢复
+    initSubagentRegistry(ctx)
+    expect(getSubagentConfig(activationSpec!.childId)).toBeDefined()
+    expect(isManagedSubagentId(activationSpec!.childId)).toBe(true)
+
+    // 重启后重新派发冷恢复 (source: resume)
+    const restartResumeSections: any[] = []
+    const restartResumeRestrictions: any[] = []
+    const restartCtx = {
+      systemPrompt: {
+        getSectionOrder: () => 100,
+        section: (sec: any) => { restartResumeSections.push(sec) },
+      },
+      tools: {
+        restrict: (filter: any) => { restartResumeRestrictions.push(filter) },
+      },
+    }
+    for (const listener of [...listeners]) {
+      listener({ agent: { id: activationSpec!.childId, ctx: restartCtx }, source: 'resume' })
+    }
+    expect(restartResumeSections).toHaveLength(1)
+    expect(restartResumeSections[0]).toMatchObject({ name: 'deployment:persona-prefix', text: 'body' })
+    expect(restartResumeRestrictions).toHaveLength(1)
+    expect(restartResumeRestrictions[0]).toEqual({
       deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'],
     })
   })
