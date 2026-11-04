@@ -1543,13 +1543,13 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 0.2.1-rc.3', () => {
+  it('DSH 开发依赖固定为 0.2.2-rc.1', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.2.1-rc.3')
+        expect(version).toBe('0.2.2-rc.1')
       }
     }
-    expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.1-rc.3')
+    expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.2-rc.1')
   })
 
   it('设置标题提供 GitHub 与问题反馈两个入口', () => {

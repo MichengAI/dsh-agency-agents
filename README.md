@@ -15,7 +15,7 @@
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm downloads](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20downloads)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH supported through 0.2.1-rc.3](https://img.shields.io/badge/DSH-up%20to%200.2.1--rc.3-2563eb.svg)](#prerequisites)
+  [![DSH supported through 0.2.2-rc.1](https://img.shields.io/badge/DSH-up%20to%200.2.2--rc.1-2563eb.svg)](#prerequisites)
 </div>
 
 > DSH Agency Agents is a community-maintained DeepSeek Harness (DSH) plugin, not an official DeepSeek AI product.
@@ -151,7 +151,7 @@ DSH `dsh.client.inject` controls browser module loading order. Missing graph ent
 
 ## Installation
 
-Host compatibility: Full DeepSeek Harness `0.2.x` line (`>=0.2.0-rc.1 <0.3.0-0`), verified with `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-rc.1`, `0.2.1-rc.2`, and `0.2.1-rc.3`, and forwards-compatible with subsequent `0.2.x` releases, alphas, and RCs without requiring routine plugin version bumps. Legacy versions and breaking changes in the `0.3.0` generation are rejected by the version gate. Expert and team settings are retained and do not need to be entered again. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy.
+Host compatibility: Full DeepSeek Harness `0.2.x` line (`>=0.2.0-rc.1 <0.3.0-0`), verified with `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-rc.1`–`0.2.1-rc.5`, and `0.2.2-rc.1`, and forwards-compatible with subsequent `0.2.x` RC releases without requiring routine plugin version bumps. Legacy versions and breaking changes in the `0.3.0` generation are rejected by the version gate. Expert and team settings are retained and do not need to be entered again. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy.
 
 The installation commands below use the official npm registry.
 

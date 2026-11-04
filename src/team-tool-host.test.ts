@@ -106,6 +106,14 @@ describe('真实宿主工具注册与模型提示组装', () => {
     const ctx = new Context()
     const prompt = new SystemPrompt(ctx, { includeHarnessIdentity: false, includeRuntimeContext: false })
     const runtime = new ToolRuntime(ctx)
+    if (typeof (ctx as any).tools?.setExecutor === 'function') {
+      (ctx as any).tools.setExecutor({
+        id: 'test',
+        select: () => true,
+        describe: (defs: any[]) => ({ schemas: defs.map(d => ({ name: d.name, description: d.description, parameters: d.parameters })), knownNames: defs.map(d => d.name) }),
+        execute: async () => ({ results: [] })
+      })
+    }
     let locale: 'zh' | 'en' = 'zh'
     const dispose = runtime.register(localizeTeamTool(defineTool({
       name: 'get_expert_team', description: '专家团只能在主会话中召唤。',
