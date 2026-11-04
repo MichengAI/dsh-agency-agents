@@ -70,7 +70,7 @@ jobs:
         run: corepack enable
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --config.minimumReleaseAge=0
 
       - name: 安装浏览器及系统依赖
         run: pnpm exec playwright install --with-deps chromium
