@@ -1,171 +1,171 @@
 <div align="center">
-  <img src="assets/branding/dsh-banner-en.webp" alt="DSH Agency Agents" width="100%">
+  <img src="assets/branding/dsh-banner.webp" alt="DSH Agency Agents" width="100%">
 </div>
 
 <div align="center">
 
   # DSH Agency Agents
 
-  **331 specialists · 5 built-in teams · Custom collaboration**
+  **331 位专业智能体 · 5 个内置专家团 · 自定义协作**
 
-  [简体中文](README.zh-CN.md) · [Expert roster](#expert-roster) · [Installation](#installation) · [Changelog](CHANGELOG.md) · [Apache-2.0](LICENSE)
+  [English](README.en.md) · [专家列表](#专家列表) · [安装](#安装) · [更新日志](CHANGELOG.zh-CN.md) · [Apache-2.0](LICENSE)
 
-  [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-  [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-331-0f766e.svg)](#expert-roster)
+  [![许可证：Apache-2.0](https://img.shields.io/badge/许可证-Apache--2.0-blue.svg)](LICENSE)
+  [![内置智能体](https://img.shields.io/badge/内置智能体-331-0f766e.svg)](#专家列表)
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
-  [![npm downloads](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20downloads)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
+  [![npm 下载量](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH supported through 0.2.2-rc.1](https://img.shields.io/badge/DSH-up%20to%200.2.2--rc.1-2563eb.svg)](#prerequisites)
+  [![DSH 支持至 0.2.2-rc.1](https://img.shields.io/badge/DSH-%E6%94%AF%E6%8C%81%E8%87%B3%200.2.2--rc.1-2563eb.svg)](#前置条件)
 </div>
 
-> DSH Agency Agents is a community-maintained DeepSeek Harness (DSH) plugin, not an official DeepSeek AI product.
+> DSH Agency Agents 是社区维护的 DeepSeek Harness（DSH）插件，并非 DeepSeek AI 官方产品。
 
-## Features
+## 功能概览
 
-Choose a specialist in DSH for code review, design, operations, or research. All 331 experts are bundled and ready to use after installation.
+遇到代码审查、设计、运营或研究任务时，在 DSH 中选一位合适的专家，让它从专业角度协助你完成工作。内置 331 名专家，安装后即可选择使用。
 
-- **Dual-surface access & wide layout**: Access management from **Settings → Experts** or enable the persistent primary sidebar entry to open in a dedicated 960px centered workspace view.
-- **Conversational creation with AI**: Dual-mode creation via \"Create with AI\" jumps to main chat with auto-prefilled prompts. Agents render structured Markdown previews in chat with multi-turn revisions, followed by a native host Ask interaction confirmation before pre-filling into editor modals/drawers for human-in-the-loop review.
-- **Smart bulk batch actions**: Compact native dropdown menu in the filter bar with dynamic filter linkage for \"Enable filtered (N) / Disable filtered (M)\" and \"Enable all (331) / Disable all\", protected by confirmation dialogs and atomic scheduling.
-- **Complete roster of 331 domain experts**: Covers 22 standard divisions from engineering, product, and design to marketing, sales, and legal, with instant prefix matching.
-- **Multi-agent team collaboration**: 5 high-impact built-in review teams and support for up to 100 custom teams with automated handoffs, parallel execution, or debate modes.
-- **Fast invocation in composer**: Summon specialists or teams via the `@` trigger or composer picker button, instantly inserting task examples without accidental sends.
-- **Enterprise control & security**: Toggle online updates or declare `updater: false` for strict platform lock; endpoints are guarded by token headers and content-type validation.
-- **Reverse proxy compatibility**: Automatic URL base resolution (`document.baseURI`) ensures seamless operation behind prefix-stripping reverse proxies.
+- **多端与双入口访问**：支持原有「设置 → 专家」弹窗管理，亦可在插件详情页开启主导航栏常驻「专家」大面板（960px 居中版心，彻底摆脱弹窗视口滚动限制）。
+- **自然语言对话创建（Create with AI）**：新建专家与专家团队支持「通过对话创建」双入口，自动跳转主会话预填提示词；智能体在对话中出具结构化图文预览，支持多轮自然微调，满意后经宿主原生 Ask 卡片把关，全量回填反显至编辑弹窗/抽屉（Human-in-the-Loop）。
+- **专家管理智能批量操作（Batch Actions）**：在管理筛选条右侧引入原生紧凑批量菜单。与来源、分类、状态及关键词检索动态联动，自适应提供「启用筛选 (N) / 停用筛选 (M)」及「启用全部 (331) / 停用全部」；具备二次确认与原子调度保护。
+- **331 位全领域专家名册**：涵盖工程、设计、产品、营销、法务、金融等 22 个标准分区，支持中英文关键词与拼音前缀秒级即时检索。
+- **专家团（Teams）多角色协同**：内置 5 大高频业务团队，支持自定义最多 100 个协作团队；支持根据任务复杂度自动选择接力推进、多路并行或深度评审协作模式。
+- **会话输入框快捷召唤**：支持对话框左侧机器人按钮快速点选，或在正文中输入 `@` 快捷呼出专家及团队名册，无缝填入任务示例。
+- **企业级配置与安全防御**：支持在插件详情页独立开启/关闭在线更新，支持静态配置 `updater: false` 进行平台级只读锁定；接口全面接入同源与 Content-Type 防御。
+- **反向代理部署无缝兼容**：自动相对页面基准地址解析 API 端点，支持无损部署在剥离前缀的反向代理（如 `/app/dsh/`）之后。
 
-## Expert teams
+## 专家团
 
-Manage teams in **Settings → Experts → Expert teams**, sharing the header, source/status filters, search, and card interactions with individual experts.
+在「设置 → 专家 → 专家团」管理团队，与专家页共用头部、来源筛选、状态筛选、搜索和卡片交互。五个内置团覆盖以下场景：
 
-| Built-in team | Focus | Delivery |
+| 专家团 | 分析重点 | 交付内容 |
 | --- | --- | --- |
-| Product Review Team | User value, experience, technical feasibility | Priorities and actions |
-| Technical Review Team | Architecture, security, acceptance boundaries | Risks and acceptance checks |
-| Content Planning Team | Angles, distribution strategy, fact checking | Topic options and content structure |
-| Data Analysis Team | Metrics, data quality, business interpretation | Findings and validation steps |
-| Research Team | Research scope, evidence, synthesis | Source-backed conclusions |
+| 产品方案评审团 | 需求价值、用户体验、技术可行性 | 优先级与行动清单 |
+| 技术方案评审团 | 架构、安全、验收边界 | 风险与验收清单 |
+| 内容选题策划团 | 选题角度、传播策略、事实核验 | 选题方案与内容结构 |
+| 数据分析诊断团 | 指标、数据质量、业务解释 | 分析结论与验证步骤 |
+| 专题研究专家团 | 研究范围、证据、综合判断 | 有来源的研究结论 |
 
-### Configure and use
+### 配置与使用
 
-1. Use a built-in team, copy it to customize, or create a team of 2–8 distinct experts. Up to 100 custom teams can be saved.
-2. Set the name, description, tags, member duties, shared goal, constraints, delivery requirements, and 1–3 examples. Add member starts with enabled experts; disabled experts can still join if you switch status to All or Disabled. Use, customize, or restore the coordinator template.
-3. Confirm enabling required experts when enabling a team. Switch to Expert teams in the composer picker or select through `@`, then write the task. Selecting or adding an example never sends the message.
-4. The current main conversation delegates, verifies evidence, handles disagreements, and delivers one result; no additional leader subagent is created. Ordinary mode runs up to four experts concurrently and preserves completed results if others fail.
+1. 直接使用内置团，或复制后修改；也可新建 2～8 位成员的自定义团，最多保存 100 个。
+2. 设置名称、简介、标签、成员职责、共同目标、约束、交付要求和 1～3 条任务示例。添加成员时默认只看已启用专家；停用的专家也可以加入，把状态改为「全部」或「已停用」。主理人提示词可使用团队模板、自定义或恢复模板。
+3. 启用团队时确认同步启用所需专家。聊天工具栏切到「专家团」，或通过 `@` 选择团队，再填写任务；选择与示例均不会自动发送。
+4. 当前主会话分工、核验证据、处理分歧并统一交付，不额外创建团长。普通模式最多四位专家并发；部分失败会保留已完成结果。
 
-### Automatic collaboration mode
+### 自动选择协作模式
 
-| Host state | Behavior |
+| 宿主状态 | 行为 |
 | --- | --- |
-| Agent Team unsupported | Use ordinary subagents without recommending an unavailable feature. |
-| Supported but disabled, or current-session tools unavailable | Recommend enabling Team while continuing to allow ordinary execution. |
-| Services and current-session tools available | Use native Agent Team, shared tasks, and teammate messages; wait for actual results before summarizing. |
+| 不支持 Agent Team | 使用普通子代理，不提示开启不存在的能力。 |
+| 支持但未启用，或当前会话工具未就绪 | 建议开启，仍可继续普通调用。 |
+| 服务和当前会话工具均可用 | 使用原生 Agent Team、共享任务板和队友消息，等待实际结果后汇总。 |
 
-Explicit `maxDepth` uses ordinary mode to preserve depth limits. Native dispatch acceptance is not expert completion; partial startup failures do not automatically switch modes and duplicate work. Members inherit the main conversation's model selection; there is no per-expert model setting. Native model labels are provided by DSH and may display creation-time values.
+显式配置 `maxDepth` 时使用普通模式以保留深度约束。原生模式任务启动确认不等于专家已经完成；创建中途失败不会自动切换模式重复执行。队友默认沿用主会话的模型选择，不提供独立专家模型配置。原生面板的模型标签由 DSH 提供，可能显示创建时的值。
 
-### Tool interfaces
+### 工具接口
 
-Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_teams`, `get_expert_team`, and `summon_expert_team`. The main conversation reads the enabled team's rules and duties before delegating the complete task, then verifies and summarizes actual member results.
+保留个人专家工具 `list_experts`、`summon_expert`、`summon_experts`；新增 `list_expert_teams`、`get_expert_team`、`summon_expert_team`。主会话应先读取已启用团队的规则与分工，再提交完整任务，最后核验并汇总成员结果。
 
-### Drafts, language, and data
+### 草稿、语言与数据
 
-- System presets, member names, coordinator templates, UI, and runtime feedback support Chinese and English. Custom content remains unchanged, and language switches preserve unsaved drafts.
-- Confirm team replacement or example insertion. If the draft changes during confirmation, stop insertion and retain the new text, attachments, and references.
-- Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
-- Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
+- 系统预设、成员名称、主理人模板、界面和运行反馈支持中英文；自定义内容保持原文，切换语言不覆盖未保存草稿。
+- 替换团队或追加示例需确认；确认期间草稿变化会停止插入，保留用户新输入、附件和引用。
+- 团队配置保存在宿主 `agency-agents` 命名空间。编辑冲突保留草稿并提示核对最新配置；停用或删除团队不会停用专家，也不会删除历史会话。
+- 专家不得继续召唤专家或自动追加分析轮次。取消会停止未启动任务；已有结果和失败原因分别报告。
 
-### Conversational Creation with AI
+### 自然语言对话创建（Create with AI）
 
-Create custom experts and teams directly through natural language in chat via the **Create with AI** entry:
+在专家与专家团队列表的新增按钮旁均提供「**通过对话创建**」入口：
 
-1. **Auto-jump with Prompt Prefixes**: Clicking \"Create with AI\" from the creation menu automatically closes the settings drawer and navigates to the main chat, injecting a natural prompt prefix (e.g. `I want to create an expert specializing in ` or `Assemble an expert team for this mission: `) with cursor auto-focused at the end;
-2. **In-Chat Structured Preview**: Specialized tools (`propose_custom_expert` / `propose_expert_team`) generate Markdown preview cards containing division categories, collapsed prompt blocks, and localized roster members with emojis, physically preventing disruptive popups during drafting;
-3. **Fuzzy Expert Slug Resolution**: When assembling teams, the model can specify Chinese names, English names, or short slugs (e.g. `code-reviewer`), which are automatically resolved to valid in-repo expert slugs without schema validation errors;
-4. **Interactive Ask Confirmation**: Once satisfied, the user replies \"confirm\" in chat. The agent triggers a native host **Ask interaction card** for two-step human confirmation;
-5. **Global Pre-filled Modal Launch**: After user submission, the full editor modal or drawer opens with all proposed fields pre-filled and inputs styled to 100% full container width for final human-in-the-loop review and saving;
-6. **Session-Bound Concurrency**: Proposal states are strictly bound to `sessionId`, ensuring multiple concurrent sessions or windows never cross-trigger popups.
+1. **自动跳转与提示词引导**：点击后自动关闭管理面板并平滑跳转至主聊天框，预填自然语言提示前缀（如 `我想创建一个专家，专门负责 ` 或 `帮我组建一个专家团队，任务目标是 `），光标自动聚焦至末尾；
+2. **对话流结构化预览（只读防打扰）**：智能体通过专职工具 `propose_custom_expert` / `propose_expert_team` 在聊天气泡中出具 Markdown 预览卡片，包含所属分类、折叠提示词与带国际化中文名及 Emoji 的成员阵容；在草案构想与多轮微调阶段物理阻断意外弹窗；
+3. **成员智能模糊别名匹配（Fuzzy Expert Resolver）**：大模型组建团队时无论输入中文全称（如“代码审查工程师”）、英文名还是短 slug（如“code-reviewer”），均自动解析映射为库内合法的真实专家 slug，彻底避免名称报错；
+4. **原生 Ask 卡片交互把关**：用户对预览满意并在对话框中回复「确认」后，模型唤起宿主原生 **Ask 交互卡片**进行二次防误触把关；
+5. **全局动态反显弹窗**：用户在卡片确认提交后，系统自动呼出编辑抽屉或中心模态弹窗，所有字段全量回填反显且单行输入框 100% 满宽整齐排版，由用户最终人工审查并保存；
+6. **会话 ID 隔离**：草案生命周期与当前会话严格绑定，多窗口或分屏并发使用时各收各的草案，绝不跨窗口串台弹窗。
 
-### Bulk Batch Actions
+### 专家管理智能批量操作（Batch Actions）
 
-A native compact **Batch Actions** dropdown menu is available on the right of the filter toolbar:
+在专家管理界面的顶部筛选条右侧提供了原生「**批量操作**」下拉菜单：
 
-- **Dynamic Filter Linkage**: Dynamically adapts based on active source, category, status, and search filters. Offers **Enable filtered (N) / Disable filtered (M)** when filters are active, and smoothly switches to **Enable all (331) / Disable all** when unfiltered;
-- **Confirmation & Conflict Protection**: Includes modal confirmation dialogs indicating affected expert counts, powered by atomic scheduling (`performBulkCommit`) to eliminate dirty writes caused by concurrent changes during review. Only affects availability and never auto-summons.
+- **动态筛选联动**：与来源、分类、状态及关键词搜索实时联动。当有筛选条件时，自适应提供「**启用筛选 (N)**」与「**停用筛选 (M)**」，精准控制当前目标子集；无筛选时，自适应切换为「**启用全部 (331)**」与「**停用全部**」；
+- **二次确认与并发保护**：点击后弹出模态确认对话框并显示受影响专家数量；底层采用原子调度器（`performBulkCommit`），防范弹窗停留期间外部并发写入导致的旧快照覆盖风险；仅改变专家可用范围，不自动召唤、不产生子代理。
 
-### Composer Task Recommendations
+### 输入框任务智能推荐（Task Recommendations）
 
-Real-time expert and expert team suggestions displayed as a native dropdown at the top-right of the chat composer based on draft semantics (Issue #27):
+在主会话聊天框键入任务内容时，系统基于草稿语义在输入框右上沿提供实时的专家与专家团队智能推荐下拉菜单（Issue #27）：
 
-- **Zero-Token Local Scoring Engine**: Client-side tokenizer, stop-word filtering, and lightweight scoring algorithm (< 3ms) debounced at 250ms, incurring zero network overhead and zero LLM token consumption;
-- **Native Two-Line Menu & Zero Occlusion**: Built with host primitives (`@deepseek-ai/dsh-client-ui-primitives` `Menu`), aligned to the right in both new and existing sessions and popping upward (`side="top"`) to prevent blocking the input box and send button;
-- **One-Click Mention & Deduplication**: Click candidate items to insert references directly into the input via host `insertReference`; already referenced experts are automatically filtered out from suggestions, auto-dismissing on outside clicks or empty input;
-- **Dedicated Extension Toggle**: Toggle under **Settings → Plugins** (default off), supporting host volatile hot-reloading and persistence.
+- **零 Token 本地纯计算**：采用纯客户端切词、停用词过滤与轻量打分算法（耗时 `< 3ms`），配合 `250ms` 键入防抖，全程不调用后台大模型，零网络延迟与 Token 消耗；
+- **原生两行式下拉与零遮挡**：使用宿主原生 `@deepseek-ai/dsh-client-ui-primitives` 中的 `Menu` 组件，新会话对齐工作区行最右端、已有会话对齐输入框右上沿并一律向上弹开，彻底避免遮挡输入框与发送按钮；
+- **一键引用与智能排除**：点击推荐项自动通过宿主原生 `insertReference` 将实体插入输入框草稿中，已引用的专家自动从推荐列表中排除，输入清空或点击外部时自动收起；
+- **独立配置开关**：在「设置 → 插件」扩展配置中提供「任务智能推荐」独立开关（默认关闭），支持实时热更新并持久化保存。
 
-> This README describes version 1.2.26. **This is a breaking upgrade: DeepSeek Harness 0.1.x is no longer supported.** Installation on an older host is rejected by the version gate. npm and GitHub Releases determine publication status. See the [changelog](CHANGELOG.md) for the full boundary. Expert and team settings are retained; back up settings before downgrading to 1.0.x.
-## Screenshots
+> 本 README 描述 1.2.26。**这是破坏性升级：不再支持 DeepSeek Harness 0.1.x。** 在旧宿主上安装会被版本门拒绝。正式发行以 npm 和 GitHub Releases 为准。完整边界见[更新日志](CHANGELOG.zh-CN.md)。专家和专家团配置仍保留；回退 1.0.x 前先备份设置。
+## 界面预览
 
-The screenshots below show the 1.0.0 interface in Chinese. Experts and expert teams share the same settings page.
+以下为 1.0.0 中文界面截图，专家与专家团共用同一个设置页面。
 
-Filter by category or search in **Settings → Experts**, then enable the experts you need:
+在「设置 → 专家」中按分类筛选或搜索，再启用需要的专家：
 
-![DSH Experts panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/agent-roster.png)
+![DSH 专家面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/agent-roster.png)
 
-Switch to **Expert teams** to browse the five built-in teams, filter by status, or create a custom team:
+切换到「专家团」，浏览五个内置专家团、按状态筛选，或新建自定义专家团：
 
-![Expert teams panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/expert-teams.png)
+![专家团面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/expert-teams.png)
 
-Open team details to review its purpose, example tasks, and member responsibilities, then summon it or copy it for customization:
+打开团队详情，查看适用场景、任务示例和成员分工，再召唤团队或复制并自定义：
 
-![Expert team details](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/expert-team-details.png)
+![专家团详情](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/expert-team-details.png)
 
-When the host supports Agent Team and the feature is enabled, view team members and shared tasks in the native panel:
+宿主支持且已启用 Agent Team 时，可在原生面板查看团队成员和共享任务：
 
-![Native Agent Team panel](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/agent-team-panel.png)
+![原生 Agent Team 面板](https://raw.githubusercontent.com/MichengAI/dsh-agency-agents/5cdbd07fda18075eab186aa972b47ab01451d244/assets/screenshots/agent-team-panel.png)
 
-## DSH product ecosystem
+## DSH 产品生态
 
-For a desktop workbench, download [DSH Codex Desktop](https://github.com/MichengAI/dsh-codex-desktop/releases). Existing [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) installations can add plugins as needed by following each project's README. Below are 11 first-party plugins; consult the corresponding desktop release notes and bundled catalog for what that version includes.
+想使用桌面工作台，可下载 [DSH Codex Desktop](https://github.com/MichengAI/dsh-codex-desktop/releases)；已有 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 环境，可按各项目 README 按需安装。以下列出 11 个自研插件；桌面端实际随附范围以对应版本的发行说明和内置清单为准。
 
-| Plugin | What you can do |
+| 插件 | 你可以用它做什么 |
 | --- | --- |
-| [Codex UI](https://github.com/MichengAI/dsh-codex-ui) | Organize projects and conversations, search tasks, and navigate chat turns |
-| [Agency Agents](https://github.com/MichengAI/dsh-agency-agents) | Choose and summon specialists for your task |
-| [Skills Manager](https://github.com/MichengAI/dsh-skills-manager) | Find, enable, create, and import local skills |
-| [Archive Manager](https://github.com/MichengAI/dsh-archive-manager) | Search, restore, or clean up archived conversations |
-| [IM Connect](https://github.com/MichengAI/dsh-im-connect) | Send tasks and receive replies through messaging platforms |
-| [Automation](https://github.com/MichengAI/dsh-automation) | Schedule tasks and review each run |
-| [BTW](https://github.com/MichengAI/dsh-btw) | Ask side questions without interrupting the main task |
-| [Simplify](https://github.com/MichengAI/dsh-simplify) | Use `/simplify` to improve code within your Git changes |
-| [PUA](https://github.com/MichengAI/dsh-pua) | Guide the Agent to try new approaches after failures, investigate causes, and verify results before completion |
-| [Code Review](https://github.com/MichengAI/dsh-code-review) | Use `/review` to request an independent Agent code review and receive the report in the current conversation |
-| [Codex Pet](https://github.com/MichengAI/dsh-codex-pet) | View conversation notifications and respond to tool approvals and questions through a desktop pet |
+| [Codex UI](https://github.com/MichengAI/dsh-codex-ui) | 整理项目与会话、搜索任务、跳转对话轮次 |
+| [Agency Agents](https://github.com/MichengAI/dsh-agency-agents) | 按任务选择并召唤专业角色 |
+| [Skills Manager](https://github.com/MichengAI/dsh-skills-manager) | 统一查找、启停、创建和导入本机技能 |
+| [Archive Manager](https://github.com/MichengAI/dsh-archive-manager) | 搜索、恢复或清理已归档会话 |
+| [IM Connect](https://github.com/MichengAI/dsh-im-connect) | 从消息平台下任务、收回复 |
+| [Automation](https://github.com/MichengAI/dsh-automation) | 按计划执行任务，查看每次运行的结果 |
+| [BTW](https://github.com/MichengAI/dsh-btw) | 在当前上下文中临时旁问，不打断主任务 |
+| [Simplify](https://github.com/MichengAI/dsh-simplify) | 用 `/simplify` 整理 Git 改动范围内的代码 |
+| [PUA](https://github.com/MichengAI/dsh-pua) | 引导 Agent 在失败时换方法、查原因，并在完成前验证结果 |
+| [Code Review](https://github.com/MichengAI/dsh-code-review) | 用 `/review` 发起独立 Agent 代码审查，在当前会话接收报告 |
+| [Codex Pet](https://github.com/MichengAI/dsh-codex-pet) | 通过桌面宠物查看会话提醒、处理工具审批和问题回答 |
 
-## Prerequisites
+## 前置条件
 
-- A working DeepSeek Harness Web installation with `dsh` available in PowerShell.
-- Examples use the `web` profile; replace it with the target profile.
-- Source installation and development require Node.js ^22.19.0 or ≥24.0.0 and pnpm. npm installation does not require running `pnpm install` separately.
+- 已可正常运行 DeepSeek Harness Web，且可在 PowerShell 中使用 `dsh`。
+- 以下示例使用 `web` profile；请替换为实际目标 profile。
+- 从源码安装或二次开发需要 Node.js ^22.19.0 或 ≥24.0.0 与 pnpm；仅从 npm 安装无需单独执行 `pnpm install`。
 
-## Host dependencies and compatibility
+## 宿主依赖与兼容性
 
-DSH `dsh.client.inject` controls browser module loading order. Missing graph entries are skipped, and frozen modules need not exist as npm packages in a profile. The UI adopts official host primitives (`@deepseek-ai/dsh-client-ui-primitives`) for `Menu` and `Button` controls with frosted glass aesthetics, completely removing custom select dropdowns and isolated Ant Design Select. Required peers such as `dsh-client-ui-slots` and `dsh-client-ui-primitives` retain the runtime contract. Profiles with `auto-install-peers` disabled may report unmet peers; strict peer checks may also block installation. Check the host version and browser module availability rather than modifying dependency declarations.
+DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块图中不存在的项会跳过，冻结模块也不一定对应 Profile 内的 npm 包。UI 全面接入宿主官方原语（`@deepseek-ai/dsh-client-ui-primitives`）的 `Menu` 和 `Button` 原语与半透明毛玻璃材质，彻底移除了自定义自绘下拉及独立的 Ant Design Select。`dsh-client-ui-slots`、`dsh-client-ui-primitives` 等 required peer 仍表达运行时契约；关闭 `auto-install-peers` 的 Profile 可能出现 unmet peer 提示，严格 peer 检查还可能阻止安装，需核对宿主版本及浏览器模块是否提供，不能据 npm 包树缺失直接判定运行失败。
 
-## Installation
+## 安装
 
-Host compatibility: Full DeepSeek Harness `0.2.x` line (`>=0.2.0-rc.1 <0.3.0-0`), verified with `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-rc.1`–`0.2.1-rc.5`, and `0.2.2-rc.1`, and forwards-compatible with subsequent `0.2.x` RC releases without requiring routine plugin version bumps. Legacy versions and breaking changes in the `0.3.0` generation are rejected by the version gate. Expert and team settings are retained and do not need to be entered again. The host is supplied by your existing CLI or Desktop installation; the plugin does not install another copy.
+宿主支持范围：DeepSeek Harness `0.2.x` 全系列（`>=0.2.0-rc.1 <0.3.0-0`），已验证兼容 `0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-rc.1`～`0.2.1-rc.5`、`0.2.2-rc.1`，并自动支持后续全部 0.2.x RC 版本，同代宿主升级无需重复等待发版。早期版本与 `0.3.0` 代际破坏性更新由版本门拦截。专家和专家团配置仍保留，不需要重新录入。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装。
 
-The installation commands below use the official npm registry.
+以下安装命令使用官方 npm 源。
 
-### Ask an agent to install it (recommended)
+### 让 Agent 帮你安装（推荐）
 
-Send the prompt below to any agent that can run terminal commands on your computer. Replace `web` with your actual profile. Once installed, use the plugin in DSH.
+把下面这段话发给任意能够执行本机终端命令的 Agent。将 `web` 替换为实际使用的 profile；安装完成后，在 DSH 中使用本插件。
 
 ```text
-Install the DSH plugin @michengai/dsh-agency-agents into my local web profile by running: dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/. Then run dsh --profile web --dump-config, confirm the configuration includes agency-agents, agency-agents-remote, and explain how to reload DSH and start using the plugin.
+请将 DSH 插件 @michengai/dsh-agency-agents 安装到本机 web profile，执行：dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=https://registry.npmjs.org/。安装后执行 dsh --profile web --dump-config，确认配置包含 agency-agents, agency-agents-remote，并告诉我如何重新加载 DSH 和开始使用。
 ```
 
-### Install the latest package from the official npm registry
+### 从官方 npm 安装最新版
 
-Run this from any PowerShell directory:
+在任意 PowerShell 目录执行：
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -174,103 +174,103 @@ dsh plugin --profile web add @michengai/dsh-agency-agents@latest --registry=http
 dsh --profile web --dump-config
 ```
 
-To pin a release, replace `@latest` with a version such as `@1.0.1`.
+需要钉死某一版时，把 `@latest` 换成具体版本，例如 `@1.0.1`。
 
-The configuration output should contain `agency-agents` and `agency-agents-remote`. Restart DSH Web and hard-refresh the browser. Do not copy client files manually: the Settings page needs the mounted Remote service.
-- **Reverse proxy deployment**: Supports hosting DSH behind prefix-stripping reverse proxies (e.g. `/app/dsh/`). API and update endpoints automatically resolve against the page base URI (`document.baseURI`), preventing 404 errors caused by lost prefix segments.
+配置输出中应包含 `agency-agents` 与 `agency-agents-remote`。安装后重启 DSH Web 并在浏览器硬刷新；请勿手工复制客户端文件，否则设置页所需的 Remote 服务不会被挂载。
+- **反向代理部署**：支持将 DSH 部署在带路径前缀的反向代理后面（如 `/app/dsh/`），插件 API 与更新检查端点统一自动按页面基址（`document.baseURI`）相对解析，避免丢失代理路径前缀导致 404。
 
-## Plugin Configuration & Toggles
+## 插件配置与可选开关
 
-The plugin follows standard DSH bundle configuration conventions. Options are located at:
-> **Sidebar → Plugins → Click `@michengai/dsh-agency-agents`** (the host's `plugins.bundle.config` slot).
+插件遵循 DSH 官方扩展配置规范，配置项位于：
+> **主界面侧边栏「插件」→ 点击 `@michengai/dsh-agency-agents` 详情页**（对应宿主 `plugins.bundle.config` 槽位）。
 
-Two native switches are available:
+此处提供两个原生扁平行开关：
 
-### 1. Sidebar Entry (`sidebarEntry`)
-- **Default**: Disabled (`false`)
-- **Description**: Displays a persistent **Agency Experts** navigation icon in the host's left primary sidebar.
-- **Effect**:
-  - When enabled, clicking the sidebar icon opens the expert and team management page directly in the primary workspace with a **960px centered container** (matching host plugin manager conventions). This eliminates vertical scrolling constraints in narrow settings dialogs;
-  - When disabled, unregisters the sidebar entry cleanly (and resets active panel gracefully if currently viewing the panel, preventing blank views);
-  - The standard **Settings → Experts** view remains active either way, and state is synchronized live across both entry points.
+### 1. 侧边栏入口 (`sidebarEntry`)
+- **默认状态**：关闭（`false`）
+- **功能说明**：在宿主左侧主导航栏增加常驻的 **「专家」** 图标入口。
+- **生效效果**：
+  - 开启后，在侧边栏点击即可直达专家与团队管理中心，并在主工作区以 **960px 居中版心**（对齐官方插件管理与市场规范）展开完整大面板，彻底告别在设置弹窗狭窄视口内滚动的局限；
+  - 关闭后安全注销侧栏槽位（若当前正停留在专家面板，会自动安全切回默认视图，防止悬空和白屏）；
+  - 无论是否开启侧栏入口，DSH 原有的「设置 → 专家」入口始终保留，两处界面数据与状态 100% 实时同步。
 
-### 2. Online Updates (`onlineUpdate` / `updater`)
-- **Default**: Enabled (`true`)
-- **Description**: Controls whether the plugin checks for and installs updates from npm.
-- **Effect**:
-  - **Dynamic UI Sync**: Disabling the toggle hides the **Check for updates** button and version badge in the header immediately without requiring a full page reload;
-  - **Endpoint Guard**: When disabled, the update API route returns `HTTP 403` for all check and install requests, preventing unreviewed updates;
-  - **Host / Platform Lock**: For curated plugin indexes (such as VibeDev) or restricted enterprise environments, this can be locked directly via Cordis configuration (bundle patch) without needing UI interaction:
+### 2. 在线更新 (`onlineUpdate` / `updater`)
+- **默认状态**：开启（`true`）
+- **功能说明**：控制是否允许在线检查并安装专家团队的新版本。
+- **生效效果**：
+  - **界面联动**：关闭开关后，专家面板标题旁的「检查更新」按钮与版本提示徽标将即时隐藏，无需刷新页面；开启后自动恢复展示；
+  - **接口安全拦截**：关闭后，服务端的更新路由对任何版本检查和安装请求均返回 `HTTP 403` 禁用状态，彻底杜绝在插件内安装未审核版本；
+  - **宿主/平台级锁定**：面向精选插件索引（如 VibeDev）或企业安全合规环境，支持直接在 Cordis 配置文件（bundle patch）中声明锁定：
     ```yaml
     updater: false
     ```
-    Once configured, the built-in updater is disabled at startup and the update action stays hidden.
-  - **Update Modes**: When a newer release is available, **Update automatically** runs only when the DSH CLI or Desktop update service is available; otherwise, the dialog provides a profile-specific manual command to copy and run.
+    配置生效后，更新器在启动时即被完全禁用，且更新开关处于锁定状态。
+  - **更新模式**：发现新版后，只有检测到 DSH CLI 或 Desktop 更新服务时才可使用“自动更新”；其他环境会在弹窗中提供可复制、与当前 Profile 对应的手工更新命令。
 
-## Usage
+## 使用
 
-1. Open the composer **Experts** picker. It shows enabled experts in a compact list grouped by category, with an avatar and a name on each row. Categories retain their original order, with experts sorted by their localized names within each category.
-2. Search the full roster by name, field or keyword, including disabled experts. One- or two-character English terms match whole words; terms of three or more characters also match word prefixes. Click a row to select it; disabled rows are marked **Enable and select**. Enabled experts also appear in the `@` shortcut list.
-3. The localized expert name is inserted as a short tag. Continue with the complete task. Selecting does not send the message or replace existing text or attachments.
+1. 点击对话输入框的「专家」，默认按分类显示已启用专家，每行是头像和专家名称；分区顺序沿用旧版，分区内按当前语言名称排序。
+2. 输入名称、领域或关键词即可搜索全部名册（英文 1–2 字符匹配完整词，3 字符起支持词首前缀），包含未启用专家。点击专家行即可选择；未启用项标记「启用并选择」，启用后也会出现在 `@` 快捷列表中。
+3. 当前语言的专家名称会以短标签写入输入框；在其后补充完整任务。选择操作不会自动发送，也不会替换已有正文或附件。例如：
 
 ```text
-Code Reviewer
+代码审查工程师
 
-Review the changes in the current workspace and list reproducible issues by severity.
+审查当前工作区的改动，按严重程度列出可复现的问题。
 ```
 
-When you select an expert with a task example through the toolbar or `@`, the example is automatically inserted after its reference if the task body is empty. Existing task text is preserved, templates are not appended to it, and nothing is sent automatically. The first eight cover code review, UX research, UI design, UX architecture, product management, technical writing, research synthesis and Xiaohongshu operations. All other experts remain searchable and selectable. Examples explain how to describe a task; they do not grant access to external platforms or tools.
+通过工具栏或 `@` 选择带有任务示例的专家时，如果正文为空，会在专家标签后自动填入可编辑的示例；已有需求时只插入标签，不追加模板，也不自动发送。首批覆盖代码审查、UX 研究、UI 设计、UX 架构、产品管理、技术写作、研究综合和小红书运营，共 8 位专家；其余专家仍可正常搜索和选择。示例仅用于说明如何交代任务，不会自动获取外部平台或工具能力。
 
-Experts with name conflicts are marked as unavailable. If another window changes the enabled roster, the picker refreshes and asks you to retry. If enabling succeeds but reference insertion fails, select the expert again without enabling it a second time. **Settings → Experts** remains the management surface; `@` still searches enabled experts only.
+名称冲突的专家会标记为不可选择。启用状态被其他窗口修改时会刷新名册并提示重试；启用成功但标签插入失败时，可以再次点击专家行，无需重复启用。「设置 → 专家」仍用于完整管理，`@` 仍只搜索已启用专家。
 
-The parent session can also call `list_experts(division?)`, then delegate with `summon_expert(expert, task)` using the expert name. The bundled roster validates localized and upstream names for uniqueness.
+也可由主会话先调用 `list_experts(division?)` 查找专家，再使用 `summon_expert(expert, task)` 按专家名称委派任务。内置名册会校验中英文名称唯一。
 
-<a id="expert-roster"></a>
+<a id="专家列表"></a>
 
-## 🎨 Expert roster
+## 🎨 专家列表
 
-Browse **331 bundled experts across 22 divisions**. Select an expert name to read its English persona.
+内置 **331 名专家，覆盖 22 个分类**。点击专家名称查看中文角色定义。
 
-### Division index
+### 分类导航
 
 <table width="100%">
   <tr>
-    <td width="33%">💻 <a href="#experts-engineering">Engineering</a> <sub>68</sub></td>
-    <td width="33%">🎨 <a href="#experts-design">Design</a> <sub>11</sub></td>
-    <td width="33%">📢 <a href="#experts-marketing">Marketing</a> <sub>43</sub></td>
+    <td width="33%">💻 <a href="#experts-engineering">工程</a> <sub>68</sub></td>
+    <td width="33%">🎨 <a href="#experts-design">设计</a> <sub>11</sub></td>
+    <td width="33%">📢 <a href="#experts-marketing">市场营销</a> <sub>43</sub></td>
   </tr>
   <tr>
-    <td width="33%">💰 <a href="#experts-paid-media">Paid Media</a> <sub>7</sub></td>
-    <td width="33%">💼 <a href="#experts-sales">Sales</a> <sub>9</sub></td>
-    <td width="33%">🏢 <a href="#experts-company">Company Leadership</a> <sub>6</sub></td>
+    <td width="33%">💰 <a href="#experts-paid-media">付费媒体</a> <sub>7</sub></td>
+    <td width="33%">💼 <a href="#experts-sales">销售</a> <sub>9</sub></td>
+    <td width="33%">🏢 <a href="#experts-company">公司经营</a> <sub>6</sub></td>
   </tr>
   <tr>
-    <td width="33%">🏦 <a href="#experts-finance">Finance</a> <sub>9</sub></td>
-    <td width="33%">👔 <a href="#experts-hr">Human Resources</a> <sub>2</sub></td>
-    <td width="33%">⚖️ <a href="#experts-legal">Legal</a> <sub>2</sub></td>
+    <td width="33%">🏦 <a href="#experts-finance">金融</a> <sub>9</sub></td>
+    <td width="33%">👔 <a href="#experts-hr">人力资源</a> <sub>2</sub></td>
+    <td width="33%">⚖️ <a href="#experts-legal">法务</a> <sub>2</sub></td>
   </tr>
   <tr>
-    <td width="33%">🚚 <a href="#experts-supply-chain">Supply Chain</a> <sub>4</sub></td>
-    <td width="33%">📦 <a href="#experts-product">Product</a> <sub>5</sub></td>
-    <td width="33%">📋 <a href="#experts-project-management">Project Management</a> <sub>7</sub></td>
+    <td width="33%">🚚 <a href="#experts-supply-chain">供应链</a> <sub>4</sub></td>
+    <td width="33%">📦 <a href="#experts-product">产品</a> <sub>5</sub></td>
+    <td width="33%">📋 <a href="#experts-project-management">项目管理</a> <sub>7</sub></td>
   </tr>
   <tr>
-    <td width="33%">🧪 <a href="#experts-testing">Testing</a> <sub>10</sub></td>
-    <td width="33%">🤝 <a href="#experts-support">Support</a> <sub>7</sub></td>
-    <td width="33%">🛡️ <a href="#experts-security">Security</a> <sub>12</sub></td>
+    <td width="33%">🧪 <a href="#experts-testing">测试</a> <sub>10</sub></td>
+    <td width="33%">🤝 <a href="#experts-support">支持</a> <sub>7</sub></td>
+    <td width="33%">🛡️ <a href="#experts-security">安全</a> <sub>12</sub></td>
   </tr>
   <tr>
-    <td width="33%">🔬 <a href="#experts-specialized">Specialized</a> <sub>68</sub></td>
-    <td width="33%">🥽 <a href="#experts-spatial-computing">Spatial Computing</a> <sub>6</sub></td>
-    <td width="33%">🎮 <a href="#experts-game-development">Game Development</a> <sub>21</sub></td>
+    <td width="33%">🔬 <a href="#experts-specialized">专业</a> <sub>68</sub></td>
+    <td width="33%">🥽 <a href="#experts-spatial-computing">空间计算</a> <sub>6</sub></td>
+    <td width="33%">🎮 <a href="#experts-game-development">游戏开发</a> <sub>21</sub></td>
   </tr>
   <tr>
-    <td width="33%">📚 <a href="#experts-academic">Academic</a> <sub>7</sub></td>
-    <td width="33%">🗺️ <a href="#experts-gis">GIS</a> <sub>13</sub></td>
-    <td width="33%">🏥 <a href="#experts-healthcare">Healthcare</a> <sub>3</sub></td>
+    <td width="33%">📚 <a href="#experts-academic">学术</a> <sub>7</sub></td>
+    <td width="33%">🗺️ <a href="#experts-gis">地理信息</a> <sub>13</sub></td>
+    <td width="33%">🏥 <a href="#experts-healthcare">医疗健康</a> <sub>3</sub></td>
   </tr>
   <tr>
-    <td width="33%">🔍 <a href="#experts-research">Research</a> <sub>1</sub></td>
+    <td width="33%">🔍 <a href="#experts-research">研究</a> <sub>1</sub></td>
     <td width="33%"></td>
     <td width="33%"></td>
   </tr>
@@ -278,552 +278,552 @@ Browse **331 bundled experts across 22 divisions**. Select an expert name to rea
 
 <a id="experts-engineering"></a>
 
-### 💻 Engineering Division
+### 💻 工程
 
-Building the future, one commit at a time.
+构建未来，一个 commit 一个脚印。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🎨 [Frontend Developer](assets/agency-agents/engineering/engineering-frontend-developer.md) | React/Vue/Angular, UI implementation, performance | Modern web apps, pixel-perfect UIs, Core Web Vitals optimization |
-| 🏗️ [Backend Architect](assets/agency-agents/engineering/engineering-backend-architect.md) | API design, database architecture, scalability | Server-side systems, microservices, cloud infrastructure |
-| 📱 [Mobile App Builder](assets/agency-agents/engineering/engineering-mobile-app-builder.md) | iOS/Android, React Native, Flutter | Native and cross-platform mobile applications |
-| 🤖 [AI Engineer](assets/agency-agents/engineering/engineering-ai-engineer.md) | ML models, deployment, AI integration | Machine learning features, data pipelines, AI-powered apps |
-| 🚀 [DevOps Automator](assets/agency-agents/engineering/engineering-devops-automator.md) | CI/CD, infrastructure automation, cloud ops | Pipeline development, deployment automation, monitoring |
-| 🌐 [Network Engineer](assets/agency-agents/engineering/engineering-network-engineer.md) | Cisco IOS/IOS-XE, Juniper Junos, Palo Alto PAN-OS | Router/switch/firewall configuration, BGP/OSPF, ACLs, show-output troubleshooting |
-| ⚡ [Rapid Prototyper](assets/agency-agents/engineering/engineering-rapid-prototyper.md) | Fast POC development, MVPs | Quick proof-of-concepts, hackathon projects, fast iteration |
-| 💎 [Senior Developer](assets/agency-agents/engineering/engineering-senior-developer.md) | Laravel/Livewire, advanced patterns | Complex implementations, architecture decisions |
-| 🔧 [Filament Optimization Specialist](assets/agency-agents/engineering/engineering-filament-optimization-specialist.md) | Filament PHP admin UX, structural form redesign, resource optimization | Restructuring Filament resources/forms/tables for faster, cleaner admin workflows |
-| ⚡ [Autonomous Optimization Architect](assets/agency-agents/engineering/engineering-autonomous-optimization-architect.md) | LLM routing, cost optimization, shadow testing | Autonomous systems needing intelligent API selection and cost guardrails |
-| 🔩 [Embedded Firmware Engineer](assets/agency-agents/engineering/engineering-embedded-firmware-engineer.md) | Bare-metal, RTOS, ESP32/STM32/Nordic firmware | Production-grade embedded systems and IoT devices |
-| 🚨 [Incident Response Commander](assets/agency-agents/engineering/engineering-incident-response-commander.md) | Incident management, post-mortems, on-call | Managing production incidents and building incident readiness |
-| ⛓️ [Solidity Smart Contract Engineer](assets/agency-agents/engineering/engineering-solidity-smart-contract-engineer.md) | EVM contracts, gas optimization, DeFi | Secure, gas-optimized smart contracts and DeFi protocols |
-| 🧭 [Codebase Onboarding Engineer](assets/agency-agents/engineering/engineering-codebase-onboarding-engineer.md) | Fast developer onboarding, read-only codebase exploration, factual explanation | Helping new developers understand unfamiliar repos quickly by reading the code, tracing code paths, and stating facts about structure and behavior |
-| 📚 [Technical Writer](assets/agency-agents/engineering/engineering-technical-writer.md) | Developer docs, API reference, tutorials | Clear, accurate technical documentation |
-| 💬 [WeChat Mini Program Developer](assets/agency-agents/engineering/engineering-wechat-mini-program-developer.md) | WeChat ecosystem, Mini Programs, payment integration | Building performant apps for the WeChat ecosystem |
-| 👁️ [Code Reviewer](assets/agency-agents/engineering/engineering-code-reviewer.md) | Constructive code review, security, maintainability | PR reviews, code quality gates, mentoring through review |
-| 🗄️ [Database Optimizer](assets/agency-agents/engineering/engineering-database-optimizer.md) | Schema design, query optimization, indexing strategies | PostgreSQL/MySQL tuning, slow query debugging, migration planning |
-| 🌿 [Git Workflow Master](assets/agency-agents/engineering/engineering-git-workflow-master.md) | Branching strategies, conventional commits, advanced Git | Git workflow design, history cleanup, CI-friendly branch management |
-| 🏛️ [Software Architect](assets/agency-agents/engineering/engineering-software-architect.md) | System design, DDD, architectural patterns, trade-off analysis | Architecture decisions, domain modeling, system evolution strategy |
-| 🛡️ [SRE (Site Reliability Engineer)](assets/agency-agents/engineering/engineering-sre.md) | SLOs, error budgets, observability, chaos engineering | Production reliability, toil reduction, capacity planning |
-| 🧬 [AI Data Remediation Engineer](assets/agency-agents/engineering/engineering-ai-data-remediation-engineer.md) | Self-healing pipelines, air-gapped SLMs, semantic clustering | Fixing broken data at scale with zero data loss |
-| 🔧 [Data Engineer](assets/agency-agents/engineering/engineering-data-engineer.md) | Data pipelines, lakehouse architecture, ETL/ELT | Building reliable data infrastructure and warehousing |
-| 🔗 [Feishu Integration Developer](assets/agency-agents/engineering/engineering-feishu-integration-developer.md) | Feishu/Lark Open Platform, bots, workflows | Building integrations for the Feishu ecosystem |
-| 🧱 [CMS Developer](assets/agency-agents/engineering/engineering-cms-developer.md) | WordPress &amp; Drupal themes, plugins/modules, content architecture | Code-first CMS implementation and customization |
-| 📧 [Email Intelligence Engineer](assets/agency-agents/engineering/engineering-email-intelligence-engineer.md) | Email parsing, MIME extraction, structured data for AI agents | Turning raw email threads into reasoning-ready context |
-| 🎙️ [Voice AI Integration Engineer](assets/agency-agents/engineering/engineering-voice-ai-integration-engineer.md) | Speech-to-text pipelines, Whisper, ASR, speaker diarization | End-to-end transcription pipelines, audio preprocessing, structured transcript delivery |
-| 🖧 [IT Service Manager](assets/agency-agents/engineering/engineering-it-service-manager.md) | ITIL 4 service management | Incident/problem/change management, SLAs, CMDB |
-| 🪡 [Minimal Change Engineer](assets/agency-agents/engineering/engineering-minimal-change-engineer.md) | Minimum-viable diffs | Fixing only what's asked, no scope creep |
-| 📜 [OrgScript Engineer](assets/agency-agents/engineering/engineering-orgscript-engineer.md) | OrgScript grammar &amp; AST validation | Designing/parsing OrgScript business-logic definitions |
-| 🧬 [Prompt Engineer](assets/agency-agents/engineering/engineering-prompt-engineer.md) | LLM prompt design &amp; optimization | Turning vague instructions into reliable AI behaviors |
-| 🕸️ [Multi-Agent Systems Architect](assets/agency-agents/engineering/engineering-multi-agent-systems-architect.md) | Multi-agent pipeline design &amp; governance | Topology, context, trust, failure recovery for agent systems |
-| 🛒 [Drupal Shopping Cart Engineer](assets/agency-agents/engineering/engineering-drupal-shopping-cart.md) | Drupal Commerce storefronts | Catalog, payments, checkout, orders on Drupal 10/11 |
-| 🛍️ [WordPress Shopping Cart Engineer](assets/agency-agents/engineering/engineering-wordpress-shopping-cart.md) | WooCommerce storefronts | Catalog, payments, checkout, conversion on WordPress |
-| 💳 [Payments &amp; Billing Engineer](assets/agency-agents/engineering/engineering-payments-billing-engineer.md) | PSP integration, idempotent payment flows, subscription billing | Stripe/Adyen/Braintree integrations, webhook processing, dunning, reconciliation |
-| 🌍 [Internationalization Engineer](assets/agency-agents/engineering/engineering-i18n-engineer.md) | ICU MessageFormat, RTL/bidi layouts, CLDR formatting, pseudo-localization | Making apps translation-ready, locale-aware formatting, RTL support, i18n audits |
-| ⚡ [Drupal Performance Engineer](assets/agency-agents/engineering/engineering-drupal-performance.md) | Drupal performance &amp; Core Web Vitals | Caching, DB/query tuning, render pipeline, profiling high-traffic Drupal |
-| ⚡ [WordPress Performance Engineer](assets/agency-agents/engineering/engineering-wordpress-performance.md) | WordPress performance &amp; Core Web Vitals | Caching, query/asset optimization, plugin tuning, profiling high-traffic WP |
-| ♿ [Section 508 Accessibility Specialist](assets/agency-agents/engineering/engineering-section-508-specialist.md) | US federal 508 / WCAG accessibility | ARIA, screen-reader testing, VPAT/ACR authoring, remediation |
-| 🏛️ [USWDS Developer](assets/agency-agents/engineering/engineering-uswds-developer.md) | US Web Design System (federal) | Accessible gov UI components &amp; design-system patterns |
-| 🔎 [Search Relevance Engineer](assets/agency-agents/engineering/engineering-search-relevance-engineer.md) | Search ranking &amp; relevance | Query understanding, embeddings, ranking/eval, relevance tuning |
-| 🔐 [Identity &amp; Access Engineer](assets/agency-agents/engineering/engineering-identity-access-engineer.md) | AuthN/AuthZ &amp; IAM | OAuth/OIDC/SAML, SSO, RBAC/ABAC, token &amp; session security |
-| 🤝 [Realtime Collaboration Engineer](assets/agency-agents/engineering/engineering-realtime-collaboration-engineer.md) | Realtime sync &amp; presence | CRDTs/OT, conflict resolution, live cursors, offline sync |
-| 💻 [Desktop App Engineer](assets/agency-agents/engineering/engineering-desktop-app-engineer.md) | Cross-platform desktop apps | Electron/Tauri, native integration, packaging, auto-update |
-| 🚀 [Mobile Release Engineer](assets/agency-agents/engineering/engineering-mobile-release-engineer.md) | Mobile release &amp; CI/CD | App Store/Play submission, signing, staged rollout, crash triage |
-| 🎬 [Video Streaming Engineer](assets/agency-agents/engineering/engineering-video-streaming-engineer.md) | Video streaming &amp; transcoding | HLS/DASH, ABR, codecs, CDN delivery, low-latency streaming |
-| 💰 [FinOps Engineer](assets/agency-agents/engineering/engineering-finops-engineer.md) | Cloud cost engineering | Cost allocation, rightsizing, unit economics, budget &amp; anomaly control |
-| 🧩 [WebAssembly Engineer](assets/agency-agents/engineering/engineering-webassembly-engineer.md) | WebAssembly &amp; WASI | Rust/C++→WASM, sandboxing, host bindings, performance |
-| 🔌 [API Platform Engineer](assets/agency-agents/engineering/engineering-api-platform-engineer.md) | API gateways &amp; platforms | Gateway design, versioning, rate limiting, developer portals |
-| 🛟 [Database Reliability Engineer](assets/agency-agents/engineering/engineering-database-reliability-engineer.md) | Database reliability (DBRE) | HA/replication, automated failover, PITR backups, zero-downtime ops |
-| 🛠️ [Developer Tooling Engineer](assets/agency-agents/engineering/engineering-developer-tooling-engineer.md) | CLI &amp; developer tooling | Command-line tools, internal DX, build/dev workflows |
-| 📡 [IoT Fleet Engineer](assets/agency-agents/engineering/engineering-iot-fleet-engineer.md) | IoT &amp; edge fleet | Device provisioning/identity, MQTT telemetry, OTA updates |
-| 🔍 [RAG Pipeline Engineer](assets/agency-agents/engineering/engineering-rag-pipeline-engineer.md) | Production RAG pipelines | Chunking, retrieval quality, hybrid search, re-ranking, eval-driven iteration |
-| 🗄️ [GaussDB Expert Engineer](assets/agency-agents/engineering/engineering-gaussdb-expert.md) | Huawei GaussDB OLTP | Enterprise OLTP performance, HA, and migration on Huawei's GaussDB |
-| 🕵️ [Privacy Engineer](assets/agency-agents/engineering/engineering-privacy-engineer.md) | PII discovery, data minimization, consent enforcement, DSAR/deletion pipelines | Implementing privacy in code, right-to-be-forgotten across services, retention automation |
-| 🦀 [Rust Refactoring Specialist](assets/agency-agents/engineering/engineering-rust-refactoring-specialist.md) | Behavior-aware Rust refactoring | Reforming crates/traits/modules with evidence-based, behavior-preserving changes |
-| 🧪 [LLM Post-Training Engineer](assets/agency-agents/engineering/engineering-llm-post-training-engineer.md) | Post-training stack (SFT/DPO/GRPO/RLVR) | Evidence-based experiment gating, checkpoint integrity, failure classification |
-| 📈 [Data Visualization Engineer](assets/agency-agents/engineering/engineering-data-visualization-engineer.md) | Perceptually honest data viz | Chart-type selection, colorblind-safe palettes, performant D3/Vega rendering |
-| 🧠 [Knowledge Graph Engineer](assets/agency-agents/engineering/engineering-knowledge-graph-engineer.md) | Knowledge graphs, entity-relationship extraction, graph-enhanced RAG | Structuring documents into queryable Neo4j graphs with LangGraph; provenance, contradiction tracking, subgraph retrieval |
-| 🔗 [DingTalk Integration Developer](assets/agency-agents/engineering/engineering-dingtalk-integration-developer.md) | DingTalk bots, Cool Apps, approvals, connectors | Enterprise collaboration and DingTalk integrations |
-| 🔌 [Embedded Linux Driver Engineer](assets/agency-agents/engineering/engineering-embedded-linux-driver-engineer.md) | Kernel modules, device trees, I2C/SPI/USB drivers | Embedded Linux drivers and BSP development |
-| 🔬 [FPGA/ASIC Digital Design Engineer](assets/agency-agents/engineering/engineering-fpga-digital-design-engineer.md) | Verilog/SystemVerilog, AXI buses, timing closure | FPGA development, digital logic, SoC verification |
-| 📡 [IoT Solution Architect](assets/agency-agents/engineering/engineering-iot-solution-architect.md) | MQTT/CoAP, edge computing, device management, cloud IoT | End-to-end IoT architecture and deployment |
-| ⚙️ [Mechanical Design Engineer](assets/agency-agents/engineering/engineering-mechanical-design-engineer.md) | Mechanisms, structural analysis, DFMA, engineering drawings | Industrial equipment, automated production, mechanical products |
-| 🌐 [China Enterprise Network Engineer](assets/agency-agents/engineering/engineering-network-engineer-china.md) | Huawei VRP, H3C Comware, Ruijie, VLAN/OSPF/BGP/VXLAN | Campus, data-center, and WAN networks using Chinese vendors |
-| 🖥️ [Industrial Desktop Application Engineer](assets/agency-agents/engineering/engineering-pc-host-engineer.md) | Qt/QML, serial/Modbus/CAN, real-time visualization | Industrial desktop software, test equipment, HMIs |
-| 🔒 [Security Engineering Consultant](assets/agency-agents/engineering/engineering-security-engineer.md) | Threat modeling, secure code review, security architecture | Application security reviews and vulnerability assessment |
-| 🛡️ [Security Operations Detection Engineer](assets/agency-agents/engineering/engineering-threat-detection-engineer.md) | SIEM rules, MITRE ATT&amp;CK, threat hunting | Detection engineering and security monitoring |
-| 🎯 [ATS Validator Architect](assets/agency-agents/engineering/engineering-ats-validator-architect.md) | ATS resume parsing, layout linearization, sub-5ms client validation | Applicant tracking systems, resume linters, deterministic recruitment parsers |
-| 🌏 [China Network Engineer](assets/agency-agents/engineering/engineering-china-network-engineer.md) | Huawei VRP, H3C Comware, Ruijie RGOS, Hillstone StoneOS | Mainland China enterprise network deployments, domestic routing/switching, MLPS 2.0 hardening |
-| 📑 [PDF Engine Architect](assets/agency-agents/engineering/engineering-pdf-engine-architect.md) | Deterministic HTML-to-PDF compilation, Playwright context pools, PDF/UA-1 &amp; PDF/A-2b | High-throughput document compilation, print-accurate layouts, archival PDF generation |
-| 🛤️ [Platform Engineer](assets/agency-agents/engineering/engineering-platform-engineer.md) | Internal developer platforms (IDP), golden paths, self-serve infrastructure | Scaling engineering velocity, standardizing cloud infrastructure, developer portals |
-| 🛠️ [ServiceNow Developer &amp; Mentor](assets/agency-agents/engineering/engineering-servicenow-developer-mentor.md) | ServiceNow Business Rules, Script Includes, Flow Designer, ACLs, OOTB vs custom isolation | Enterprise ServiceNow platform development, script optimization, incident troubleshooting |
-| 📑 [Universal Document Compiler](assets/agency-agents/engineering/engineering-universal-document-compiler.md) | Schema-agnostic document ASTs, algorithmic layout inference, bidirectional CST-to-canvas sync | Dynamic multi-format document authoring, universal paged publishing, visual canvas synchronization |
+| 🎨 [前端开发者](assets/agency-agents-zh/engineering/engineering-frontend-developer.md) | React/Vue、UI 实现、性能优化 | 现代 Web 应用、像素级 UI |
+| 🏗️ [后端架构师](assets/agency-agents-zh/engineering/engineering-backend-architect.md) | API 设计、数据库架构、可扩展性 | 服务端系统、微服务 |
+| 📱 [移动应用开发工程师](assets/agency-agents-zh/engineering/engineering-mobile-app-builder.md) | iOS/Android 原生、跨平台框架 | 移动端开发、App 性能优化 |
+| 🤖 [AI 工程师](assets/agency-agents-zh/engineering/engineering-ai-engineer.md) | 机器学习、模型部署、AI 集成 | ML 功能、数据管线 |
+| 🚀 [DevOps 自动化工程师](assets/agency-agents-zh/engineering/engineering-devops-automator.md) | CI/CD、基础设施自动化 | 流水线开发、部署自动化 |
+| 🌐 [网络工程师](assets/agency-agents-zh/engineering/engineering-network-engineer.md) | Cisco/Juniper/Palo Alto、路由交换、防火墙 | BGP/OSPF 配置、ACL 调整、网络排障 |
+| ⚡ [快速原型工程师](assets/agency-agents-zh/engineering/engineering-rapid-prototyper.md) | 快速 POC、MVP 开发 | 概念验证、黑客马拉松 |
+| 💎 [高级开发者](assets/agency-agents-zh/engineering/engineering-senior-developer.md) | Laravel/Livewire/FluxUI、高端 CSS、Three.js | 高品质 Web 体验 |
+| 🔧 [Filament 后台优化专家](assets/agency-agents-zh/engineering/engineering-filament-optimization-specialist.md) | Filament PHP 后台重构、高影响力改造 | PHP 后台管理优化 |
+| ⚡ [自动化优化架构师](assets/agency-agents-zh/engineering/engineering-autonomous-optimization-architect.md) | 自适应系统、自动调优 | 智能运维、自愈系统 |
+| 🔩 [嵌入式固件工程师](assets/agency-agents-zh/engineering/engineering-embedded-firmware-engineer.md) | RTOS、外设驱动、低功耗设计 | IoT、嵌入式系统 |
+| 🚨 [故障应急工程师](assets/agency-agents-zh/engineering/engineering-incident-response-commander.md) | 故障处置、SLO 管理、事后复盘 | 线上故障、应急响应 |
+| ⛓️ [Solidity 智能合约工程师](assets/agency-agents-zh/engineering/engineering-solidity-smart-contract-engineer.md) | Solidity、EVM、Gas 优化、DeFi | 智能合约开发、Web3 |
+| 🧭 [工程效率工程师](assets/agency-agents-zh/engineering/engineering-codebase-onboarding-engineer.md) | 源码阅读、调用链追踪、代码结构说明 | 新成员上手、陌生代码库理解 |
+| 📚 [技术文档工程师](assets/agency-agents-zh/engineering/engineering-technical-writer.md) | API 文档、开发者文档、docs-as-code | 技术文档、知识库 |
+| 💬 [微信小程序开发者](assets/agency-agents-zh/engineering/engineering-wechat-mini-program-developer.md) | WXML/WXSS、微信支付、云开发 | 微信小程序全栈开发 |
+| 👁️ [代码审查工程师](assets/agency-agents-zh/engineering/engineering-code-reviewer.md) | 代码审查、安全审计、质量把关 | PR 审查、代码质量 |
+| 🗄️ [数据库性能工程师](assets/agency-agents-zh/engineering/engineering-database-optimizer.md) | Schema 设计、查询优化、索引策略 | 数据库性能调优 |
+| 🌿 [Git 工作流工程师](assets/agency-agents-zh/engineering/engineering-git-workflow-master.md) | 分支策略、约定式提交、变基 | Git 工作流规范 |
+| 🏛️ [软件架构师](assets/agency-agents-zh/engineering/engineering-software-architect.md) | 系统设计、DDD、架构决策 | 系统架构设计 |
+| 🛡️ [SRE（站点可靠性工程师）](assets/agency-agents-zh/engineering/engineering-sre.md) | SLO、可观测性、混沌工程 | 站点可靠性工程 |
+| 🧬 [AI 数据治理工程师](assets/agency-agents-zh/engineering/engineering-ai-data-remediation-engineer.md) | 自愈管道、SLM 语义聚类、零数据丢失 | 大规模数据异常修复 |
+| 🔧 [数据工程师](assets/agency-agents-zh/engineering/engineering-data-engineer.md) | ETL/ELT、数据湖、Spark/dbt | 数据管线、数据仓库 |
+| 🔗 [飞书集成开发工程师](assets/agency-agents-zh/engineering/engineering-feishu-integration-developer.md) | 飞书机器人、审批流、多维表格 | 飞书生态集成开发 |
+| 🧱 [CMS 开发者](assets/agency-agents-zh/engineering/engineering-cms-developer.md) | Drupal/WordPress、主题开发、自定义插件 | CMS 站点开发与内容架构 |
+| 📧 [邮件系统工程师](assets/agency-agents-zh/engineering/engineering-email-intelligence-engineer.md) | 邮件解析、结构化提取、AI 推理数据 | 智能体邮件集成 |
+| 🎙️ [语音 AI 集成工程师](assets/agency-agents-zh/engineering/engineering-voice-ai-integration-engineer.md) | Whisper/ASR、音频处理、说话人分离 | 语音转写管线、字幕生成、业务集成 |
+| 🖧 [IT 服务经理](assets/agency-agents-zh/engineering/engineering-it-service-manager.md) | ITIL、服务目录、SLA、配置库 | IT 事件与变更管理、服务质量改进 |
+| 🪡 [低风险变更工程师](assets/agency-agents-zh/engineering/engineering-minimal-change-engineer.md) | 最小范围修改、回归控制、问题修复 | 边界明确的小修复、低风险代码变更 |
+| 📜 [OrgScript 工程师](assets/agency-agents-zh/engineering/engineering-orgscript-engineer.md) | OrgScript 语法、AST 校验、业务规则 | 业务脚本定义、解析器与引擎实现 |
+| 🧬 [提示词工程师](assets/agency-agents-zh/engineering/engineering-prompt-engineer.md) | 提示词设计、评测、迭代优化 | 将模糊需求转化为稳定的 AI 行为 |
+| 🕸️ [多智能体系统架构师](assets/agency-agents-zh/engineering/engineering-multi-agent-systems-architect.md) | 智能体拓扑、上下文、信任与故障恢复 | 多智能体架构设计、治理与人工介入 |
+| 🛒 [Drupal 购物车工程师](assets/agency-agents-zh/engineering/engineering-drupal-shopping-cart.md) | Drupal Commerce、支付、结算、促销 | Drupal 商城开发与交易流程配置 |
+| 🛍️ [WordPress 购物车工程师](assets/agency-agents-zh/engineering/engineering-wordpress-shopping-cart.md) | WooCommerce、支付网关、购物车、优惠券 | WordPress 商城搭建、结算转化优化 |
+| 💳 [支付计费工程师](assets/agency-agents-zh/engineering/engineering-payments-billing-engineer.md) | 支付渠道、幂等、回调、订阅计费 | Stripe/Adyen 集成、支付对账、订阅管理 |
+| 🌍 [国际化工程师](assets/agency-agents-zh/engineering/engineering-i18n-engineer.md) | 多语言文案、复数规则、RTL、本地化格式 | 应用国际化改造、多语言测试 |
+| ⚡ [Drupal 性能工程师](assets/agency-agents-zh/engineering/engineering-drupal-performance.md) | 缓存、BigPipe、Views 查询、PHP-FPM | Drupal 性能调优、Core Web Vitals 优化 |
+| ⚡ [WordPress 性能工程师](assets/agency-agents-zh/engineering/engineering-wordpress-performance.md) | 对象缓存、页面缓存、查询与静态资源 | WordPress 性能调优、页面速度优化 |
+| ♿ [无障碍合规工程师](assets/agency-agents-zh/engineering/engineering-section-508-specialist.md) | Section 508、WCAG、ARIA、VPAT | 联邦网站无障碍审计、界面改造 |
+| 🏛️ [USWDS 开发者](assets/agency-agents-zh/engineering/engineering-uswds-developer.md) | USWDS 组件、设计令牌、无障碍模式 | 美国政府网站前端开发、CMS 集成 |
+| 🔎 [搜索相关性工程师](assets/agency-agents-zh/engineering/engineering-search-relevance-engineer.md) | 索引、BM25、混合检索、nDCG | 搜索排序调优、相关性评测与实验 |
+| 🔐 [身份与访问管理工程师](assets/agency-agents-zh/engineering/engineering-identity-access-engineer.md) | OAuth/OIDC、SSO、SCIM、RBAC/ABAC | 身份认证、企业账号接入、权限体系建设 |
+| 🤝 [实时协作工程师](assets/agency-agents-zh/engineering/engineering-realtime-collaboration-engineer.md) | WebSocket、在线状态、协同编辑、同步 | 实时协作、冲突处理、离线恢复 |
+| 💻 [桌面应用工程师](assets/agency-agents-zh/engineering/engineering-desktop-app-engineer.md) | Electron/Tauri、原生集成、签名与更新 | 跨平台桌面应用开发、打包发布 |
+| 🚀 [移动发布工程师](assets/agency-agents-zh/engineering/engineering-mobile-release-engineer.md) | 签名证书、fastlane、商店提审、分批发布 | iOS/Android 打包、CI/CD 与上架 |
+| 🎬 [视频流工程师](assets/agency-agents-zh/engineering/engineering-video-streaming-engineer.md) | HLS/DASH、转码、DRM、CDN | 视频点播与直播、播放质量优化 |
+| 💰 [FinOps 工程师](assets/agency-agents-zh/engineering/engineering-finops-engineer.md) | 云费用分摊、资源规格、成本看板 | 云成本治理、预算跟踪、资源优化 |
+| 🧩 [WebAssembly 工程师](assets/agency-agents-zh/engineering/engineering-webassembly-engineer.md) | Rust/C++、WebAssembly、WASI、JS 互操作 | 浏览器高性能计算、原生代码移植 |
+| 🔌 [API 平台工程师](assets/agency-agents-zh/engineering/engineering-api-platform-engineer.md) | OpenAPI/gRPC、网关、版本治理、SDK | API 平台建设、鉴权限流、开发者接入 |
+| 🛟 [数据库可靠性工程师](assets/agency-agents-zh/engineering/engineering-database-reliability-engineer.md) | 主从复制、自动切换、备份恢复 | 数据库高可用、容灾、无停机变更 |
+| 🛠️ [开发者工具工程师](assets/agency-agents-zh/engineering/engineering-developer-tooling-engineer.md) | CLI、命令补全、跨平台分发 | 内部研发工具、开发流程提效 |
+| 📡 [物联网设备工程师](assets/agency-agents-zh/engineering/engineering-iot-fleet-engineer.md) | 设备注册、MQTT、OTA、边缘计算 | 大规模设备接入、升级回滚、在线运维 |
+| 🔍 [RAG 管线工程师](assets/agency-agents-zh/engineering/engineering-rag-pipeline-engineer.md) | 分块、混合检索、重排、检索评测 | 生产级 RAG 管线建设与召回优化 |
+| 🗄️ [GaussDB 专家工程师](assets/agency-agents-zh/engineering/engineering-gaussdb-expert.md) | GaussDB OLTP、分布式表、查询与索引 | GaussDB 架构设计、性能调优与迁移 |
+| 🕵️ [隐私工程师](assets/agency-agents-zh/engineering/engineering-privacy-engineer.md) | 敏感数据识别、最小化采集、删除与留存 | 隐私要求落地、数据删除流程自动化 |
+| 🦀 [Rust 重构工程师](assets/agency-agents-zh/engineering/engineering-rust-refactoring-specialist.md) | Rust 模块拆分、错误处理、Clippy | Rust 代码重构、重复清理、行为保持 |
+| 🧪 [LLM 后训练工程师](assets/agency-agents-zh/engineering/engineering-llm-post-training-engineer.md) | SFT、偏好优化、强化学习微调 | 大模型后训练实验、模型发布评估 |
+| 📈 [数据可视化工程师](assets/agency-agents-zh/engineering/engineering-data-visualization-engineer.md) | 图表选型、D3/Vega、交互与渲染性能 | 数据看板、交互图表、大数据量可视化 |
+| 🧠 [知识图谱工程师](assets/agency-agents-zh/engineering/engineering-knowledge-graph-engineer.md) | 实体关系建模、知识图谱、图增强检索 | 知识组织、上下文导航、RAG 能力组合 |
+| 🔗 [钉钉集成开发工程师](assets/agency-agents-zh/engineering/engineering-dingtalk-integration-developer.md) | 钉钉机器人、酷应用、连接器 | 钉钉生态集成开发 |
+| 🔌 [嵌入式 Linux 驱动工程师](assets/agency-agents-zh/engineering/engineering-embedded-linux-driver-engineer.md) | 内核模块、设备树、Platform/I2C/SPI 驱动 | 嵌入式 Linux BSP 开发 |
+| 🔬 [FPGA/ASIC 数字设计工程师](assets/agency-agents-zh/engineering/engineering-fpga-digital-design-engineer.md) | Verilog/SystemVerilog、时序收敛、AXI 总线 | FPGA 开发、数字逻辑设计 |
+| 📡 [IoT 方案架构师](assets/agency-agents-zh/engineering/engineering-iot-solution-architect.md) | MQTT/CoAP、边缘计算、设备管理、云平台 | 物联网端到端方案设计 |
+| ⚙️ [机械设计工程师](assets/agency-agents-zh/engineering/engineering-mechanical-design-engineer.md) | 传动选型、强度刚度疲劳振动校核、DFMA、GB/ISO 标准件 | 工业装备、自动化产线、检测仪器 |
+| 🌐 [国内网络工程师](assets/agency-agents-zh/engineering/engineering-network-engineer-china.md) | 华为 VRP/华三 Comware/锐捷、VLAN/OSPF/BGP/VXLAN、信创国产化、等保组网 | 国产设备园区网/数据中心/广域网 |
+| 🖥️ [上位机工程师](assets/agency-agents-zh/engineering/engineering-pc-host-engineer.md) | Qt/QML、QSerialPort、Modbus/CAN、QChart 实时可视化 | 工业上位机、检测设备、HMI |
+| 🔒 [安全工程师](assets/agency-agents-zh/engineering/engineering-security-engineer.md) | 威胁建模、代码审计、安全架构 | 应用安全、漏洞评估 |
+| 🛡️ [威胁检测工程师（工程侧）](assets/agency-agents-zh/engineering/engineering-threat-detection-engineer.md) | SIEM、威胁狩猎、检测规则 | 安全运营、威胁检测 |
+| 🎯 [ATS 简历校验架构师](assets/agency-agents-zh/engineering/engineering-ats-validator-architect.md) | ATS 简历解析、排版线性化、亚 5ms 客户端校验 | 招聘管理系统接入、简历可解析性审计、无 AI 幻觉确定性检索 |
+| 🌏 [国内网络架构工程师](assets/agency-agents-zh/engineering/engineering-china-network-engineer.md) | 华为 VRP、华三 Comware、锐捷 RGOS、山石网科 StoneOS | 国内企业网规划、主流国产网络设备割接与排障、等保 2.0 边界加固 |
+| 📑 [PDF 引擎架构师](assets/agency-agents-zh/engineering/engineering-pdf-engine-architect.md) | 确定性 HTML 转 PDF、Playwright 渲染池、PDF/UA-1 与 PDF/A-2b | 高并发电子凭证与研报生成、打印级像素精确排版、电子档案归档 |
+| 🛤️ [平台工程师](assets/agency-agents-zh/engineering/engineering-platform-engineer.md) | 内部开发者平台（IDP）、黄金路径、基础设施自助化 | 工程交付效能跃升、云原生基础设施自助化、研发标准规范化 |
+| 🛠️ [ServiceNow 平台导师](assets/agency-agents-zh/engineering/engineering-servicenow-developer-mentor.md) | ServiceNow Business Rules、Script Includes、Flow Designer、ACL 权限、开箱/客制化隔离 | ServiceNow 平台开发、复杂业务流排障、大规模工单系统性能优化 |
+| 📑 [通用文档编译器架构师](assets/agency-agents-zh/engineering/engineering-universal-document-compiler.md) | 通用文档 AST、算法化排版推断、CST 与画布双向同步 | 复杂数据排版推断、多渠道自适应出版、可视化画布与底层代码双向协同 |
 
 <a id="experts-design"></a>
 
-### 🎨 Design Division
+### 🎨 设计
 
-Making it beautiful, usable, and delightful.
+让产品好看、好用，保持一致的体验。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🎯 [UI Designer](assets/agency-agents/design/design-ui-designer.md) | Visual design, component libraries, design systems | Interface creation, brand consistency, component design |
-| 🔍 [UX Researcher](assets/agency-agents/design/design-ux-researcher.md) | User testing, behavior analysis, research | Understanding users, usability testing, design insights |
-| 🏛️ [UX Architect](assets/agency-agents/design/design-ux-architect.md) | Technical architecture, CSS systems, implementation | Developer-friendly foundations, implementation guidance |
-| 🎭 [Brand Guardian](assets/agency-agents/design/design-brand-guardian.md) | Brand identity, consistency, positioning | Brand strategy, identity development, guidelines |
-| 📖 [Visual Storyteller](assets/agency-agents/design/design-visual-storyteller.md) | Visual narratives, multimedia content | Compelling visual stories, brand storytelling |
-| ✨ [Whimsy Injector](assets/agency-agents/design/design-whimsy-injector.md) | Personality, delight, playful interactions | Adding joy, micro-interactions, Easter eggs, brand personality |
-| 📷 [Image Prompt Engineer](assets/agency-agents/design/design-image-prompt-engineer.md) | AI image generation prompts, photography | Photography prompts for Midjourney, DALL-E, Stable Diffusion |
-| 🌈 [Inclusive Visuals Specialist](assets/agency-agents/design/design-inclusive-visuals-specialist.md) | Representation, bias mitigation, authentic imagery | Generating culturally accurate AI images and video |
-| 🎭 [Persona Walkthrough Specialist](assets/agency-agents/design/design-persona-walkthrough.md) | Persona-driven cognitive walkthroughs | Simulating user reactions and friction at each scroll position |
-| 🧱 [UI Finish-Gate Reviewer](assets/agency-agents/design/design-ui-finish-gate-reviewer.md) | Anti-generic UI finish gate | Catching interchangeable UI before ship via evidence + a written design contract |
-| 🎬 [AI Video Prompt Engineer](assets/agency-agents/design/design-video-prompt-engineer.md) | AI video prompts, shot design, camera movement, sound | Preparing video prompts for Sora, Kling, Veo, and Seedance |
+| 🎯 [UI 设计师](assets/agency-agents-zh/design/design-ui-designer.md) | 视觉设计、组件库、设计系统 | 界面设计、品牌一致性 |
+| 🔍 [UX 研究员](assets/agency-agents-zh/design/design-ux-researcher.md) | 用户测试、行为分析 | 用户研究、可用性测试 |
+| 🏛️ [UX 架构师](assets/agency-agents-zh/design/design-ux-architect.md) | 信息架构、交互设计、导航系统 | 复杂产品的 UX 架构 |
+| 🎭 [品牌视觉设计师](assets/agency-agents-zh/design/design-brand-guardian.md) | 品牌标识、一致性、定位 | 品牌策略、视觉规范 |
+| 📖 [视觉传达设计师](assets/agency-agents-zh/design/design-visual-storyteller.md) | 数据可视化、视觉叙事 | 信息图、演示文稿 |
+| ✨ [创意设计师](assets/agency-agents-zh/design/design-whimsy-injector.md) | 微交互、彩蛋、趣味元素 | 产品细节体验提升 |
+| 📷 [AI 图像设计师](assets/agency-agents-zh/design/design-image-prompt-engineer.md) | AI 图像生成、提示词优化 | Midjourney/DALL-E 出图 |
+| 🌈 [无障碍设计师](assets/agency-agents-zh/design/design-inclusive-visuals-specialist.md) | 多元化视觉、无障碍设计 | 包容性设计、全球化视觉 |
+| 🎭 [用户体验设计师](assets/agency-agents-zh/design/design-persona-walkthrough.md) | 用户画像、认知走查、转化率分析 | 网页体验评审、逐屏问题定位、转化优化 |
+| 🧱 [UI 视觉验收设计师](assets/agency-agents-zh/design/design-ui-finish-gate-reviewer.md) | 设计契约、视觉一致性、界面验收 | 发布前 UI 评审、通用化界面整改 |
+| 🎬 [视频提示词工程师](assets/agency-agents-zh/design/design-video-prompt-engineer.md) | 文生视频提示词、5 段式结构、运镜与负面词 | Sora / 可灵 / Veo / Seedance 出片 |
 
 <a id="experts-marketing"></a>
 
-### 📢 Marketing Division
+### 📢 市场营销
 
-Connecting content, channels, and audiences to drive growth.
+连接内容、渠道与受众，推动持续增长。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🚀 [Growth Hacker](assets/agency-agents/marketing/marketing-growth-hacker.md) | Rapid user acquisition, viral loops, experiments | Explosive growth, user acquisition, conversion optimization |
-| 📝 [Content Creator](assets/agency-agents/marketing/marketing-content-creator.md) | Multi-platform content, editorial calendars | Content strategy, copywriting, brand storytelling |
-| 🐦 [Twitter Engager](assets/agency-agents/marketing/marketing-twitter-engager.md) | Real-time engagement, thought leadership | Twitter strategy, LinkedIn campaigns, professional social |
-| 🛰️ [X/Twitter Intelligence Analyst](assets/agency-agents/marketing/marketing-x-twitter-intelligence-analyst.md) | Social listening, trend detection, account monitoring | Brand risk, competitor, and audience intelligence on X/Twitter |
-| 📱 [TikTok Strategist](assets/agency-agents/marketing/marketing-tiktok-strategist.md) | Viral content, algorithm optimization | TikTok growth, viral content, Gen Z/Millennial audience |
-| 📸 [Instagram Curator](assets/agency-agents/marketing/marketing-instagram-curator.md) | Visual storytelling, community building | Instagram strategy, aesthetic development, visual content |
-| 🤝 [Reddit Community Builder](assets/agency-agents/marketing/marketing-reddit-community-builder.md) | Authentic engagement, value-driven content | Reddit strategy, community trust, authentic marketing |
-| 📱 [App Store Optimizer](assets/agency-agents/marketing/marketing-app-store-optimizer.md) | ASO, conversion optimization, discoverability | App marketing, store optimization, app growth |
-| 🌐 [Social Media Strategist](assets/agency-agents/marketing/marketing-social-media-strategist.md) | Cross-platform strategy, campaigns | Overall social strategy, multi-platform campaigns |
-| 📕 [Xiaohongshu Specialist](assets/agency-agents/marketing/marketing-xiaohongshu-specialist.md) | Lifestyle content, trend-driven strategy | Xiaohongshu growth, aesthetic storytelling, Gen Z audience |
-| 💬 [WeChat Official Account Manager](assets/agency-agents/marketing/marketing-wechat-official-account.md) | Subscriber engagement, content marketing | WeChat OA strategy, community building, conversion optimization |
-| 🧠 [Zhihu Strategist](assets/agency-agents/marketing/marketing-zhihu-strategist.md) | Thought leadership, knowledge-driven engagement | Zhihu authority building, Q&amp;A strategy, lead generation |
-| 🇨🇳 [Baidu SEO Specialist](assets/agency-agents/marketing/marketing-baidu-seo-specialist.md) | Baidu optimization, China SEO, ICP compliance | Ranking in Baidu and reaching China's search market |
-| 🎬 [Bilibili Content Strategist](assets/agency-agents/marketing/marketing-bilibili-content-strategist.md) | Bilibili algorithm, danmaku culture, creator growth | Building audiences on Bilibili with community-first content |
-| 🎠 [Carousel Growth Engine](assets/agency-agents/marketing/marketing-carousel-growth-engine.md) | TikTok/Instagram carousels, autonomous publishing | Generating and publishing viral carousel content |
-| 💼 [LinkedIn Content Creator](assets/agency-agents/marketing/marketing-linkedin-content-creator.md) | Personal branding, thought leadership, professional content | LinkedIn growth, professional audience building, B2B content |
-| 🛒 [China E-Commerce Operator](assets/agency-agents/marketing/marketing-china-ecommerce-operator.md) | Taobao, Tmall, Pinduoduo, live commerce | Running multi-platform e-commerce in China |
-| 🎥 [Kuaishou Strategist](assets/agency-agents/marketing/marketing-kuaishou-strategist.md) | Kuaishou, loyal communities, grassroots growth | Building authentic audiences in lower-tier markets |
-| 🔍 [SEO Specialist](assets/agency-agents/marketing/marketing-seo-specialist.md) | Technical SEO, content strategy, link building | Driving sustainable organic search growth |
-| 📘 [Book Co-Author](assets/agency-agents/marketing/marketing-book-co-author.md) | Thought-leadership books, ghostwriting, publishing | Strategic book collaboration for founders and experts |
-| 🌏 [Cross-Border E-Commerce Specialist](assets/agency-agents/marketing/marketing-cross-border-ecommerce.md) | Amazon, Shopee, Lazada, cross-border fulfillment | Full-funnel cross-border e-commerce strategy |
-| 🎵 [Douyin Strategist](assets/agency-agents/marketing/marketing-douyin-strategist.md) | Douyin platform, short-video marketing, algorithm | Growing audiences on China's leading short-video platform |
-| 🎙️ [Livestream Commerce Coach](assets/agency-agents/marketing/marketing-livestream-commerce-coach.md) | Host training, live room optimization, conversion | Building high-performing livestream e-commerce operations |
-| 🎧 [Podcast Strategist](assets/agency-agents/marketing/marketing-podcast-strategist.md) | Podcast content strategy, platform optimization | Chinese podcast market strategy and operations |
-| 🔒 [Private Domain Operator](assets/agency-agents/marketing/marketing-private-domain-operator.md) | WeCom, private traffic, community operations | Building enterprise WeChat private domain ecosystems |
-| 🎬 [Short-Video Editing Coach](assets/agency-agents/marketing/marketing-short-video-editing-coach.md) | Post-production, editing workflows, platform specs | Hands-on short-video editing training and optimization |
-| 🔥 [Weibo Strategist](assets/agency-agents/marketing/marketing-weibo-strategist.md) | Sina Weibo, trending topics, fan engagement | Full-spectrum Weibo operations and growth |
-| 🎙️ [Global Podcast Strategist](assets/agency-agents/marketing/marketing-global-podcast-strategist.md) | Show positioning, audience growth, monetisation | Podcast launch, platform algorithms, sponsorship, community building |
-| 🔮 [AI Citation Strategist](assets/agency-agents/marketing/marketing-ai-citation-strategist.md) | AEO/GEO, AI recommendation visibility, citation auditing | Improving brand visibility across ChatGPT, Claude, Gemini, Perplexity |
-| 🇨🇳 [China Market Localization Strategist](assets/agency-agents/marketing/marketing-china-market-localization-strategist.md) | Full-stack China market localization, Douyin/Xiaohongshu/WeChat GTM | Turning trend signals into executable China go-to-market strategies |
-| 🎬 [Video Optimization Specialist](assets/agency-agents/marketing/marketing-video-optimization-specialist.md) | YouTube algorithm strategy, chaptering, thumbnail concepts | YouTube channel growth, video SEO, audience retention optimization |
-| 🏗️ [AEO Foundations Architect](assets/agency-agents/marketing/marketing-aeo-foundations.md) | AI Engine Optimization infrastructure | llms.txt, AI-aware robots.txt, agent discovery files |
-| 🤖 [Agentic Search Optimizer](assets/agency-agents/marketing/marketing-agentic-search-optimizer.md) | WebMCP &amp; agentic task completion | Making sites usable by AI browsing agents |
-| 📧 [Email Marketing Strategist](assets/agency-agents/marketing/marketing-email-strategist.md) | Lifecycle email &amp; deliverability | CRM campaigns, automation, segmentation |
-| 📡 [Multi-Platform Publisher](assets/agency-agents/marketing/marketing-multi-platform-publisher.md) | One-click Chinese multi-platform publishing | Adapting articles for Zhihu, Xiaohongshu, CSDN, Bilibili, WeChat, and Juejin |
-| 📣 [PR &amp; Communications Manager](assets/agency-agents/marketing/marketing-pr-communications-manager.md) | PR, media relations &amp; crisis comms | Press releases, thought leadership, reputation |
-| 📺 [Bilibili Long-Form Video Strategist](assets/agency-agents/marketing/marketing-bilibili-strategist.md) | Long-form video, creator operations, danmaku, monetization | Bilibili content strategy and sustainable audience growth |
-| 📰 [News Intelligence Analyst](assets/agency-agents/marketing/marketing-daily-news-briefing.md) | Source verification, news prioritization, structured briefs | Daily news intelligence for content teams |
-| 🛒 [China E-commerce Operations Specialist](assets/agency-agents/marketing/marketing-ecommerce-operator.md) | Merchandising, listings, campaigns, livestream commerce | Taobao, Tmall, JD.com, and Pinduoduo store operations |
-| 🎓 [Knowledge Commerce Product Strategist](assets/agency-agents/marketing/marketing-knowledge-commerce-strategist.md) | Course packaging, pricing, community operations | Launching and monetizing knowledge products in China |
-| 💬 [WeChat Official Account Operator](assets/agency-agents/marketing/marketing-wechat-operator.md) | Official Accounts, editorial planning, private-domain growth | WeChat content operations and customer conversion |
-| 📹 [Weixin Channels Growth Strategist](assets/agency-agents/marketing/marketing-weixin-channels-strategist.md) | Social recommendation, short video, livestream commerce | Weixin Channels growth and WeChat ecosystem coordination |
-| 📕 [Xiaohongshu Growth Operator](assets/agency-agents/marketing/marketing-xiaohongshu-operator.md) | Discovery-led posts, search visibility, creator partnerships | Xiaohongshu content testing and customer acquisition |
-| 🌱 [Developer Community Builder](assets/agency-agents/marketing/marketing-developer-community-builder.md) | Discord/GitHub discussions, technical community growth, contributor onboarding | Open-source community building, turning developers into brand advocates, contributor programs |
-| 🧭 [Search Growth Orchestrator](assets/agency-agents/marketing/marketing-search-growth-orchestrator.md) | Unified search orchestration across AEO, SEO, GEO, and Agentic Search | Cross-functional search visibility programs, deduplicating search tasks, revenue attribution |
+| 🚀 [增长营销专家](assets/agency-agents-zh/marketing/marketing-growth-hacker.md) | 快速获客、病毒循环、实验 | 用户增长、转化优化 |
+| 📝 [内容创作者](assets/agency-agents-zh/marketing/marketing-content-creator.md) | 多平台内容、编辑日历 | 内容策略、品牌故事 |
+| 🐦 [Twitter 互动运营](assets/agency-agents-zh/marketing/marketing-twitter-engager.md) | 实时互动、思想领袖 | 出海品牌社交 |
+| 🛰️ [X/Twitter 舆情分析师](assets/agency-agents-zh/marketing/marketing-x-twitter-intelligence-analyst.md) | X/Twitter 监测、趋势识别、风险信号 | 品牌舆情研究、账号与话题情报 |
+| 📱 [TikTok 运营专家](assets/agency-agents-zh/marketing/marketing-tiktok-strategist.md) | 病毒式内容、算法优化 | 出海短视频营销 |
+| 📸 [Instagram 运营](assets/agency-agents-zh/marketing/marketing-instagram-curator.md) | 视觉叙事、社区运营 | 出海视觉营销 |
+| 🤝 [Reddit 社区运营](assets/agency-agents-zh/marketing/marketing-reddit-community-builder.md) | 社区文化、真实互动 | 出海社区营销 |
+| 📱 [应用商店优化师](assets/agency-agents-zh/marketing/marketing-app-store-optimizer.md) | ASO、转化优化 | App 出海推广 |
+| 🌐 [社媒运营专家](assets/agency-agents-zh/marketing/marketing-social-media-strategist.md) | 跨平台策略、整合营销 | 全渠道社交运营 |
+| 📕 [小红书运营专家](assets/agency-agents-zh/marketing/marketing-xiaohongshu-specialist.md) | 生活方式内容、趋势策略 | 小红书品牌建设 |
+| 💬 [公众号运营](assets/agency-agents-zh/marketing/marketing-wechat-official-account.md) | 订阅者运营、内容营销 | 微信公众号增长 |
+| 🧠 [知乎运营专家](assets/agency-agents-zh/marketing/marketing-zhihu-strategist.md) | 知识型内容、思想领袖建设 | 知乎品牌权威 |
+| 🇨🇳 [百度 SEO 专家](assets/agency-agents-zh/marketing/marketing-baidu-seo-specialist.md) | 百度优化、百科/知道/贴吧生态 | 百度搜索营销 |
+| 🎬 [B站内容运营专家](assets/agency-agents-zh/marketing/marketing-bilibili-content-strategist.md) | B 站选题、UP 主合作、弹幕互动 | 视频播放增长、账号内容运营 |
+| 🎠 [内容增长运营专家](assets/agency-agents-zh/marketing/marketing-carousel-growth-engine.md) | 轮播图内容、自动化投放 | 社交媒体轮播素材 |
+| 💼 [LinkedIn 内容创作者](assets/agency-agents-zh/marketing/marketing-linkedin-content-creator.md) | LinkedIn 职场内容、B2B 获客 | LinkedIn 品牌建设 |
+| 🛒 [中国电商运营](assets/agency-agents-zh/marketing/marketing-china-ecommerce-operator.md) | 淘宝/拼多多/京东、广告投放、大促作战 | 电商全链路深度运营 |
+| 🎥 [快手运营专家](assets/agency-agents-zh/marketing/marketing-kuaishou-strategist.md) | 下沉市场、老铁文化、直播电商 | 快手运营、社区信任 |
+| 🔍 [SEO 专家](assets/agency-agents-zh/marketing/marketing-seo-specialist.md) | 搜索引擎优化、技术 SEO | Google SEO、内容优化 |
+| 📘 [图书策划编辑](assets/agency-agents-zh/marketing/marketing-book-co-author.md) | 思想领袖力图书、代笔协作 | 图书策划与撰写 |
+| 🌏 [跨境电商专家](assets/agency-agents-zh/marketing/marketing-cross-border-ecommerce.md) | Amazon/Shopee/Lazada、海外仓、品牌出海 | 跨境电商全链路运营 |
+| 🎵 [抖音运营专家](assets/agency-agents-zh/marketing/marketing-douyin-strategist.md) | 短视频策划、算法优化、直播带货 | 抖音增长、短视频营销 |
+| 🎙️ [直播电商运营专家](assets/agency-agents-zh/marketing/marketing-livestream-commerce-coach.md) | 直播话术、选品排品、千川投放 | 直播带货、主播孵化 |
+| 🎧 [中国播客运营策略专家](assets/agency-agents-zh/marketing/marketing-podcast-strategist.md) | 小宇宙/喜马拉雅、音频制作、商业化 | 播客内容创作与增长 |
+| 🔒 [私域运营](assets/agency-agents-zh/marketing/marketing-private-domain-operator.md) | 企微SCRM、社群运营、用户生命周期 | 私域体系搭建、复购增长 |
+| 🎬 [短视频剪辑师](assets/agency-agents-zh/marketing/marketing-short-video-editing-coach.md) | 剪映/PR/达芬奇、调色、音频、特效 | 短视频剪辑技术指导 |
+| 🔥 [微博运营专家](assets/agency-agents-zh/marketing/marketing-weibo-strategist.md) | 热搜运营、超话、舆情公关、粉丝经济 | 微博全链路运营 |
+| 🎙️ [全球播客增长策略专家](assets/agency-agents-zh/marketing/marketing-global-podcast-strategist.md) | 播客定位、分发、广告与会员变现 | Spotify/Apple Podcasts 运营、收听增长 |
+| 🔮 [AI 引用优化师](assets/agency-agents-zh/marketing/marketing-ai-citation-strategist.md) | AEO/GEO 优化、AI 平台可见性审计 | AI 搜索引擎品牌可见性 |
+| 🇨🇳 [中国市场本地化专家](assets/agency-agents-zh/marketing/marketing-china-market-localization-strategist.md) | 抖音/小红书/微信/B站全栈本地化 | 中国市场进入策略 |
+| 🎬 [视频优化专家](assets/agency-agents-zh/marketing/marketing-video-optimization-specialist.md) | YouTube 算法、观众留存、跨平台分发 | 视频营销与 SEO |
+| 🏗️ [AEO 搜索优化师](assets/agency-agents-zh/marketing/marketing-aeo-foundations.md) | llms.txt、robots.txt、结构化 Markdown | AI 爬虫可访问性、AI 搜索可见度 |
+| 🤖 [AI 搜索优化师](assets/agency-agents-zh/marketing/marketing-agentic-search-optimizer.md) | WebMCP、智能体任务审计、完成率 | 网站预订、购买、注册流程的智能体适配 |
+| 📧 [邮件营销专家](assets/agency-agents-zh/marketing/marketing-email-strategist.md) | 自动化邮件、用户分群、送达率 | 欢迎与召回序列、复购营销、邮件转化 |
+| 📡 [多平台内容运营专家](assets/agency-agents-zh/marketing/marketing-multi-platform-publisher.md) | 内容适配、草稿审核、频率控制 | 知乎、小红书、公众号等多平台分发 |
+| 📣 [公关传播经理](assets/agency-agents-zh/marketing/marketing-pr-communications-manager.md) | 媒体关系、新闻稿、舆情、危机公关 | 品牌声誉管理、高管对外沟通 |
+| 📺 [B站内容策略师](assets/agency-agents-zh/marketing/marketing-bilibili-strategist.md) | UP主运营、弹幕文化、中长视频 | B站内容增长、品牌合作 |
+| 📰 [新闻情报官](assets/agency-agents-zh/marketing/marketing-daily-news-briefing.md) | 国内外多源新闻采集、交叉验证、结构化简报 | 内容生产线上游素材供应 |
+| 🛒 [电商运营师](assets/agency-agents-zh/marketing/marketing-ecommerce-operator.md) | 淘宝/拼多多/京东、直播带货、大促 | 电商全平台运营（简洁版） |
+| 🎓 [知识付费产品策划师](assets/agency-agents-zh/marketing/marketing-knowledge-commerce-strategist.md) | 得到/知识星球/小鹅通、内容定价 | 知识付费产品运营 |
+| 💬 [微信公众号运营](assets/agency-agents-zh/marketing/marketing-wechat-operator.md) | 公众号内容、社群运营、裂变增长 | 微信生态营销 |
+| 📹 [微信视频号运营策略师](assets/agency-agents-zh/marketing/marketing-weixin-channels-strategist.md) | 视频号直播、社交裂变、私域闭环 | 视频号运营与变现 |
+| 📕 [小红书增长运营专家](assets/agency-agents-zh/marketing/marketing-xiaohongshu-operator.md) | 种草笔记、达人合作、爆款内容 | 小红书获客、品牌种草 |
+| 🌱 [开发者社区建设专家](assets/agency-agents-zh/marketing/marketing-developer-community-builder.md) | Discord 与 GitHub Discussions、技术社区增长、贡献者梯队建设 | 开源生态建设、开发者关系维护、技术分享与贡献者成长路径运营 |
+| 🧭 [搜索增长编排器](assets/agency-agents-zh/marketing/marketing-search-growth-orchestrator.md) | 统筹编排 AEO、SEO、GEO 与智能体搜索（Agentic Search） | 全域搜索增长战略规划、多搜索形态任务去重与依赖编排、业务归因分析 |
 
 <a id="experts-paid-media"></a>
 
-### 💰 Paid Media Division
+### 💰 付费媒体
 
-Turning advertising budgets into measurable growth.
+把投放预算转化为可衡量的增长。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 💰 [PPC Campaign Strategist](assets/agency-agents/paid-media/paid-media-ppc-strategist.md) | Google/Microsoft/Amazon Ads, account architecture, bidding | Account buildouts, budget allocation, scaling, performance diagnosis |
-| 🔍 [Search Query Analyst](assets/agency-agents/paid-media/paid-media-search-query-analyst.md) | Search term analysis, negative keywords, intent mapping | Query audits, wasted spend elimination, keyword discovery |
-| 📋 [Paid Media Auditor](assets/agency-agents/paid-media/paid-media-auditor.md) | 200+ point account audits, competitive analysis | Account takeovers, quarterly reviews, competitive pitches |
-| 📡 [Tracking &amp; Measurement Specialist](assets/agency-agents/paid-media/paid-media-tracking-specialist.md) | GTM, GA4, conversion tracking, CAPI | New implementations, tracking audits, platform migrations |
-| ✍️ [Ad Creative Strategist](assets/agency-agents/paid-media/paid-media-creative-strategist.md) | RSA copy, Meta creative, Performance Max assets | Creative launches, testing programs, ad fatigue refreshes |
-| 📺 [Programmatic &amp; Display Buyer](assets/agency-agents/paid-media/paid-media-programmatic-buyer.md) | GDN, DSPs, partner media, ABM display | Display planning, partner outreach, ABM programs |
-| 📱 [Paid Social Strategist](assets/agency-agents/paid-media/paid-media-paid-social-strategist.md) | Meta, LinkedIn, TikTok, cross-platform social | Social ad programs, platform selection, audience strategy |
+| 💰 [PPC 投放优化师](assets/agency-agents-zh/paid-media/paid-media-ppc-strategist.md) | 搜索竞价、关键词管理 | Google Ads、百度推广 |
+| 🔍 [搜索词分析师](assets/agency-agents-zh/paid-media/paid-media-search-query-analyst.md) | 搜索词挖掘、否词优化 | 搜索广告精细化运营 |
+| 📋 [广告投放审计师](assets/agency-agents-zh/paid-media/paid-media-auditor.md) | 广告账户审计、预算优化 | 广告效果诊断、降本增效 |
+| 📡 [广告归因分析师](assets/agency-agents-zh/paid-media/paid-media-tracking-specialist.md) | 转化追踪、归因模型 | 广告效果衡量、数据打通 |
+| ✍️ [广告创意策划师](assets/agency-agents-zh/paid-media/paid-media-creative-strategist.md) | 广告素材策划、A/B 测试 | 广告创意优化 |
+| 📺 [程序化广告投放师](assets/agency-agents-zh/paid-media/paid-media-programmatic-buyer.md) | DSP、RTB、程序化购买 | 程序化广告投放 |
+| 📱 [付费社媒投放专家](assets/agency-agents-zh/paid-media/paid-media-paid-social-strategist.md) | 社交平台广告投放 | Meta/TikTok/LinkedIn 广告 |
 
 <a id="experts-sales"></a>
 
-### 💼 Sales Division
+### 💼 销售
 
-Moving opportunities from first contact to closed deals.
+从线索开发到成交，推进销售全流程。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🎯 [Outbound Strategist](assets/agency-agents/sales/sales-outbound-strategist.md) | Signal-based prospecting, multi-channel sequences, ICP targeting | Building pipeline through research-driven outreach, not volume |
-| 🔍 [Discovery Coach](assets/agency-agents/sales/sales-discovery-coach.md) | SPIN, Gap Selling, Sandler — question design and call structure | Preparing for discovery calls, qualifying opportunities, coaching reps |
-| ♟️ [Deal Strategist](assets/agency-agents/sales/sales-deal-strategist.md) | MEDDPICC qualification, competitive positioning, win planning | Scoring deals, exposing pipeline risk, building win strategies |
-| 🛠️ [Sales Engineer](assets/agency-agents/sales/sales-engineer.md) | Technical demos, POC scoping, competitive battlecards | Pre-sales technical wins, demo prep, competitive positioning |
-| 🏹 [Proposal Strategist](assets/agency-agents/sales/sales-proposal-strategist.md) | RFP response, win themes, narrative structure | Writing proposals that persuade, not just comply |
-| 📊 [Pipeline Analyst](assets/agency-agents/sales/sales-pipeline-analyst.md) | Forecasting, pipeline health, deal velocity, RevOps | Pipeline reviews, forecast accuracy, revenue operations |
-| 🗺️ [Account Strategist](assets/agency-agents/sales/sales-account-strategist.md) | Land-and-expand, QBRs, stakeholder mapping | Post-sale expansion, account planning, NRR growth |
-| 🏋️ [Sales Coach](assets/agency-agents/sales/sales-coach.md) | Rep development, call coaching, pipeline review facilitation | Making every rep and every deal better through structured coaching |
-| 🧲 [Offer &amp; Lead Gen Strategist](assets/agency-agents/sales/sales-offer-lead-gen-strategist.md) | Offers &amp; lead magnets | Top-of-funnel offer construction and lead gen |
+| 🎯 [外呼销售专员](assets/agency-agents-zh/sales/sales-outbound-strategist.md) | 外呼策略、Cold outreach | 新客户开拓 |
+| 🔍 [售前需求顾问](assets/agency-agents-zh/sales/sales-discovery-coach.md) | 需求挖掘、客户洞察 | 销售前期沟通 |
+| ♟️ [商务谈判顾问](assets/agency-agents-zh/sales/sales-deal-strategist.md) | 成交策略、MEDDPICC | 复杂销售推进 |
+| 🛠️ [销售工程师](assets/agency-agents-zh/sales/sales-engineer.md) | 技术方案、Demo 演示 | 技术售前支持 |
+| 🏹 [方案提案顾问](assets/agency-agents-zh/sales/sales-proposal-strategist.md) | 投标方案、提案撰写 | 招投标、方案竞标 |
+| 📊 [销售管线分析师](assets/agency-agents-zh/sales/sales-pipeline-analyst.md) | 销售漏斗、预测分析 | 销售数据分析、预测 |
+| 🗺️ [大客户经理](assets/agency-agents-zh/sales/sales-account-strategist.md) | 大客户拓展、ABM 策略 | 重点客户攻关 |
+| 🏋️ [销售培训师](assets/agency-agents-zh/sales/sales-coach.md) | 销售辅导、技能提升 | 团队销售能力建设 |
+| 🧲 [销售获客专员](assets/agency-agents-zh/sales/sales-offer-lead-gen-strategist.md) | 报价设计、引流产品、多渠道线索 | 销售漏斗获客、转介绍与渠道拓展 |
 
 <a id="experts-company"></a>
 
-### 🏢 Company Leadership Division
+### 🏢 公司经营
 
-Setting direction, allocating resources, and aligning execution.
+确定方向、分配资源，让战略落实到执行。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 👔 [Chief Executive Officer (CEO)](assets/agency-agents/company/chief-executive-officer.md) | Strategy, resource allocation, executive alignment | Setting company direction and making major trade-offs |
-| 📣 [Chief Marketing Officer (CMO)](assets/agency-agents/company/chief-marketing-officer.md) | Positioning, channel mix, marketing budgets, brand equity | Growth strategy, budget allocation, brand building |
-| 👔 [Executive Chief of Staff](assets/agency-agents/company/chief-of-staff.md) | Executive coordination, decision routing, OKR tracking | Leadership meetings and cross-functional follow-through |
-| ⚙️ [Chief Operating Officer (COO)](assets/agency-agents/company/chief-operating-officer.md) | Processes, operating metrics, accountability | Turning strategy into SOPs and reliable execution |
-| 🧭 [Chief Product Officer (CPO)](assets/agency-agents/company/chief-product-officer.md) | Product strategy, roadmap prioritization, product organization | Resolving product priorities and reviewing outcomes |
-| 🛠️ [Chief Technology Officer (CTO)](assets/agency-agents/company/chief-technology-officer.md) | Technology strategy, architecture, engineering organization | Technology selection, technical debt, engineering effectiveness |
+| 👔 [首席执行官（CEO）](assets/agency-agents-zh/company/chief-executive-officer.md) | 战略方向、资源配置、组织节奏、对外叙事 | 定方向、做重大取舍、把愿景翻成优先级 |
+| 📣 [首席营销官（CMO）](assets/agency-agents-zh/company/chief-marketing-officer.md) | 定位、渠道组合、营销预算、品牌资产 | 增长打法、预算分配、品牌建设 |
+| 👔 [幕僚长（Chief of Staff）](assets/agency-agents-zh/company/chief-of-staff.md) | 战略运营、跨部门协调、OKR 追踪 | 高管例会、组织变革推进 |
+| ⚙️ [首席运营官（COO）](assets/agency-agents-zh/company/chief-operating-officer.md) | 流程、指标、执行节奏 | 把战略落成 SOP、消灭组织摩擦 |
+| 🧭 [首席产品官（CPO）](assets/agency-agents-zh/company/chief-product-officer.md) | 产品战略、路线图取舍、产品组织 | 需求裁决、路线图排期、产品复盘 |
+| 🛠️ [首席技术官（CTO）](assets/agency-agents-zh/company/chief-technology-officer.md) | 技术路线、架构决策、研发组织、技术债 | 选型评审、技术债取舍、研发效能 |
 
 <a id="experts-finance"></a>
 
-### 🏦 Finance Division
+### 🏦 金融
 
-Supporting business and investment decisions with financial insight.
+用准确的财务分析支持经营与投资决策。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 📒 [Bookkeeper &amp; Controller](assets/agency-agents/finance/finance-bookkeeper-controller.md) | Month-end close, reconciliation, GAAP compliance, internal controls | Day-to-day accounting operations, audit readiness, financial record-keeping |
-| 📊 [Financial Analyst](assets/agency-agents/finance/finance-financial-analyst.md) | Financial modeling, forecasting, scenario analysis, decision support | Three-statement models, variance analysis, data-driven business intelligence |
-| 📈 [FP&amp;A Analyst](assets/agency-agents/finance/finance-fpa-analyst.md) | Budgeting, rolling forecasts, variance analysis, business reviews | Annual operating plans, monthly business reviews, strategic resource allocation |
-| 🔍 [Investment Researcher](assets/agency-agents/finance/finance-investment-researcher.md) | Due diligence, portfolio analysis, asset valuation, equity research | Investment thesis development, risk assessment, market research |
-| 🏛️ [Tax Strategist](assets/agency-agents/finance/finance-tax-strategist.md) | Tax optimization, multi-jurisdictional compliance, transfer pricing | Entity structuring, ETR analysis, audit defense, strategic tax planning |
-| 🔮 [Financial Forecasting Analyst](assets/agency-agents/finance/finance-financial-forecaster.md) | Revenue forecasts, cash flow, burn rate, scenario models | Runway planning, fundraising, financial uncertainty |
-| 🕵️ [Financial Fraud Risk Analyst](assets/agency-agents/finance/finance-fraud-detector.md) | Payment risk, AML, identity signals, case review | Transaction fraud detection and financial crime controls |
-| ⚖️ [Hong Kong Stock Market Compliance Reviewer](assets/agency-agents/finance/finance-hk-stock-compliance-reviewer.md) | HKEX Listing Rules, SFC requirements, corporate governance | Listing applications, disclosure, connected transactions |
-| 🧾 [Invoice Management Specialist](assets/agency-agents/finance/finance-invoice-manager.md) | VAT invoices, e-invoices, reconciliation, tax workflows | China invoicing, reimbursement, and financial controls |
+| 📒 [财务会计主管](assets/agency-agents-zh/finance/finance-bookkeeper-controller.md) | 记账、银行对账、月结、内部控制 | 日常财务运营、报表编制、审计准备 |
+| 📊 [财务分析师](assets/agency-agents-zh/finance/finance-financial-analyst.md) | 财务建模、预测、情景分析 | 经营分析、战略规划、投资决策 |
+| 📈 [财务计划分析师](assets/agency-agents-zh/finance/finance-fpa-analyst.md) | 年度预算、滚动预测、差异分析 | 预算管理、经营复盘、管理层汇报 |
+| 🔍 [投资研究员](assets/agency-agents-zh/finance/finance-investment-researcher.md) | 行业研究、尽职调查、估值与风险 | 投资标的分析、公司研究、投资建议 |
+| 🏛️ [税务筹划师](assets/agency-agents-zh/finance/finance-tax-strategist.md) | 税务筹划、跨地区申报、转让定价 | 企业税务规划、合规申报、税负优化 |
+| 🔮 [财务预测分析师](assets/agency-agents-zh/finance/finance-financial-forecaster.md) | 收入预测、场景建模、现金流 | SaaS 财务规划、融资对接 |
+| 🕵️ [金融风控分析师](assets/agency-agents-zh/finance/finance-fraud-detector.md) | 交易风控、反洗钱、电信诈骗 | 支付风控、合规审查 |
+| ⚖️ [香港股市合规审查专家](assets/agency-agents-zh/finance/finance-hk-stock-compliance-reviewer.md) | HKEX 上市规则、SFC 监管、企业管治 | 港股上市审查、关联交易、持续披露 |
+| 🧾 [发票管理专家](assets/agency-agents-zh/finance/finance-invoice-manager.md) | 增值税发票、金税系统、三单匹配 | 发票全生命周期管理 |
 
 <a id="experts-hr"></a>
 
-### 👔 Human Resources Division
+### 👔 人力资源
 
-Bringing structure to recruiting, performance, and talent development.
+覆盖招聘、绩效与人才发展。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 📋 [Performance Management Specialist](assets/agency-agents/hr/hr-performance-reviewer.md) | OKRs, KPIs, 360-degree feedback, calibration | Performance reviews, improvement plans, talent development |
-| 🎯 [Full-Cycle Recruiter](assets/agency-agents/hr/hr-recruiter.md) | Sourcing, resume screening, interviews, offers | Full-cycle recruiting in the Chinese talent market |
+| 📋 [绩效管理专家](assets/agency-agents-zh/hr/hr-performance-reviewer.md) | OKR/KPI、361分布、晋升答辩 | 绩效体系搭建与评估 |
+| 🎯 [招聘专家（HR 全流程）](assets/agency-agents-zh/hr/hr-recruiter.md) | Boss直聘/猎聘、校招社招、背调 | 招聘全流程管理 |
 
 <a id="experts-legal"></a>
 
-### ⚖️ Legal Division
+### ⚖️ 法务
 
-Reviewing contract risk and writing practical policies.
+审查合同风险，制定清晰可用的制度。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 📑 [Contract Review Specialist](assets/agency-agents/legal/legal-contract-reviewer.md) | Contract clauses, redlines, electronic signatures, disputes | Commercial contract review under Chinese law |
-| 📜 [Legal Policy Writer](assets/agency-agents/legal/legal-policy-writer.md) | Internal policies, privacy notices, PIPL/DSL/CSL | Drafting company policies and service terms in China |
+| 📑 [合同审查专家](assets/agency-agents-zh/legal/legal-contract-reviewer.md) | 民法典合同编、电子签章、风险评估 | 合同审查与风控 |
+| 📜 [制度文件撰写专家](assets/agency-agents-zh/legal/legal-policy-writer.md) | PIPL/数据安全法、隐私政策 | 合规制度与政策撰写 |
 
 <a id="experts-supply-chain"></a>
 
-### 🚚 Supply Chain Division
+### 🚚 供应链
 
-Coordinating procurement, inventory, production, and delivery.
+协调采购、库存、生产与配送。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🏭 [Garment Factory Planning Engineer](assets/agency-agents/supply-chain/supply-chain-garment-factory-planning-engineer.md) | Plant layout, capacity modeling, equipment, lean production | Planning apparel factories across multiple countries and sites |
-| 📦 [Inventory Forecasting Specialist](assets/agency-agents/supply-chain/supply-chain-inventory-forecaster.md) | Demand forecasts, safety stock, replenishment | Inventory planning for Chinese e-commerce promotion cycles |
-| 🗺️ [Logistics Route Optimizer](assets/agency-agents/supply-chain/supply-chain-route-optimizer.md) | Route planning, delivery networks, cold chain | Reducing logistics costs while meeting delivery deadlines |
-| 🔍 [Vendor Evaluation Specialist](assets/agency-agents/supply-chain/supply-chain-vendor-evaluator.md) | Supplier scoring, factory audits, quality systems, negotiation | Supplier selection and procurement lifecycle management |
+| 🏭 [服装工厂规划工程师](assets/agency-agents-zh/supply-chain/supply-chain-garment-factory-planning-engineer.md) | 场地布局、产能测算、设备选型、精益生产 | 多国多基地服装工厂规划、产线优化 |
+| 📦 [库存预测专家](assets/agency-agents-zh/supply-chain/supply-chain-inventory-forecaster.md) | 需求预测、安全库存、618/双11备货 | 库存管理与补货优化 |
+| 🗺️ [物流路线优化师](assets/agency-agents-zh/supply-chain/supply-chain-route-optimizer.md) | 顺丰/通达系、冷链、跨境物流 | 物流成本优化与路线规划 |
+| 🔍 [供应商评估专家](assets/agency-agents-zh/supply-chain/supply-chain-vendor-evaluator.md) | 1688供应商、验厂、国标质检 | 供应商准入与分级管理 |
 
 <a id="experts-product"></a>
 
-### 📦 Product Division
+### 📦 产品
 
-Finding product opportunities and setting priorities around user needs.
+从用户需求中识别机会，明确产品优先级。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🎯 [Sprint Prioritizer](assets/agency-agents/product/product-sprint-prioritizer.md) | Agile planning, feature prioritization | Sprint planning, resource allocation, backlog management |
-| 🔍 [Trend Researcher](assets/agency-agents/product/product-trend-researcher.md) | Market intelligence, competitive analysis | Market research, opportunity assessment, trend identification |
-| 💬 [Feedback Synthesizer](assets/agency-agents/product/product-feedback-synthesizer.md) | User feedback analysis, insights extraction | Feedback analysis, user insights, product priorities |
-| 🧠 [Behavioral Nudge Engine](assets/agency-agents/product/product-behavioral-nudge-engine.md) | Behavioral psychology, nudge design, engagement | Maximizing user motivation through behavioral science |
-| 🧭 [Product Manager](assets/agency-agents/product/product-manager.md) | Full lifecycle product ownership | Discovery, PRDs, roadmap planning, GTM, outcome measurement |
-| 🔬 [DX Engineer](assets/agency-agents/product/product-dx-engineer.md) | Time-to-hello-world optimization, runnable SDK snippets, actionable error messages | Developer onboarding friction audits, API/SDK usability redesign, developer journey streamlining |
+| 🎯 [需求优先级分析师](assets/agency-agents-zh/product/product-sprint-prioritizer.md) | 敏捷规划、功能优先级 | Sprint 规划、资源分配 |
+| 🔍 [趋势研究员](assets/agency-agents-zh/product/product-trend-researcher.md) | 市场情报、竞品分析 | 市场调研、机会评估 |
+| 💬 [用户反馈研究员](assets/agency-agents-zh/product/product-feedback-synthesizer.md) | 用户反馈分析、洞察提取 | 反馈分析、产品优先级 |
+| 🧠 [增长产品经理](assets/agency-agents-zh/product/product-behavioral-nudge-engine.md) | 行为心理学、用户引导 | 用户行为设计、转化提升 |
+| 🧭 [产品经理](assets/agency-agents-zh/product/product-manager.md) | 产品全生命周期、PRD、路线图 | 产品策略与交付管理 |
+| 🔬 [开发者体验工程师](assets/agency-agents-zh/product/product-dx-engineer.md) | 快速跑通优化、可运行 SDK 示例设计、诊断级友好错误信息 | 开发者接入摩擦走查、API 与 SDK 可用性优化、减少开发者猜测试错 |
 
 <a id="experts-project-management"></a>
 
-### 📋 Project Management Division
+### 📋 项目管理
 
-Keeping people, timelines, and decisions aligned for delivery.
+协调人员、进度与决策，让项目有序交付。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🎬 [Studio Producer](assets/agency-agents/project-management/project-management-studio-producer.md) | High-level orchestration, portfolio management | Multi-project oversight, strategic alignment, resource allocation |
-| 🐑 [Project Shepherd](assets/agency-agents/project-management/project-management-project-shepherd.md) | Cross-functional coordination, timeline management | End-to-end project coordination, stakeholder management |
-| ⚙️ [Studio Operations](assets/agency-agents/project-management/project-management-studio-operations.md) | Day-to-day efficiency, process optimization | Operational excellence, team support, productivity |
-| 🧪 [Experiment Tracker](assets/agency-agents/project-management/project-management-experiment-tracker.md) | A/B tests, hypothesis validation | Experiment management, data-driven decisions, testing |
-| 👔 [Senior Project Manager](assets/agency-agents/project-management/project-manager-senior.md) | Realistic scoping, task conversion | Converting specs to tasks, scope management |
-| 📋 [Jira Workflow Steward](assets/agency-agents/project-management/project-management-jira-workflow-steward.md) | Git workflow, branch strategy, traceability | Enforcing Jira-linked Git discipline and delivery |
-| 📋 [Meeting Notes Specialist](assets/agency-agents/project-management/project-management-meeting-notes-specialist.md) | Structured meeting summaries | Extracting decisions, action items, open questions |
+| 🎬 [工作室制片人](assets/agency-agents-zh/project-management/project-management-studio-producer.md) | 创意项目管理、资源调度 | 内容/创意项目 |
+| 🐑 [项目推进专员](assets/agency-agents-zh/project-management/project-management-project-shepherd.md) | 跨团队协调、进度跟踪 | 多团队项目协调 |
+| ⚙️ [工作室运营](assets/agency-agents-zh/project-management/project-management-studio-operations.md) | 工作室日常运营管理 | 团队运营效率 |
+| 🧪 [实验项目运营](assets/agency-agents-zh/project-management/project-management-experiment-tracker.md) | A/B 测试、实验管理 | 数据驱动决策 |
+| 👔 [高级项目经理](assets/agency-agents-zh/project-management/project-manager-senior.md) | 需求拆解、范围管控 | 大型项目管理 |
+| 📋 [Jira 流程管理员](assets/agency-agents-zh/project-management/project-management-jira-workflow-steward.md) | Jira 配置、工作流优化 | Jira 项目管理 |
+| 📋 [项目记录专员](assets/agency-agents-zh/project-management/project-management-meeting-notes-specialist.md) | 纪要整理、决策提炼、行动项、未决问题 | 会议录音与笔记整理、事项跟进 |
 
 <a id="experts-testing"></a>
 
-### 🧪 Testing Division
+### 🧪 测试
 
-Validating quality through tests and reproducible evidence.
+以测试和可复现证据把关交付质量。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 📸 [Evidence Collector](assets/agency-agents/testing/testing-evidence-collector.md) | Screenshot-based QA, visual proof | UI testing, visual verification, bug documentation |
-| 🔍 [Reality Checker](assets/agency-agents/testing/testing-reality-checker.md) | Evidence-based certification, quality gates | Production readiness, quality approval, release certification |
-| 📊 [Test Results Analyzer](assets/agency-agents/testing/testing-test-results-analyzer.md) | Test evaluation, metrics analysis | Test output analysis, quality insights, coverage reporting |
-| ⚡ [Performance Benchmarker](assets/agency-agents/testing/testing-performance-benchmarker.md) | Performance testing, optimization | Speed testing, load testing, performance tuning |
-| 🔌 [API Tester](assets/agency-agents/testing/testing-api-tester.md) | API validation, integration testing | API testing, endpoint verification, integration QA |
-| 🛠️ [Tool Evaluator](assets/agency-agents/testing/testing-tool-evaluator.md) | Technology assessment, tool selection | Evaluating tools, software recommendations, tech decisions |
-| 🔄 [Workflow Optimizer](assets/agency-agents/testing/testing-workflow-optimizer.md) | Process analysis, workflow improvement | Process optimization, efficiency gains, automation opportunities |
-| ♿ [Accessibility Auditor](assets/agency-agents/testing/testing-accessibility-auditor.md) | WCAG auditing, assistive technology testing | Accessibility compliance, screen reader testing, inclusive design verification |
-| 🎭 [Test Automation Engineer](assets/agency-agents/testing/testing-test-automation-engineer.md) | Playwright/Cypress E2E, flake elimination, CI parallelization | Browser test suites, deterministic pipelines, trace-driven failure debugging |
-| 🔌 [Embedded QA Engineer](assets/agency-agents/testing/testing-embedded-qa-engineer.md) | HIL, firmware automation, OTA regression, fault injection | Embedded reliability testing and production test planning |
+| 📸 [质量记录专员](assets/agency-agents-zh/testing/testing-evidence-collector.md) | 截图 QA、视觉验证 | UI 测试、Bug 文档 |
+| 🔍 [验收测试工程师](assets/agency-agents-zh/testing/testing-reality-checker.md) | 证据驱动认证、质量关卡 | 生产就绪评估 |
+| 📊 [测试结果分析师](assets/agency-agents-zh/testing/testing-test-results-analyzer.md) | 测试数据分析、质量度量 | 质量趋势、发布决策 |
+| ⚡ [性能基准测试工程师](assets/agency-agents-zh/testing/testing-performance-benchmarker.md) | 性能测试、优化 | 压测、性能调优 |
+| 🔌 [API 测试工程师](assets/agency-agents-zh/testing/testing-api-tester.md) | API 验证、集成测试 | 接口测试、端点验证 |
+| 🛠️ [测试工具评估工程师](assets/agency-agents-zh/testing/testing-tool-evaluator.md) | 工具选型、功能对比 | 技术选型、工具采购 |
+| 🔄 [测试流程优化工程师](assets/agency-agents-zh/testing/testing-workflow-optimizer.md) | 流程分析、自动化 | 效率提升、流程改进 |
+| ♿ [无障碍测试工程师](assets/agency-agents-zh/testing/testing-accessibility-auditor.md) | WCAG 审核、辅助技术测试 | 无障碍合规、包容性设计 |
+| 🎭 [测试自动化工程师](assets/agency-agents-zh/testing/testing-test-automation-engineer.md) | Playwright/Cypress、端到端测试、CI、trace | 自动化回归、用例稳定性与失败排查 |
+| 🔌 [嵌入式测试工程师](assets/agency-agents-zh/testing/testing-embedded-qa-engineer.md) | HIL 测试、固件自动化测试、EMC 测试 | 嵌入式质量保障、量产测试 |
 
 <a id="experts-support"></a>
 
-### 🤝 Support Division
+### 🤝 支持
 
-Keeping daily operations running and helping customers and teams.
+支撑日常运营，解决客户与团队的问题。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 💬 [Support Responder](assets/agency-agents/support/support-support-responder.md) | Customer service, issue resolution | Customer support, user experience, support operations |
-| 📊 [Analytics Reporter](assets/agency-agents/support/support-analytics-reporter.md) | Data analysis, dashboards, insights | Business intelligence, KPI tracking, data visualization |
-| 💰 [Finance Tracker](assets/agency-agents/support/support-finance-tracker.md) | Financial planning, budget management | Financial analysis, cash flow, business performance |
-| 🏗️ [Infrastructure Maintainer](assets/agency-agents/support/support-infrastructure-maintainer.md) | System reliability, performance optimization | Infrastructure management, system operations, monitoring |
-| ⚖️ [Legal Compliance Checker](assets/agency-agents/support/support-legal-compliance-checker.md) | Compliance, regulations, legal review | Legal compliance, regulatory requirements, risk management |
-| 📑 [Executive Summary Generator](assets/agency-agents/support/support-executive-summary-generator.md) | C-suite communication, strategic summaries | Executive reporting, strategic communication, decision support |
-| 🎯 [Recruitment Operations Specialist](assets/agency-agents/support/support-recruitment-specialist.md) | Hiring channels, structured assessment, employer branding | Recruitment operations and labor-law compliance in China |
+| 💬 [客服响应专员](assets/agency-agents-zh/support/support-support-responder.md) | 客户服务、工单处理 | 客户支持、用户体验 |
+| 📊 [分析报表专员](assets/agency-agents-zh/support/support-analytics-reporter.md) | 数据分析、仪表盘 | 商业智能、KPI 追踪 |
+| 💰 [财务跟踪专员](assets/agency-agents-zh/support/support-finance-tracker.md) | 财务分析、预算管理 | 财务规划、成本管控 |
+| 🏗️ [基础设施运维工程师](assets/agency-agents-zh/support/support-infrastructure-maintainer.md) | 系统运维、可靠性工程 | 基础设施管理、故障排查 |
+| ⚖️ [合规检查专员](assets/agency-agents-zh/support/support-legal-compliance-checker.md) | 合规审查、法规检查 | 法律合规、风险管理 |
+| 📑 [管理报告专员](assets/agency-agents-zh/support/support-executive-summary-generator.md) | 业务摘要、战略沟通 | 高管汇报、决策支持 |
+| 🎯 [招聘运营专家](assets/agency-agents-zh/support/support-recruitment-specialist.md) | Boss直聘/猎聘、劳动法、校招社招 | 招聘全流程与HR合规 |
 
 <a id="experts-security"></a>
 
-### 🛡️ Security Division
+### 🛡️ 安全
 
-Managing security risks from architecture through incident response.
+从架构到响应，管理系统与数据的安全风险。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🛡️ [Security Architect](assets/agency-agents/security/security-architect.md) | Threat modeling, secure-by-design, trust boundaries | System security models, architecture reviews, defense-in-depth |
-| 🔐 [Application Security Engineer](assets/agency-agents/security/security-appsec-engineer.md) | SDLC security, SAST/DAST, secure code review | Securing the dev lifecycle, code-level vulnerabilities |
-| 🗡️ [Penetration Tester](assets/agency-agents/security/security-penetration-tester.md) | Authorized pentests, red team ops, exploitation | Finding exploitable weaknesses before attackers do |
-| ☁️ [Cloud Security Architect](assets/agency-agents/security/security-cloud-security-architect.md) | Zero trust, cloud-native defense-in-depth | Securing cloud infrastructure and architectures |
-| 🚨 [Incident Responder](assets/agency-agents/security/security-incident-responder.md) | DFIR, breach investigation, threat containment | Active breaches, forensics, crisis response |
-| 🔍 [Threat Intelligence Analyst](assets/agency-agents/security/security-threat-intelligence-analyst.md) | Adversary tracking, campaign mapping, ATT&amp;CK | Understanding who's attacking and how |
-| 🎯 [Threat Detection Engineer](assets/agency-agents/security/security-threat-detection-engineer.md) | SIEM rules, threat hunting, ATT&amp;CK mapping | Building detection layers and threat hunting |
-| 🛡️ [Senior SecOps Engineer](assets/agency-agents/security/security-senior-secops.md) | Secrets scanning, secure-by-default submissions | Defensive code-level security on every change |
-| 📋 [Compliance Auditor](assets/agency-agents/security/security-compliance-auditor.md) | SOC 2, ISO 27001, HIPAA, PCI-DSS | Guiding organizations through compliance certification |
-| 🛡️ [Blockchain Security Auditor](assets/agency-agents/security/security-blockchain-security-auditor.md) | Smart contract audits, exploit analysis | Finding vulnerabilities in contracts before deployment |
-| 🔎 [AI-Generated Code Security Auditor](assets/agency-agents/security/security-ai-generated-code-auditor.md) | Security review of AI/vibe-coded apps | Hardcoded secrets, broken RLS, prompt-injection sinks |
-| 🔑 [Secrets &amp; Credential Hygiene Engineer](assets/agency-agents/security/security-secrets-credential-engineer.md) | Secrets &amp; credential lifecycle | Detection, vaulting, rotation, leak response |
+| 🛡️ [安全架构师](assets/agency-agents-zh/security/security-architect.md) | 信任边界、威胁建模、纵深防御 | 系统安全设计、架构评审、风险处置 |
+| 🔐 [应用安全工程师](assets/agency-agents-zh/security/security-appsec-engineer.md) | 威胁建模、安全评审、SAST/DAST | SDLC 安全集成、开发团队安全支持 |
+| 🗡️ [渗透测试工程师](assets/agency-agents-zh/security/security-penetration-tester.md) | 网络/Web/云渗透、红队、漏洞评估 | 授权安全测试、漏洞修复验证 |
+| ☁️ [云安全架构师](assets/agency-agents-zh/security/security-cloud-security-architect.md) | AWS/Azure/GCP、零信任、IaC 策略 | 云安全架构、基础设施安全治理 |
+| 🚨 [应急响应工程师](assets/agency-agents-zh/security/security-incident-responder.md) | 数字取证、攻击遏制、应急协调 | 安全事件处置、复盘与整改 |
+| 🔍 [威胁情报分析师](assets/agency-agents-zh/security/security-threat-intelligence-analyst.md) | 攻击组织、活动追踪、战术手法 | 威胁情报报告、检测规则建设 |
+| 🎯 [威胁检测工程师](assets/agency-agents-zh/security/security-threat-detection-engineer.md) | SIEM、MITRE ATT&amp;CK、威胁狩猎 | 检测规则开发、覆盖评估、误报调优 |
+| 🛡️ [高级安全运营工程师](assets/agency-agents-zh/security/security-senior-secops.md) | 提交安全检查、认证授权、CORS、限流 | 安全基线评审、敏感信息防泄露 |
+| 📋 [合规审计师](assets/agency-agents-zh/security/security-compliance-auditor.md) | SOC 2/ISO 27001/HIPAA 合规 | 合规审计、安全认证 |
+| 🛡️ [区块链安全审计师](assets/agency-agents-zh/security/security-blockchain-security-auditor.md) | 智能合约审计、漏洞检测 | 合约安全、DeFi 审计 |
+| 🔎 [AI 生成代码安全审计师](assets/agency-agents-zh/security/security-ai-generated-code-auditor.md) | 密钥泄露、越权、提示注入、CWE 报告 | AI 生成代码审计、修复与复扫 |
+| 🔑 [密钥与凭据治理工程师](assets/agency-agents-zh/security/security-secrets-credential-engineer.md) | 密钥发现、入库、轮换、短期凭据 | 凭据生命周期管理、泄露应对 |
 
 <a id="experts-specialized"></a>
 
-### 🔬 Specialized Division
+### 🔬 专业
 
-Bringing domain expertise to industry-specific and complex work.
+为具体行业与复杂任务提供专业支持。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🎯 [Sales Outreach](assets/agency-agents/specialized/sales-outreach.md) | Cold prospecting, multi-touch cadences, objection handling, proposals | Top-of-funnel B2B outreach — from cold email to booked discovery call |
-| 🎭 [Agents Orchestrator](assets/agency-agents/specialized/agents-orchestrator.md) | Multi-agent coordination, workflow management | Complex projects requiring multiple agent coordination |
-| 🔍 [LSP/Index Engineer](assets/agency-agents/specialized/lsp-index-engineer.md) | Language Server Protocol, code intelligence | Code intelligence systems, LSP implementation, semantic indexing |
-| 📥 [Sales Data Extraction Agent](assets/agency-agents/specialized/sales-data-extraction-agent.md) | Excel monitoring, sales metric extraction | Sales data ingestion, MTD/YTD/Year End metrics |
-| 📈 [Data Consolidation Agent](assets/agency-agents/specialized/data-consolidation-agent.md) | Sales data aggregation, dashboard reports | Territory summaries, rep performance, pipeline snapshots |
-| 📬 [Report Distribution Agent](assets/agency-agents/specialized/report-distribution-agent.md) | Automated report delivery | Territory-based report distribution, scheduled sends |
-| 🔐 [Agentic Identity &amp; Trust Architect](assets/agency-agents/specialized/agentic-identity-trust.md) | Agent identity, authentication, trust verification | Multi-agent identity systems, agent authorization, audit trails |
-| 🔗 [Identity Graph Operator](assets/agency-agents/specialized/identity-graph-operator.md) | Shared identity resolution for multi-agent systems | Entity deduplication, merge proposals, cross-agent identity consistency |
-| 💸 [Accounts Payable Agent](assets/agency-agents/specialized/accounts-payable-agent.md) | Payment processing, vendor management, audit | Autonomous payment execution across crypto, fiat, stablecoins |
-| 🌍 [Cultural Intelligence Strategist](assets/agency-agents/specialized/specialized-cultural-intelligence-strategist.md) | Global UX, representation, cultural exclusion | Ensuring software resonates across cultures |
-| 🗣️ [Developer Advocate](assets/agency-agents/specialized/specialized-developer-advocate.md) | Community building, DX, developer content | Bridging product and developer community |
-| 🔬 [Model QA Specialist](assets/agency-agents/specialized/specialized-model-qa.md) | ML audits, feature analysis, interpretability | End-to-end QA for machine learning models |
-| 🗃️ [ZK Steward](assets/agency-agents/specialized/zk-steward.md) | Knowledge management, Zettelkasten, notes | Building connected, validated knowledge bases |
-| 🔌 [MCP Builder](assets/agency-agents/specialized/specialized-mcp-builder.md) | Model Context Protocol servers, AI agent tooling | Building MCP servers that extend AI agent capabilities |
-| 📄 [Document Generator](assets/agency-agents/specialized/specialized-document-generator.md) | PDF, PPTX, DOCX, XLSX generation from code | Professional document creation, reports, data visualization |
-| ⚙️ [Automation Governance Architect](assets/agency-agents/specialized/automation-governance-architect.md) | Automation governance, n8n, workflow auditing | Evaluating and governing business automations at scale |
-| 📚 [Corporate Training Designer](assets/agency-agents/specialized/corporate-training-designer.md) | Enterprise training, curriculum development | Designing training systems and learning programs |
-| 🌱 [Personal Growth Mentor](assets/agency-agents/specialized/personal-growth-mentor.md) | Goal clarity, habit systems, accountability, life strategy | Cross-domain personal development without motivational fluff |
-| 🏛️ [Government Digital Presales Consultant](assets/agency-agents/specialized/government-digital-presales-consultant.md) | China ToG presales, digital transformation | Government digital transformation proposals and bids |
-| ⚕️ [Healthcare Marketing Compliance Specialist](assets/agency-agents/specialized/healthcare-marketing-compliance.md) | China healthcare advertising compliance | Healthcare marketing regulatory compliance |
-| 🎯 [Recruitment Specialist](assets/agency-agents/specialized/recruitment-specialist.md) | Talent acquisition, recruiting operations | Recruitment strategy, sourcing, and hiring processes |
-| 🎓 [Study Abroad Advisor](assets/agency-agents/specialized/study-abroad-advisor.md) | International education, application planning | Study abroad planning across US, UK, Canada, Australia |
-| 🔗 [Supply Chain Strategist](assets/agency-agents/specialized/supply-chain-strategist.md) | Supply chain management, procurement strategy | Supply chain optimization and procurement planning |
-| 🗺️ [Workflow Architect](assets/agency-agents/specialized/specialized-workflow-architect.md) | Workflow discovery, mapping, and specification | Mapping every path through a system before code is written |
-| ☁️ [Salesforce Architect](assets/agency-agents/specialized/specialized-salesforce-architect.md) | Multi-cloud Salesforce design, governor limits, integrations | Enterprise Salesforce architecture, org strategy, deployment pipelines |
-| 🇫🇷 [French Consulting Market Navigator](assets/agency-agents/specialized/specialized-french-consulting-market.md) | ESN/SI ecosystem, portage salarial, rate positioning | Freelance consulting in the French IT market |
-| 🇰🇷 [Korean Business Navigator](assets/agency-agents/specialized/specialized-korean-business-navigator.md) | Korean business culture, 품의 process, relationship mechanics | Foreign professionals navigating Korean business relationships |
-| 🏗️ [Civil Engineer](assets/agency-agents/specialized/specialized-civil-engineer.md) | Structural analysis, geotechnical design, global building codes | Multi-standard structural engineering across Eurocode, ACI, AISC, and more |
-| 🎧 [Customer Service](assets/agency-agents/specialized/customer-service.md) | Omnichannel support, complaint handling, retention, escalation | Any industry customer support — retail, SaaS, hospitality, finance, logistics |
-| 🏥 [Healthcare Customer Service](assets/agency-agents/specialized/healthcare-customer-service.md) | HIPAA-aware patient support, billing, insurance, emergency routing | Healthcare organizations needing compliant, empathetic patient support |
-| 🏨 [Hospitality Guest Services](assets/agency-agents/specialized/hospitality-guest-services.md) | Reservations, concierge, complaint recovery, loyalty, events | Hotels, resorts, restaurants, and event venues |
-| 🤝 [HR Onboarding](assets/agency-agents/specialized/hr-onboarding.md) | Pre-boarding, compliance, benefits enrollment, 30-60-90 day plans | Any company onboarding new hires — from startups to enterprise |
-| 🌐 [Language Translator](assets/agency-agents/specialized/language-translator.md) | Spanish ↔ English translation, dialect awareness, cultural context | Travel, business, medical, and legal translation needs |
-| ⏱️ [Legal Billing &amp; Time Tracking](assets/agency-agents/specialized/legal-billing-time-tracking.md) | Time capture, billing narratives, IOLTA compliance, collections | Law firms maximizing revenue recovery and billing accuracy |
-| 📋 [Legal Client Intake](assets/agency-agents/specialized/legal-client-intake.md) | Prospect qualification, conflict screening, consultation scheduling | Law firms converting inquiries into retained clients |
-| ⚖️ [Legal Document Review](assets/agency-agents/specialized/legal-document-review.md) | Contract review, risk flagging, version comparison, compliance | Attorney-ready first-pass review across any practice area |
-| 🏦 [Loan Officer Assistant](assets/agency-agents/specialized/loan-officer-assistant.md) | Borrower intake, TRID compliance, pipeline tracking, closing coordination | Mortgage and consumer lending teams |
-| 🏠 [Real Estate Buyer &amp; Seller](assets/agency-agents/specialized/real-estate-buyer-seller.md) | Buyer/seller representation, offers, transaction coordination | Residential and investment real estate transactions |
-| 🛒 [Retail Customer Returns](assets/agency-agents/specialized/retail-customer-returns.md) | Return processing, fraud prevention, exchanges, vendor returns | Brick-and-mortar, e-commerce, and omnichannel retail |
-| ♟️ [Business Strategist](assets/agency-agents/specialized/business-strategist.md) | Management-consulting strategy | Competitive analysis, market entry, growth planning |
-| 🔄 [Change Management Consultant](assets/agency-agents/specialized/change-management-consultant.md) | ADKAR/Kotter/Prosci change | Guiding orgs through transformation &amp; adoption |
-| 🧭 [Chief of Staff](assets/agency-agents/specialized/specialized-chief-of-staff.md) | Executive coordination | Filtering noise, owning processes, routing decisions |
-| 🌟 [Customer Success Manager](assets/agency-agents/specialized/customer-success-manager.md) | Onboarding, health &amp; retention | QBRs, churn prevention, renewals &amp; expansion |
-| 📝 [Grant Writer](assets/agency-agents/specialized/grant-writer.md) | Grant proposals &amp; funding | LOIs, proposals, budgets for nonprofits/research |
-| 🏥 [Medical Billing &amp; Coding Specialist](assets/agency-agents/specialized/medical-billing-coding-specialist.md) | ICD-10/CPT/HCPCS &amp; revenue cycle | Claims, denial management, RCM optimization |
-| 💰 [Pricing Analyst](assets/agency-agents/specialized/specialized-pricing-analyst.md) | Pricing models &amp; margin optimization | Competitor/cost analysis, value-based pricing |
-| 💼 [Chief Financial Officer](assets/agency-agents/specialized/chief-financial-officer.md) | Capital allocation &amp; financial strategy | Treasury, FP&amp;A, M&amp;A finance, investor &amp; board reporting |
-| 🌱 [ESG &amp; Sustainability Officer](assets/agency-agents/specialized/esg-sustainability-officer.md) | ESG programs &amp; disclosure | Sustainability strategy, decarbonization, reporting |
-| 🔐 [Data Privacy Officer](assets/agency-agents/specialized/data-privacy-officer.md) | GDPR/CCPA privacy compliance | Data mapping, DPIAs, consent, breach response |
-| ⚙️ [Operations Manager](assets/agency-agents/specialized/operations-manager.md) | Lean/Six Sigma operations | Process mapping, capacity planning, KPI governance |
-| 🤝 [M&amp;A Integration Manager](assets/agency-agents/specialized/ma-integration-manager.md) | Post-merger integration | Day 1/100-day plans, synergy tracking, TSA management |
-| 🧠 [Organizational Psychologist](assets/agency-agents/specialized/organizational-psychologist.md) | Team dynamics &amp; culture health | Psychological safety, burnout risk, high-performing teams |
-| ⚔️ [Strategy Duel Agent](assets/agency-agents/specialized/specialized-strategy-duel-agent.md) | Game theory &amp; the 36 stratagems | Turn-based strategy duels, adversarial scenario simulation |
-| 🛡️ [FedRAMP &amp; RMF Compliance Engineer](assets/agency-agents/specialized/specialized-fedramp-rmf-compliance.md) | Federal cloud authorization (ATO) | NIST 800-53, FedRAMP Rev5/20x, SSP/POA&amp;M, ConMon, OSCAL |
-| 🏺 [Codebase Archaeologist](assets/agency-agents/specialized/specialized-codebase-archaeologist.md) | Multi-tool codebase drift audits | Detecting silent drift across Claude/Cursor/Copilot/Windsurf edits |
-| 🧾 [Resume Tailor](assets/agency-agents/specialized/resume-tailor.md) | Candidate-side resume optimization | JD mapping, ATS keyword alignment, experience-to-requirement matching |
-| 🧡 [Aging Parent Care Companion](assets/agency-agents/specialized/healthcare-aging-parent-care-companion.md) | Family caregiver decision-support | Appointment/medication coordination, care-team comms, caregiver wellbeing (HIPAA-aligned) |
-| 🏛️ [Master Plan Architect](assets/agency-agents/specialized/specialized-master-plan-architect.md) | Architectural teaching, red-team plan critique | Deep architecture teaching, risk critique, comprehensive Markdown implementation plans (no code execution) |
-| 🔍 [Authenticity Appraiser](assets/agency-agents/specialized/authenticity-appraiser.md) | Luxury goods authentication, valuation, transaction risk | Secondhand purchases, collectibles, remote appraisal limits |
-| 🎓 [Gaokao College Admissions Advisor](assets/agency-agents/specialized/gaokao-college-advisor.md) | Provincial admission rules, score ranks, major selection | Balanced university application portfolios for Gaokao candidates |
-| 🐄 [Livestock Records Auditor](assets/agency-agents/specialized/livestock-archive-auditor.md) | Medication, feed, treatment, immunization, FIFO batch checks | Auditing livestock records and production spreadsheets |
-| 🧠 [General Prompt Engineer](assets/agency-agents/specialized/prompt-engineer.md) | System prompts, examples, tool constraints, evaluations | Improving structured outputs and reliable LLM behavior |
-| 📜 [AI Governance Policy Specialist](assets/agency-agents/specialized/specialized-ai-policy-writer.md) | Generative-AI regulation, algorithm filing, model governance | AI compliance policies and operating controls in China |
-| 📅 [Meeting Productivity Specialist](assets/agency-agents/specialized/specialized-meeting-assistant.md) | Agendas, decisions, action tracking, time-zone coordination | Meetings across Feishu, DingTalk, and Tencent Meeting |
-| 💲 [Dynamic Pricing Strategist](assets/agency-agents/specialized/specialized-pricing-optimizer.md) | Promotion mechanics, elasticity, margin guardrails | Optimizing e-commerce prices and campaign profitability |
-| ⚖️ [Enterprise Risk Assessor](assets/agency-agents/specialized/specialized-risk-assessor.md) | Risk identification, control design, audit remediation | Enterprise risk reviews and organizational resilience |
-| 🌐 [Technical Translator](assets/agency-agents/specialized/technical-translator-agent.md) | Chinese-English translation, software/AI/cloud terminology | Translating developer documentation and technical materials |
-| 🧳 [Travel Planner](assets/agency-agents/specialized/travel-planner.md) | Itineraries, transport, lodging, visas, budgets | Practical domestic and international travel plans for Chinese travelers |
-| 🎧 [Focus Music Architect](assets/agency-agents/specialized/specialized-focus-music-architect.md) | Neuroacoustic prompt engineering, binaural beats, soundscape architecture, BPM curves | Designing cognitive flow audio, tailored generative audio prompts, focus soundscapes |
+| 🎯 [销售拓展专员](assets/agency-agents-zh/specialized/sales-outreach.md) | 线索开发、意向跟进、异议处理 | 新客户触达、销售方案、漏斗维护 |
+| 🎭 [AI 流程编排师](assets/agency-agents-zh/specialized/agents-orchestrator.md) | 多智能体协调、工作流管理 | 复杂项目的多智能体协作 |
+| 🔍 [LSP/索引工程师](assets/agency-agents-zh/specialized/lsp-index-engineer.md) | 代码智能、语义索引 | 代码导航、IDE 集成 |
+| 📥 [销售数据专员](assets/agency-agents-zh/specialized/sales-data-extraction-agent.md) | 销售数据采集、结构化 | CRM 数据处理 |
+| 📈 [数据整合专员](assets/agency-agents-zh/specialized/data-consolidation-agent.md) | 多源数据整合、仪表盘 | 数据汇总与可视化 |
+| 📬 [报告分发专员](assets/agency-agents-zh/specialized/report-distribution-agent.md) | 报告分发、多渠道推送 | 自动化报告分发 |
+| 🔐 [身份与信任架构师](assets/agency-agents-zh/specialized/agentic-identity-trust.md) | AI 身份验证、信任框架 | AI 系统安全与信任 |
+| 🔗 [身份图谱运营](assets/agency-agents-zh/specialized/identity-graph-operator.md) | 身份解析、多源匹配 | 用户身份治理 |
+| 💸 [应付账款会计](assets/agency-agents-zh/specialized/accounts-payable-agent.md) | 发票处理、付款自动化 | 财务流程自动化 |
+| 🌍 [跨文化咨询顾问](assets/agency-agents-zh/specialized/specialized-cultural-intelligence-strategist.md) | 文化洞察、跨文化设计 | 全球化产品、本地化策略 |
+| 🗣️ [开发者布道师](assets/agency-agents-zh/specialized/specialized-developer-advocate.md) | 开发者关系、DX 工程 | 开发者社区、技术推广 |
+| 🔬 [模型质量评估工程师](assets/agency-agents-zh/specialized/specialized-model-qa.md) | ML 模型审计、质量验证 | 模型上线前检查 |
+| 🗃️ [零知识证明工程师](assets/agency-agents-zh/specialized/zk-steward.md) | Zettelkasten 知识管理 | 知识库构建、笔记系统 |
+| 🔌 [MCP 集成工程师](assets/agency-agents-zh/specialized/specialized-mcp-builder.md) | MCP 服务器、工具设计、API 集成 | MCP 开发、AI 工具扩展 |
+| 📄 [文档工程师](assets/agency-agents-zh/specialized/specialized-document-generator.md) | PDF/PPTX/DOCX/XLSX 生成 | 程序化文档创建 |
+| ⚙️ [自动化治理架构师](assets/agency-agents-zh/specialized/automation-governance-architect.md) | 自动化审计、n8n 工作流治理、风险评估 | 业务自动化决策 |
+| 📚 [企业培训师](assets/agency-agents-zh/specialized/corporate-training-designer.md) | ADDIE/SAM、企业学习平台、TTT | 培训体系搭建与课程开发 |
+| 🌱 [职业发展导师](assets/agency-agents-zh/specialized/personal-growth-mentor.md) | 目标梳理、习惯设计、行动与复盘 | 个人成长规划、执行跟进 |
+| 🏛️ [政务数字化售前顾问](assets/agency-agents-zh/specialized/government-digital-presales-consultant.md) | 方案设计、标书、等保/信创 | 政务ToG项目售前 |
+| ⚕️ [医疗营销合规专家](assets/agency-agents-zh/specialized/healthcare-marketing-compliance.md) | 医疗广告法、NMPA、互联网医疗 | 医疗健康营销合规 |
+| 🎯 [招聘专员](assets/agency-agents-zh/specialized/recruitment-specialist.md) | 国内招聘平台、人才评估、劳动法合规 | 招聘运营与雇主品牌 |
+| 🎓 [留学顾问](assets/agency-agents-zh/specialized/study-abroad-advisor.md) | 多国申请策略、选校定位 | 留学规划、文书指导 |
+| 🔗 [供应链规划师](assets/agency-agents-zh/specialized/supply-chain-strategist.md) | 1688采购、质检、供应商管理、ERP | 供应链与采购管理 |
+| 🗺️ [工作流架构师](assets/agency-agents-zh/specialized/specialized-workflow-architect.md) | 工作流树设计、交接契约、故障恢复 | 系统流程规格化 |
+| ☁️ [Salesforce 架构师](assets/agency-agents-zh/specialized/specialized-salesforce-architect.md) | Salesforce 多云设计、集成、数据模型 | 企业级 Salesforce 架构 |
+| 🇫🇷 [法国市场咨询顾问](assets/agency-agents-zh/specialized/specialized-french-consulting-market.md) | ESN/SI 生态、Malt 平台、薪资代管 | 法国自由职业市场导航 |
+| 🇰🇷 [韩国市场咨询顾问](assets/agency-agents-zh/specialized/specialized-korean-business-navigator.md) | 품의流程、KakaoTalk 礼仪、层级关系 | 韩国商务文化导航 |
+| 🏗️ [土木工程师](assets/agency-agents-zh/specialized/specialized-civil-engineer.md) | Eurocode/DIN/ACI/GB 多标准结构分析 | 土木与结构工程设计 |
+| 🎧 [客户服务](assets/agency-agents-zh/specialized/customer-service.md) | 咨询解答、投诉处理、工单升级 | 客户问题处理、账户支持、满意度维护 |
+| 🏥 [医疗客服](assets/agency-agents-zh/specialized/healthcare-customer-service.md) | 患者咨询、预约、账单、保险支持 | 医疗机构客服、患者问题分流 |
+| 🏨 [酒店宾客服务](assets/agency-agents-zh/specialized/hospitality-guest-services.md) | 预订、礼宾、客诉处理、会员服务 | 酒店、度假村、餐饮与活动接待 |
+| 🤝 [HR 入职专员](assets/agency-agents-zh/specialized/hr-onboarding.md) | 入职培训、合规材料、福利、试用期跟进 | 新员工入职与融入、转正支持 |
+| 🌐 [翻译专员](assets/agency-agents-zh/specialized/language-translator.md) | 西英翻译、方言、文化语境 | 旅行、商务、医疗与法律沟通翻译 |
+| ⏱️ [法务计费专员](assets/agency-agents-zh/specialized/legal-billing-time-tracking.md) | 工时记录、计费说明、托管账户、回款 | 律所计费管理、收入回收、账单分析 |
+| 📋 [法务客户接待专员](assets/agency-agents-zh/specialized/legal-client-intake.md) | 客户筛选、案件信息、利益冲突排查 | 律所接案、咨询预约、接案摘要 |
+| ⚖️ [法务文档审核员](assets/agency-agents-zh/specialized/legal-document-review.md) | 合同与诉讼文书、风险条款、版本比对 | 法律文书审阅、合规核查 |
+| 🏦 [信贷专员助理](assets/agency-agents-zh/specialized/loan-officer-assistant.md) | 借款资料、初步资质、报价、流程协调 | 贷款申请支持、签约与放款跟进 |
+| 🏠 [房产买卖顾问](assets/agency-agents-zh/specialized/real-estate-buyer-seller.md) | 房源、谈判、交易手续、过户 | 房产买卖支持、交易进度管理 |
+| 🛒 [零售售后客服](assets/agency-agents-zh/specialized/retail-customer-returns.md) | 退换货、退款、售后政策、欺诈识别 | 零售售后处理、退货流程优化 |
+| ♟️ [商业策略顾问](assets/agency-agents-zh/specialized/business-strategist.md) | 竞争分析、商业模式、市场进入策略 | 商业决策、增长规划、新市场评估 |
+| 🔄 [变革管理顾问](assets/agency-agents-zh/specialized/change-management-consultant.md) | 组织变革、阻力管理、采纳机制 | 新制度推行、组织调整、变革落地 |
+| 🧭 [幕僚长](assets/agency-agents-zh/specialized/specialized-chief-of-staff.md) | 事务统筹、信息过滤、流程与决策跟进 | 创始人日程管理、执行协调 |
+| 🌟 [客户成功经理](assets/agency-agents-zh/specialized/customer-success-manager.md) | 客户上线、健康度、季度回顾、续约 | 客户使用辅导、降低流失、增购机会 |
+| 📝 [基金申报专员](assets/agency-agents-zh/specialized/grant-writer.md) | 资助调研、申报书、预算、结项报告 | 非营利与研究项目资助申请 |
+| 🏥 [医疗计费编码专家](assets/agency-agents-zh/specialized/medical-billing-coding-specialist.md) | ICD/CPT 编码、理赔、拒赔、收入周期 | 医疗账单处理、收入回收、合规审计 |
+| 💰 [定价分析师](assets/agency-agents-zh/specialized/specialized-pricing-analyst.md) | 竞品与成本分析、定价模型、毛利 | 市场定价研究、价格策略优化 |
+| 💼 [首席财务官](assets/agency-agents-zh/specialized/chief-financial-officer.md) | 资本配置、资金运营、财务规划、投资者关系 | 融资、预算、董事会汇报 |
+| 🌱 [ESG 与可持续发展官](assets/agency-agents-zh/specialized/esg-sustainability-officer.md) | ESG 体系、信息披露、减排规划 | 可持续发展战略、报告编制、监管对接 |
+| 🔐 [数据隐私官](assets/agency-agents-zh/specialized/data-privacy-officer.md) | 隐私合规、数据映射、影响评估 | 隐私治理、泄露应对、监管沟通 |
+| ⚙️ [运营经理](assets/agency-agents-zh/specialized/operations-manager.md) | 精益流程、产能计划、KPI、供应商管理 | 运营流程优化、降本提效 |
+| 🤝 [并购整合经理](assets/agency-agents-zh/specialized/ma-integration-manager.md) | 并购整合、协同跟踪、过渡服务协议 | 并购后 Day 1 与百日计划执行 |
+| 🧠 [组织心理学家](assets/agency-agents-zh/specialized/organizational-psychologist.md) | 团队动力、心理安全、倦怠、组织氛围 | 团队诊断、管理建议、文化改善 |
+| ⚔️ [竞争战略分析师](assets/agency-agents-zh/specialized/specialized-strategy-duel-agent.md) | 博弈论、竞争推演、对手模拟 | 攻防策略演练、竞争决策分析 |
+| 🛡️ [FedRAMP 与 RMF 合规工程师](assets/agency-agents-zh/specialized/specialized-fedramp-rmf-compliance.md) | FedRAMP、NIST 800-53、SSP/POA&amp;M | 联邦云授权、第三方评估、持续监控 |
+| 🏺 [遗留系统工程师](assets/agency-agents-zh/specialized/specialized-codebase-archaeologist.md) | 多工具代码审计、逻辑漂移、死代码 | AI 编程改动排查、文档与实现一致性检查 |
+| 🧾 [简历优化顾问](assets/agency-agents-zh/specialized/resume-tailor.md) | 岗位匹配、ATS 关键词、经历表述 | 按目标岗位调整简历、求职材料优化 |
+| 🧡 [老年照护顾问](assets/agency-agents-zh/specialized/healthcare-aging-parent-care-companion.md) | 就医用药协调、照护沟通、家属支持 | 老年家属照护安排、照护团队协作 |
+| 🏛️ [总体规划架构师](assets/agency-agents-zh/specialized/specialized-master-plan-architect.md) | 架构讲解、红队评审、实施计划 | 技术方案教学、计划风险审查与细化 |
+| 🔍 [鉴定评估师](assets/agency-agents-zh/specialized/authenticity-appraiser.md) | 真伪要点、行情估值、交易风险 | 二手奢侈品与收藏品选购、鉴定路径判断 |
+| 🎓 [高考志愿填报顾问](assets/agency-agents-zh/specialized/gaokao-college-advisor.md) | 平行志愿、位次法、冲稳保策略 | 高考志愿填报规划 |
+| 🐄 [养殖档案核对员](assets/agency-agents-zh/specialized/livestock-archive-auditor.md) | 兽药、饲料、免疫记录、FIFO 批号核查 | 养殖档案与生产日报核对、错漏整改 |
+| 🧠 [通用提示词工程师](assets/agency-agents-zh/specialized/prompt-engineer.md) | LLM 提示词设计、优化、评测 | 提示词开发、AI 应用优化 |
+| 📜 [AI 治理政策专家](assets/agency-agents-zh/specialized/specialized-ai-policy-writer.md) | 算法备案、生成式AI管理、伦理审查 | AI 合规与治理框架 |
+| 📅 [会议效率专家](assets/agency-agents-zh/specialized/specialized-meeting-assistant.md) | 飞书/钉钉/腾讯会议、OKR周会 | 会议管理与纪要输出 |
+| 💲 [动态定价策略师](assets/agency-agents-zh/specialized/specialized-pricing-optimizer.md) | 淘宝/京东/拼多多定价、大促机制 | 电商定价与促销策略 |
+| ⚖️ [企业风险评估师](assets/agency-agents-zh/specialized/specialized-risk-assessor.md) | COSO本土化、国企风控、ESG | 企业风险管理与审计 |
+| 🌐 [技术翻译专家](assets/agency-agents-zh/specialized/technical-translator-agent.md) | 中英文双向翻译、编程/AI/云计算术语 | 技术文档翻译 |
+| 🧳 [旅行规划师](assets/agency-agents-zh/specialized/travel-planner.md) | 路线、交通住宿、签证、预算、季节约束 | 中国旅行者国内外行程规划、逐日安排 |
+| 🎧 [专注音乐架构师](assets/agency-agents-zh/specialized/specialized-focus-music-architect.md) | 神经声学提示词工程、双耳节律分层、声景架构、BPM 心流曲线 | 深度工作心流音乐生成、针对生成式音频模型的精准提示词、认知减疲声学设计 |
 
 <a id="experts-spatial-computing"></a>
 
-### 🥽 Spatial Computing Division
+### 🥽 空间计算
 
-Building spatial interactions, immersive interfaces, and XR experiences.
+打造空间交互、沉浸式界面与扩展现实体验。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🏗️ [XR Interface Architect](assets/agency-agents/spatial-computing/xr-interface-architect.md) | Spatial interaction design, immersive UX | AR/VR/XR interface design, spatial computing UX |
-| 💻 [macOS Spatial/Metal Engineer](assets/agency-agents/spatial-computing/macos-spatial-metal-engineer.md) | Swift, Metal, high-performance 3D | macOS spatial computing, Vision Pro native apps |
-| 🌐 [XR Immersive Developer](assets/agency-agents/spatial-computing/xr-immersive-developer.md) | WebXR, browser-based AR/VR | Browser-based immersive experiences, WebXR apps |
-| 🎮 [XR Cockpit Interaction Specialist](assets/agency-agents/spatial-computing/xr-cockpit-interaction-specialist.md) | Cockpit-based controls, immersive systems | Cockpit control systems, immersive control interfaces |
-| 🍎 [visionOS Spatial Engineer](assets/agency-agents/spatial-computing/visionos-spatial-engineer.md) | Apple Vision Pro development | Vision Pro apps, spatial computing experiences |
-| 🔌 [Terminal Integration Specialist](assets/agency-agents/spatial-computing/terminal-integration-specialist.md) | Terminal integration, command-line tools | CLI tools, terminal workflows, developer tools |
+| 🏗️ [XR 界面架构师](assets/agency-agents-zh/spatial-computing/xr-interface-architect.md) | 空间 UI 架构、交互设计 | XR 应用界面设计 |
+| 💻 [macOS 空间/Metal 工程师](assets/agency-agents-zh/spatial-computing/macos-spatial-metal-engineer.md) | Metal、GPU 渲染 | macOS 高性能图形 |
+| 🌐 [XR 沉浸式开发者](assets/agency-agents-zh/spatial-computing/xr-immersive-developer.md) | WebXR、沉浸式体验 | VR/AR 应用开发 |
+| 🎮 [XR 座舱交互专家](assets/agency-agents-zh/spatial-computing/xr-cockpit-interaction-specialist.md) | 座舱 UI、多模态交互 | 汽车/航空 XR 交互 |
+| 🍎 [visionOS 空间工程师](assets/agency-agents-zh/spatial-computing/visionos-spatial-engineer.md) | visionOS、SwiftUI 空间 UI | Apple Vision Pro 开发 |
+| 🔌 [终端集成专家](assets/agency-agents-zh/spatial-computing/terminal-integration-specialist.md) | 终端模拟、系统集成 | 空间计算终端工具 |
 
 <a id="experts-game-development"></a>
 
-### 🎮 Game Development Division
+### 🎮 游戏开发
 
-Creating games through design, engine development, and optimization.
+覆盖游戏设计、引擎开发与体验优化。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🎯 [Game Designer](assets/agency-agents/game-development/game-designer.md) | Systems design, GDD authorship, economy balancing, gameplay loops | Designing game mechanics, progression systems, writing design documents |
-| 🗺️ [Level Designer](assets/agency-agents/game-development/level-designer.md) | Layout theory, pacing, encounter design, environmental storytelling | Building levels, designing encounter flow, spatial narrative |
-| 🎨 [Technical Artist](assets/agency-agents/game-development/technical-artist.md) | Shaders, VFX, LOD pipeline, art-to-engine optimization | Bridging art and engineering, shader authoring, performance-safe asset pipelines |
-| 🔊 [Game Audio Engineer](assets/agency-agents/game-development/game-audio-engineer.md) | FMOD/Wwise, adaptive music, spatial audio, audio budgets | Interactive audio systems, dynamic music, audio performance |
-| 📖 [Narrative Designer](assets/agency-agents/game-development/narrative-designer.md) | Story systems, branching dialogue, lore architecture | Writing branching narratives, implementing dialogue systems, world lore |
-| 💰 [Economy Designer](assets/agency-agents/game-development/economy-designer.md) | Virtual currencies, sources/sinks, monetization modeling, inflation control | Designing in-game economies, balancing F2P monetization, live economy tuning |
-| 🏗️ [Unity Architect](assets/agency-agents/game-development/unity-architect.md) | ScriptableObjects, data-driven modularity, DOTS/ECS | Large-scale Unity projects, data-driven system design, ECS performance work |
-| ✨ [Unity Shader Graph Artist](assets/agency-agents/game-development/unity-shader-graph-artist.md) | Shader Graph, HLSL, URP/HDRP, Renderer Features | Custom Unity materials, VFX shaders, post-processing passes |
-| 🌐 [Unity Multiplayer Engineer](assets/agency-agents/game-development/unity-multiplayer-engineer.md) | Netcode for GameObjects, Unity Relay/Lobby, server authority, prediction | Online Unity games, client prediction, Unity Gaming Services integration |
-| 🛠️ [Unity Editor Tool Developer](assets/agency-agents/game-development/unity-editor-tool-developer.md) | EditorWindows, AssetPostprocessors, PropertyDrawers, build validation | Custom Unity Editor tooling, pipeline automation, content validation |
-| ⚙️ [Unreal Systems Engineer](assets/agency-agents/game-development/unreal-systems-engineer.md) | C++/Blueprint hybrid, GAS, Nanite constraints, memory management | Complex Unreal gameplay systems, Gameplay Ability System, engine-level C++ |
-| 🎨 [Unreal Technical Artist](assets/agency-agents/game-development/unreal-technical-artist.md) | Material Editor, Niagara, PCG, Substrate | Unreal materials, Niagara VFX, procedural content generation |
-| 🌐 [Unreal Multiplayer Architect](assets/agency-agents/game-development/unreal-multiplayer-architect.md) | Actor replication, GameMode/GameState hierarchy, dedicated server | Unreal online games, replication graphs, server authoritative Unreal |
-| 🗺️ [Unreal World Builder](assets/agency-agents/game-development/unreal-world-builder.md) | World Partition, Landscape, HLOD, LWC | Large open-world Unreal levels, streaming systems, terrain at scale |
-| 📜 [Godot Gameplay Scripter](assets/agency-agents/game-development/godot-gameplay-scripter.md) | GDScript 2.0, signals, composition, static typing | Godot gameplay systems, scene composition, performance-conscious GDScript |
-| 🌐 [Godot Multiplayer Engineer](assets/agency-agents/game-development/godot-multiplayer-engineer.md) | MultiplayerAPI, ENet/WebRTC, RPCs, authority model | Online Godot games, scene replication, server-authoritative Godot |
-| ✨ [Godot Shader Developer](assets/agency-agents/game-development/godot-shader-developer.md) | Godot shading language, VisualShader, RenderingDevice | Custom Godot materials, 2D/3D effects, post-processing, compute shaders |
-| 🧩 [Blender Add-on Engineer](assets/agency-agents/game-development/blender-addon-engineer.md) | Blender Python (`bpy`), custom operators/panels, asset validators, exporters, pipeline automation | Building Blender add-ons, asset prep tools, export workflows, and DCC pipeline automation |
-| ⚙️ [Roblox Systems Scripter](assets/agency-agents/game-development/roblox-systems-scripter.md) | Luau, RemoteEvents/Functions, DataStore, server-authoritative module architecture | Building secure Roblox game systems, client-server communication, data persistence |
-| 🎯 [Roblox Experience Designer](assets/agency-agents/game-development/roblox-experience-designer.md) | Engagement loops, monetization, D1/D7 retention, onboarding flow | Designing Roblox game loops, Game Passes, daily rewards, player retention |
-| 👗 [Roblox Avatar Creator](assets/agency-agents/game-development/roblox-avatar-creator.md) | UGC pipeline, accessory rigging, Creator Marketplace submission | Roblox UGC items, HumanoidDescription customization, in-experience avatar shops |
+| 🎯 [游戏设计师](assets/agency-agents-zh/game-development/game-designer.md) | 游戏机制、系统设计、平衡性 | 游戏核心玩法设计 |
+| 🗺️ [关卡设计师](assets/agency-agents-zh/game-development/level-designer.md) | 关卡布局、节奏控制、空间叙事 | 关卡设计、场景构建 |
+| 🎨 [技术美术](assets/agency-agents-zh/game-development/technical-artist.md) | Shader、渲染管线、美术工具 | 画面效果、性能优化 |
+| 🔊 [游戏音频工程师](assets/agency-agents-zh/game-development/game-audio-engineer.md) | 音效设计、音频引擎、空间音频 | 游戏音效、配乐 |
+| 📖 [叙事设计师](assets/agency-agents-zh/game-development/narrative-designer.md) | 剧情设计、对话系统、世界观 | 游戏剧情、互动叙事 |
+| 💰 [经济系统设计师](assets/agency-agents-zh/game-development/economy-designer.md) | 游戏货币、产出消耗、数值平衡 | 游戏经济系统设计、通胀控制、商业化 |
+| 🏗️ [Unity 架构师](assets/agency-agents-zh/game-development/unity-architect.md) | Unity 架构、ECS、性能优化 | Unity 项目架构 |
+| ✨ [Unity 着色器美术](assets/agency-agents-zh/game-development/unity-shader-graph-artist.md) | Shader Graph、URP/HDRP | Unity 视觉效果 |
+| 🌐 [Unity 多人联机工程师](assets/agency-agents-zh/game-development/unity-multiplayer-engineer.md) | Netcode、同步、网络架构 | Unity 联机游戏 |
+| 🛠️ [Unity 编辑器工具开发者](assets/agency-agents-zh/game-development/unity-editor-tool-developer.md) | 编辑器扩展、自定义工具 | Unity 工具链开发 |
+| ⚙️ [Unreal 系统工程师](assets/agency-agents-zh/game-development/unreal-systems-engineer.md) | Gameplay 框架、C++ 系统 | UE 核心系统开发 |
+| 🎨 [Unreal 技术美术](assets/agency-agents-zh/game-development/unreal-technical-artist.md) | 材质、Niagara、渲染管线 | UE 画面与性能 |
+| 🌐 [Unreal 多人联机架构师](assets/agency-agents-zh/game-development/unreal-multiplayer-architect.md) | Replication、网络同步 | UE 联机架构 |
+| 🗺️ [Unreal 世界构建师](assets/agency-agents-zh/game-development/unreal-world-builder.md) | 开放世界、地形、关卡串流 | UE 场景构建 |
+| 📜 [Godot 玩法脚本工程师](assets/agency-agents-zh/game-development/godot-gameplay-scripter.md) | GDScript、场景树、信号系统 | Godot 游戏逻辑 |
+| 🌐 [Godot 多人联机工程师](assets/agency-agents-zh/game-development/godot-multiplayer-engineer.md) | MultiplayerAPI、网络同步 | Godot 联机游戏 |
+| ✨ [Godot 着色器开发者](assets/agency-agents-zh/game-development/godot-shader-developer.md) | Godot Shader Language、视觉效果 | Godot 画面效果 |
+| 🧩 [Blender 插件工程师](assets/agency-agents-zh/game-development/blender-addon-engineer.md) | Python 插件、资源验证、导出自动化 | Blender 管线工具开发 |
+| ⚙️ [Roblox 系统脚本工程师](assets/agency-agents-zh/game-development/roblox-systems-scripter.md) | Luau 脚本、数据存储 | Roblox 游戏开发 |
+| 🎯 [Roblox 体验设计师](assets/agency-agents-zh/game-development/roblox-experience-designer.md) | 体验设计、游戏循环 | Roblox 游戏设计 |
+| 👗 [Roblox 虚拟形象创作者](assets/agency-agents-zh/game-development/roblox-avatar-creator.md) | 虚拟形象、UGC 资产 | Roblox 角色设计 |
 
 <a id="experts-academic"></a>
 
-### 📚 Academic Division
+### 📚 学术
 
-Applying disciplinary methods to research, analysis, and learning.
+运用学科方法开展研究、分析与学习规划。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🌍 [Anthropologist](assets/agency-agents/academic/academic-anthropologist.md) | Cultural systems, kinship, rituals, belief systems | Designing culturally coherent societies with internal logic |
-| 🌐 [Geographer](assets/agency-agents/academic/academic-geographer.md) | Physical/human geography, climate, cartography | Building geographically coherent worlds with realistic terrain and settlements |
-| 📚 [Historian](assets/agency-agents/academic/academic-historian.md) | Historical analysis, periodization, material culture | Validating historical coherence, enriching settings with authentic period detail |
-| 📜 [Narratologist](assets/agency-agents/academic/academic-narratologist.md) | Narrative theory, story structure, character arcs | Analyzing and improving story structure with established theoretical frameworks |
-| 🧠 [Psychologist](assets/agency-agents/academic/academic-psychologist.md) | Personality theory, motivation, cognitive patterns | Building psychologically credible characters grounded in research |
-| 📊 [Statistician](assets/agency-agents/academic/academic-statistician.md) | Statistical inference &amp; experiment design | Hypothesis testing, causal inference, sampling, rigorous analysis |
-| 📚 [Study Planner](assets/agency-agents/academic/academic-study-planner.md) | Exam strategy, active recall, spaced repetition | Exam preparation and personalized learning plans |
+| 🌍 [人类学家](assets/agency-agents-zh/academic/academic-anthropologist.md) | 文化体系、仪式、民族志 | 世界观设计、文化构建 |
+| 🌐 [地理学家](assets/agency-agents-zh/academic/academic-geographer.md) | 自然与人文地理、空间分析 | 地图构建、场景设计 |
+| 📚 [历史学家](assets/agency-agents-zh/academic/academic-historian.md) | 历史分析、史料考证 | 历史题材验证、年代设定 |
+| 📜 [叙事学家](assets/agency-agents-zh/academic/academic-narratologist.md) | 叙事理论、故事结构 | 剧情设计、角色弧线 |
+| 🧠 [心理学家](assets/agency-agents-zh/academic/academic-psychologist.md) | 行为心理、人格理论 | 角色心理塑造、动机设计 |
+| 📊 [统计学家](assets/agency-agents-zh/academic/academic-statistician.md) | 实验设计、统计推断、显著性检验 | 研究方案评审、试验数据分析、结论验证 |
+| 📚 [学习规划师](assets/agency-agents-zh/academic/academic-study-planner.md) | 考研/考公/法考备考、学习方法论 | 个性化学习计划与备考规划 |
 
 <a id="experts-gis"></a>
 
-### 🗺️ GIS Division
+### 🗺️ 地理信息
 
-Turning geographic data into maps, analysis, and spatial applications.
+把地理数据转化为地图、分析与空间应用。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🧠 [Technical Consultant](assets/agency-agents/gis/gis-technical-consultant.md) | GIS strategy, gap analysis, technology roadmaps, digital transformation | Understanding business needs, selecting the right geospatial stack, planning multi-phase GIS programs |
-| 🔧 [Solution Engineer](assets/agency-agents/gis/gis-solution-engineer.md) | Esri + FOSS4G prototype building, PoC delivery, technical feasibility | Building working demos, validating technical approaches, pre-sales support |
-| 🖥️ [GIS Analyst](assets/agency-agents/gis/gis-analyst.md) | Map production, data QC, symbology, layouts, spatial queries | Day-to-day GIS operations, creating publication-ready maps, maintaining data integrity |
-| 📦 [Spatial Data Engineer](assets/agency-agents/gis/gis-spatial-data-engineer.md) | Geospatial ETL, format conversion, CRS reprojection, automated pipelines | Ingesting messy data from any source, building repeatable data transformation pipelines |
-| ⚙️ [Geoprocessing Specialist](assets/agency-agents/gis/gis-geoprocessing-specialist.md) | ArcPy, Python Toolbox (.pyt), Model Builder, batch automation | Automating repetitive GIS workflows, building custom geoprocessing tools |
-| ✅ [GIS QA Engineer](assets/agency-agents/gis/gis-qa-engineer.md) | Topology validation, metadata audit, CRS consistency, accuracy assessment | Quality gates before data publication, compliance verification, data integrity audits |
-| 🤖 [GeoAI/ML Engineer](assets/agency-agents/gis/gis-geoai-ml-engineer.md) | Feature extraction, object detection, semantic segmentation, land cover classification | Extracting buildings/roads/vehicles from imagery, change detection, environmental monitoring |
-| 🏗️ [BIM/GIS Specialist](assets/agency-agents/gis/gis-bim-specialist.md) | Revit/IFC to GIS, indoor mapping, digital twin architecture, facility management | Smart campus, airport digital twins, indoor navigation, building operations |
-| 🏔️ [3D &amp; Scene Developer](assets/agency-agents/gis/gis-3d-scene-developer.md) | Cesium, ArcGIS Scene Viewer, 3D Tiles, point clouds, terrain visualization | 3D city scenes, terrain flyovers, point cloud web viewers, OAuth-gated scene sharing |
-| 📊 [Spatial Data Scientist](assets/agency-agents/gis/gis-spatial-data-scientist.md) | Spatial statistics, clustering, regression, interpolation, point pattern analysis | Hotspot detection, spatial modeling, predictive analytics, research-grade analysis |
-| 🛸 [Drone/Reality Mapping Specialist](assets/agency-agents/gis/gis-drone-reality-mapping.md) | Photogrammetry, orthomosaic, DTM/DSM, point cloud classification, 3D mesh | Drone survey processing, reality capture, construction monitoring, environmental mapping |
-| 🌐 [Web GIS Developer](assets/agency-agents/gis/gis-web-gis-developer.md) | MapLibre GL JS, ArcGIS JS API, Leaflet, real-time dashboards, REST APIs | Building interactive web maps, operational dashboards, real-time data visualization |
-| 🎨 [Cartography Designer](assets/agency-agents/gis/gis-cartography-designer.md) | Color theory, typography, basemap design, visual hierarchy, print and web aesthetics | Making maps beautiful and readable, colorblind-safe palettes, professional map layouts |
+| 🧠 [技术顾问](assets/agency-agents-zh/gis/gis-technical-consultant.md) | 需求分析、差距评估、技术路线图 | GIS 方案咨询、投标文件、系统改造 |
+| 🔧 [解决方案工程师](assets/agency-agents-zh/gis/gis-solution-engineer.md) | GIS 原型、概念验证、Esri 与开源技术栈 | 售前演示、技术可行性验证、方案落地 |
+| 🖥️ [GIS 分析师](assets/agency-agents-zh/gis/gis-analyst.md) | 制图、图层管理、空间查询 | 日常 GIS 分析、地图出图、地理数据维护 |
+| 📦 [空间数据工程师](assets/agency-agents-zh/gis/gis-spatial-data-engineer.md) | 空间 ETL、坐标转换、属性标准化 | 地理数据集成、自动化管线、标准数据集 |
+| ⚙️ [地理处理专家](assets/agency-agents-zh/gis/gis-geoprocessing-specialist.md) | ArcPy、Python、批处理、自定义工具箱 | ArcGIS Pro 工作流自动化、批量地理处理 |
+| ✅ [GIS QA 工程师](assets/agency-agents-zh/gis/gis-qa-engineer.md) | 拓扑、坐标系、元数据、精度评估 | 地理数据验收、质量控制、合规检查 |
+| 🤖 [地理 AI/ML 工程师](assets/agency-agents-zh/gis/gis-geoai-ml-engineer.md) | 遥感机器学习、目标检测、影像分割 | 卫星与航拍解译、土地覆盖分类 |
+| 🏗️ [BIM/GIS 专家](assets/agency-agents-zh/gis/gis-bim-specialist.md) | Revit/IFC、BIM-GIS 转换、室内地图 | 建筑与地理数据融合、数字孪生、设施管理 |
+| 🏔️ [3D 场景开发者](assets/agency-agents-zh/gis/gis-3d-scene-developer.md) | Cesium、ArcGIS Scene Viewer、地形与点云 | Web 三维地图、可交互场景、数字孪生 |
+| 📊 [空间数据科学家](assets/agency-agents-zh/gis/gis-spatial-data-scientist.md) | 空间统计、聚类、预测建模 | 地理规律发现、空间分析与研究报告 |
+| 🛸 [无人机/实景测绘专家](assets/agency-agents-zh/gis/gis-drone-reality-mapping.md) | 航测影像、正射影像、地形模型、点云 | 无人机测绘、三维重建、测绘成果入库 |
+| 🌐 [Web GIS 开发者](assets/agency-agents-zh/gis/gis-web-gis-developer.md) | MapLibre GL JS、ArcGIS JS API、Leaflet | 交互式地图应用、地理服务集成、实时看板 |
+| 🎨 [制图设计师](assets/agency-agents-zh/gis/gis-cartography-designer.md) | 地图版式、配色、字体、注记布局 | 印刷地图设计、Web 地图可读性优化 |
 
 <a id="experts-healthcare"></a>
 
-### 🏥 Healthcare Division
+### 🏥 医疗健康
 
-Connecting clinical evidence with healthcare policy and strategy.
+整理临床证据，支持医疗政策与行业决策。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🩺 [Clinical Evidence Agent](assets/agency-agents/healthcare/healthcare-clinical-evidence-agent.md) | Evidence standards, validated vs unvalidated claims, diagnostic authority boundaries | Making clinical claims credibly without overstepping into diagnostic authority |
-| 🌍 [Sovereign Health Systems Agent](assets/agency-agents/healthcare/healthcare-sovereign-health-systems-agent.md) | Government health mandates, UHC policy, emerging market deployment | Health tech teams operating at the intersection of national health infrastructure and sovereign health policy |
-| 🧭 [Healthcare Innovation Strategist](assets/agency-agents/healthcare/healthcare-innovation-strategist.md) | Narrative architecture for healthcare founders across investor, regulatory, sovereign, and clinical audiences | Healthcare founders who need to translate clinical and financial complexity into language that moves capital and builds trust |
+| 🩺 [循证医学研究员](assets/agency-agents-zh/healthcare/healthcare-clinical-evidence-agent.md) | 临床文献检索、证据分级、系统评价 | 临床决策支持、诊疗指南证据整理 |
+| 🌍 [医疗系统治理顾问](assets/agency-agents-zh/healthcare/healthcare-sovereign-health-systems-agent.md) | 卫生政策、治理、资源配置、效果评估 | 政府卫生系统规划、公共卫生项目 |
+| 🧭 [医疗创新战略顾问](assets/agency-agents-zh/healthcare/healthcare-innovation-strategist.md) | 医疗市场、政策分析、商业模式 | 医疗企业战略、产品上市、扩张规划 |
 
 <a id="experts-research"></a>
 
-### 🔍 Research Division
+### 🔍 研究
 
-Evaluating sources and synthesizing evidence into traceable findings.
+评估来源、梳理证据，形成可追溯的研究结论。
 
-| Agent | Specialty | When to Use |
+| 专家 | 专长 | 适用场景 |
 | --- | --- | --- |
-| 🔍 [Research Synthesist](assets/agency-agents/research/research-synthesist.md) | Literature review, source evaluation, citation tracing, evidence synthesis | Turning a scattered pile of sources into a structured, honestly-weighted map of what the evidence supports |
+| 🔍 [研究证据综合专家](assets/agency-agents-zh/research/research-synthesist.md) | 文献综述、来源评价、引用追踪、证据综合 | 将零散资料整理为有依据的研究结论 |
 
-## Configuration and limits
+## 配置与边界
 
-| Key | Default | Purpose |
+| 配置项 | 默认值 | 作用 |
 | --- | --- | --- |
-| `root` | Bundled expert assets | External expert root; an explicit value takes priority. |
-| `provider` | `spawn` | DSH subagent provider; `fork` also works when it supports persona and tool filtering. |
-| `divisions` | 22 standard divisions | Top-level divisions to scan. |
-| `maxDepth` | Unset | Positive absolute subagent-depth limit. |
+| `root` | 包内专家资产 | 外部专家根目录；显式配置优先。 |
+| `provider` | `spawn` | DSH 子代理 provider，可使用支持 persona 与工具过滤的 `fork`。 |
+| `divisions` | 22 个标准分区 | 需要扫描的顶层分区。 |
+| `maxDepth` | 未设置 | 正整数形式的绝对子代理深度上限。 |
 
-Set `AGENCY_AGENTS_ROOT` to use an external expert directory. Persona bodies from that directory are injected as the child system prompt, so load them only from a trusted source. The provider must support persona and tool filtering. `summon_experts` accepts at most 8 experts with a concurrency of 4 and still returns successful answers when some experts fail.
+也可设置 `AGENCY_AGENTS_ROOT` 环境变量指定外部专家目录。外部目录里的 persona 正文会注入为子代理系统提示，只应从可信来源加载。子代理 provider 必须支持 persona 和工具过滤能力。`summon_experts` 一次最多 8 名专家，并发 4，部分失败仍返回成功结果。
 
-## Secondary development
+## 二次开发
 
-Both GitHub and npm include a ready-to-run `lib`. After changing the source in a clone, run `pnpm build` before committing, or a source install keeps the previous runtime.
+GitHub 与 npm 都包含可直接运行的 `lib`。克隆后如果改了源码，提交前运行 `pnpm build`，否则源码安装仍是旧的运行文件。
 
 
-### Install from source
+### 从源码安装
 
-Use this for debugging or unpublished changes. The cloned directory becomes the plugin source path:
+适用于调试或使用未发布改动。克隆后的本地路径就是插件安装路径：
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -837,14 +837,14 @@ dsh plugin --profile web add .
 dsh --profile web --dump-config
 ```
 
-Restart DSH Web and hard-refresh the browser. `dsh plugin ... add .` reads the package metadata and `cordis.patch.yml`; do not install by copying `lib` directly.
+完成后重启 DSH Web 并硬刷新浏览器。`dsh plugin ... add .` 会读取当前目录的包信息和 `cordis.patch.yml`；不要改为直接复制 `lib` 目录。
 
-- [src\index.ts](src/index.ts): host entry point for catalog loading, tools, and settings.
-- [src\remote-contract.ts](src/remote-contract.ts) and [src\remote.ts](src/remote.ts): Remote contract and implementation.
-- [src\client\index.ts](src/client/index.ts): Settings page, composer button, and `@` trigger.
-- `assets\agency-agents`: bundled personas; retain its MIT license and [NOTICE](NOTICE) attribution.
+- Host 端入口：[src\index.ts](src/index.ts)，负责加载专家目录、注册工具和设置项。
+- Remote 契约与实现：[src\remote-contract.ts](src/remote-contract.ts)、[src\remote.ts](src/remote.ts)。
+- 客户端入口：[src\client\index.ts](src/client/index.ts)，负责设置页、输入框按钮与 `@` 触发器。
+- 内置 persona 位于 `assets\agency-agents`；保留其中的 MIT 许可证和 [NOTICE](NOTICE) 归属说明。
 
-After changing `src` or `assets`, rebuild, test, and install from the local directory:
+修改 `src` 或 `assets` 后，重新构建并以本地目录安装验证：
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -855,9 +855,9 @@ pnpm verify
 dsh plugin --profile web add .
 ```
 
-The published package includes `lib`, `assets`, the patch, and the root README/license files. Do not publish `node_modules` or local development files.
+发布包只包含 `lib`、`assets`、补丁和根目录说明/许可证；不要将 `node_modules` 或本地开发文件加入发布内容。
 
-## Validation
+## 验证
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -867,9 +867,9 @@ pnpm test
 pnpm verify
 ```
 
-`prepublishOnly` runs the build, unit tests, browser regressions, and package-integrity checks before publishing. Release CI installs Chromium and its system dependencies; before the first local release, run the browser installation command below.
+`prepublishOnly` 在发布前执行构建、单元测试、浏览器回归和包完整性检查；发布 CI 自动安装 Chromium 及系统依赖。首次本地发布前需执行下方浏览器安装命令。
 
-Run browser interaction regressions separately (real React DOM and Chromium; no DSH credentials or user profile required):
+浏览器交互回归独立运行（真实 React DOM 与 Chromium，不需要 DSH 认证或用户 Profile）：
 
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -878,14 +878,14 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-Coverage includes expert/team filtering, creation, copying, editing, enablement, deletion, draft protection, revision conflicts, localization, dark/light themes, narrow layouts, and focus restoration under normal rendering and StrictMode. These component tests do not replace real-host or model-delegation acceptance. Browser tests bundle source rather than loading the published `lib/client.js`; artifacts still require build, package checks, and real-host acceptance. Override the default port 18769 with the `AGENCY_BROWSER_TEST_PORT` environment variable if needed.
+覆盖专家与团队的筛选、创建、复制、编辑、启停、删除、草稿保护、配置冲突、双语切换、深浅主题、窄屏以及 Escape、关闭按钮和遮罩的焦点恢复。该测试验证组件交互，不替代真实宿主和模型委派验收。 浏览器测试从源码构建，不加载发布的 `lib/client.js`；产物仍需构建、包校验及真实宿主验收。端口默认 18769，占用时可通过 `AGENCY_BROWSER_TEST_PORT` 环境变量覆盖。
 
-## Custom experts
+## 自定义专家
 
-Open Settings → Experts → New expert. Set a name, description, category, prompt, and avatar. Save and enable makes the expert immediately available through @ and the Experts button. Reference labels use the standard expert icon and plain name, matching built-in experts; candidate menus show avatars. Copy a base expert to customize it, or edit, enable, disable and delete custom experts. Deletion permanently removes the expert content and enabled state; it cannot be undone.
+在「设置 → 专家」点击「新建专家」，填写名称、简介、分类和专家提示词，并选择头像。「保存并启用」后立即通过 @ 或专家按钮选择；标签与内置专家一致，显示统一专家图标和纯名称，候选菜单使用头像。基础专家可复制为自定义，自定义专家可编辑、启停、删除，删除会永久移除专家内容及启用状态，无法撤销。
 
-Data lives in the DSH settings agency-agents namespace outside the plugin directory and survives upgrades. External root still replaces the base roster; custom experts are appended. Viewing, copying, and summoning nested experts use the actual file selected by the catalog. The limit is 200 existing custom experts. Deletion frees a slot; legacy soft-deleted records are cleaned up on startup and subsequent writes. Name conflicts introduced by a base catalog update remain visible in Settings for renaming or deletion, but conflicting experts cannot be summoned. Concurrent changes reject stale saves and keep the draft in the editor. Read and compare the latest content, choose to keep your draft or load that content, then save explicitly. Deleted experts can only be continued as new experts. Remove disabled draft references or re-enable the expert; remove and reselect deleted or conflicting references. Writes carry a revision; see the [Remote contract](src/remote-contract.ts). Back up current settings before downgrading: restoring custom data is separate from rolling back plugin code.
+数据保存在 DSH settings 的 agency-agents 命名空间，独立于插件目录，升级保留。外部 root 仍替换基础名册，自定义专家追加到该名册；嵌套目录专家的查看、复制与召唤均读取名册选中的实际文件。最多保留 200 位自定义专家，删除立即释放名额；旧版已删除记录在启动及后续写入时清理。内置或外部目录更新导致的名称冲突会在设置页标记，允许改名或删除，冲突专家暂停召唤。多窗口冲突时在当前编辑器保留草稿，可读取最新内容并核对，选择继续使用草稿或载入最新内容后再保存；已删除专家只能作为新专家继续。停用的草稿标签需移除或重新启用，已删除或冲突的标签需移除并重新选择。写入携带修订号，协议以 [Remote 契约](src/remote-contract.ts) 为准。回退旧插件前应备份最新 settings，自定义数据的恢复与代码回退分开处理。
 
-## License and attribution
+## 许可证与归属
 
-This project’s TypeScript source, build scripts, and documentation use [Apache License 2.0](LICENSE). Bundled personas originate from [The Agency](https://github.com/msitarzewski/agency-agents) and remain MIT-licensed; see [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE).
+本项目 TypeScript 源码、构建脚本和文档采用 [Apache License 2.0](LICENSE)。内置专家 persona 源自 [The Agency](https://github.com/msitarzewski/agency-agents)，仍采用 MIT，许可证位于 [assets\agency-agents\LICENSE](assets/agency-agents/LICENSE)。

@@ -8,7 +8,7 @@
 
   **331 位专业智能体 · 5 个内置专家团 · 自定义协作**
 
-  [English](README.md) · [专家列表](#专家列表) · [安装](#安装) · [更新日志](CHANGELOG.zh-CN.md) · [Apache-2.0](LICENSE)
+  [English](README.en.md) · [专家列表](#专家列表) · [安装](#安装) · [更新日志](CHANGELOG.zh-CN.md) · [Apache-2.0](LICENSE)
 
   [![许可证：Apache-2.0](https://img.shields.io/badge/许可证-Apache--2.0-blue.svg)](LICENSE)
   [![内置智能体](https://img.shields.io/badge/内置智能体-331-0f766e.svg)](#专家列表)
