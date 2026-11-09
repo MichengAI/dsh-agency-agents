@@ -11,7 +11,7 @@ import React from 'react'
  */
 
 export const NAV_ICON_MARKER = 'data-aag-nav-icon'
-export const NAV_ROW_SELECTOR = '[role="dialog"] nav button'
+export const NAV_ROW_SELECTOR = '[role="dialog"] nav button, [data-shortcut-modal="settings"] nav button'
 
 /** 原生 settings.section.icon 插槽图标组件 */
 export function AgentsNavIcon({ size = 16 }: { size?: number }): React.ReactElement {
@@ -58,6 +58,7 @@ const NAV_ICON_CSS = [
   `  -webkit-mask-size: 16px 16px;`,
   `  mask-size: 16px 16px;`,
   `}`,
+  `.dcu-sb-row[${NAV_ICON_MARKER}]::before, .dcu-sb-row::before { content: none !important; }`,
 ].join('\n')
 
 /** 注入导航图标样式；重复安装时复用同一个 style 元素 */
@@ -76,16 +77,40 @@ export function isOwnNavRow(rowText: string | null | undefined, wantedLabel: str
   return current === wanted || current === '专家' || current === 'Experts' || current === '智能体'
 }
 
+export function isSidebarNavButton(button: Element | null | undefined): boolean {
+  if (!button) return false
+  if (typeof (button as any).matches === 'function') {
+    if ((button as any).matches('.dcu-sb-row, [data-dcu-panel-id], nav[class*="panelList"] button')) return true
+  }
+  if (typeof (button as any).closest === 'function') {
+    if ((button as any).closest('.dcu-sidebar-nav-root, .dcu-sb-root, nav[class*="panelList"], [data-dcu-managed], [data-dcu-sidebar-active]')) return true
+  }
+  const cls = String((button as any).className || '')
+  if (cls.includes('dcu-sb-row') || cls.includes('panelRow')) return true
+  if (typeof button.hasAttribute === 'function' && button.hasAttribute('data-dcu-panel-id')) return true
+  return false
+}
+
 /**
  * 100% 对齐 dshmarket：用纯属性标记控制 ::before 伪元素渲染图标。
  * 不修改任何 DOM 节点，避免移动端列表项排版下与文字重叠冲突。
  */
 export function applySettingsNavIcon(button: Element, wantedLabel: () => string): boolean {
+  if (isSidebarNavButton(button)) {
+    if (button.hasAttribute(NAV_ICON_MARKER)) {
+      button.removeAttribute(NAV_ICON_MARKER)
+      return true
+    }
+    return false
+  }
+
   const isOwn = isOwnNavRow(button.textContent, wantedLabel())
   if (isOwn) {
-    const hasSlotIcon = Array.from(button.children).some((child) =>
-      child.tagName === 'SPAN' && child.className && String(child.className).includes('navIcon')
-    ) || Boolean(button.querySelector?.('span[class*="navIcon"]'))
+    const hasSlotIcon = Array.from(button.children).some((child) => {
+      if (!child || child.tagName !== 'SPAN') return false
+      const cls = String((child as any).className || '')
+      return cls.includes('navIcon') || cls.includes('glyph') || cls.includes('dcu-sb-')
+    }) || Boolean(button.querySelector?.('span[class*="navIcon"], span[class*="glyph"], [class*="dcu-sb-glyph"]'))
     if (hasSlotIcon) {
       if (button.hasAttribute(NAV_ICON_MARKER)) {
         button.removeAttribute(NAV_ICON_MARKER)
