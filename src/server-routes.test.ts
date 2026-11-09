@@ -12,7 +12,7 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
       enabledTeams: [],
     }
 
-    const VOLATILE_PATHS = new Set(['enabled', 'customExperts', 'customTeams', 'enabledTeams', 'sidebarEntry', 'entryLocation', 'onlineUpdate', 'composerRecommend'])
+    const VOLATILE_PATHS = new Set(['enabled', 'customExperts', 'customTeams', 'enabledTeams', 'sidebarEntry', 'entryLocation', 'composerRecommend'])
 
     const mockCtx = {
       webServer: {
@@ -56,7 +56,6 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
       enabledTeams: { get: () => mockSettingsState.enabledTeams },
       entryLocation: { get: () => mockSettingsState.entryLocation },
       sidebarEntry: { get: () => mockSettingsState.sidebarEntry },
-      onlineUpdate: { get: () => mockSettingsState.onlineUpdate },
       composerRecommend: { get: () => mockSettingsState.composerRecommend },
       ...configOverrides,
     }

@@ -122,12 +122,10 @@ export function readAgencySettings(config: object, locale: 'zh' | 'en' = 'zh'): 
     enabledTeams?: unknown
     entryLocation?: unknown
     sidebarEntry?: unknown
-    onlineUpdate?: unknown
     composerRecommend?: unknown
   }
   const rawLocation = unwrapLive(record.entryLocation)
   const rawSidebar = unwrapLive(record.sidebarEntry)
-  const rawUpdate = unwrapLive(record.onlineUpdate)
   const rawRecommend = unwrapLive(record.composerRecommend)
   const location = (rawLocation === 'both' || rawLocation === 'sidebar' || rawLocation === 'settings')
     ? rawLocation
@@ -139,7 +137,6 @@ export function readAgencySettings(config: object, locale: 'zh' | 'en' = 'zh'): 
     enabledTeams: stringList(unwrapLive(record.enabledTeams)),
     entryLocation: location,
     sidebarEntry: typeof rawSidebar === 'boolean' ? rawSidebar : (location !== 'settings'),
-    onlineUpdate: typeof rawUpdate === 'boolean' ? rawUpdate : undefined,
     composerRecommend: typeof rawRecommend === 'boolean' ? rawRecommend : undefined,
   }
   validateAgencySettings(value, locale)

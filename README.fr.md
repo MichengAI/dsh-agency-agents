@@ -33,7 +33,7 @@ Pour la revue de code, le design, les opérations ou la recherche, choisissez un
 - **Répertoire complet de 331 experts métier** : Couvre 22 divisions standards (ingénierie, produit, design, marketing, juridique, etc.) avec recherche instantanée.
 - **Collaboration d’équipe multi-rôles (Teams)** : 5 équipes expertes intégrées et création de jusqu’à 100 équipes personnalisées en parallèle ou en relais.
 - **Invocation rapide dans l’éditeur** : Convoquez des spécialistes ou des équipes avec le déclencheur `@` ou le bouton robot à côté du champ de saisie.
-- **Sécurité et contrôle d’entreprise** : Personnalisez l’emplacement d’accès et les suggestions ; endpoints protégés par jetons et validation stricte d'origine.
+- **Sécurité et contrôle d’entreprise** : Personnalisez l’emplacement d’accès et les suggestions ; support de `updater: false` pour désactiver les points de mise à jour en verrouillage lecture seule ; validation stricte d'origine.
 - **Compatibilité proxy inverse** : Résolution automatique de l’URL de base (`document.baseURI`) pour fonctionner sans accroc derrière un proxy inverse avec suppression de préfixe.
 
 ## Équipes d’experts (Expert Teams)

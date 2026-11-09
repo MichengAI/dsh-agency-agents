@@ -205,7 +205,6 @@ export interface Config {
   /** 可选的正整数绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
   maxDepth?: number
   updater?: boolean
-  onlineUpdate?: boolean
   sidebarEntry?: boolean
 }
 
@@ -243,7 +242,6 @@ const configFields: Record<string, unknown> = {
   // schemastery 没有 .optional()：未调用 .required() 的字段本身即可选，缺省不参与校验
   maxDepth: schema.natural().min(1),
   updater: schema.boolean(),
-  onlineUpdate: schema.boolean(),
   entryLocation: schema.string(),
   sidebarEntry: schema.boolean(),
   composerRecommend: schema.boolean(),
@@ -255,7 +253,6 @@ for (const [key, field] of [
   ['enabledTeams', schema.array(schema.string()).default([])],
   ['entryLocation', schema.string()],
   ['sidebarEntry', schema.boolean()],
-  ['onlineUpdate', schema.boolean()],
   ['composerRecommend', schema.boolean()],
 ] as Array<readonly [string, z<any>]>) {
   const live = markLiveFields ? liveSchemaField(field) : undefined

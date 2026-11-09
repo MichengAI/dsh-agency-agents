@@ -15,7 +15,6 @@ export interface AgencySettings {
   enabledTeams?: string[]
   entryLocation?: 'both' | 'sidebar' | 'settings'
   sidebarEntry?: boolean
-  onlineUpdate?: boolean
   composerRecommend?: boolean
 }
 
@@ -27,7 +26,6 @@ export const agencySettingsSchema = schema.object({
   enabledTeams: schema.array(schema.string()).default([]),
   entryLocation: schema.string(),
   sidebarEntry: schema.boolean(),
-  onlineUpdate: schema.boolean(),
   composerRecommend: schema.boolean().default(false),
 })
 
