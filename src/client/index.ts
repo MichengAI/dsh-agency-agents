@@ -34,7 +34,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { ZH_NAME, ZH_DIVISION, EN_DIVISION } from '../names.js'
 import { EXPERT_AVATAR_URLS } from './avatars.js'
 import { ROSTER } from './roster.js'
-import { de, en, es, fr, ja, pt, ru, zh, type AgencyKey } from './locales.js'
+import { de, en, es, fr, ja, pt, ru, zh, NS, type AgencyKey } from './locales.js'
 import { TYPERT_REMOTE, type AgencyAgentsEnabledState, type AgencyAgentsPrompt } from './remote.js'
 import { setupSidebarEntry } from './bundle-config.js'
 import { resolveApiUrl } from '../api-base.js'
@@ -59,8 +59,6 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 }
 
 const PLUGIN_ID = '@michengai/dsh-agency-agents'
-/** 本插件客户端词条字典命名空间。 */
-const NS = 'agency'
 
 interface LineIconProps {
   readonly className?: string
@@ -548,7 +546,6 @@ export const SETTINGS_CSS = `
 .aag-toolbar{display:flex;flex-direction:column;gap:8px;padding-bottom:12px}
 .aag-title-row{display:flex;align-items:center;gap:8px 12px;min-width:0;flex-wrap:wrap}
 .aag-settings-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.aag-settings-links>span[data-mpi-check]{display:inline-flex;align-items:center}
 .aag-title{margin:0;font-size:20px;line-height:28px;font-weight:650;letter-spacing:-.2px}
 .aag-note{overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;text-overflow:ellipsis;white-space:nowrap}
 .aag-error{color:var(--dsw-alias-state-error-primary);font-size:13px;line-height:20px}

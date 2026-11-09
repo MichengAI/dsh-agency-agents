@@ -145,5 +145,4 @@ export const PLUGIN_UI_CSS = `
 .aag-theme button.is-loading::after{content:"";position:absolute;width:14px;height:14px;top:50%;left:50%;margin:-7px 0 0 -7px;border:1.5px solid currentColor;border-top-color:transparent;border-radius:50%;animation:aag-spin .6s linear infinite;color:var(--dsw-alias-label-primary)}
 @keyframes aag-spin{to{transform:rotate(360deg)}}
 .aag-theme button.is-danger.is-loading::after{color:var(--dsw-alias-state-error-primary,#ef4444)}
-.mpi-busy{height:2px;margin:8px 0 0;border-radius:999px;background:var(--dsw-alias-brand-primary);animation:aag-spin 1s linear infinite}
 `
