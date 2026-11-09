@@ -8,7 +8,9 @@
 
   **331 specialists · 5 built-in teams · Custom collaboration**
 
-  [简体中文](README.md) · [Expert roster](#expert-roster) · [Installation](#installation) · [Changelog](CHANGELOG.md) · [Apache-2.0](LICENSE)
+  [简体中文](README.zh-CN.md) · [English](README.en.md) · [日本語](README.ja.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md) · [Português](README.pt.md)
+
+  [Expert roster](#expert-roster) · [Installation](#installation) · [Changelog](CHANGELOG.md) · [Apache-2.0](LICENSE)
 
   [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
   [![Bundled agents](https://img.shields.io/badge/Bundled%20agents-331-0f766e.svg)](#expert-roster)
@@ -30,7 +32,7 @@ Choose a specialist in DSH for code review, design, operations, or research. All
 - **Complete roster of 331 domain experts**: Covers 22 standard divisions from engineering, product, and design to marketing, sales, and legal, with instant prefix matching.
 - **Multi-agent team collaboration**: 5 high-impact built-in review teams and support for up to 100 custom teams with automated handoffs, parallel execution, or debate modes.
 - **Fast invocation in composer**: Summon specialists or teams via the `@` trigger or composer picker button, instantly inserting task examples without accidental sends.
-- **Enterprise control & security**: Toggle online updates or declare `updater: false` for strict platform lock; endpoints are guarded by token headers and content-type validation.
+- **Enterprise control & security**: Configure entry placement and task suggestions directly in the plugin workbench, or declare `updater: false` for strict platform lock; endpoints are guarded by token headers and content-type validation.
 - **Reverse proxy compatibility**: Automatic URL base resolution (`document.baseURI`) ensures seamless operation behind prefix-stripping reverse proxies.
 
 ## Expert teams

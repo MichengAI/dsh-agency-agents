@@ -34,9 +34,8 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { ZH_NAME, ZH_DIVISION, EN_DIVISION } from '../names.js'
 import { EXPERT_AVATAR_URLS } from './avatars.js'
 import { ROSTER } from './roster.js'
-import { zh, en, type AgencyKey } from './locales.js'
+import { de, en, es, fr, ja, pt, ru, zh, type AgencyKey } from './locales.js'
 import { TYPERT_REMOTE, type AgencyAgentsEnabledState, type AgencyAgentsPrompt } from './remote.js'
-import { observePluginUpdate, type PluginUpdateIconName, PLUGIN_UPDATE_TOGGLE_EVENT } from './plugin-update-ui.js'
 import { setupSidebarEntry } from './bundle-config.js'
 import { resolveApiUrl } from '../api-base.js'
 export { resolveApiUrl }
@@ -62,34 +61,6 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const PLUGIN_ID = '@michengai/dsh-agency-agents'
 /** 本插件客户端词条字典命名空间。 */
 const NS = 'agency'
-
-const UPDATE_ICON_PATHS: Record<PluginUpdateIconName, readonly string[]> = {
-  refresh: ['M13.5 5.5V2.5m0 0h-3m3 0-2.1 2.1A5.5 5.5 0 1 0 13.2 12'],
-  download: ['M8 2v8m0 0 3-3m-3 3-3-3M3 13v2h10v-2'],
-  copy: ['M5 5h8v8H5z', 'M3 3h8'],
-  close: ['m4 4 8 8M12 4 4 12'],
-}
-
-export function createPluginUpdateIcon(name: PluginUpdateIconName): HTMLElement {
-  const element = document.createElement('span')
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('viewBox', '0 0 16 16')
-  svg.setAttribute('width', '16')
-  svg.setAttribute('height', '16')
-  svg.setAttribute('fill', 'none')
-  svg.setAttribute('stroke', 'currentColor')
-  svg.setAttribute('stroke-width', '1.5')
-  svg.setAttribute('stroke-linecap', 'round')
-  svg.setAttribute('stroke-linejoin', 'round')
-  svg.setAttribute('aria-hidden', 'true')
-  for (const d of UPDATE_ICON_PATHS[name]) {
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    path.setAttribute('d', d)
-    svg.append(path)
-  }
-  element.append(svg)
-  return element
-}
 
 interface LineIconProps {
   readonly className?: string
@@ -2008,9 +1979,9 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     return () => { tag.remove() }
   }, 'agency-agents: style')
 
-  // 注册双语词条；t 为稳定引用（调用时读取当前 locale），locale 切换由
+  // 注册 8 语词条；t 为稳定引用（调用时读取当前 locale），locale 切换由
   // framework 以 (namespace, revision) 重新派生注入的 t 并触发重渲染。
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'agency-agents: dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { zh, en, ja, es, fr, de, ru, pt }), 'agency-agents: dictionaries')
   const t = ctx.locale.bind(NS)
   const getActive = (): 'zh' | 'en' => ctx.locale.getSnapshot().active === 'en' ? 'en' : 'zh'
   installSettingsNavIcon(ctx)
@@ -2065,25 +2036,11 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       onEnabledChange: updateEnabledForMentions,
       prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
     }),
-    onOnlineUpdateChange: () => {
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(PLUGIN_UPDATE_TOGGLE_EVENT))
-    },
   })
   ctx.effect(() => () => {
     sidebarController.destroy()
     unmountSettingsSection?.()
   }, 'agency-agents: sidebar entry')
-
-  ctx.effect(() => observePluginUpdate({
-    endpoint: '/api/michengai/dsh-agency-agents/update',
-    packageName: '@michengai/dsh-agency-agents',
-    titleRowSelector: '.aag-title-row',
-    linksSelector: '.aag-settings-links',
-    zhName: '专家',
-    enName: 'Experts',
-    createIcon: createPluginUpdateIcon,
-    isEnabled: () => sidebarController.isOnlineUpdateEnabled(),
-  }), 'agency-agents: plugin update ui')
 
   let enabledForMentions: ReadonlySet<string> | undefined
   const lexiconListeners = new Set<() => void>()

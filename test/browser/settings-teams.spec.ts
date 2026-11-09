@@ -388,25 +388,16 @@ test('一级页签使用官方分段页签，与来源筛选保持紧凑层级',
   expect(filters!.y - navigation!.y - navigation!.height).toBeLessThanOrEqual(24)
 })
 
-test('切换团队保留同一个公共头部及宿主注入内容', async ({ page }) => {
-  await page.route('**/api/plugin-update', route => route.fulfill({ json: { packageName: '@michengai/dsh-agency-agents', currentVersion: '1.0.0', latestVersion: '1.0.1', updateAvailable: true, latestCheckFailed: false, profileName: 'test', canAutoUpdate: false } }))
-  await page.goto('/?teams&settings&updateUI')
+test('切换团队保留同一个公共头部', async ({ page }) => {
+  await page.goto('/?teams&settings')
   const header = page.locator('main .aag-title-row').first()
-  await expect(header.locator('.mpi-version')).toHaveText('v1.0.0')
-  await expect(header.locator('[data-mpi-check]')).toBeVisible()
   const before = await header.boundingBox()
   const tabsBefore = await page.getByRole('tablist', { name: '专家库类型' }).boundingBox()
   await page.getByRole('tab', { name: '专家团', exact: true }).click()
-  await expect(header.locator('.mpi-version')).toHaveText('v1.0.0')
-  await expect(header.locator('[data-mpi-check]')).toBeVisible()
   await expect(page.locator('main .aag-title-row')).toHaveCount(1)
   expect(await header.boundingBox()).toEqual(before)
   expect(await page.getByRole('tablist', { name: '专家库类型' }).boundingBox()).toEqual(tabsBefore)
   await expect(page.getByRole('button', { name: '新建专家团', exact: true })).toBeVisible()
-  await header.locator('[data-mpi-check]').click()
-  await expect(page.getByRole('dialog', { name: '专家 更新' })).toBeVisible()
-  await page.keyboard.press('Escape')
-  await expect(page.getByRole('dialog', { name: '专家 更新' })).toHaveCount(0)
 })
 
 test('数量写在对应页签上，来源选项与新建同行', async ({ page }) => {

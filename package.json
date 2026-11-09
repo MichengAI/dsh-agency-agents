@@ -2,6 +2,25 @@
   "name": "@michengai/dsh-agency-agents",
   "description": "DSH Agency Agents — 为 DeepSeek Harness 提供 331 名可召唤的专业智能体 · 331 summonable domain experts for DeepSeek Harness",
   "version": "1.2.26",
+  "author": {
+    "name": "MichengAI",
+    "url": "https://github.com/MichengAI"
+  },
+  "homepage": "https://github.com/MichengAI/dsh-agency-agents#readme",
+  "bugs": {
+    "url": "https://github.com/MichengAI/dsh-agency-agents/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "agency-agents",
+    "subagents",
+    "experts",
+    "teams",
+    "multi-agent",
+    "ai-agents"
+  ],
+  "icon": "./assets/icon.svg",
   "type": "module",
   "packageManager": "pnpm@11.22.0",
   "engines": {
@@ -24,6 +43,8 @@
     },
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json",
+    "./icon": "./assets/icon.svg",
+    "./remote/icon": "./assets/icon.svg",
     "./locale/*.json": "./locale/*.json",
     "./remote/locale/*.json": "./locale/remote/*.json"
   },
@@ -40,8 +61,14 @@
     "assets/screenshots",
     "cordis.patch.yml",
     "README.md",
-    "README.en.md",
     "README.zh-CN.md",
+    "README.en.md",
+    "README.ja.md",
+    "README.es.md",
+    "README.fr.md",
+    "README.de.md",
+    "README.ru.md",
+    "README.pt.md",
     "CHANGELOG.md",
     "CHANGELOG.zh-CN.md",
     "LICENSE",
@@ -57,6 +84,7 @@
     "prepublishOnly": "pnpm build && pnpm test && pnpm test:browser && pnpm verify"
   },
   "dsh": {
+    "manifestVersion": 1,
     "bundle": {
       "patch": "./cordis.patch.yml"
     },
@@ -152,6 +180,5 @@
     "tsdown": "^0.22.2",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
-  },
-  "icon": "assets/icon.svg"
+  }
 }

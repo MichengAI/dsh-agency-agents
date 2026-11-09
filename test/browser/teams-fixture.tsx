@@ -1,6 +1,4 @@
 import React from 'react'
-import { observePluginUpdate } from '../../src/client/plugin-update-ui'
-import { createPluginUpdateIcon } from '../../src/client/index'
 import { teamText } from '../../src/team-i18n'
 import { AgentsButton, AgencySettingsPanel, CSS } from '../../src/client/index'
 import { CUSTOM_EDITOR_CSS } from '../../src/client/custom-editor'
@@ -166,10 +164,6 @@ export function TeamsFixture() {
       teamFixtureLocale: (locale: string) => { params.set('lang', locale); refreshLocale(value => value + 1) },
       teamFixtureConfirm: () => confirmTeamAction(teamText(activeLocale(), '草稿已有正文，是否保留正文并追加所选示例？取消则仅选择团队。'), activeLocale()),
     })
-  }, [])
-  React.useEffect(() => {
-    if (!params.has('updateUI')) return
-    return observePluginUpdate({ endpoint: '/api/plugin-update', packageName: '@michengai/dsh-agency-agents', titleRowSelector: '.aag-title-row', linksSelector: '.aag-settings-links', zhName: '专家', enName: 'Experts', createIcon: createPluginUpdateIcon })
   }, [])
   const [draft, setDraft] = React.useState('')
   const [selected, setSelected] = React.useState('')

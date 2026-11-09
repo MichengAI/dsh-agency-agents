@@ -91,7 +91,7 @@ test('弹窗关闭按钮使用调用方文案，不再接收宿主没有的宽�
     onClose: () => undefined,
   }))
   assert.match(html, /class="[^"]*dsh-modal-close[^"]*"[^>]*aria-label="关闭"|aria-label="关闭"[^>]*class="[^"]*dsh-modal-close/)
-  const sources = ['plugin-ui.ts', 'library-ui.tsx', 'prompt-dialog.ts', 'plugin-update-ui.ts', 'custom-editor.ts', 'team-shared.tsx']
+  const sources = ['plugin-ui.ts', 'library-ui.tsx', 'prompt-dialog.ts', 'custom-editor.ts', 'team-shared.tsx']
     .map((name) => readFileSync(new URL(`./${name}`, import.meta.url), 'utf8'))
     .join('\n')
   assert.doesNotMatch(sources, /\b(zIndex|maskClosable|keyboard)\s*[:=]/)

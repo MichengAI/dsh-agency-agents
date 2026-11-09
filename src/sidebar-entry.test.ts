@@ -70,8 +70,6 @@ describe('setupSidebarEntry 侧边栏与更新开关生命周期', () => {
 
     // 默认关闭
     expect(controller.isEnabled()).toBe(false)
-    expect(controller.isOnlineUpdateEnabled()).toBe(true)
-    expect(controller.isOnlineUpdateLocked()).toBe(false)
 
     // 模拟 slots 注入通知
     if (injectCallbacks['plugins.bundle.config']) {
@@ -96,34 +94,6 @@ describe('setupSidebarEntry 侧边栏与更新开关生命周期', () => {
     expect(controller.isEnabled()).toBe(false)
     expect(slotsMap.has('sidebar.panellist')).toBe(false)
     expect(slotsMap.has('main')).toBe(false)
-
-    controller.destroy()
-  })
-
-  it('感知宿主锁定更新状态并拒绝修改', async () => {
-    const { ctx } = createMockCtx()
-    const callApi = vi.fn(async (path: string) => {
-      if (path === '/api/michengai/dsh-agency-agents/sidebar-entry') return { ok: true, enabled: false }
-      if (path === '/api/michengai/dsh-agency-agents/online-update') return { ok: true, enabled: false, locked: true }
-      return {}
-    })
-
-    const controller = setupSidebarEntry(ctx as any, {
-      callApi,
-      renderPanel: () => null,
-      ns: 'agency',
-    })
-
-    await vi.waitFor(() => expect(controller.isOnlineUpdateLocked()).toBe(true))
-    expect(controller.isOnlineUpdateEnabled()).toBe(false)
-
-    // 尝试开启，因 locked 保持 false 且不发起 POST 请求
-    await controller.setOnlineUpdate(true)
-    expect(controller.isOnlineUpdateEnabled()).toBe(false)
-    expect(callApi).not.toHaveBeenCalledWith(
-      '/api/michengai/dsh-agency-agents/online-update',
-      expect.objectContaining({ method: 'POST' }),
-    )
 
     controller.destroy()
   })
@@ -165,28 +135,6 @@ describe('setupSidebarEntry 侧边栏与更新开关生命周期', () => {
     cleanupMain?.()
     expect(slotsMap.has('main')).toBe(false)
 
-    controller.destroy()
-  })
-
-  it('更新开关切换保存成功后再次通知监听器', async () => {
-    const { ctx } = createMockCtx()
-    let notifyCount = 0
-    const callApi = vi.fn(async (_path: string, options?: any) => {
-      if (options?.method === 'POST') {
-        return { ok: true, enabled: JSON.parse(options.body).enabled }
-      }
-      return { ok: true, enabled: true }
-    })
-
-    const controller = setupSidebarEntry(ctx as any, {
-      callApi,
-      renderPanel: () => null,
-      ns: 'agency',
-      onOnlineUpdateChange: () => { notifyCount += 1 },
-    })
-
-    await controller.setOnlineUpdate(false)
-    expect(notifyCount).toBeGreaterThanOrEqual(2) // 乐观更新 + 成功保存后通知
     controller.destroy()
   })
 })
