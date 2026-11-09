@@ -137,5 +137,6 @@ export const ja: Record<AgencyKey, string> = {
   'settings.viewPromptTitle': 'プロンプトを表示',
   'summary.enabledPrefix': '有効',
   'summary.total.one': '名のエキスパート',
+  'summary.total.few': '名のエキスパート',
   'summary.total.other': '名のエキスパート',
 }

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { de, en, es, fr, ja, pt, ru, zh } from './client/locales.js'
+import { de, en, es, fr, ja, pt, ru, zh, resolveSummaryTotalKey } from './client/locales.js'
 
 describe('多语言 i18n 完整性门禁', () => {
   const languages = { zh, en, ja, es, fr, de, ru, pt } as const
@@ -8,7 +8,7 @@ describe('多语言 i18n 完整性门禁', () => {
   const baselineKeys = Object.keys(zh).sort()
 
   it('官方全部 8 门语言完整导出且键集严格一致', () => {
-    expect(baselineKeys.length).toBe(137)
+    expect(baselineKeys.length).toBe(138)
     for (const lang of langKeys) {
       const currentDict = languages[lang]
       const currentKeys = Object.keys(currentDict).sort()
@@ -77,5 +77,35 @@ describe('多语言 i18n 完整性门禁', () => {
       const content = readFileSync(file, 'utf8')
       expect(content).toContain(navText)
     }
+  })
+
+  it('resolveSummaryTotalKey 精确支持俄语复数语法与多语言 Intl.PluralRules 规则', () => {
+    // 俄语 (ru):
+    // 1, 21, 331 -> 'one' (эксперт)
+    // 2, 3, 4, 22, 332 -> 'few' (эксперта)
+    // 0, 5, 20, 25, 335 -> 'other' (экспертов)
+    expect(resolveSummaryTotalKey(1, 'ru')).toBe('summary.total.one')
+    expect(resolveSummaryTotalKey(21, 'ru')).toBe('summary.total.one')
+    expect(resolveSummaryTotalKey(331, 'ru')).toBe('summary.total.one')
+
+    expect(resolveSummaryTotalKey(2, 'ru')).toBe('summary.total.few')
+    expect(resolveSummaryTotalKey(3, 'ru')).toBe('summary.total.few')
+    expect(resolveSummaryTotalKey(4, 'ru')).toBe('summary.total.few')
+    expect(resolveSummaryTotalKey(22, 'ru')).toBe('summary.total.few')
+    expect(resolveSummaryTotalKey(332, 'ru')).toBe('summary.total.few')
+
+    expect(resolveSummaryTotalKey(0, 'ru')).toBe('summary.total.other')
+    expect(resolveSummaryTotalKey(5, 'ru')).toBe('summary.total.other')
+    expect(resolveSummaryTotalKey(20, 'ru')).toBe('summary.total.other')
+    expect(resolveSummaryTotalKey(335, 'ru')).toBe('summary.total.other')
+
+    // 英语 (en): 1 为 one，其它全为 other
+    expect(resolveSummaryTotalKey(1, 'en')).toBe('summary.total.one')
+    expect(resolveSummaryTotalKey(2, 'en')).toBe('summary.total.other')
+    expect(resolveSummaryTotalKey(331, 'en')).toBe('summary.total.other')
+
+    // 中文 (zh): 无复数形态，走 other
+    expect(resolveSummaryTotalKey(1, 'zh')).toBe('summary.total.other')
+    expect(resolveSummaryTotalKey(331, 'zh')).toBe('summary.total.other')
   })
 })

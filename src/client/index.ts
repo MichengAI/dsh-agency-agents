@@ -34,7 +34,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { ZH_NAME, ZH_DIVISION, EN_DIVISION } from '../names.js'
 import { EXPERT_AVATAR_URLS } from './avatars.js'
 import { ROSTER } from './roster.js'
-import { de, en, es, fr, ja, pt, ru, zh, NS, type AgencyKey } from './locales.js'
+import { de, en, es, fr, ja, pt, ru, zh, NS, resolveSummaryTotalKey, type AgencyKey } from './locales.js'
 import { TYPERT_REMOTE, type AgencyAgentsEnabledState, type AgencyAgentsPrompt } from './remote.js'
 import { setupSidebarEntry } from './bundle-config.js'
 import { resolveApiUrl } from '../api-base.js'
@@ -1311,6 +1311,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
   onSummary?: (value: { total: number; enabled: number }) => void
   remote: AgencyAgentsRemoteApi
   getActive: () => 'zh' | 'en'
+  getLocale?: () => string
   onEnabledChange?: (enabled: ReadonlySet<string>) => void
   closeSettings?: () => void
 }): React.ReactElement {
@@ -1622,7 +1623,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       React.createElement('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } },
         React.createElement('span', { className: 'aag-header-stat' },
           React.createElement('strong', null, total),
-          props.t(total === 1 ? 'summary.total.one' : 'summary.total.other', { count: total })),
+          props.t(resolveSummaryTotalKey(total, props.getLocale?.() ?? (typeof document !== 'undefined' ? document.documentElement.lang : undefined) ?? 'en'), { count: total })),
         React.createElement('span', { className: 'aag-header-stat' },
           props.t('summary.enabledPrefix'),
           React.createElement('strong', null, enabledCount)))))
@@ -2023,6 +2024,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       },
       remote,
       getActive,
+      getLocale: () => ctx.locale.getSnapshot().active,
       onEnabledChange: updateEnabledForMentions,
       prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
     }),
@@ -2030,6 +2032,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     injectProps: () => ({
       remote,
       getActive,
+      getLocale: () => ctx.locale.getSnapshot().active,
       onEnabledChange: updateEnabledForMentions,
       prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
     }),

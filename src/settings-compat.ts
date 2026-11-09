@@ -367,20 +367,6 @@ export async function setAgencySidebarEntry(ctx: Context, namespace: string, ena
   return enabled
 }
 
-export async function setAgencyOnlineUpdate(ctx: Context, namespace: string, enabled: boolean): Promise<boolean> {
-  if (typeof enabled !== 'boolean') throw new TypeError('enabled must be a boolean')
-  const settings = (ctx as { settings?: LiveSettingsWriter }).settings
-  const revision = settings?.describe?.().find((item) => item.ns === namespace)?.revision
-  await writeLiveSettings(ctx, async () => {
-    if (typeof settings?.mutate === 'function') {
-      await settings.mutate(namespace, [{ op: 'set', path: ['onlineUpdate'], value: enabled }], revision)
-    } else if (typeof settings?.update === 'function') {
-      await settings.update(namespace, { onlineUpdate: enabled }, revision)
-    }
-  })
-  return enabled
-}
-
 export async function setAgencyComposerRecommend(ctx: Context, namespace: string, enabled: boolean): Promise<boolean> {
   if (typeof enabled !== 'boolean') throw new TypeError('enabled must be a boolean')
   const settings = (ctx as { settings?: LiveSettingsWriter }).settings

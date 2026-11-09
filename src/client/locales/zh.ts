@@ -135,5 +135,6 @@ export const zh = {
   'settings.viewPromptTitle': '查看提示词',
   'summary.enabledPrefix': '已启用',
   'summary.total.one': '位专家',
+  'summary.total.few': '位专家',
   'summary.total.other': '位专家',
 } as const

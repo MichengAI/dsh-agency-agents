@@ -33,7 +33,7 @@ Wählen Sie bei Code-Reviews, Design, Betrieb oder Recherchen einen passenden Ex
 - **Vollständiger Katalog aus 331 Domänenexperten**: 22 Standardkategorien (Entwicklung, Produkt, Design, Marketing, Recht etc.) mit sofortiger Präfixsuche.
 - **Multidisziplinäre Teams (Teams)**: 5 leistungsstarke integrierte Review-Teams und Unterstützung für bis zu 100 benutzerdefinierte Teams in paralleler oder sequenzieller Ausführung.
 - **Schneller Aufruf im Composer**: Experten oder Teams über das `@`-Kürzel oder die Roboter-Schaltfläche direkt mit Aufgabenbeispielen aufrufen.
-- **Enterprise-Konfiguration & Sicherheit**: Konfigurieren Sie Zugangsorte und intelligente Empfehlungen; Unterstützung für `updater: false` zur Plattform-Sperre und Same-Origin-Schutz.
+- **Enterprise-Konfiguration & Sicherheit**: Konfigurieren Sie Zugangsorte und intelligente Empfehlungen; Endpunkte sind durch Token-Header und Same-Origin-Schutz gesichert.
 - **Nahtlose Reverse-Proxy-Kompatibilität**: Automatische Auflösung der Basis-URL (`document.baseURI`) für reibungslosen Betrieb hinter Pfad-Präfix-Proxies.
 
 ## Expertenteams (Expert Teams)

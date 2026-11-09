@@ -137,5 +137,6 @@ export const fr: Record<AgencyKey, string> = {
   'settings.viewPromptTitle': 'Voir le prompt',
   'summary.enabledPrefix': 'Activé',
   'summary.total.one': 'expert',
+  'summary.total.few': 'experts',
   'summary.total.other': 'experts',
 }

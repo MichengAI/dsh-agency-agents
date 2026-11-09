@@ -49,7 +49,7 @@ import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { createHostLocaleReader, formatHost, localizedExpertDescription, localizedExpertName, matchDivision, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
-import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat, setAgencySidebarEntry, setAgencyOnlineUpdate, setAgencyComposerRecommend, getAgencyEntryLocation, setAgencyEntryLocation } from './settings-compat.js'
+import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat, setAgencySidebarEntry, setAgencyComposerRecommend, getAgencyEntryLocation, setAgencyEntryLocation } from './settings-compat.js'
 import { registerPluginUpdater } from './plugin-updater.js'
 import { AGENCY_LIBRARY_SERVICE, createExpertLibrary, type AgencySettings } from './expert-library.js'
 
@@ -729,7 +729,7 @@ export function apply(ctx: Context, config: Config): void {
       endpoint: '/api/michengai/dsh-agency-agents/update',
       packageName: '@michengai/dsh-agency-agents',
       manifestUrl: new URL('../package.json', import.meta.url),
-      isEnabled: async () => !hostUpdateDisabled && settingsSource().onlineUpdate !== false,
+      isEnabled: async () => !hostUpdateDisabled,
     })
     if (typeof ctx.effect === 'function') ctx.effect(mountUpdater, 'agency-agents: plugin updater')
     else mountUpdater()
@@ -799,47 +799,6 @@ export function apply(ctx: Context, config: Config): void {
               }
               response.writeHead(400, { 'content-type': 'application/json; charset=utf-8' })
               response.end(JSON.stringify({ ok: false, error: '缺少合法的 location 或 enabled 参数' }))
-            } catch (err) {
-              response.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
-              response.end(JSON.stringify({ ok: false, error: String(err) }))
-            }
-            return
-          }
-          response.writeHead(405, { allow: 'GET, HEAD, POST' })
-          response.end()
-        },
-      }))
-
-      disposers.push(webServer.register!({
-        kind: 'exact',
-        path: '/api/michengai/dsh-agency-agents/online-update',
-        handler: async (request: any, response: any) => {
-          if (!checkAuthAndMutation(request, response)) return
-          if (request.method === 'GET' || request.method === 'HEAD') {
-            response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
-            response.end(request.method === 'HEAD' ? undefined : JSON.stringify({
-              ok: true,
-              enabled: !hostUpdateDisabled && settingsSource().onlineUpdate !== false,
-              locked: hostUpdateDisabled,
-            }))
-            return
-          }
-          if (request.method === 'POST') {
-            if (hostUpdateDisabled) {
-              response.writeHead(403, { 'content-type': 'application/json; charset=utf-8' })
-              response.end(JSON.stringify({ ok: false, error: '在线更新已被宿主配置锁定禁用' }))
-              return
-            }
-            const bodyRes = await readJsonBody(request)
-            if (!bodyRes.ok || !bodyRes.data || typeof bodyRes.data.enabled !== 'boolean') {
-              response.writeHead(bodyRes.status ?? 400, { 'content-type': 'application/json; charset=utf-8' })
-              response.end(JSON.stringify({ ok: false, error: bodyRes.error ?? 'enabled 必须是布尔值' }))
-              return
-            }
-            try {
-              await setAgencyOnlineUpdate(ctx, settingsNamespace, bodyRes.data.enabled)
-              response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
-              response.end(JSON.stringify({ ok: true, enabled: bodyRes.data.enabled }))
             } catch (err) {
               response.writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
               response.end(JSON.stringify({ ok: false, error: String(err) }))

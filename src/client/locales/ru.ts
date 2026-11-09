@@ -137,5 +137,6 @@ export const ru: Record<AgencyKey, string> = {
   'settings.viewPromptTitle': 'Просмотр промпта',
   'summary.enabledPrefix': 'Включено',
   'summary.total.one': 'эксперт',
+  'summary.total.few': 'эксперта',
   'summary.total.other': 'экспертов',
 }
