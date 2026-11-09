@@ -40,8 +40,8 @@ const EXPERT_ICON_MASK = `url("data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">${EXPERT_PATHS.replace(/currentColor/g, 'black')}</svg>`,
 )}")`
 
-const NAV_ICON_STYLE_ID = 'aag-settings-nav-icon-style'
-const NAV_ICON_CSS = [
+export const NAV_ICON_STYLE_ID = 'aag-settings-nav-icon-style'
+export const NAV_ICON_CSS = [
   `[${NAV_ICON_MARKER}] > svg { display: none !important; }`,
   `[${NAV_ICON_MARKER}]::before {`,
   `  content: '';`,
@@ -58,7 +58,7 @@ const NAV_ICON_CSS = [
   `  -webkit-mask-size: 16px 16px;`,
   `  mask-size: 16px 16px;`,
   `}`,
-  `.dcu-sb-row[${NAV_ICON_MARKER}]::before, .dcu-sb-row::before { content: none !important; }`,
+  `.dcu-sb-row[${NAV_ICON_MARKER}]::before { content: none !important; }`,
 ].join('\n')
 
 /** 注入导航图标样式；重复安装时复用同一个 style 元素 */

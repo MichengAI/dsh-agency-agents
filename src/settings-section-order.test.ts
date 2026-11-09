@@ -96,7 +96,11 @@ it('registerSettingsSection 兼顾回退仅暴露 specDynamic 的测试/实验�
 }, 20000)
 
 it('applySettingsNavIcon 在老宿主带 aria-hidden 图标容器下正常打上 marker，在新宿主带 navIcon 时自动清除 marker', async () => {
-  const { applySettingsNavIcon, NAV_ICON_MARKER } = await import('./client/settings-nav-icon.js')
+  const { applySettingsNavIcon, NAV_ICON_MARKER, NAV_ICON_CSS } = await import('./client/settings-nav-icon.js')
+
+  // 防御检查：样式规则严禁包含未限定 marker 的裸 .dcu-sb-row::before，防止破坏 Codex UI 的拖拽与状态线
+  expect(NAV_ICON_CSS).toContain(`.dcu-sb-row[${NAV_ICON_MARKER}]::before`)
+  expect(NAV_ICON_CSS).not.toMatch(/(^|[^[])\.dcu-sb-row::before/)
 
   // 1. 老宿主：按钮包含原生齿轮 span（带 aria-hidden="true"），不得误判为已有插槽图标
   const oldHostIconSpan = {

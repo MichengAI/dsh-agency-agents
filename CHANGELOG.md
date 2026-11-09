@@ -1,4 +1,14 @@
 # Changelog
+
+## [1.2.27] - 2026-11-09
+
+- **Full Support for All 8 Official DeepSeek Harness Languages**:
+  - Seamlessly integrated with the official localization architecture, providing full native translations for Chinese, English, Japanese, Spanish, French, German, Russian, and Portuguese (`zh`, `en`, `ja`, `es`, `fr`, `de`, `ru`, `pt`). All expert catalogs, custom editor forms, batch action dialogs, and team views adapt immediately when switching languages;
+  - Comprehensive documentation provided across all 8 languages with click-to-switch navigation bars.
+- **Interface & Mobile Presentation Refinements**:
+  - **Mobile and drawer sidebar icon presentation**: Resolved an issue where sidebar navigation icons could render incorrectly when opening the sidebar drawer on mobile viewports, ensuring reliable visual presentation across all device sizes;
+  - **Streamlined settings workbench**: Refined the settings interface by removing obsolete update toggles and entry buttons for a cleaner, focused experience.
+
 ## [1.2.26] - 2026-11-04
 
 ### Compatibility & Dependencies
