@@ -42,7 +42,6 @@ describe('setupSidebarEntry 侧边栏与更新开关生命周期', () => {
   it('初始状态拉取 API 并同步开关', async () => {
     const { ctx, slotsMap, injectCallbacks } = createMockCtx()
     let serverSidebar = false
-    let serverUpdate = true
 
     const callApi = vi.fn(async (path: string, options?: any) => {
       if (path === '/api/michengai/dsh-agency-agents/sidebar-entry') {
@@ -51,13 +50,6 @@ describe('setupSidebarEntry 侧边栏与更新开关生命周期', () => {
           return { ok: true, enabled: serverSidebar }
         }
         return { ok: true, enabled: serverSidebar }
-      }
-      if (path === '/api/michengai/dsh-agency-agents/online-update') {
-        if (options?.method === 'POST') {
-          serverUpdate = JSON.parse(options.body).enabled
-          return { ok: true, enabled: serverUpdate }
-        }
-        return { ok: true, enabled: serverUpdate, locked: false }
       }
       throw new Error(`Unexpected path: ${path}`)
     })

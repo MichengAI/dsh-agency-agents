@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { apply } from './index.js'
 import type { Context } from '@deepseek-ai/cordis'
 
-describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () => {
+describe('agency-agents HTTP 管理路由 (sidebar-entry)', () => {
   function setupHarness(configOverrides: Record<string, unknown> = {}, extraCtx: Record<string, unknown> = {}) {
     const routes = new Map<string, (req: any, res: any) => Promise<void>>()
     const mockSettingsState: Record<string, any> = {
