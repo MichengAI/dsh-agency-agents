@@ -24,27 +24,27 @@ describe('resolveApiUrl (API 基址反代解析)', () => {
 
   it('无 document 环境下原样返回路径', () => {
     setDocumentBase(undefined)
-    expect(resolveApiUrl('/api/michengai/dsh-agency-agents/update')).toBe('/api/michengai/dsh-agency-agents/update')
+    expect(resolveApiUrl('/api/michengai/dsh-agency-agents/sidebar-entry')).toBe('/api/michengai/dsh-agency-agents/sidebar-entry')
   })
 
   it('站点根路径 (https://domain.com/) 下正确解析为绝对 URL', () => {
     setDocumentBase('https://domain.com/')
-    expect(resolveApiUrl('/api/michengai/dsh-agency-agents/update')).toBe('https://domain.com/api/michengai/dsh-agency-agents/update')
+    expect(resolveApiUrl('/api/michengai/dsh-agency-agents/sidebar-entry')).toBe('https://domain.com/api/michengai/dsh-agency-agents/sidebar-entry')
   })
 
   it('反向代理子路径带斜杠 (https://domain.com/app/dsh/) 下保留前缀', () => {
     setDocumentBase('https://domain.com/app/dsh/')
-    expect(resolveApiUrl('/api/michengai/dsh-agency-agents/update')).toBe('https://domain.com/app/dsh/api/michengai/dsh-agency-agents/update')
+    expect(resolveApiUrl('/api/michengai/dsh-agency-agents/sidebar-entry')).toBe('https://domain.com/app/dsh/api/michengai/dsh-agency-agents/sidebar-entry')
   })
 
   it('反向代理子路径无斜杠 (https://domain.com/app/dsh) 自动补齐斜杠并保留前缀', () => {
     setDocumentBase('https://domain.com/app/dsh')
-    expect(resolveApiUrl('/api/michengai/dsh-agency-agents/update')).toBe('https://domain.com/app/dsh/api/michengai/dsh-agency-agents/update')
+    expect(resolveApiUrl('/api/michengai/dsh-agency-agents/sidebar-entry')).toBe('https://domain.com/app/dsh/api/michengai/dsh-agency-agents/sidebar-entry')
   })
 
   it('相对路径、完整 URL 与协议相对 URL 原样返回', () => {
     setDocumentBase('https://domain.com/app/dsh/')
-    expect(resolveApiUrl('api/update')).toBe('api/update')
+    expect(resolveApiUrl('api/test')).toBe('api/test')
     expect(resolveApiUrl('https://other.com/api/test')).toBe('https://other.com/api/test')
     expect(resolveApiUrl('//cdn.example.com/asset.js')).toBe('//cdn.example.com/asset.js')
   })
