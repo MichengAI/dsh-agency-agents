@@ -33,7 +33,7 @@ Cuando enfrente tareas de revisión de código, diseño, operaciones o investiga
 - **Catálogo completo de 331 expertos de dominio**: Cubre 22 divisiones estándar (ingeniería, producto, diseño, marketing, legal, etc.) con búsqueda instantánea.
 - **Colaboración en equipo multirrol (Teams)**: 5 equipos integrados de alto impacto y soporte para hasta 100 equipos personalizados con ejecución paralela o relevo.
 - **Invocación rápida en el editor**: Convoque especialistas o equipos mediante `@` o el botón de robot junto al campo de entrada.
-- **Control empresarial y seguridad**: Configure ubicaciones de entrada y sugerencias inteligentes; compatible con `updater: false` para bloquear endpoints de actualización con protección de solo lectura a nivel de plataforma; validación estricta de origen.
+- **Control empresarial y seguridad**: Configure ubicaciones de entrada y sugerencias inteligentes; validación estricta de origen.
 - **Compatibilidad con proxies inversos**: Resolución automática de URL base (`document.baseURI`) para operar detrás de proxies que eliminan prefijos de ruta.
 
 ## Equipos de expertos (Expert Teams)

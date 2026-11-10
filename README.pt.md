@@ -33,7 +33,7 @@ Em tarefas de revisão de código, design, operações ou pesquisa, escolha um e
 - **Catálogo completo com 331 especialistas**: Abrange 22 divisões padrão (engenharia, produto, design, marketing, jurídico, finanças, etc.) com pesquisa rápida.
 - **Colaboração de equipas multifuncionais (Teams)**: 5 equipas integradas e suporte para até 100 equipas personalizadas com execução paralela ou em etapas.
 - **Convocação rápida no compositor**: Convoque especialistas ou equipas através de `@` ou do botão de robô junto à caixa de entrada.
-- **Segurança e controlo empresarial**: Configure locais de entrada e sugestões inteligentes; suporte a `updater: false` para bloquear endpoints de atualização com proteção de apenas leitura da plataforma; validação de origem.
+- **Segurança e controlo empresarial**: Configure locais de entrada e sugestões inteligentes; validação de origem.
 - **Compatibilidade com proxies inversos**: Resolução automática do endereço base (`document.baseURI`) para funcionamento perfeito atrás de proxies que removem prefixos.
 
 ## Equipas de especialistas (Expert Teams)

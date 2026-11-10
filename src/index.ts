@@ -50,7 +50,6 @@ import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { createHostLocaleReader, formatHost, localizedExpertDescription, localizedExpertName, matchDivision, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
 import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat, setAgencySidebarEntry, setAgencyComposerRecommend, getAgencyEntryLocation, setAgencyEntryLocation } from './settings-compat.js'
-import { registerPluginUpdater } from './plugin-updater.js'
 import { AGENCY_LIBRARY_SERVICE, createExpertLibrary, type AgencySettings } from './expert-library.js'
 
 export const name = 'agency-agents'
@@ -204,7 +203,6 @@ export interface Config {
   divisions: string[]
   /** 可选的正整数绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
   maxDepth?: number
-  updater?: boolean
   sidebarEntry?: boolean
 }
 
@@ -241,7 +239,6 @@ const configFields: Record<string, unknown> = {
   divisions: schema.array(schema.string()).default(DEFAULT_DIVISIONS),
   // schemastery 没有 .optional()：未调用 .required() 的字段本身即可选，缺省不参与校验
   maxDepth: schema.natural().min(1),
-  updater: schema.boolean(),
   entryLocation: schema.string(),
   sidebarEntry: schema.boolean(),
   composerRecommend: schema.boolean(),
@@ -617,7 +614,6 @@ async function readJsonBody(request: { on(event: string, listener: (...args: unk
 }
 
 export function apply(ctx: Context, config: Config): void {
-  const hostUpdateDisabled = (config as { updater?: unknown }).updater === false
   const maxDepth = normalizeMaxDepth(config.maxDepth)
   const settingsNamespace = settingsNamespaceCompat('agency-agents')
   let settingsSource: () => AgencySettings = () => ({ enabled: [], customExperts: [] })
@@ -722,15 +718,6 @@ export function apply(ctx: Context, config: Config): void {
 
   const webServer = (ctx as Context & { webServer?: { register?: (route: any) => () => void } }).webServer
   if (typeof webServer?.register === 'function') {
-    const mountUpdater = () => registerPluginUpdater(ctx, {
-      endpoint: '/api/michengai/dsh-agency-agents/update',
-      packageName: '@michengai/dsh-agency-agents',
-      manifestUrl: new URL('../package.json', import.meta.url),
-      isEnabled: async () => !hostUpdateDisabled,
-    })
-    if (typeof ctx.effect === 'function') ctx.effect(mountUpdater, 'agency-agents: plugin updater')
-    else mountUpdater()
-
     const registerApiRoutes = () => {
       const checkAuthAndMutation = (request: any, response: any): boolean => {
         let connection: { requestRejection?: (request: { headers: any }) => 401 | 403 | undefined } | undefined

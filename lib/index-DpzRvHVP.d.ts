@@ -61,7 +61,6 @@ interface Config {
   divisions: string[];
   /** 可选的正整数绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
   maxDepth?: number;
-  updater?: boolean;
   sidebarEntry?: boolean;
 }
 declare const AGENCY_PERSONA_SERVICE = "agencyAgentsPersona";

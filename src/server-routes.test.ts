@@ -141,10 +141,10 @@ describe('agency-agents HTTP 管理路由 (sidebar-entry & online-update)', () =
     expect(getRes2.json).toEqual({ ok: true, location: 'sidebar', enabled: true })
   })
 
-  it('online-update 路由已废弃且不再挂载，标准 updater 端点正常注册', async () => {
+  it('online-update 与 update 路由已废弃且不再挂载', async () => {
     const { routes } = setupHarness()
     expect(routes.has('/api/michengai/dsh-agency-agents/online-update')).toBe(false)
-    expect(routes.has('/api/michengai/dsh-agency-agents/update')).toBe(true)
+    expect(routes.has('/api/michengai/dsh-agency-agents/update')).toBe(false)
   })
 
   it('安全防护：缺少 x-michengai-client 标记头应返回 403，非法 Content-Type 返回 415，超限返回 413', async () => {
