@@ -1,7 +1,7 @@
 {
   "name": "@michengai/dsh-agency-agents",
   "description": "DSH Agency Agents — 为 DeepSeek Harness 提供 331 名可召唤的专业智能体 · 331 summonable domain experts for DeepSeek Harness",
-  "version": "1.2.28",
+  "version": "1.2.29",
   "author": {
     "name": "MichengAI",
     "url": "https://github.com/MichengAI"
@@ -153,6 +153,7 @@
     "@deepseek-ai/dsh-client-ui-primitives": "0.2.2-rc.2",
     "@deepseek-ai/dsh-client-ui-settings": "0.2.2-rc.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.2-rc.2",
+    "@deepseek-ai/dsh-error": "0.2.2-rc.2",
     "@deepseek-ai/dsh-host-webserver": "0.2.2-rc.2",
     "@deepseek-ai/dsh-llm": "0.2.2-rc.2",
     "@deepseek-ai/dsh-ptc-runtime": "0.2.2-rc.2",

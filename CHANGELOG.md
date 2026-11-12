@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.28] - 2026-11-12
+## [1.2.29] - 2026-11-12
 
 - **Full Compatibility with DeepSeek Harness `0.2.2-rc.2`**:
   - **Expert Summoning & Multi-Agent Execution**: Seamlessly integrated with the host's latest agent scheduling mechanism, ensuring single expert summoning, multi-expert parallel execution, and background operations run smoothly on the latest DSH release;
