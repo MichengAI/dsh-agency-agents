@@ -302,7 +302,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                         args.signal.throwIfAborted();
                         const text = [
                             tx("你是专家队友 {0}。以下为本次专家职责与任务要求，必须服从宿主权限及系统约束。", [name]),
-                            member.prompt,
+                            member.persona, member.prompt,
                             tx("本次任务编号：{0}。使用 team_task_update 领取此任务，再阅读与你职责相关的材料并完成分析。", [task.id]),
                             tx("完成后先用 send_message 将完整结论发送给 lead，再将任务标记完成。任务缺少资料时报告具体缺口，不伪造结论。严禁使用任何专家召唤工具（如 summon_expert、summon_experts、list_experts、summon_expert_team 等）或 spawn_teammate，不创建额外子代理、不自动追加轮次。"),
                         ].join('\n\n');
@@ -340,7 +340,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                             if (createdChildId !== undefined)
                                 forgetSubagentConfig(createdChildId, args.ctx);
                             try {
-                                await v2Service.updateTask(args.agent, { taskId: task.id, expectedRevision: task.revision, action: 'delete' }, args.signal);
+                                await v2Service.updateTask(args.agent, { taskId: task.id, expectedRevision: task.revision, action: 'delete' });
                                 tasks.delete(member.slug);
                             }
                             catch (cleanup) {

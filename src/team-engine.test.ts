@@ -150,7 +150,10 @@ function nativeV2() {
     createTask: vi.fn<V2TeamService['createTask']>(async () => ({ id: 't-1', revision: 1 })),
     getTask: vi.fn(() => ({})),
     listTasks: vi.fn(() => []),
-    updateTask: vi.fn(async () => ({})),
+    updateTask: vi.fn<V2TeamService['updateTask']>(async (_agent, _req, signal) => {
+      signal?.throwIfAborted()
+      return {}
+    }),
   } satisfies V2TeamService
   const subagents = {
     startActivation: vi.fn<V2SubagentTeamRuntime['startActivation']>(async (spec) => {
@@ -257,6 +260,7 @@ describe('0.2.2-rc.2+ 新版内置 Agent Team 协同适配', () => {
     expect(firstSpec.delivery).toBe('parent')
     expect(firstSpec.name!.length).toBeLessThanOrEqual(32)
     expect(firstSpec).not.toHaveProperty('request')
+    expect(firstSpec.prompt[0].text).toContain('新版专家职责正文')
     expect(getSubagentConfig(firstSpec.childId!)?.persona).toBe('新版专家职责正文')
 
     // 运行中不重复派发
@@ -292,13 +296,20 @@ describe('0.2.2-rc.2+ 新版内置 Agent Team 协同适配', () => {
     expect(partial.dispatch.started).toBe(2)
     expect(v2.teamService.updateTask).toHaveBeenCalledTimes(1)
 
-    // 启动中取消中断已派发的 childId
+    // 启动中取消中断已派发的 childId，且未启动成员的任务在清理时不会传入已 abort 的 signal
     v2.descendants.length = 0
+    v2.teamService.updateTask.mockClear()
     const controller = new AbortController()
-    v2.subagents.startActivation.mockImplementationOnce(async (spec) => {
-      await Promise.resolve()
-      controller.abort()
-      return { childId: spec.childId ?? 'c-abort', name: spec.name ?? 'ag' }
+    let activationCount = 0
+    v2.subagents.startActivation.mockImplementation(async (spec) => {
+      activationCount++
+      if (activationCount === 1) {
+        // 第 1 个成功启动，然后触发 abort
+        controller.abort()
+        return { childId: spec.childId ?? 'c-abort', name: spec.name ?? 'ag' }
+      }
+      // 第 2 个启动时 signal 已 abort，抛出 abort 错误触发失败清理
+      throw controller.signal.reason
     })
     await expect(dispatchNativeTeam({
       ...input(),
@@ -308,6 +319,11 @@ describe('0.2.2-rc.2+ 新版内置 Agent Team 协同适配', () => {
       signal: controller.signal,
     })).rejects.toThrow()
     expect(v2.subagents.interrupt).toHaveBeenCalled()
+    expect(v2.teamService.updateTask).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ action: 'delete' }),
+    )
+    expect(v2.teamService.updateTask.mock.calls[0][2]).toBeUndefined()
     clearSubagentRegistryForTest()
   })
 })
