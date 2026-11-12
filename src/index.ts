@@ -670,11 +670,26 @@ export function apply(ctx: Context, config: Config): void {
     let config = getSubagentConfig(agent.id)
     if (!config) {
       const agentTeams = ctx.get?.('agentTeams') as NativeTeamService | undefined
-      const membership = agentTeams?.tryMembership?.(agent)
+      const membership = typeof agentTeams?.tryMembership === 'function' ? agentTeams.tryMembership(agent) : undefined
       if (membership?.role === 'teammate' && isAgencyTeammateName(membership.name)) {
         const nativeSetup = getNativeTeammateSetup(membership.name)
         config = {
           toolFilter: nativeSetup?.toolFilter ?? { deny: [...EXPERT_TOOL_DENY] },
+        }
+      } else {
+        const subagents = ctx.get?.('subagents') as { namesOf?: (a: object) => { self?: string } } | undefined
+        let selfName: string | undefined
+        try {
+          selfName = typeof subagents?.namesOf === 'function' ? subagents.namesOf(agent)?.self : undefined
+        } catch {
+          selfName = undefined
+        }
+        const leaf = selfName?.split('/').at(-1)
+        if (leaf && isAgencyTeammateName(leaf)) {
+          const nativeSetup = getNativeTeammateSetup(leaf)
+          config = {
+            toolFilter: nativeSetup?.toolFilter ?? { deny: [...EXPERT_TOOL_DENY] },
+          }
         }
       }
     }
@@ -697,7 +712,7 @@ export function apply(ctx: Context, config: Config): void {
     return undefined
   })
   ctx.on?.('tools/pre-execute', async (exec, next) => {
-    if (blocksNativeDelegation(ctx.get('agentTeams'), exec.agent, exec.name)) return { kind: 'deny', reason: teamTx('专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。') }
+    if (blocksNativeDelegation(ctx.get('agentTeams'), exec.agent, exec.name, ctx.get('subagents'))) return { kind: 'deny', reason: teamTx('专家团成员不能继续创建子代理或扩展专家团，请将缺口交给主理人。') }
     const agentId = exec.agent?.id
     if (agentId && isManagedSubagentId(agentId) && (EXPERT_TOOL_DENY as readonly string[]).includes(exec.name)) {
       return { kind: 'deny', reason: teamTx('专家成员不能继续召唤专家团。') }
@@ -971,35 +986,59 @@ export function apply(ctx: Context, config: Config): void {
 
   async function startSubagentRun(providerName: string, options: ExpertSubagentStart): Promise<SubagentRunHandle> {
     const { slug, persona, toolFilter, label, signal, prompt, parent, maxDepth } = options
+    type LegacyActivationSpec = {
+      provider: string
+      label: string
+      childId?: ReturnType<typeof SessionId>
+      request: Omit<SubagentStartRequest, 'label' | 'signal'>
+      signal: AbortSignal
+      delivery: 'parent' | 'caller'
+    }
+    type FlatActivationSpec = Omit<SubagentStartRequest, 'label' | 'signal'> & {
+      provider: string
+      label: string
+      name?: string
+      childId?: ReturnType<typeof SessionId>
+      signal: AbortSignal
+      delivery: 'parent' | 'caller'
+    }
     const service = ctx.subagents as unknown as {
       start?: (name: string, request: SubagentStartRequest & { persona?: string; toolFilter?: { deny: string[] } }) => Promise<SubagentRun>
-      startActivation?: (spec: {
-        provider: string
-        label: string
-        childId?: ReturnType<typeof SessionId>
-        request: Omit<SubagentStartRequest, 'label' | 'signal'>
-        signal: AbortSignal
-        delivery: 'parent' | 'caller'
-      }) => Promise<SubagentRunHandle>
+      startActivation?: (spec: LegacyActivationSpec | FlatActivationSpec) => Promise<SubagentRunHandle>
+      namesOf?: unknown
+      rootOf?: unknown
     }
     const runSignal = signal ?? new AbortController().signal
-    // DSH 0.2.1-rc.1+: 优先使用 startActivation，由持久注册表守护首次启动与后续冷恢复。
+    // DSH 0.2.1-rc.1+: 优先使用 startActivation，由持久注册表守护首次启动与后续冷恢复；
+    // 0.2.2-rc.2+ 起 SubagentRuntime 提供 namesOf/rootOf 且 startActivation 改为顶层平铺字段（无 request 包装）。
     if (typeof service.startActivation === 'function') {
       const childId = SessionId(randomUUID())
       recordSubagentConfig(childId, { slug, persona, toolFilter }, ctx)
+      const usesFlatSpec = typeof service.namesOf === 'function' || typeof service.rootOf === 'function'
+      const requestPayload = {
+        parent,
+        prompt,
+        ...(maxDepth === undefined ? {} : { maxDepth }),
+      }
+      const spec: LegacyActivationSpec | FlatActivationSpec = usesFlatSpec
+        ? {
+            provider: providerName,
+            label: label ?? providerName,
+            childId,
+            ...requestPayload,
+            signal: runSignal,
+            delivery: 'caller',
+          }
+        : {
+            provider: providerName,
+            label: label ?? providerName,
+            childId,
+            request: requestPayload,
+            signal: runSignal,
+            delivery: 'caller',
+          }
       try {
-        return await service.startActivation({
-          provider: providerName,
-          label: label ?? providerName,
-          childId,
-          request: {
-            parent,
-            prompt,
-            ...(maxDepth === undefined ? {} : { maxDepth }),
-          },
-          signal: runSignal,
-          delivery: 'caller',
-        })
+        return await service.startActivation(spec)
       } catch (error) {
         // 创建失败时撤回记录：幻影条目会占住条目配额与门禁清单，把真实子代理更早挤出去
         forgetSubagentConfig(childId, ctx)
@@ -1166,8 +1205,8 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         const locale = activeLocale();
         if (engine.status.mode === 'native' && engine.service) {
             const result = await dispatchNativeTeam({ team, locale, experts: catalog.experts, enabled: catalog.enabled, task: String(args.task ?? ''), revision: snapshot.revision,
-                signal: exec.signal, agent: exec.agent!, service: engine.service, provider: config.provider,
-                readPersona: async (expert) => (await personaSource.getPrompt(expert.slug, expert.division, locale)).prompt });
+                signal: exec.signal, agent: exec.agent!, service: engine.service, subagents: engine.subagents, ctx, provider: config.provider,
+                readPersona: async (expert) => sanitize((await personaSource.getPrompt(expert.slug, expert.division, locale)).prompt) });
             return { report: JSON.stringify({ ...result, engine: engine.status }) };
         }
         const provider = ctx.subagents.getProvider(config.provider);

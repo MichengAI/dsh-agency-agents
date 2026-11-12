@@ -590,6 +590,59 @@ describe('summon_expert', () => {
     expect(disposed).toBe(true)
   })
 
+  it('0.2.2-rc.2+ 宿主通过扁平 SubagentActivationSpec 调用 startActivation（无 request 包装）', async () => {
+    const tools: unknown[] = []
+    const controller = new AbortController()
+    const parentAgent = { id: 'lead-1' }
+    let activationSpec: Record<string, any> | undefined
+    let disposed = false
+    const ctx = {
+      tools: { register: (tool: unknown) => tools.push(tool) },
+      subagents: {
+        getProvider: () => ({ capabilities: { depthLimit: true } }),
+        namesOf: () => ({ self: 'lead' }),
+        rootOf: () => parentAgent,
+        startActivation: async (spec: Record<string, any>) => {
+          activationSpec = spec
+          return {
+            childId: spec.childId ?? 'child-rc2',
+            name: 'agent-1',
+            result: Promise.resolve({ output: [{ type: 'text', text: 'done rc2' }], stopReason: 'completed' }),
+            dispose: async () => { disposed = true },
+          }
+        },
+      },
+      systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
+      settings: alphaSettings(['reviewer']),
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: 2 })
+    const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
+      execute: (args: unknown, exec: unknown) => Promise<unknown>
+    }
+
+    await expect(summon.execute(
+      { expert: 'reviewer', task: 'review flat spec' },
+      { agent: parentAgent, signal: controller.signal },
+    )).resolves.toEqual({ expert: 'Reviewer', answer: 'done rc2' })
+    expect(activationSpec).toMatchObject({
+      provider: 'spawn',
+      label: 'Reviewer',
+      parent: parentAgent,
+      prompt: [{ type: 'text', text: 'review flat spec' }],
+      maxDepth: 2,
+      signal: controller.signal,
+      delivery: 'caller',
+    })
+    expect(activationSpec).not.toHaveProperty('request')
+    expect(disposed).toBe(true)
+  })
+
   it('专家子代理通过 startActivation 首次启动与后续冷恢复均注入人格并限制召唤工具', async () => {
     const tools: unknown[] = []
     const listeners: Array<(event: any) => any> = []
@@ -1543,13 +1596,13 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 0.2.2-rc.1', () => {
+  it('DSH 开发依赖固定为 0.2.2-rc.2', () => {
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.2.2-rc.1')
+        expect(version).toBe('0.2.2-rc.2')
       }
     }
-    expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.2-rc.1')
+    expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.2-rc.2')
   })
 
   it('设置标题提供 GitHub 与问题反馈两个入口', () => {
