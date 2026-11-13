@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.32] - 2026-11-14
+
+- **Configurable Brief Character Limit & Default Limit Raised**:
+  - **Raised Default Brief Budget**: Increased the default character limit for single expert tasks (`summon_expert` and `summon_experts`) from 2000 to 3000, providing generous headroom for complex delegations with extensive goals, constraints, file paths, and acceptance criteria;
+  - **Customizable Task Budget**: Added `summonTaskMaxChars` to plugin configuration, allowing users to customize the character budget (clamped to a safe `200–4000` range) with tool descriptions and validation fully synchronized;
+  - **Resolved Validation Guard Inconsistency**: Resolved an issue where modifying the character budget constant in bundle builds resulted in a mismatch between the advertised tool description and the active validation guard ([#39](https://github.com/MichengAI/dsh-agency-agents/issues/39)).
+- **Compatibility & Dependency Updates**:
+  - Fully verified and adapted for the latest official DeepSeek Harness `0.2.2-rc.3` release; upgraded all development dependencies;
+  - Updated compatibility badges and verified version ranges across all 8 language manuals.
+
 ## [1.2.31] - 2026-11-13
 
 - **Unified settings header card**: wrapped the header in a bordered card container matching the modern ecosystem design.
