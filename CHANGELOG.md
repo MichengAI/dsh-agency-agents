@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.30] - 2026-11-13
+## [1.2.31] - 2026-11-13
 
 - **Unified settings header card**: wrapped the header in a bordered card container matching the modern ecosystem design.
 - **Standardized typography**: increased title size to 24px bold and added localized descriptions across all 8 languages for roster management and summon instructions.
