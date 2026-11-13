@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.30] - 2026-11-13
+
+- **Unified settings header card**: wrapped the header in a bordered card container matching the modern ecosystem design.
+- **Standardized typography**: increased title size to 24px bold and added localized descriptions across all 8 languages for roster management and summon instructions.
+- **Native button and icon styling**: updated the issue feedback action to use the host's native pen icon and outline button styling.
+
 ## [1.2.29] - 2026-11-12
 
 - **Full Compatibility with DeepSeek Harness `0.2.2-rc.2`**:
