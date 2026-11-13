@@ -17,7 +17,7 @@
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![Téléchargements npm](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=downloads)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH supporté jusqu’à 0.2.2--rc.2](https://img.shields.io/badge/DSH-0.2.2--rc.2-2563eb.svg)](https://github.com/MichengAI/dsh-agency-agents)
+  [![DSH supporté jusqu’à 0.2.2--rc.3](https://img.shields.io/badge/DSH-0.2.2--rc.3-2563eb.svg)](https://github.com/MichengAI/dsh-agency-agents)
 
 </div>
 

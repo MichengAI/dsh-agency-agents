@@ -87,12 +87,22 @@ const DESCRIPTION_LIMIT = 120
 export const SUMMON_EXPERTS_MAX = 8
 /** 批量召唤的并发上限。 */
 export const SUMMON_EXPERTS_CONCURRENCY = 4
-/** 单条任务的 Unicode 码点上限。本机实测单条约 3200 字时工具 JSON 仍合法，约 7200 字时未转义引号会让宿主在专家启动前结束回合。2000 是给目标、约束和路径留的余量，不是算出的安全边界。 */
-export const SUMMON_TASK_MAX_CHARS = 2000
+/** 单条任务的 Unicode 码点上限。默认 3000。本机实测单条约 3200 字时工具 JSON 仍合法，约 7200 字时未转义引号会让宿主在专家启动前结束回合。 */
+export const SUMMON_TASK_MAX_CHARS = 3000
+export const SUMMON_TASK_MIN_LIMIT = 200
+export const SUMMON_TASK_MAX_LIMIT = 4000
+
+/** 规范化单条任务字符上限：缺省使用默认 3000，越界值钳制在 200–4000 安全区间。 */
+export function normalizeSummonTaskMaxChars(value: unknown): number {
+  if (value === undefined || value === null) return SUMMON_TASK_MAX_CHARS
+  if (typeof value !== 'number' || !Number.isFinite(value)) return SUMMON_TASK_MAX_CHARS
+  const int = Math.round(value)
+  return Math.max(SUMMON_TASK_MIN_LIMIT, Math.min(SUMMON_TASK_MAX_LIMIT, int))
+}
 
 /** 召唤参数说明。模型把带引号的源码写进工具 JSON 时，宿主会在执行前拒绝整轮。 */
-function summonTaskDescription(scope: 'single' | 'member'): string {
-  const shared = `Short brief only: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code; an unescaped quote makes the tool JSON invalid and no expert starts. At most ${SUMMON_TASK_MAX_CHARS} characters. The expert reads the files itself.`
+function summonTaskDescription(scope: 'single' | 'member', maxChars: number = SUMMON_TASK_MAX_CHARS): string {
+  const shared = `Short brief only: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code; an unescaped quote makes the tool JSON invalid and no expert starts. At most ${maxChars} characters. The expert reads the files itself.`
   return scope === 'member'
     ? `${shared} One sentence of this expert's role is enough; do not repeat a long brief for every expert.`
     : shared
@@ -116,7 +126,7 @@ export interface SummonExpertItemResult {
  * 校验并规范化任务文本：非空且不超过码点上限。
  * index 存在时使用带序号的批量文案，否则使用单条召唤文案；返回规范化后的字符串。
  */
-function normalizeTask(task: unknown, locale: LocaleId, index?: number): string {
+function normalizeTask(task: unknown, locale: LocaleId, index?: number, maxChars: number = SUMMON_TASK_MAX_CHARS): string {
   const text = task === undefined || task === null ? '' : String(task)
   const length = Array.from(text).length
   if (text.trim() === '') {
@@ -124,16 +134,16 @@ function normalizeTask(task: unknown, locale: LocaleId, index?: number): string 
       ? formatHost(locale, 'error.taskRequired')
       : formatHost(locale, 'error.taskEmpty', { index }))
   }
-  if (length > SUMMON_TASK_MAX_CHARS) {
+  if (length > maxChars) {
     throw new Error(index === undefined
-      ? formatHost(locale, 'error.taskLimit', { length, max: SUMMON_TASK_MAX_CHARS })
-      : formatHost(locale, 'error.taskTooLong', { index, length, max: SUMMON_TASK_MAX_CHARS }))
+      ? formatHost(locale, 'error.taskLimit', { length, max: maxChars })
+      : formatHost(locale, 'error.taskTooLong', { index, length, max: maxChars }))
   }
   return text
 }
 
 /** 校验批量召唤入参：非空、数量上限、专家名非空、任务非空且不超过码点上限。 */
-export function validateSummonSpecs(specs: unknown, locale: LocaleId): SummonExpertSpec[] {
+export function validateSummonSpecs(specs: unknown, locale: LocaleId, maxChars: number = SUMMON_TASK_MAX_CHARS): SummonExpertSpec[] {
   if (!Array.isArray(specs) || specs.length === 0) {
     throw new Error(formatHost(locale, 'error.expertsEmpty'))
   }
@@ -146,7 +156,7 @@ export function validateSummonSpecs(specs: unknown, locale: LocaleId): SummonExp
     if (expert === undefined || expert === null || String(expert).trim() === '') {
       throw new Error(formatHost(locale, 'error.expertEmpty', { index: index + 1 }))
     }
-    const task = normalizeTask(record?.task, locale, index + 1)
+    const task = normalizeTask(record?.task, locale, index + 1, maxChars)
     return { expert, task }
   })
 }
@@ -204,6 +214,8 @@ export interface Config {
   /** 可选的正整数绝对子代理深度上限；未设置时沿用 provider 的默认行为。 */
   maxDepth?: number
   sidebarEntry?: boolean
+  /** 单条专家召唤任务的 Unicode 码点上限。默认 3000，超出 200–4000 安全区间时会被自动钳制。 */
+  summonTaskMaxChars?: number
 }
 
 /** 未在配置中显式提供 `root` 时，先读取该环境变量，再使用随包发布的智能体目录。 */
@@ -239,6 +251,7 @@ const configFields: Record<string, unknown> = {
   divisions: schema.array(schema.string()).default(DEFAULT_DIVISIONS),
   // schemastery 没有 .optional()：未调用 .required() 的字段本身即可选，缺省不参与校验
   maxDepth: schema.natural().min(1),
+  summonTaskMaxChars: schema.natural().min(SUMMON_TASK_MIN_LIMIT).max(SUMMON_TASK_MAX_LIMIT).default(SUMMON_TASK_MAX_CHARS),
   entryLocation: schema.string(),
   sidebarEntry: schema.boolean(),
   composerRecommend: schema.boolean(),
@@ -251,6 +264,7 @@ for (const [key, field] of [
   ['entryLocation', schema.string()],
   ['sidebarEntry', schema.boolean()],
   ['composerRecommend', schema.boolean()],
+  ['summonTaskMaxChars', schema.natural().min(SUMMON_TASK_MIN_LIMIT).max(SUMMON_TASK_MAX_LIMIT).default(SUMMON_TASK_MAX_CHARS)],
 ] as Array<readonly [string, z<any>]>) {
   const live = markLiveFields ? liveSchemaField(field) : undefined
   if (live !== undefined) configFields[key] = live
@@ -615,6 +629,7 @@ async function readJsonBody(request: { on(event: string, listener: (...args: unk
 
 export function apply(ctx: Context, config: Config): void {
   const maxDepth = normalizeMaxDepth(config.maxDepth)
+  const getTaskMaxChars = (): number => normalizeSummonTaskMaxChars(config.summonTaskMaxChars)
   const settingsNamespace = settingsNamespaceCompat('agency-agents')
   let settingsSource: () => AgencySettings = () => ({ enabled: [], customExperts: [] })
   const enabledSet = (): ReadonlySet<string> => new Set(settingsSource().enabled)
@@ -1063,7 +1078,7 @@ export function apply(ctx: Context, config: Config): void {
   async function runExpert(query: unknown, task: unknown, exec: ToolRunContext): Promise<{ expert: string; answer: string }> {
     const locale = activeLocale()
     // 单条与批量召唤共用同一套任务校验，避免单条路径绕过码点上限
-    const taskText = normalizeTask(task, locale)
+    const taskText = normalizeTask(task, locale, undefined, getTaskMaxChars())
     if (exec.agent === undefined) throw new Error(formatHost(locale, 'error.summonRequiresAgent'))
     const provider = ctx.subagents.getProvider(config.provider)
     if (provider === undefined) throw new Error(formatHost(locale, 'error.providerMissing', { provider: config.provider }))
@@ -1101,7 +1116,7 @@ export function apply(ctx: Context, config: Config): void {
     description: "Summon a domain expert from The Agency roster to complete a task: a specialist subagent runs with that expert's full persona and returns its result. If the user already named this expert, call this immediately. Do not read the project or do the analysis yourself. Call list_experts first only if you do not know the expert name.",
     parameters: {
       expert: { type: 'string', required: true, description: 'Expert name to summon (e.g. "Frontend Developer").' },
-      task: { type: 'string', required: true, description: summonTaskDescription('single') },
+      task: { type: 'string', required: true, description: summonTaskDescription('single', getTaskMaxChars()) },
     },
     output: {
       schema: { type: 'object', additionalProperties: false, properties: { expert: { type: 'string', required: true }, answer: { type: 'string', required: true } } },
@@ -1126,7 +1141,7 @@ export function apply(ctx: Context, config: Config): void {
           additionalProperties: false,
           properties: {
             expert: { type: 'string', required: true, description: 'Expert name (e.g. "Frontend Developer").' },
-            task: { type: 'string', required: true, description: summonTaskDescription('member') },
+            task: { type: 'string', required: true, description: summonTaskDescription('member', getTaskMaxChars()) },
           },
         },
       },
@@ -1142,7 +1157,7 @@ export function apply(ctx: Context, config: Config): void {
       await ensureReady()
       const locale = activeLocale()
       if (exec.agent === undefined) throw new Error(formatHost(locale, 'error.summonManyRequiresAgent'))
-      const specs = validateSummonSpecs(args.experts, locale)
+      const specs = validateSummonSpecs(args.experts, locale, getTaskMaxChars())
       const results = await mapPool(specs, SUMMON_EXPERTS_CONCURRENCY, async (spec) => {
         try {
           return toSummonItemResult(spec.expert, await runExpert(spec.expert, spec.task, exec))
@@ -1500,7 +1515,7 @@ ctx.systemPrompt.section({ name: 'agency:teams', order: 118, text: context => {
     text: (context) => {
       const agent = (context as { agent?: { session?: { header?: { parentSession?: unknown } } } }).agent
       if (agent?.session?.header?.parentSession !== undefined) return ''
-      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + SUMMON_TASK_MAX_CHARS + ' characters. Experts read the files themselves.\nWhen the user asks to create, design, or customize an expert persona (e.g. "我想创建一个专家...", "创建小红书运营专家", "新建专家"), call propose_custom_expert. You MUST ALWAYS present a full, polished preview in your response text (name, division, description, and detailed system prompt breakdown) so the user can read and review it first. Invite the user to suggest modifications in chat. Only when the user explicitly confirms (e.g. says "确认", "就按这个", "打开弹窗", "满意"), call open_custom_expert_editor to open the modal. Do NOT tell the user to manually copy-paste, and do NOT write markdown files to docs/. When the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"), call propose_expert_team. Always present team members using their localized names (e.g. 中文名如「产品经理」、「代码审查工程师」) alongside their slug, duties, and reasons in your chat preview. Do NOT tell the user to click non-existent links; instead, inform them that they can review the draft and say "确认" when satisfied. When the user explicitly confirms (e.g. says "确认", "就按这个", "满意", "打开弹窗"), call open_expert_team_editor (or open_custom_expert_editor), which will present an interactive confirmation card before popping up the full editor dialog.'
+      return '## Agency expert mode\nThe parent session has a roster of domain experts from The Agency (specialists across 22 divisions, individually enable/disable; ALL are disabled by default, and the user enables some in the Agency settings tab). A composer selection inserts one enabled expert as a native reference chip; all remaining draft text is that expert\'s task. When the user message already names experts, call summon_expert or summon_experts immediately. Summarize that message into the user goal, constraints, and file paths; do not pass the raw text when it is long. Do not call list_experts, read the project, or do the analysis yourself. Experts read the files and produce the analysis; the parent only synthesizes their results. Call list_experts only when the user did not name an expert. summon_experts runs at most 8 experts; partial results are returned if some fail. A disabled expert cannot be summoned. When calling either tool, pass only a short brief: the user goal, constraints, and file paths. Do not paste source, CSS, HTML, or quoted code into the tool argument; an unescaped quote makes the JSON invalid and no expert starts. Each task must stay within ' + getTaskMaxChars() + ' characters. Experts read the files themselves.\nWhen the user asks to create, design, or customize an expert persona (e.g. "我想创建一个专家...", "创建小红书运营专家", "新建专家"), call propose_custom_expert. You MUST ALWAYS present a full, polished preview in your response text (name, division, description, and detailed system prompt breakdown) so the user can read and review it first. Invite the user to suggest modifications in chat. Only when the user explicitly confirms (e.g. says "确认", "就按这个", "打开弹窗", "满意"), call open_custom_expert_editor to open the modal. Do NOT tell the user to manually copy-paste, and do NOT write markdown files to docs/. When the user asks to assemble, design, or create an expert team (e.g. "帮我组建一个专家团队...", "创建专家团"), call propose_expert_team. Always present team members using their localized names (e.g. 中文名如「产品经理」、「代码审查工程师」) alongside their slug, duties, and reasons in your chat preview. Do NOT tell the user to click non-existent links; instead, inform them that they can review the draft and say "确认" when satisfied. When the user explicitly confirms (e.g. says "确认", "就按这个", "满意", "打开弹窗"), call open_expert_team_editor (or open_custom_expert_editor), which will present an interactive confirmation card before popping up the full editor dialog.'
     },
   })
 }

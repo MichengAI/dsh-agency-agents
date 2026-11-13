@@ -17,7 +17,7 @@
   [![npm package](https://img.shields.io/npm/v/%40michengai%2Fdsh-agency-agents.svg?label=npm%20package)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![npm 下载量](https://img.shields.io/npm/dt/%40michengai%2Fdsh-agency-agents.svg?label=npm%20%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://www.npmjs.com/package/@michengai/dsh-agency-agents)
   [![DSH Web Plugin](https://img.shields.io/badge/DSH%20Web-Plugin-0f766e.svg)](https://github.com/MichengAI/dsh-agency-agents)
-  [![DSH 支持至 0.2.2-rc.2](https://img.shields.io/badge/DSH-%E6%94%AF%E6%8C%81%E8%87%B3%200.2.2--rc.2-2563eb.svg)](#前置条件)
+  [![DSH 支持至 0.2.2-rc.3](https://img.shields.io/badge/DSH-%E6%94%AF%E6%8C%81%E8%87%B3%200.2.2--rc.3-2563eb.svg)](#前置条件)
 </div>
 
 > DSH Agency Agents 是社区维护的 DeepSeek Harness（DSH）插件，并非 DeepSeek AI 官方产品。
@@ -102,7 +102,7 @@
 - **一键引用与智能排除**：点击推荐项自动通过宿主原生 `insertReference` 将实体插入输入框草稿中，已引用的专家自动从推荐列表中排除，输入清空或点击外部时自动收起；
 - **独立配置开关**：在「设置 → 插件」扩展配置中提供「任务智能推荐」独立开关（默认关闭），支持实时热更新并持久化保存。
 
-> 本 README 描述 1.2.31。**这是破坏性升级：不再支持 DeepSeek Harness 0.1.x。** 在旧宿主上安装会被版本门拒绝。正式发行以 npm 和 GitHub Releases 为准。完整边界见[更新日志](CHANGELOG.zh-CN.md)。专家和专家团配置仍保留；回退 1.0.x 前先备份设置。
+> 本 README 描述 1.2.32。**这是破坏性升级：不再支持 DeepSeek Harness 0.1.x。** 在旧宿主上安装会被版本门拒绝。正式发行以 npm 和 GitHub Releases 为准。完整边界见[更新日志](CHANGELOG.zh-CN.md)。专家和专家团配置仍保留；回退 1.0.x 前先备份设置。
 ## 界面预览
 
 以下为 1.0.0 中文界面截图，专家与专家团共用同一个设置页面。
@@ -153,7 +153,7 @@ DSH 的 `dsh.client.inject` 声明浏览器模块的加载顺序；宿主模块�
 
 ## 安装
 
-宿主支持范围：DeepSeek Harness `0.2.x` 全系列（`>=0.2.0-rc.1 <0.3.0-0`），已验证兼容 `0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-rc.1`～`0.2.1-rc.5`、`0.2.2-rc.1`、`0.2.2-rc.2`，并自动支持后续全部 0.2.x RC 版本，同代宿主升级无需重复等待发版。早期版本与 `0.3.0` 代际破坏性更新由版本门拦截。专家和专家团配置仍保留，不需要重新录入。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装。
+宿主支持范围：DeepSeek Harness `0.2.x` 全系列（`>=0.2.0-rc.1 <0.3.0-0`），已验证兼容 `0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-rc.1`～`0.2.1-rc.5`、`0.2.2-rc.1`、`0.2.2-rc.2`、`0.2.2-rc.3`，并自动支持后续全部 0.2.x RC 版本，同代宿主升级无需重复等待发版。早期版本与 `0.3.0` 代际破坏性更新由版本门拦截。专家和专家团配置仍保留，不需要重新录入。主程序由现有 CLI 或 Desktop 提供，插件不会另行安装。
 
 以下安装命令使用官方 npm 源。
 
@@ -809,6 +809,7 @@ dsh --profile web --dump-config
 | `provider` | `spawn` | DSH 子代理 provider，可使用支持 persona 与工具过滤的 `fork`。 |
 | `divisions` | 22 个标准分区 | 需要扫描的顶层分区。 |
 | `maxDepth` | 未设置 | 正整数形式的绝对子代理深度上限。 |
+| `summonTaskMaxChars` | `3000` | 单条专家召唤任务的 Unicode 字符上限（200–4000 范围钳制）。 |
 
 也可设置 `AGENCY_AGENTS_ROOT` 环境变量指定外部专家目录。外部目录里的 persona 正文会注入为子代理系统提示，只应从可信来源加载。子代理 provider 必须支持 persona 和工具过滤能力。`summon_experts` 一次最多 8 名专家，并发 4，部分失败仍返回成功结果。
 
