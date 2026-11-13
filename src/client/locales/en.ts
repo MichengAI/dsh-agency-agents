@@ -132,6 +132,7 @@ export const en: Record<AgencyKey, string> = {
   'settings.search.clear': 'Clear search',
   'settings.search.placeholder': 'Search experts, roles, or domains',
   'settings.title': 'Experts',
+  'settings.desc': 'Manage domain expert agents. Summon anytime with @ in chat, or let tasks suggest them automatically.',
   'settings.viewProject': 'GitHub',
   'settings.viewPrompt': 'View',
   'settings.viewPromptTitle': 'View prompt',

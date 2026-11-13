@@ -8,7 +8,7 @@ describe('多语言 i18n 完整性门禁', () => {
   const baselineKeys = Object.keys(zh).sort()
 
   it('官方全部 8 门语言完整导出且键集严格一致', () => {
-    expect(baselineKeys.length).toBe(138)
+    expect(baselineKeys.length).toBe(139)
     for (const lang of langKeys) {
       const currentDict = languages[lang]
       const currentKeys = Object.keys(currentDict).sort()

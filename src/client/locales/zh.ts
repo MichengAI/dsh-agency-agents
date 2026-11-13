@@ -130,6 +130,7 @@ export const zh = {
   'settings.search.clear': '清除搜索',
   'settings.search.placeholder': '搜索专家、职责或领域',
   'settings.title': '专家',
+  'settings.desc': '管理专业智能体名册。在对话中随时 @ 召唤，或由任务按需自动推荐。',
   'settings.viewProject': 'GitHub',
   'settings.viewPrompt': '查看',
   'settings.viewPromptTitle': '查看提示词',

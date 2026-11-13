@@ -132,6 +132,7 @@ export const de: Record<AgencyKey, string> = {
   'settings.search.clear': 'Suche löschen',
   'settings.search.placeholder': 'Experten, Rollen oder Fachbereiche suchen',
   'settings.title': 'Experten',
+  'settings.desc': 'Verwalten Sie Fachagenten. Jederzeit im Chat mit @ aufrufen oder Aufgaben automatisch vorschlagen lassen.',
   'settings.viewProject': 'GitHub',
   'settings.viewPrompt': 'Anzeigen',
   'settings.viewPromptTitle': 'Prompt anzeigen',

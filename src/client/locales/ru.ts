@@ -132,6 +132,7 @@ export const ru: Record<AgencyKey, string> = {
   'settings.search.clear': 'Очистить поиск',
   'settings.search.placeholder': 'Поиск экспертов, ролей или направлений',
   'settings.title': 'Эксперты',
+  'settings.desc': 'Управляйте профильными агентами. Вызывайте в чате через @ или получайте авторекомендации под задачи.',
   'settings.viewProject': 'GitHub',
   'settings.viewPrompt': 'Просмотр',
   'settings.viewPromptTitle': 'Просмотр промпта',

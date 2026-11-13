@@ -132,6 +132,7 @@ export const ja: Record<AgencyKey, string> = {
   'settings.search.clear': '検索をクリア',
   'settings.search.placeholder': 'エキスパート、職務、または分野を検索',
   'settings.title': 'エキスパート',
+  'settings.desc': '専門家エージェントを管理します。チャットでいつでも @ で呼び出し、またはタスクから自動推薦されます。',
   'settings.viewProject': 'GitHub',
   'settings.viewPrompt': '表示',
   'settings.viewPromptTitle': 'プロンプトを表示',

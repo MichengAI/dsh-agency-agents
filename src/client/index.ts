@@ -548,6 +548,7 @@ export const SETTINGS_CSS = `
 .aag-title-row{display:flex;align-items:center;gap:8px 12px;min-width:0;flex-wrap:wrap}
 .aag-settings-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .aag-title{margin:0;font-size:24px;line-height:32px;font-weight:600;letter-spacing:-.4px}
+.aag-desc{margin:0;font-size:13px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
 .aag-note{overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;text-overflow:ellipsis;white-space:nowrap}
 .aag-error{color:var(--dsw-alias-state-error-primary);font-size:13px;line-height:20px}
 .aag-filters{display:flex;align-items:flex-end;gap:10px;width:100%;min-width:0;max-width:100%}
@@ -1621,6 +1622,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       React.createElement('div', { className: 'aag-title-row' },
         React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')),
         settingsGithubLinks(props.t)),
+      React.createElement('p', { className: 'aag-desc' }, props.t('settings.desc')),
       React.createElement('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } },
         React.createElement('span', { className: 'aag-header-stat' },
           React.createElement('strong', null, total),
@@ -1778,8 +1780,11 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
   // 两个名册都保持挂载，切换时不丢失筛选，也不重新等待第一次加载。
   return React.createElement('section', { className: 'aag-section aag-library-shell' },
     React.createElement('div', { className: 'aag-section-card' },
-      React.createElement('header', { className: 'aag-toolbar' }, React.createElement('div', { className: 'aag-title-row' },
-        React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')), settingsGithubLinks(props.t)))),
+      React.createElement('header', { className: 'aag-toolbar' },
+        React.createElement('div', { className: 'aag-title-row' },
+          React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')),
+          settingsGithubLinks(props.t)),
+        React.createElement('p', { className: 'aag-desc' }, props.t('settings.desc')))),
     React.createElement('div', { className: 'aag-library-navigation' }, navigation),
     React.createElement('div', { id: 'aag-library-panel-experts', hidden: view !== 'experts' }, React.createElement(ExpertCardsSettings, { ...props, closeSettings: props.closeSettings ?? (props as { close?: () => void }).close, sharedHeader: true, onSummary: setExpertSummary })),
     React.createElement('div', { id: 'aag-library-panel-teams', hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
