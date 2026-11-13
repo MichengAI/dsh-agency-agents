@@ -543,10 +543,11 @@ export const COMPOSER_CSS = '.aag-btn-wrap{position:relative;order:1;display:inl
 // 设置页版式对齐 dsh-skills-manager：工具栏 + 汇总条 + 分组卡片 + 行内启停按钮。
 export const SETTINGS_CSS = `
 .aag-section{box-sizing:border-box;display:flex;min-width:0;width:100%;flex-direction:column;gap:16px;padding:0 0 32px;color:var(--dsw-alias-label-primary)}
+.aag-section-card{box-sizing:border-box;display:flex;flex-direction:column;gap:12px;padding:18px 20px;background:var(--dsw-alias-bg-layer-2);border:1px solid var(--dsw-alias-border-l1);border-radius:var(--dsw-radius-lg,16px);margin-bottom:16px}
 .aag-toolbar{display:flex;flex-direction:column;gap:8px;padding-bottom:12px}
 .aag-title-row{display:flex;align-items:center;gap:8px 12px;min-width:0;flex-wrap:wrap}
 .aag-settings-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.aag-title{margin:0;font-size:20px;line-height:28px;font-weight:650;letter-spacing:-.2px}
+.aag-title{margin:0;font-size:24px;line-height:32px;font-weight:600;letter-spacing:-.4px}
 .aag-note{overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px;text-overflow:ellipsis;white-space:nowrap}
 .aag-error{color:var(--dsw-alias-state-error-primary);font-size:13px;line-height:20px}
 .aag-filters{display:flex;align-items:flex-end;gap:10px;width:100%;min-width:0;max-width:100%}
@@ -738,10 +739,10 @@ function githubMark16(): React.ReactElement {
     React.createElement('path', { fill: 'currentColor', d: 'M8 0a8 8 0 0 0-2.53 15.59c.4.074.547-.173.547-.385 0-.19-.007-.693-.01-1.36-2.226.484-2.695-1.073-2.695-1.073-.364-.924-.89-1.17-.89-1.17-.726-.496.055-.486.055-.486.803.056 1.225.824 1.225.824.714 1.223 1.872.87 2.328.665.072-.517.28-.87.508-1.07-1.777-.202-3.645-.888-3.645-3.956 0-.874.31-1.588.823-2.148-.083-.202-.357-1.017.078-2.12 0 0 .672-.215 2.2.82A7.65 7.65 0 0 1 8 4.8c.68.003 1.365.092 2.004.27 1.527-1.035 2.197-.82 2.197-.82.437 1.103.162 1.918.08 2.12.513.56.822 1.274.822 2.148 0 3.076-1.872 3.752-3.654 3.95.288.248.544.735.544 1.482 0 1.07-.01 1.932-.01 2.195 0 .214.144.463.55.384A8.001 8.001 0 0 0 8 0Z' }))
 }
 
-const IconEditOutlineRegular = (primitives as Record<string, unknown>).IconEditOutlineRegular as React.ComponentType<{ size?: number }>
+const IconEditOutlineRegular = ((primitives as Record<string, unknown>).IconListPenOutlineMedium || (primitives as Record<string, unknown>).IconListPenOutlineRegular || (primitives as Record<string, unknown>).IconEditOutlineRegular) as React.ComponentType<{ size?: number }>
 
 function feedbackMark16(): React.ReactElement {
-  return React.createElement(IconEditOutlineRegular, { size: 16 })
+  return React.createElement(IconEditOutlineRegular, { size: 14 })
 }
 
 function settingsGithubLinks(t: TranslateNS<'agency'>): React.ReactElement {
@@ -1616,7 +1617,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
       }
     }
 
-    if (!props.sharedHeader) nodes.push(React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
+    if (!props.sharedHeader) nodes.push(React.createElement('div', { key: 'toolbar-card', className: 'aag-section-card' }, React.createElement('div', { key: 'toolbar', className: 'aag-toolbar' },
       React.createElement('div', { className: 'aag-title-row' },
         React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')),
         settingsGithubLinks(props.t)),
@@ -1626,7 +1627,7 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
           props.t(resolveSummaryTotalKey(total, props.getLocale?.() ?? (typeof document !== 'undefined' ? document.documentElement.lang : undefined) ?? 'en'), { count: total })),
         React.createElement('span', { className: 'aag-header-stat' },
           props.t('summary.enabledPrefix'),
-          React.createElement('strong', null, enabledCount)))))
+          React.createElement('strong', null, enabledCount))))))
     const filterActions = React.createElement('div', { className: 'aag-filter-actions' },
       React.createElement(BulkActionMenu, {
         label: props.t('settings.bulk.menu'),
@@ -1776,8 +1777,9 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
   })
   // 两个名册都保持挂载，切换时不丢失筛选，也不重新等待第一次加载。
   return React.createElement('section', { className: 'aag-section aag-library-shell' },
-    React.createElement('header', { className: 'aag-toolbar' }, React.createElement('div', { className: 'aag-title-row' },
-      React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')), settingsGithubLinks(props.t))),
+    React.createElement('div', { className: 'aag-section-card' },
+      React.createElement('header', { className: 'aag-toolbar' }, React.createElement('div', { className: 'aag-title-row' },
+        React.createElement('h2', { className: 'aag-title' }, props.t('settings.title')), settingsGithubLinks(props.t)))),
     React.createElement('div', { className: 'aag-library-navigation' }, navigation),
     React.createElement('div', { id: 'aag-library-panel-experts', hidden: view !== 'experts' }, React.createElement(ExpertCardsSettings, { ...props, closeSettings: props.closeSettings ?? (props as { close?: () => void }).close, sharedHeader: true, onSummary: setExpertSummary })),
     React.createElement('div', { id: 'aag-library-panel-teams', hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
