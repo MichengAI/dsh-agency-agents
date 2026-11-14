@@ -1626,10 +1626,20 @@ describe('@ 菜单分组标题本地化', () => {
   })
 
   it('DSH 开发依赖固定为 0.2.2-rc.3', () => {
+    // CI 宿主矩阵会把基线改写为目标版本，此时只要求各宿主包版本一致。
+    const matrixHost = process.env.DSH_HOST_MATRIX
+    const versions = new Set<string>()
     for (const [name, version] of Object.entries(PACKAGE_MANIFEST.devDependencies ?? {})) {
       if (name.startsWith('@deepseek-ai/dsh-')) {
-        expect(version).toBe('0.2.2-rc.3')
+        // dsh-error 自 0.2.2-rc.2 才发布，矩阵在更早版本上保留基线值。
+        if (name === '@deepseek-ai/dsh-error') continue
+        versions.add(version)
+        if (!matrixHost) expect(version).toBe('0.2.2-rc.3')
       }
+    }
+    if (matrixHost) {
+      expect(versions.size).toBe(1)
+      return
     }
     expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.2-rc.3')
   })

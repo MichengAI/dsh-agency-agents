@@ -85,3 +85,37 @@ jobs:
           name: verified-lib
           path: lib/
           if-no-files-found: error
+
+  host-matrix:
+    needs: changes
+    if: needs.changes.outputs.run_tests == 'true'
+    name: 宿主 ${{ matrix.dsh }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      # 0.2.1 及更早宿主的本地化只到 zh/en，本插件提供 8 种语言，矩阵从 0.2.2 起。
+      matrix:
+        dsh: [0.2.2-rc.1, 0.2.2-rc.2, 0.2.2-rc.3]
+    env:
+      DSH_HOST_MATRIX: '1'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: 启用 pnpm
+        run: corepack enable
+
+      - name: 对齐宿主版本
+        run: node scripts/host-matrix.mjs ${{ matrix.dsh }}
+
+      - name: 安装该版本宿主依赖
+        run: pnpm install --config.minimumReleaseAge=0
+
+      - name: 类型检查与单元测试
+        run: pnpm typecheck && pnpm test
