@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.34] - 2026-11-14
+
+- **Improve plugin coexistence stability**: Fixed an issue during activation that could prevent other third-party extensions from mounting and providing services correctly ([#40](https://github.com/MichengAI/dsh-agency-agents/issues/40)).
+
 ## [1.2.33] - 2026-11-14
 
 - Verified against the DSH `0.2.2` release candidates (`0.2.2-rc.1` through `0.2.2-rc.3`); the host matrix now covers this generation.
