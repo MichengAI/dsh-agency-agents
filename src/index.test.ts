@@ -255,6 +255,47 @@ describe('DSH settings 兼容层', () => {
     }
   })
 
+  it('无 settings.yaml.imported 或已有配置时直接返回，绝不调用 loader.await', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'aag-legacy-guard-'))
+    const loaderAwait = vi.fn().mockResolvedValue(undefined)
+    const ctx = {
+      root: { loader: { await: loaderAwait } },
+      get: (name: string) => name === 'profileContext' ? { home } : undefined,
+      settings: {
+        describe: () => [{ ns: 'agency-agents', revision: 1 }],
+        update: vi.fn(),
+      },
+    } as unknown as Context
+
+    try {
+      // 场景 1: settings.yaml.imported 不存在
+      await recoverImportedAgencySettings(ctx, 'agency-agents', () => ({ enabled: [] }), () => false, JSON.parse)
+      expect(loaderAwait).not.toHaveBeenCalled()
+
+      // 场景 2: settings.yaml.imported 存在但当前配置已有数据
+      await writeFile(join(home, 'settings.yaml.imported'), JSON.stringify({
+        'agency-agents': { enabled: ['reviewer'] },
+      }), 'utf8')
+      await recoverImportedAgencySettings(ctx, 'agency-agents', () => ({ enabled: ['existing-expert'] }), () => false, JSON.parse)
+      expect(loaderAwait).not.toHaveBeenCalled()
+
+      // 场景 3: settings.yaml.imported 存在且当前配置为空，成功恢复且全程不调用 loader.await
+      const updateFn = vi.fn().mockResolvedValue(undefined)
+      const ctxWithUpdate = {
+        ...ctx,
+        settings: {
+          describe: () => [{ ns: 'agency-agents', revision: 1 }],
+          update: updateFn,
+        },
+      } as unknown as Context
+      await recoverImportedAgencySettings(ctxWithUpdate, 'agency-agents', () => ({ enabled: [] }), () => false, JSON.parse)
+      expect(updateFn).toHaveBeenCalledWith('agency-agents', { enabled: ['reviewer'], customExperts: [], customTeams: [], enabledTeams: [] }, 1)
+      expect(loaderAwait).not.toHaveBeenCalled()
+    } finally {
+      await rm(home, { recursive: true, force: true })
+    }
+  })
+
   it('启动事务尚未结束时，补写会先离开 HMR 事务', async () => {
     const home = await mkdtemp(join(tmpdir(), 'aag-legacy-hmr-'))
     const written: unknown[] = []

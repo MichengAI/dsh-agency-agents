@@ -228,12 +228,6 @@ export async function recoverImportedAgencySettings(
   parse: (text: string) => unknown = parseHostYaml,
   locale: 'zh' | 'en' = 'zh',
 ): Promise<void> {
-  const loader = (ctx as Context & { root?: { loader?: { await?: () => Promise<unknown> } } }).root?.loader
-  try {
-    await loader?.await?.()
-  } catch {
-    // Loader 失败时仍尝试读取已经改名的旧文件。
-  }
   if (isCancelled()) return
   const home = profileHome(ctx)
   if (home === undefined) return
