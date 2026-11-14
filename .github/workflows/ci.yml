@@ -115,7 +115,7 @@ jobs:
         run: node scripts/host-matrix.mjs ${{ matrix.dsh }}
 
       - name: 安装该版本宿主依赖
-        run: pnpm install --config.minimumReleaseAge=0
+        run: pnpm install --config.minimumReleaseAge=0 --no-frozen-lockfile
 
       - name: 类型检查与单元测试
         run: pnpm typecheck && pnpm test
