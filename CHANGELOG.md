@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.33] - 2026-11-14
+
+- Verified against the DSH `0.2.2` release candidates (`0.2.2-rc.1` through `0.2.2-rc.3`); the host matrix now covers this generation.
+
 ## [1.2.32] - 2026-11-14
 
 - **Configurable Brief Character Limit & Default Limit Raised**:
