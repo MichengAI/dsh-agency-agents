@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import React from 'react'
+import { describe, it, expect, vi } from 'vitest'
 import { extractTaskKeywords, recommendExpertsForTask } from './recommend-engine.js'
-import { resolveRecommendInputs, buildRecommendMenuItems } from './client/recommend-bar.js'
+import { resolveRecommendInputs, buildRecommendMenuItems, RecommendBar } from './client/recommend-bar.js'
 import type { ExpertSearchable } from './client/index.js'
 import type { ExpertTeam } from './team-contract.js'
 
@@ -202,5 +203,64 @@ describe('recommend-engine 本地极速推荐引擎', () => {
     const itemsEn = buildRecommendMenuItems(mockCandidates, 'en')
     const teamRow1En = itemsEn[1].label.props.children[0]
     expect(teamRow1En.props.children[1].props.children).toBe('Team')
+  })
+
+  it('RecommendBar 的 Menu 必须配置 portal 为 true 以确保浮层脱离祖先滚动容器裁剪', () => {
+    const mockCandidates = [
+      {
+        id: 'marketing-xiaohongshu-expert',
+        kind: 'expert' as const,
+        name: '小红书增长运营专家',
+        emoji: '🧩',
+        division: 'marketing',
+        reason: '精准命中「小红书」业务关键词，擅长爆款笔记打造。',
+        score: 100,
+      },
+    ]
+
+    const ReactInternals = (React as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
+    const prevDispatcher = ReactInternals.ReactCurrentDispatcher.current
+    let stateCall = 0
+    ReactInternals.ReactCurrentDispatcher.current = {
+      useState: (initial: unknown) => {
+        stateCall++
+        if (stateCall === 3) return [mockCandidates, () => {}]
+        return [typeof initial === 'function' ? (initial as () => unknown)() : initial, () => {}]
+      },
+      useRef: (initial: unknown) => ({ current: initial }),
+      useEffect: () => {},
+    }
+
+    try {
+      const mockExperts: ExpertSearchable[] = [
+        {
+          slug: 'marketing-xiaohongshu-expert',
+          name: '小红书增长运营专家',
+          nameEn: 'Xiaohongshu Growth Expert',
+          division: 'marketing',
+          divisionZh: '市场',
+          divisionEn: 'Marketing',
+          description: '专精小红书爆款笔记结构与流量分发机制。',
+          descriptionEn: 'Xiaohongshu viral notes and growth.',
+        },
+      ]
+
+      const element = RecommendBar({
+        draft: '我想做小红书爆款笔记',
+        experts: mockExperts,
+        teams: [],
+        enabledExpertSlugs: new Set(['marketing-xiaohongshu-expert']),
+        enabledTeamIds: new Set([]),
+        activeLocale: 'zh',
+        onSelect: () => {},
+      })
+
+      expect(element).not.toBeNull()
+      const menuElement = element!.props.children
+      expect(menuElement.props.portal).toBe(true)
+      expect(menuElement.props.listClassName).toBe('aag-recommend-menu-list')
+    } finally {
+      ReactInternals.ReactCurrentDispatcher.current = prevDispatcher
+    }
   })
 })

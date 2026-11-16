@@ -87,6 +87,7 @@ declare module '@deepseek-ai/dsh-client-ui-primitives' {
     dense?: boolean
     compact?: boolean
     className?: string
+    listClassName?: string
   }): ReactElement
 
   export function Pill(props: {

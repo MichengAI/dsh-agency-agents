@@ -243,7 +243,8 @@ export function RecommendBar(props: RecommendBarProps): React.ReactElement | nul
       },
       align: 'end',
       side: 'top',
-      portal: false,
+      portal: true,
+      listClassName: 'aag-recommend-menu-list',
       items,
       onSelect: (id: string) => {
         setOpen(false)
