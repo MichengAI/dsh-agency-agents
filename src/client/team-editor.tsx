@@ -1,7 +1,7 @@
-import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
+import { useTeamLocale, localizedExperts } from './team-locale.js';
 import { LibraryEditorFooter } from './library-ui.js';
 import React from 'react';
-import { effectiveCoordinator, BUILTIN_TEAMS, TEAM_PROMPTS, teamInputSchema, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
+import { effectiveCoordinator, teamInputSchema, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
 import { Button, Input } from './plugin-ui.js';
 import { SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives';

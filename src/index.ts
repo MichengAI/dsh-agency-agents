@@ -18,10 +18,9 @@ import { validateExpertProposal, validateTeamProposal } from './creation-contrac
  *   - `summon_expert(expert, task)` delegate a task to a subagent whose
  *     persona is that expert's, through the `ctx.subagents` spawn provider.
  *
- * A summoned expert does NOT replace the parent's persona: on DSH 0.2.1-rc.1
+ * A summoned expert does NOT replace the parent's persona: on DSH 0.2.2-rc.2+
  * the child gets a scoped `deployment:persona-prefix` (and a tool denylist) on
- * `agent/created` after `startActivation`. 0.2.0-rc.1 and 0.2.0-rc.2 still pass
- * start-time `persona` / `toolFilter` through `ctx.subagents.start`.
+ * `agent/created` after `startActivation`.
  *
  * Strict `{{...}}` interpolation runs over every system-prompt section, so any
  * complete brace group inside expert prose would throw at assembly. A
@@ -32,7 +31,7 @@ import { validateExpertProposal, validateTeamProposal } from './creation-contrac
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { resolveTeamEngine, dispatchNativeTeam, blocksNativeDelegation, getNativeTeammateSetup, isAgencyTeammateName, EXPERT_TOOL_DENY, type NativeTeamService } from './team-engine.js'
+import { resolveTeamEngine, dispatchNativeTeam, blocksNativeDelegation, isAgencyTeammateName, EXPERT_TOOL_DENY } from './team-engine.js'
 import { initSubagentRegistry, recordSubagentConfig, forgetSubagentConfig, getSubagentConfig, isManagedSubagentId, flushSubagentRegistrySync } from './subagent-registry.js'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
@@ -49,7 +48,7 @@ import { TextDecoder } from 'node:util'
 import { ZH_DIVISION, ZH_NAME } from './names.js'
 export { ZH_NAME }
 import { createHostLocaleReader, formatHost, localizedExpertDescription, localizedExpertName, matchDivision, renderExpertList, renderSummonResults, type LocaleId } from './i18n.js'
-import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat, setAgencySidebarEntry, setAgencyComposerRecommend, getAgencyEntryLocation, setAgencyEntryLocation } from './settings-compat.js'
+import { isLiveValue, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat, setAgencyComposerRecommend, getAgencyEntryLocation, setAgencyEntryLocation } from './settings-compat.js'
 import { AGENCY_LIBRARY_SERVICE, createExpertLibrary, type AgencySettings } from './expert-library.js'
 
 export const name = 'agency-agents'
@@ -683,34 +682,24 @@ export function apply(ctx: Context, config: Config): void {
   ctx.on?.('agent/created', (event: { agent: { id: string; ctx: Context } }) => {
     const agent = event.agent
     let config = getSubagentConfig(agent.id)
-    if (!config) {
-      const agentTeams = ctx.get?.('agentTeams') as NativeTeamService | undefined
-      const membership = typeof agentTeams?.tryMembership === 'function' ? agentTeams.tryMembership(agent) : undefined
-      if (membership?.role === 'teammate' && isAgencyTeammateName(membership.name)) {
-        const nativeSetup = getNativeTeammateSetup(membership.name)
-        config = {
-          toolFilter: nativeSetup?.toolFilter ?? { deny: [...EXPERT_TOOL_DENY] },
-        }
-      } else {
-        const subagents = ctx.get?.('subagents') as { namesOf?: (a: object) => { self?: string } } | undefined
-        let selfName: string | undefined
-        try {
-          selfName = typeof subagents?.namesOf === 'function' ? subagents.namesOf(agent)?.self : undefined
-        } catch {
-          selfName = undefined
-        }
-        const leaf = selfName?.split('/').at(-1)
-        if (leaf && isAgencyTeammateName(leaf)) {
-          const nativeSetup = getNativeTeammateSetup(leaf)
-          config = {
-            toolFilter: nativeSetup?.toolFilter ?? { deny: [...EXPERT_TOOL_DENY] },
-          }
-        }
+    const subagents = ctx.get?.('subagents') as { namesOf?: (a: object) => { self?: string } } | undefined
+    let selfName: string | undefined
+    try {
+      selfName = typeof subagents?.namesOf === 'function' ? subagents.namesOf(agent)?.self : undefined
+    } catch {
+      selfName = undefined
+    }
+    const leaf = selfName?.split('/').at(-1)
+    const isTeammate = Boolean(leaf && isAgencyTeammateName(leaf))
+    if (!config && isTeammate) {
+      config = {
+        toolFilter: { deny: [...EXPERT_TOOL_DENY] },
       }
     }
     if (!config) return undefined
     const childCtx = agent.ctx
-    if (childCtx?.systemPrompt && config.persona) {
+    // 队友的人设已完整嵌入首条任务 Prompt 中，Native 队友不再重复注入易失的 systemPrompt.section
+    if (childCtx?.systemPrompt && config.persona && !isTeammate) {
       childCtx.systemPrompt.section({
         name: PERSONA_PREFIX_SECTION,
         order: childCtx.systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA_PREFIX'),
@@ -1001,14 +990,6 @@ export function apply(ctx: Context, config: Config): void {
 
   async function startSubagentRun(providerName: string, options: ExpertSubagentStart): Promise<SubagentRunHandle> {
     const { slug, persona, toolFilter, label, signal, prompt, parent, maxDepth } = options
-    type LegacyActivationSpec = {
-      provider: string
-      label: string
-      childId?: ReturnType<typeof SessionId>
-      request: Omit<SubagentStartRequest, 'label' | 'signal'>
-      signal: AbortSignal
-      delivery: 'parent' | 'caller'
-    }
     type FlatActivationSpec = Omit<SubagentStartRequest, 'label' | 'signal'> & {
       provider: string
       label: string
@@ -1018,40 +999,23 @@ export function apply(ctx: Context, config: Config): void {
       delivery: 'parent' | 'caller'
     }
     const service = ctx.subagents as unknown as {
-      start?: (name: string, request: SubagentStartRequest & { persona?: string; toolFilter?: { deny: string[] } }) => Promise<SubagentRun>
-      startActivation?: (spec: LegacyActivationSpec | FlatActivationSpec) => Promise<SubagentRunHandle>
-      namesOf?: unknown
-      rootOf?: unknown
+      startActivation?: (spec: FlatActivationSpec) => Promise<SubagentRunHandle>
     }
     const runSignal = signal ?? new AbortController().signal
-    // DSH 0.2.1-rc.1+: 优先使用 startActivation，由持久注册表守护首次启动与后续冷恢复；
-    // 0.2.2-rc.2+ 起 SubagentRuntime 提供 namesOf/rootOf 且 startActivation 改为顶层平铺字段（无 request 包装）。
+    // DSH 0.2.2-rc.2+: 统一通过 startActivation 按 FlatActivationSpec 调用，由持久注册表守护首次启动与后续冷恢复
     if (typeof service.startActivation === 'function') {
       const childId = SessionId(randomUUID())
       recordSubagentConfig(childId, { slug, persona, toolFilter }, ctx)
-      const usesFlatSpec = typeof service.namesOf === 'function' || typeof service.rootOf === 'function'
-      const requestPayload = {
+      const spec: FlatActivationSpec = {
+        provider: providerName,
+        label: label ?? providerName,
+        childId,
         parent,
         prompt,
         ...(maxDepth === undefined ? {} : { maxDepth }),
+        signal: runSignal,
+        delivery: 'caller',
       }
-      const spec: LegacyActivationSpec | FlatActivationSpec = usesFlatSpec
-        ? {
-            provider: providerName,
-            label: label ?? providerName,
-            childId,
-            ...requestPayload,
-            signal: runSignal,
-            delivery: 'caller',
-          }
-        : {
-            provider: providerName,
-            label: label ?? providerName,
-            childId,
-            request: requestPayload,
-            signal: runSignal,
-            delivery: 'caller',
-          }
       try {
         return await service.startActivation(spec)
       } catch (error) {
@@ -1060,9 +1024,8 @@ export function apply(ctx: Context, config: Config): void {
         throw error
       }
     }
-    // DSH 0.2.0-rc.1 / 0.2.0-rc.2: start-time persona / toolFilter 兜底。
-    if (typeof service.start === 'function') {
-      return service.start(providerName, {
+    if (typeof (service as any).start === 'function') {
+      return (service as any).start(providerName, {
         label,
         prompt,
         parent,
@@ -1082,13 +1045,12 @@ export function apply(ctx: Context, config: Config): void {
     if (exec.agent === undefined) throw new Error(formatHost(locale, 'error.summonRequiresAgent'))
     const provider = ctx.subagents.getProvider(config.provider)
     if (provider === undefined) throw new Error(formatHost(locale, 'error.providerMissing', { provider: config.provider }))
-    const caps = provider.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean }
-    // 0.2.0-rc.1 / 0.2.0-rc.2 still advertise persona/toolFilter; 0.2.1-rc.1 drops them.
-    if (caps.persona !== undefined || caps.toolFilter !== undefined) {
+    const caps = provider.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean } | undefined
+    if (caps?.persona !== undefined || caps?.toolFilter !== undefined) {
       if (!caps.persona) throw new Error(formatHost(locale, 'error.providerNoPersona', { provider: config.provider }))
       if (!caps.toolFilter) throw new Error(formatHost(locale, 'error.providerNoToolFilter', { provider: config.provider }))
     }
-    if (maxDepth !== undefined && !caps.depthLimit) throw new Error(formatHost(locale, 'error.providerNoMaxDepth', { provider: config.provider }))
+    if (maxDepth !== undefined && !caps?.depthLimit) throw new Error(formatHost(locale, 'error.providerNoMaxDepth', { provider: config.provider }))
     const expert = resolveExpert((await library.catalog()).experts.filter(expert => !expert.conflict), query, locale)
     if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
     const { prompt: persona } = await personaSource.getPrompt(expert.slug, expert.division, locale)
@@ -1218,7 +1180,7 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
             throw new Error(teamTx("专家团未启用或不存在。"));
         const engine = resolveTeamEngine(ctx, exec.agent, maxDepth);
         const locale = activeLocale();
-        if (engine.status.mode === 'native' && engine.service) {
+        if (engine.status.mode === 'native' && engine.service && engine.subagents) {
             const result = await dispatchNativeTeam({ team, locale, experts: catalog.experts, enabled: catalog.enabled, task: String(args.task ?? ''), revision: snapshot.revision,
                 signal: exec.signal, agent: exec.agent!, service: engine.service, subagents: engine.subagents, ctx, provider: config.provider,
                 readPersona: async (expert) => sanitize((await personaSource.getPrompt(expert.slug, expert.division, locale)).prompt) });
@@ -1226,7 +1188,6 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
         }
         const provider = ctx.subagents.getProvider(config.provider);
         const teamCaps = provider?.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean } | undefined
-        // 0.2.0-rc.1 / 0.2.0-rc.2 仍声明 persona/toolFilter；0.2.1-rc.1 不再声明，身份改在 agent/created 写入。
         const legacyTeamCaps = teamCaps !== undefined && (teamCaps.persona !== undefined || teamCaps.toolFilter !== undefined)
         if (!provider || (legacyTeamCaps && (!teamCaps?.persona || !teamCaps.toolFilter)) || (maxDepth !== undefined && !teamCaps?.depthLimit))
             throw new Error(teamTx("当前子代理服务不支持专家团所需的身份、工具过滤或深度限制。"));
@@ -1390,7 +1351,6 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
     async execute(args, exec) {
       const sessionId = (exec as any)?.agent?.session?.id ?? (exec as any)?.agent?.session?.header?.id
       const catalog = await library.catalog()
-      const allowedSlugs = new Set(catalog.experts.map(e => e.slug))
       const membersRaw = Array.isArray(args.members) ? args.members : []
       const members = membersRaw.map((m: any) => ({
         expertSlug: String(m?.expertSlug ?? '').trim(),

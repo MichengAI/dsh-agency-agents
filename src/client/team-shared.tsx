@@ -3,7 +3,7 @@ import { LibraryConfirm } from './library-ui.js';
 import { Modal } from './plugin-ui.js';
 import { useEscapeLayer } from './escape-layer.js';
 import React from 'react';
-import { IconX, IconUsers, IconUser, IconFileText, IconChevronDown, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconCheck, IconTrash, IconRefresh, IconGripVertical, } from '@tabler/icons-react/dist/esm/tabler-icons-react.mjs';
+import { IconUsers, IconUser, IconFileText, IconChevronDown, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconCheck, IconTrash, IconRefresh, IconGripVertical, } from '@tabler/icons-react/dist/esm/tabler-icons-react.mjs';
 export { IconUsers, IconUser, IconFileText, IconChevronDown, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconCheck, IconTrash, IconRefresh, IconGripVertical, };
 import type { ExpertSummary } from '../expert-contract.js';
 import type { ExpertTeam, TeamInput } from '../team-contract.js';

@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
-import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import z from '@deepseek-ai/schemastery'
 import { Config, SUMMON_EXPERTS_CONCURRENCY, SUMMON_EXPERTS_MAX, SUMMON_TASK_MAX_CHARS, apply, inject, liveSchemaField, loadCatalog, createAgencyPersonaSource, mapPool, normalizeSummonTaskMaxChars, parseFrontmatter, resolveCatalogRoot, resolveExpert, sanitize, stripBom, toSummonItemResult, truncate, unquote, validateSummonSpecs } from './index.js'
 import AgencyAgentsRemote, { readExpertPrompt, readLocalizedExpertPrompt } from './remote.js'
@@ -562,8 +561,10 @@ describe('summon_expert', () => {
     const ctx = {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
-        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
-        start: async () => ({
+        getProvider: () => ({ capabilities: { depthLimit: true } }),
+        startActivation: async () => ({
+          childId: 'child-1',
+          name: 'reviewer',
           result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
           dispose: async () => { throw new Error('dispose failed') },
         }),
@@ -585,7 +586,7 @@ describe('summon_expert', () => {
     await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow('dispose failed')
   })
 
-  it('新版宿主通过 startActivation 按 caller 模式运行并转发取消信号', async () => {
+  it('宿主通过 startActivation 按 caller 模式运行并转发取消信号', async () => {
     const tools: unknown[] = []
     const controller = new AbortController()
     let activationSpec: Record<string, any> | undefined
@@ -593,11 +594,12 @@ describe('summon_expert', () => {
     const ctx = {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
-        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        getProvider: () => ({ capabilities: { depthLimit: true } }),
         startActivation: async (spec: Record<string, any>) => {
           activationSpec = spec
           return {
             childId: 'child-1',
+            name: 'reviewer',
             result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
             dispose: async () => { disposed = true },
           }
@@ -626,7 +628,7 @@ describe('summon_expert', () => {
       label: 'Reviewer',
       signal: controller.signal,
       delivery: 'caller',
-      request: { prompt: [{ type: 'text', text: 'review' }] },
+      prompt: [{ type: 'text', text: 'review' }],
     })
     expect(disposed).toBe(true)
   })
@@ -1639,7 +1641,7 @@ describe('专家库目标稿样式契约', () => {
 
 describe('@ 菜单分组标题本地化', () => {
   it("DSH peer 与 engines 开放 0.2.x 宿主代际范围", () => {
-    const range = ">=0.2.0-rc.1 <0.3.0-0";
+    const range = ">=0.2.2-rc.2 <0.3.0-0";
     expect((PACKAGE_MANIFEST.engines as any)?.dsh).toBe(range);
     const peers = PACKAGE_MANIFEST.peerDependencies;
     expect(peers?.["@deepseek-ai/dsh"]).toBe(range);
@@ -1666,7 +1668,7 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 0.2.2-rc.3', () => {
+  it('DSH 开发依赖固定为 0.2.2-rc.5', () => {
     // CI 宿主矩阵会把基线改写为目标版本，此时只要求各宿主包版本一致。
     const matrixHost = process.env.DSH_HOST_MATRIX
     const versions = new Set<string>()
@@ -1675,14 +1677,14 @@ describe('@ 菜单分组标题本地化', () => {
         // dsh-error 自 0.2.2-rc.2 才发布，矩阵在更早版本上保留基线值。
         if (name === '@deepseek-ai/dsh-error') continue
         versions.add(version)
-        if (!matrixHost) expect(version).toBe('0.2.2-rc.3')
+        if (!matrixHost) expect(version).toBe('0.2.2-rc.5')
       }
     }
     if (matrixHost) {
       expect(versions.size).toBe(1)
       return
     }
-    expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.2-rc.3')
+    expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.2-rc.5')
   })
 
   it('设置标题提供 GitHub 与问题反馈两个入口', () => {
@@ -1856,7 +1858,7 @@ describe('@ 菜单分组标题本地化', () => {
     expect(expertMentionFromReference('missing-expert', 'en')).toBe('@Removed expert (please reselect)\u00A0')
   })
 
-  it('slot 未提供 sessionId 时回退解析当前会话输入机', () => {
+  it('slot 未提供 sessionId 时回退解析主视图会话输入机', () => {
     const actx = {} as Context
     const target = {
       state: { getSnapshot: () => ({ draft: '', draftRev: 1 }) },
@@ -1865,7 +1867,13 @@ describe('@ 菜单分组标题本地化', () => {
     const calls: string[] = []
 
     const resolved = resolveReferenceInsertionTarget({
-      list: { getSnapshot: () => ({ current: 'current-session' as SessionId }) },
+      list: {
+        getSnapshot: () => ({
+          byId: {
+            'current-session': { id: 'current-session' as SessionId, retainedBy: { mainView: 1 } },
+          },
+        }),
+      },
       binding: (id: string) => {
         calls.push(id)
         return { ctx: actx }

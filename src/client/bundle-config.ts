@@ -1,6 +1,5 @@
 import React from 'react'
 import * as primitives from '@deepseek-ai/dsh-client-ui-primitives'
-import { resolveApiUrl } from '../api-base.js'
 import type { EntryLocation } from '../settings-compat.js'
 
 export const BUNDLE_KEY = '@michengai/dsh-agency-agents'

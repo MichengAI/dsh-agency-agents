@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { resolveApiUrl } from './api-base.js'
 
 describe('resolveApiUrl (API 基址反代解析)', () => {

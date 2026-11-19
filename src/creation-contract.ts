@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import {
   customExpertInputSchema,
-  type CustomExpertInput,
 } from './expert-contract.js'
 import { teamInputSchema, type TeamInput } from './team-contract.js'
 import { ZH_DIVISION } from './names.js'

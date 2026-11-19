@@ -2,8 +2,7 @@ import { Button, Input } from './plugin-ui.js'
 import * as primitives from '@deepseek-ai/dsh-client-ui-primitives'
 import { SegmentedControl, SegmentedTabs } from '@deepseek-ai/dsh-client-ui-primitives'
 import { LibraryCard, LibraryConfirm } from './library-ui.js'
-import { IconPlus } from './team-shared.js'
-import { Button as PrimitiveButton, type ButtonVariant } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button as PrimitiveButton } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { AgencyTeamsRemote } from './remote.js'
 import { TeamsPanel, unwrap, type TeamRemote } from './team-ui.js'
 import { TEAM_CSS } from './team-style.js'
@@ -803,9 +802,9 @@ export interface ReferenceInsertionTarget {
 
 /** 会话列表快照里能用来回退「当前主视图」的字段。 */
 export interface ReferenceSessionListSnapshot {
-  /** 0.2.0-rc.1 / 0.2.0-rc.2：全局当前会话。0.2.1-rc.1 已删除。 */
+  /** 0.2.0-rc.1 / 0.2.0-rc.2：全局当前会话。0.2.1-rc.1 起由 mainView 反查。 */
   readonly current?: SessionId
-  /** 0.2.1-rc.1：主视图由 `retainedBy.mainView` 标记，不再有 `current`。 */
+  /** 主视图由 `retainedBy.mainView` 标记。 */
   readonly byId?: Readonly<Record<string, {
     readonly id?: SessionId
     readonly retainedBy?: { readonly mainView?: number }
@@ -821,7 +820,7 @@ export interface ReferenceSessionAccess {
   binding?(id: SessionId): { readonly ctx: CordisClientContext } | undefined
 }
 
-/** slot 未给 sessionId 时：0.2.0-rc.1 / 0.2.0-rc.2 认 `current`，0.2.1-rc.1 按主视图 retain 反查。 */
+/** slot 未给 sessionId 时：0.2.0-rc.1 / 0.2.0-rc.2 认 `current`，0.2.1-rc.1+ 按主视图 retain 反查。 */
 export function resolveTargetSessionId(
   sessions: ReferenceSessionAccess,
   sessionId?: SessionId,
@@ -1538,9 +1537,9 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     if (state.experts.some(expert => expert.conflict)) nodes.push(React.createElement('div', { key: 'conflicts', className: 'aag-error', role: 'alert' }, props.t('custom.nameConflictHint')))
     const hasFilter = normalizeExpertQuery(query) !== '' || division !== '' || status !== '' || source !== 'all'
     const resetFilters = (): void => { setSource('all'); setQuery(''); setDivision(''); setStatus('') }
-    const { nextEnabled: bulkEnableFilteredNext, affectedCount: pendingEnableFilteredCount } = bulkEnableTargets(state.enabled, filtered)
-    const { nextEnabled: bulkDisableFilteredNext, affectedCount: pendingDisableFilteredCount } = bulkDisableTargets(state.enabled, filtered)
-    const { nextEnabled: bulkEnableAllNext, affectedCount: pendingEnableAllCount } = bulkEnableTargets(state.enabled, state.experts)
+    const { affectedCount: pendingEnableFilteredCount } = bulkEnableTargets(state.enabled, filtered)
+    const { affectedCount: pendingDisableFilteredCount } = bulkDisableTargets(state.enabled, filtered)
+    const { affectedCount: pendingEnableAllCount } = bulkEnableTargets(state.enabled, state.experts)
 
     const menuItems: BulkActionMenuItem[] = hasFilter
       ? [

@@ -11,7 +11,7 @@ import type { AgencyCatalogRemote, AgencyTeamsRemote, AgencyCreationRemote } fro
 import { TeamEditor } from './team-editor.js';
 import { CreateActionMenu } from './create-action-menu.js';
 import { triggerChatCreation } from './prefill.js';
-import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, Avatar, teamIssue, IconUsers, IconFileText, IconPlus, IconArrowRight, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconTrash, } from './team-shared.js';
+import { TeamDialog, TeamConfirm, TeamAvatars, MemberList, teamIssue, IconUsers, IconFileText, IconBulb, IconCopy, IconSend, IconSearch, IconEye, IconTrash, } from './team-shared.js';
 export { TEAM_CSS } from './team-style.js';
 export type TeamRemote = AgencyCatalogRemote & AgencyTeamsRemote & AgencyCreationRemote;
 export async function unwrap<T>(promise: Promise<{

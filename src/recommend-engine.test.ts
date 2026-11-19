@@ -1,5 +1,5 @@
 import React from 'react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { extractTaskKeywords, recommendExpertsForTask } from './recommend-engine.js'
 import { resolveRecommendInputs, buildRecommendMenuItems, RecommendBar } from './client/recommend-bar.js'
 import type { ExpertSearchable } from './client/index.js'

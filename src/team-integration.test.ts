@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { createScope } from '@deepseek-ai/dsh-scope'
-import type { NativeTeamService } from './team-engine.js'
+import type { V2TeamService, V2SubagentTeamRuntime } from './team-engine.js'
 import { EXPERT_TOOL_DENY } from './team-engine.js'
 import { Context } from '@deepseek-ai/cordis'
 import {
@@ -170,15 +170,23 @@ describe('专家团宿主与远端集成', () => {
     await expect(invoke('get_expert_team', { team: saved.id })).rejects.toThrow('未启用')
     const latest = await remote.getTeams()
     await remote.setTeamEnabled(team.id, true, latest.revision)
-    const native: NativeTeamService = {
-      tryMembership: () => ({ role: 'lead', name: 'lead' }),
-      listMembers: () => [],
-      spawnTeammate: vi.fn(async (_agent, request) => ({ member: { name: request.name, status: 'running' } })),
-      sendMessage: async () => ({}),
-      createTask: async () => ({ id: '1', revision: 1 }),
-      updateTask: async () => ({}), waitForChange: async () => ({}), interrupt: () => {},
+    const native: V2TeamService = {
+      isEnabled: () => true,
+      createTask: vi.fn(async () => ({ id: '1', revision: 1 })),
+      getTask: () => ({}),
+      listTasks: () => [],
+      updateTask: vi.fn(async () => ({})),
+    }
+    const nativeSubagents: V2SubagentTeamRuntime = {
+      startActivation: vi.fn(async (spec) => ({ childId: spec.childId ?? 'c-1', name: spec.name ?? 'ag' })),
+      namesOf: () => ({ self: 'lead' }),
+      rootOf: () => ({ id: 'root-1' }),
+      listDescendants: async () => [],
+      sendMessage: vi.fn(async () => ({})),
+      interrupt: vi.fn(),
     }
     services.set('agentTeams', native)
+    services.set('subagents', nativeSubagents)
     expect((await remote.getTeams()).engine).toMatchObject({ state: 'enabled', mode: 'native' })
     const notReady = await invoke('get_expert_team', { team: team.id })
     expect(notReady.engine).toMatchObject({ state: 'disabled', mode: 'subagent', recommendation: expect.stringContaining('开启') })
@@ -190,7 +198,7 @@ describe('专家团宿主与远端集成', () => {
     expect(nativeReport.dispatch.started).toBe(3)
     expect(nativeReport).not.toHaveProperty('coverage')
     expect(starts).toHaveLength(priorStarts)
-    expect(native.spawnTeammate).toHaveBeenCalledTimes(3)
+    expect(nativeSubagents.startActivation).toHaveBeenCalledTimes(3)
   })
 
   it('Native Agent Team 模式生成的队友在 prompt 中强化防递归，并在 agent/created 时注入人格与工具裁剪', async () => {
@@ -204,16 +212,16 @@ describe('专家团宿主与远端集成', () => {
     const injectedSections: any[] = []
     const injectedRestrictions: any[] = []
 
-    const native: NativeTeamService = {
-      tryMembership: (agent: any) => {
-        if (agent?.id && String(agent.id).startsWith('teammate-')) {
-          return { role: 'teammate', name: agent.mockName }
-        }
-        return { role: 'lead', name: 'lead' }
-      },
-      listMembers: () => [],
-      spawnTeammate: vi.fn(async (_agent, request) => {
-        teammateCalls.push({ name: request.name, text: request.prompt[0].text })
+    const native: V2TeamService = {
+      isEnabled: () => true,
+      createTask: vi.fn(async () => ({ id: '1', revision: 1 })),
+      getTask: () => ({}),
+      listTasks: () => [],
+      updateTask: vi.fn(async () => ({})),
+    }
+    const nativeSubagents: V2SubagentTeamRuntime = {
+      startActivation: vi.fn(async (spec) => {
+        teammateCalls.push({ name: spec.name ?? 'ag', text: spec.prompt[0].text })
         // 模拟宿主底层创建 Agent 触发 agent/created
         const childCtx = {
           systemPrompt: {
@@ -224,19 +232,20 @@ describe('专家团宿主与远端集成', () => {
             restrict: (filter: any) => { injectedRestrictions.push(filter) },
           },
         }
-        const fakeAgent = { id: `teammate-${request.name}`, mockName: request.name, ctx: childCtx }
+        const fakeAgent = { id: spec.childId ?? `teammate-${spec.name}`, mockName: spec.name, ctx: childCtx }
         for (const listener of teamListeners) {
           listener({ agent: fakeAgent, source: 'startup' })
         }
-        return { member: { name: request.name, status: 'running' } }
+        return { childId: spec.childId ?? `teammate-${spec.name}`, name: spec.name ?? 'ag' }
       }),
-      sendMessage: async () => ({}),
-      createTask: async () => ({ id: '1', revision: 1 }),
-      updateTask: async () => ({}),
-      waitForChange: async () => ({}),
-      interrupt: () => {},
+      namesOf: (agent: any) => ({ self: agent?.mockName ?? 'lead' }),
+      rootOf: () => ({ id: 'root-1' }),
+      listDescendants: async () => [],
+      sendMessage: vi.fn(async () => ({})),
+      interrupt: vi.fn(),
     }
     services.set('agentTeams', native)
+    services.set('subagents', nativeSubagents)
 
     const ctx = {
       settings,
@@ -257,10 +266,7 @@ describe('专家团宿主与远端集成', () => {
           if (idx >= 0) teamListeners.splice(idx, 1)
         }
       },
-      subagents: {
-        getProvider: () => ({ capabilities: { persona: true, toolFilter: true } }),
-        start: async () => ({ result: Promise.resolve({ output: [], stopReason: 'completed' }), dispose: async () => {} }),
-      },
+      subagents: nativeSubagents,
     } as unknown as Context
 
     apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS, ...volatileConfig(settings) } as never)
@@ -303,17 +309,15 @@ describe('专家团宿主与远端集成', () => {
     const tools = new Map<string, { execute(args: unknown, exec?: unknown): Promise<unknown> }>()
     let createdListener: ((event: any) => any) | undefined
 
-    const native: NativeTeamService = {
-      tryMembership: (agent: any) => ({ role: 'teammate', name: agent.mockName }),
-      listMembers: () => [],
-      spawnTeammate: vi.fn(async () => ({ member: { name: 'agency-pm-1234567890', status: 'running' } })),
-      sendMessage: async () => ({}),
-      createTask: async () => ({ id: '1', revision: 1 }),
-      updateTask: async () => ({}),
-      waitForChange: async () => ({}),
-      interrupt: () => {},
+    const nativeSubagents: V2SubagentTeamRuntime = {
+      startActivation: vi.fn(async (spec) => ({ childId: spec.childId ?? 'c-1', name: spec.name ?? 'ag' })),
+      namesOf: (agent: any) => ({ self: agent?.mockName ?? 'lead' }),
+      rootOf: () => ({ id: 'root-1' }),
+      listDescendants: async () => [],
+      sendMessage: vi.fn(async () => ({})),
+      interrupt: vi.fn(),
     }
-    services.set('agentTeams', native)
+    services.set('subagents', nativeSubagents)
 
     const ctx = {
       settings,
@@ -331,10 +335,7 @@ describe('专家团宿主与远端集成', () => {
         if (event === 'agent/created') createdListener = cb
         return () => {}
       },
-      subagents: {
-        getProvider: () => ({ capabilities: { persona: true, toolFilter: true } }),
-        start: async () => ({ result: Promise.resolve({ output: [], stopReason: 'completed' }), dispose: async () => {} }),
-      },
+      subagents: nativeSubagents,
     } as unknown as Context
 
     apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS, ...volatileConfig(settings) } as never)

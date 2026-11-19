@@ -1,4 +1,3 @@
-import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { LibraryConfirm } from './library-ui.js'
 import { teamText, type TeamLocale } from '../team-i18n.js'

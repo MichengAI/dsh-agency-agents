@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { acceptCatalog, catalogState, subscribeCatalog } from './catalog.js'
-import { acceptTeams, teamState, subscribeTeams } from './team-cache.js'
 import type { AgencyCatalogRemote, AgencyTeamsRemote } from './remote.js'
 import type { CatalogSnapshot } from '../expert-contract.js'
 
