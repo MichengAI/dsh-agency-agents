@@ -18,6 +18,7 @@ import {
   type ExpertSummary,
 } from "./expert-contract.js";
 import { settingsNamespaceCompat } from "./settings-compat.js";
+import { getSubagentConfig } from "./subagent-registry.js";
 import { MemorySettings } from "./settings-memory.js";
 import { apply } from "./index.js";
 import AgencyAgentsRemote from "./remote.js";
@@ -307,10 +308,10 @@ describe("真实 Host 与 Remote 集成", () => {
       on: () => () => undefined,
       subagents: {
         getProvider: () => ({
-          capabilities: { persona: true, toolFilter: true },
+          capabilities: { persona: true, toolFilter: true, depthLimit: true },
         }),
-        start: async (_provider: string, options: Record<string, unknown>) => {
-          starts.push(options);
+        startActivation: async (spec: any) => {
+          starts.push(spec);
           return {
             result: Promise.resolve({
               output: [{ type: "text", text: "租赁建议" }],
@@ -341,8 +342,10 @@ describe("真实 Host 与 Remote 集成", () => {
     ).toEqual({ expert: input.name, answer: "租赁建议" });
     expect(starts).toHaveLength(1);
     expect(starts[0]).toMatchObject({
-      persona: input.prompt,
       label: input.name,
+    });
+    expect(getSubagentConfig(starts[0].childId as string)).toMatchObject({
+      persona: input.prompt,
       toolFilter: { deny: ["summon_expert", "summon_experts", "list_experts", "list_expert_teams", "get_expert_team", "summon_expert_team"] },
     });
     const disabled = await remote.setEnabled([], saved.revision);

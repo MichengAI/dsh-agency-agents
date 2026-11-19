@@ -75,10 +75,10 @@ describe('专家团宿主与远端集成', () => {
       on: () => () => undefined,
       subagents: {
         getProvider: () => ({
-          capabilities: { persona: true, toolFilter: true },
+          capabilities: { persona: true, toolFilter: true, depthLimit: true },
         }),
-        start: async (_provider: string, options: Record<string, unknown>) => {
-          starts.push(options)
+        startActivation: async (spec: Record<string, unknown>) => {
+          starts.push(spec)
           return {
             result: Promise.resolve({
               output: [{ type: 'text', text: '租赁建议' }],
@@ -133,9 +133,10 @@ describe('专家团宿主与远端集成', () => {
     expect(starts).toHaveLength(3)
     expect(starts.map(start => start.label)).toEqual(team.members.map(member => catalog.experts.find(expert => expert.slug === member.expertSlug)!.name))
     for (const start of starts) {
-      expect(start.persona).toEqual(expect.any(String))
       expect(start.prompt).toEqual([{ type: 'text', text: expect.stringContaining('交接给主理人') }])
-      expect(start.toolFilter).toMatchObject({
+      const config = getSubagentConfig(start.childId as string)
+      expect(config?.persona).toEqual(expect.any(String))
+      expect(config?.toolFilter).toMatchObject({
         deny: expect.arrayContaining([
           'summon_expert_team',
           'summon_expert',
@@ -201,7 +202,7 @@ describe('专家团宿主与远端集成', () => {
     expect(nativeSubagents.startActivation).toHaveBeenCalledTimes(3)
   })
 
-  it('Native Agent Team 模式生成的队友在 prompt 中强化防递归，并在 agent/created 时注入人格与工具裁剪', async () => {
+  it('Native Agent Team 模式生成的队友在 prompt 中强化防递归，并在 agent/created 时不再重复注入人格', async () => {
     const settings = new TestSettings(new Context())
     settings.register('locale', (value) => value)
     settings.restore({ 'agency-agents': { enabled: [] }, locale: { preference: 'zh' } })
@@ -238,7 +239,9 @@ describe('专家团宿主与远端集成', () => {
         }
         return { childId: spec.childId ?? `teammate-${spec.name}`, name: spec.name ?? 'ag' }
       }),
-      namesOf: (agent: any) => ({ self: agent?.mockName ?? 'lead' }),
+      namesOf: vi.fn(() => {
+        throw new Error('agent has no active runtime owner')
+      }),
       rootOf: () => ({ id: 'root-1' }),
       listDescendants: async () => [],
       sendMessage: vi.fn(async () => ({})),
@@ -297,7 +300,9 @@ describe('专家团宿主与远端集成', () => {
       })
     }
 
-    // 断言 3：队友的人设已完整且持久地嵌入首条任务 Prompt 中，不再重复叠加入易失的 systemPrompt.section 以免 Token 翻倍
+    // 断言 3：队友的人设已完整且持久地嵌入首条任务 Prompt 中，不再重复叠加入易失的 systemPrompt.section 以免 Token 翻倍；
+    // 即使宿主在 agent/created 阶段 namesOf 抛错（尚未建立 resident），凭 nativeTeammate 标记依然正确跳过
+    expect(nativeSubagents.namesOf).toHaveBeenCalled()
     expect(injectedSections).toHaveLength(0)
   })
 

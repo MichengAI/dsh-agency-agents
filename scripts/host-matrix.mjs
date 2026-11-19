@@ -13,21 +13,13 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const manifestPath = join(root, 'package.json');
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 
-// 每个宿主代际配套的 Cordis 与 Schemastery 版本，不能一律钉最新稳定版。
-const toolchain = version.startsWith('0.2.0-')
-  ? { cordis: '4.0.4', schemastery: '3.18.4' }
-  : version.startsWith('0.2.1-')
-    ? { cordis: '4.0.5', schemastery: '3.18.5' }
-    : { cordis: '4.1.0', schemastery: '3.19.0' };
-
-// dsh-error 自 0.2.2-rc.2 才发布，更早代际保留 package.json 里钉的版本。
-const errorAvailable = !(version.startsWith('0.2.0-') || version.startsWith('0.2.1-') || version === '0.2.2-rc.1');
+// DSH >=0.2.2-rc.2 配套的 Cordis 与 Schemastery 工具链版本。
+const toolchain = { cordis: '4.1.0', schemastery: '3.19.0' };
 
 const dev = manifest.devDependencies ?? {};
 const aligned = [];
 for (const name of Object.keys(dev)) {
   if (!name.startsWith('@deepseek-ai/dsh')) continue;
-  if (name === '@deepseek-ai/dsh-error' && !errorAvailable) continue;
   dev[name] = version;
   aligned.push(name);
 }

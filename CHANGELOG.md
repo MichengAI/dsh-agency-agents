@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0] - 2026-11-19
+
+- **Full Compatibility with DeepSeek Harness `0.2.2-rc.5`**:
+  - **Host Version Matrix Convergence (Breaking Change)**: Tightened supported host versions to `>=0.2.2-rc.2 <0.3.0-0`. Older host versions (`<0.2.2-rc.2`) are no longer supported; please ensure the host is updated to the latest release candidate;
+  - **Native Expert Team Collaboration Efficiency**: Refined expert team dispatch and task synchronization, preventing redundant persona injections during teammate startup and resumption, significantly saving context token budget;
+  - **Enhanced Multi-Agent Execution**: Fully aligned with the host's latest multi-agent dispatch mechanisms, improving responsiveness and stability for single expert summoning and multi-expert team delegations;
+  - **Dependencies & Test Matrix Update**: Upgraded all development dependencies and type definitions to `@deepseek-ai/dsh-*@0.2.2-rc.5`, fully covering compatibility tests against the latest host releases.
+
 ## [1.2.34] - 2026-11-14
 
 - **Improve plugin coexistence stability**: Fixed an issue during activation that could prevent other third-party extensions from mounting and providing services correctly ([#40](https://github.com/MichengAI/dsh-agency-agents/issues/40)).

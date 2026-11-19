@@ -236,6 +236,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                             slug: member.slug,
                             persona: member.persona,
                             toolFilter: { deny: [...EXPERT_TOOL_DENY] },
+                            nativeTeammate: true,
                         }, args.ctx);
                         await v2Subagents.startActivation({
                             provider: args.provider,

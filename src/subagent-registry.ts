@@ -9,6 +9,7 @@ export interface PersistedSubagentConfig {
   slug?: string
   persona?: string
   toolFilter?: { deny: string[] }
+  nativeTeammate?: boolean
   updatedAt?: number
 }
 
@@ -16,6 +17,7 @@ interface PersistedChildEntry {
   slug?: string
   persona?: string
   toolFilter?: { deny: string[] }
+  nativeTeammate?: boolean
   updatedAt: number
 }
 
@@ -107,6 +109,7 @@ function adoptChildRecord(id: string, config: PersistedSubagentConfig): void {
     slug: typeof config.slug === 'string' ? config.slug : undefined,
     persona: typeof config.persona === 'string' ? config.persona : undefined,
     toolFilter: Array.isArray(config.toolFilter?.deny) ? { deny: config.toolFilter.deny } : undefined,
+    nativeTeammate: typeof config.nativeTeammate === 'boolean' ? config.nativeTeammate : undefined,
     updatedAt: typeof config.updatedAt === 'number' ? config.updatedAt : Date.now(),
   })
   managedIds.add(id)
@@ -229,7 +232,7 @@ export function flushSubagentRegistrySync(ctx?: Context): void {
 
 export function recordSubagentConfig(
   id: string,
-  config: { slug?: string; persona?: string; toolFilter?: { deny: string[] } },
+  config: { slug?: string; persona?: string; toolFilter?: { deny: string[] }; nativeTeammate?: boolean },
   ctx?: Context,
 ): void {
   if (!managedIds.has(id)) {
@@ -264,9 +267,9 @@ export function recordSubagentConfig(
       expertPersonas.set(config.slug, config.persona)
       personasDirty = true
     }
-    childRecords.set(id, { slug: config.slug, toolFilter: config.toolFilter, updatedAt: Date.now() })
+    childRecords.set(id, { slug: config.slug, toolFilter: config.toolFilter, nativeTeammate: config.nativeTeammate, updatedAt: Date.now() })
   } else {
-    childRecords.set(id, { persona: config.persona, toolFilter: config.toolFilter, updatedAt: Date.now() })
+    childRecords.set(id, { persona: config.persona, toolFilter: config.toolFilter, nativeTeammate: config.nativeTeammate, updatedAt: Date.now() })
   }
 
   scheduleFlush(ctx)
@@ -303,6 +306,7 @@ export function getSubagentConfig(id: string): PersistedSubagentConfig | undefin
     slug: child.slug,
     persona,
     toolFilter: child.toolFilter,
+    nativeTeammate: child.nativeTeammate,
     updatedAt: child.updatedAt,
   }
 }

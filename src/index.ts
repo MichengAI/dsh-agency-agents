@@ -690,7 +690,7 @@ export function apply(ctx: Context, config: Config): void {
       selfName = undefined
     }
     const leaf = selfName?.split('/').at(-1)
-    const isTeammate = Boolean(leaf && isAgencyTeammateName(leaf))
+    const isTeammate = Boolean(config?.nativeTeammate || (leaf && isAgencyTeammateName(leaf)))
     if (!config && isTeammate) {
       config = {
         toolFilter: { deny: [...EXPERT_TOOL_DENY] },
@@ -1024,17 +1024,6 @@ export function apply(ctx: Context, config: Config): void {
         throw error
       }
     }
-    if (typeof (service as any).start === 'function') {
-      return (service as any).start(providerName, {
-        label,
-        prompt,
-        parent,
-        signal: runSignal,
-        ...(maxDepth === undefined ? {} : { maxDepth }),
-        persona,
-        toolFilter,
-      })
-    }
     throw new Error(formatHost(activeLocale(), 'error.subagentsUnavailable'))
   }
 
@@ -1045,11 +1034,7 @@ export function apply(ctx: Context, config: Config): void {
     if (exec.agent === undefined) throw new Error(formatHost(locale, 'error.summonRequiresAgent'))
     const provider = ctx.subagents.getProvider(config.provider)
     if (provider === undefined) throw new Error(formatHost(locale, 'error.providerMissing', { provider: config.provider }))
-    const caps = provider.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean } | undefined
-    if (caps?.persona !== undefined || caps?.toolFilter !== undefined) {
-      if (!caps.persona) throw new Error(formatHost(locale, 'error.providerNoPersona', { provider: config.provider }))
-      if (!caps.toolFilter) throw new Error(formatHost(locale, 'error.providerNoToolFilter', { provider: config.provider }))
-    }
+    const caps = provider.capabilities
     if (maxDepth !== undefined && !caps?.depthLimit) throw new Error(formatHost(locale, 'error.providerNoMaxDepth', { provider: config.provider }))
     const expert = resolveExpert((await library.catalog()).experts.filter(expert => !expert.conflict), query, locale)
     if (!enabledSet().has(expert.slug)) throw new Error(formatHost(locale, 'error.expertDisabled', { name: localizedExpertName(expert, locale) }))
@@ -1187,9 +1172,8 @@ ctx.tools.register(localizeTeamTool(defineTool({ name: 'summon_expert_team', des
             return { report: JSON.stringify({ ...result, engine: engine.status }) };
         }
         const provider = ctx.subagents.getProvider(config.provider);
-        const teamCaps = provider?.capabilities as { persona?: boolean; toolFilter?: boolean; depthLimit?: boolean } | undefined
-        const legacyTeamCaps = teamCaps !== undefined && (teamCaps.persona !== undefined || teamCaps.toolFilter !== undefined)
-        if (!provider || (legacyTeamCaps && (!teamCaps?.persona || !teamCaps.toolFilter)) || (maxDepth !== undefined && !teamCaps?.depthLimit))
+        const teamCaps = provider?.capabilities
+        if (!provider || (maxDepth !== undefined && !teamCaps?.depthLimit))
             throw new Error(teamTx("当前子代理服务不支持专家团所需的身份、工具过滤或深度限制。"));
         const result = await executeTeam({ team, locale, experts: catalog.experts, enabled: catalog.enabled, task: String(args.task ?? ''), revision: snapshot.revision, signal: exec.signal,
             readPersona: async (expert) => (await personaSource.getPrompt(expert.slug, expert.division, locale)).prompt,

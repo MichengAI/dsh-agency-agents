@@ -875,8 +875,8 @@ describe('summon_expert', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
         getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
-        start: async (_provider: string, options: Record<string, unknown>) => {
-          startOptions = options
+        startActivation: async (spec: Record<string, unknown>) => {
+          startOptions = spec
           return {
             result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
             dispose: async () => undefined,
@@ -898,7 +898,10 @@ describe('summon_expert', () => {
     }
 
     await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).resolves.toEqual({ expert: 'Reviewer', answer: 'done' })
-    expect(startOptions).toMatchObject({ label: 'Reviewer', toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'] } })
+    expect(startOptions).toMatchObject({ label: 'Reviewer' })
+    expect(getSubagentConfig(startOptions!.childId as string)).toMatchObject({
+      toolFilter: { deny: ['summon_expert', 'summon_experts', 'list_experts', 'list_expert_teams', 'get_expert_team', 'summon_expert_team'] },
+    })
     expect(startOptions).not.toHaveProperty('maxDepth')
   })
 
@@ -910,8 +913,8 @@ describe('summon_expert', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
         getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
-        start: async (_provider: string, options: Record<string, unknown>) => {
-          startOptions = options
+        startActivation: async (spec: Record<string, unknown>) => {
+          startOptions = spec
           return {
             result: Promise.resolve({ output: [{ type: 'text', text: 'done' }], stopReason: 'completed' }),
             dispose: async () => undefined,
@@ -940,7 +943,7 @@ describe('summon_expert', () => {
 
     const displayed = await promptSource!.getPrompt('chief-executive-officer', 'company', 'zh')
     expect(displayed.prompt).toContain('首席执行官')
-    expect(startOptions?.persona).toBe(sanitize(displayed.prompt))
+    expect(getSubagentConfig(startOptions?.childId as string)?.persona).toBe(sanitize(displayed.prompt))
   })
 
   it('只向父会话注入花名册协议', () => {
@@ -1071,17 +1074,13 @@ describe('summon_expert', () => {
     await expect(list.execute({ division: 'en' })).resolves.toEqual({ divisions: [], total: 0 })
   })
 
-  it.each([
-    ['expert personas', { persona: false, toolFilter: true, depthLimit: true }, undefined, formatHost('zh', 'error.providerNoPersona', { provider: 'spawn' })],
-    ['toolFilter', { persona: true, toolFilter: false, depthLimit: true }, undefined, formatHost('zh', 'error.providerNoToolFilter', { provider: 'spawn' })],
-    ['maxDepth', { persona: true, toolFilter: true, depthLimit: false }, 1, formatHost('zh', 'error.providerNoMaxDepth', { provider: 'spawn' })],
-  ])('provider 缺少 %s 能力时给出明确错误', async (_capability, capabilities, maxDepth, message) => {
+  it('provider 缺少 depthLimit 深度限制能力时给出明确错误', async () => {
     const tools: unknown[] = []
     const ctx = {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
-        getProvider: () => ({ capabilities }),
-        start: async () => { throw new Error('must not start') },
+        getProvider: () => ({ capabilities: { agentOptions: true, agentPreset: true, outputSchema: true, depthLimit: false } }),
+        startActivation: async () => { throw new Error('must not start') },
       },
       systemPrompt: { section: () => undefined },
       on: () => () => undefined,
@@ -1092,12 +1091,12 @@ describe('summon_expert', () => {
       reflect: { provide: () => undefined },
     } as unknown as Context
 
-    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], ...(maxDepth === undefined ? {} : { maxDepth }) })
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'], maxDepth: 1 })
     const summon = tools.find((tool) => (tool as { name?: string }).name === 'summon_expert') as {
       execute: (args: unknown, exec: unknown) => Promise<unknown>
     }
 
-    await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow(message)
+    await expect(summon.execute({ expert: 'reviewer', task: 'review' }, { agent: {} })).rejects.toThrow(formatHost('zh', 'error.providerNoMaxDepth', { provider: 'spawn' }))
   })
 
   it('单条召唤拒绝空任务与超长任务，与批量上限一致', async () => {
@@ -1106,7 +1105,7 @@ describe('summon_expert', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
         getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
-        start: async () => { throw new Error('provider start reached') },
+        startActivation: async () => { throw new Error('provider start reached') },
       },
       systemPrompt: { section: () => undefined },
       on: () => () => undefined,
@@ -1134,7 +1133,7 @@ describe('summon_expert', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
         getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
-        start: async () => ({
+        startActivation: async () => ({
           result: Promise.resolve({ output: [{ type: 'text', text: 'partial result' }], stopReason: 'cancelled' }),
           dispose: async () => undefined,
         }),
@@ -2145,8 +2144,8 @@ describe('summon_experts', () => {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
         getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
-        start: async (_provider: string, options: { label?: string }) => {
-          if (options.label === 'Historian') {
+        startActivation: async (spec: { label?: string }) => {
+          if (spec.label === 'Historian') {
             return {
               result: Promise.resolve({ output: [{ type: 'text', text: 'partial' }], stopReason: 'cancelled' }),
               dispose: async () => undefined,
