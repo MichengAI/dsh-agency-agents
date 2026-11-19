@@ -308,7 +308,7 @@ describe("真实 Host 与 Remote 集成", () => {
       on: () => () => undefined,
       subagents: {
         getProvider: () => ({
-          capabilities: { persona: true, toolFilter: true, depthLimit: true },
+          capabilities: { agentOptions: true, agentPreset: true, outputSchema: true, depthLimit: true },
         }),
         startActivation: async (spec: any) => {
           starts.push(spec);

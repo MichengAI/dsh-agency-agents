@@ -822,7 +822,7 @@ describe('summon_expert', () => {
     const ctx = {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
-        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        getProvider: () => ({ capabilities: { agentOptions: true, agentPreset: true, outputSchema: true, depthLimit: true } }),
         startActivation: async () => {
           markPublished()
           return {
@@ -874,7 +874,7 @@ describe('summon_expert', () => {
     const ctx = {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
-        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        getProvider: () => ({ capabilities: { agentOptions: true, agentPreset: true, outputSchema: true, depthLimit: true } }),
         startActivation: async (spec: Record<string, unknown>) => {
           startOptions = spec
           return {
@@ -912,7 +912,7 @@ describe('summon_expert', () => {
     const ctx = {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
-        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        getProvider: () => ({ capabilities: { agentOptions: true, agentPreset: true, outputSchema: true, depthLimit: true } }),
         startActivation: async (spec: Record<string, unknown>) => {
           startOptions = spec
           return {
@@ -1104,7 +1104,7 @@ describe('summon_expert', () => {
     const ctx = {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
-        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        getProvider: () => ({ capabilities: { agentOptions: true, agentPreset: true, outputSchema: true, depthLimit: true } }),
         startActivation: async () => { throw new Error('provider start reached') },
       },
       systemPrompt: { section: () => undefined },
@@ -1132,7 +1132,7 @@ describe('summon_expert', () => {
     const ctx = {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
-        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        getProvider: () => ({ capabilities: { agentOptions: true, agentPreset: true, outputSchema: true, depthLimit: true } }),
         startActivation: async () => ({
           result: Promise.resolve({ output: [{ type: 'text', text: 'partial result' }], stopReason: 'cancelled' }),
           dispose: async () => undefined,
@@ -2143,7 +2143,7 @@ describe('summon_experts', () => {
     const ctx = {
       tools: { register: (tool: unknown) => tools.push(tool) },
       subagents: {
-        getProvider: () => ({ capabilities: { persona: true, toolFilter: true, depthLimit: true } }),
+        getProvider: () => ({ capabilities: { agentOptions: true, agentPreset: true, outputSchema: true, depthLimit: true } }),
         startActivation: async (spec: { label?: string }) => {
           if (spec.label === 'Historian') {
             return {

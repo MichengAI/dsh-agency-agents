@@ -75,7 +75,7 @@ describe('专家团宿主与远端集成', () => {
       on: () => () => undefined,
       subagents: {
         getProvider: () => ({
-          capabilities: { persona: true, toolFilter: true, depthLimit: true },
+          capabilities: { agentOptions: true, agentPreset: true, outputSchema: true, depthLimit: true },
         }),
         startActivation: async (spec: Record<string, unknown>) => {
           starts.push(spec)
@@ -586,6 +586,44 @@ describe('专家团宿主与远端集成', () => {
       quiet.mockRestore()
       expect(getSubagentConfig('child-fallback')?.persona).toBe('FALLBACK-PERSONA')
       expect(getSubagentConfig('child-fallback')?.toolFilter).toEqual({ deny: ['summon_expert'] })
+    } finally {
+      clearSubagentRegistryForTest()
+      await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
+    }
+  })
+
+  it('原生队友的 nativeTeammate 标记落盘保存并在重启后完整恢复', async () => {
+    const tempHome = await mkdtemp(join(tmpdir(), 'aag-reg-teammate-'))
+    try {
+      const ctx = { get: (name: string) => name === 'profileContext' ? { home: tempHome } : undefined } as unknown as Context
+      clearSubagentRegistryForTest()
+      recordSubagentConfig('teammate-1', {
+        slug: 'engineering-code-reviewer',
+        persona: 'PERSONA-REVIEWER',
+        toolFilter: { deny: ['summon_expert'] },
+        nativeTeammate: true,
+      }, ctx)
+      recordSubagentConfig('expert-1', {
+        slug: 'engineering-code-reviewer',
+        persona: 'PERSONA-EXPERT',
+        toolFilter: { deny: ['summon_expert'] },
+      }, ctx)
+      flushSubagentRegistrySync(ctx)
+
+      const hot = JSON.parse(await readFile(join(tempHome, 'agency-subagents.json'), 'utf8'))
+      expect(hot.children['teammate-1']?.nativeTeammate).toBe(true)
+      expect(hot.children['expert-1']?.nativeTeammate).toBeUndefined()
+
+      clearSubagentRegistryForTest()
+      initSubagentRegistry(ctx)
+
+      const restoredTeammate = getSubagentConfig('teammate-1')
+      expect(restoredTeammate?.nativeTeammate).toBe(true)
+      expect(restoredTeammate?.slug).toBe('engineering-code-reviewer')
+
+      const restoredExpert = getSubagentConfig('expert-1')
+      expect(restoredExpert?.nativeTeammate).toBeUndefined()
+      expect(restoredExpert?.slug).toBe('engineering-code-reviewer')
     } finally {
       clearSubagentRegistryForTest()
       await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
