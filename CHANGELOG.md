@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- **Localization:** Localize expert and expert team creation confirmations in English, Portuguese, and Spanish, alongside Chinese. Keep confirmation bound to the displayed draft and preserve user-authored content.
+
 ## [1.3.0] - 2026-11-19
 
 - **Full Compatibility with DeepSeek Harness `0.2.2-rc.5`**:

@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { TEAM_PROMPTS_EN } from './team-prompts-en.js'
-import { TEAM_PROMPTS } from './team-prompts.js'
+import { coordinatorTemplate, TEAM_PROMPTS } from './team-prompts.js'
 export { TEAM_PROMPTS }
 const text = (max: number) =>
   z
@@ -89,10 +88,10 @@ export const teamSnapshotSchema = z.object({
   nativeMembers: z.record(z.string(), z.string()).optional(),
 })
 export type TeamSnapshot = z.infer<typeof teamSnapshotSchema>
-export const effectiveCoordinator = (team: TeamInput, locale: 'zh' | 'en' = 'zh'): string =>
+export const effectiveCoordinator = (team: TeamInput, locale = 'zh'): string =>
   team.coordinatorMode === 'custom'
     ? team.coordinatorPrompt
-    : (locale === 'en' ? TEAM_PROMPTS_EN : TEAM_PROMPTS)[team.coordinatorTemplateId]
+    : coordinatorTemplate(team.coordinatorTemplateId, locale)
 const member = (expertSlug: string, duty: string, instructions: string) => ({
   expertSlug,
   duty,

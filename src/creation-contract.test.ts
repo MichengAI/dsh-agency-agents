@@ -55,7 +55,7 @@ describe('creation-contract', () => {
       })
       expect(result.ok).toBe(false)
       if (!result.ok) {
-        expect(result.error).toContain('专家分类「constructor」不存在')
+        expect(result.reason).toEqual({ code: 'unknownDivision', path: 'division', value: 'constructor' })
       }
     })
 
@@ -162,7 +162,7 @@ describe('creation-contract', () => {
       const result = validateTeamProposal(invalidProposal, mockKnownSlugs)
       expect(result.ok).toBe(false)
       if (!result.ok) {
-        expect(result.error).toContain('hallucinated-expert-slug-12345')
+        expect(result.reason).toMatchObject({ code: 'unknownMember', value: 'hallucinated-expert-slug-12345' })
       }
     })
 

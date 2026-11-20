@@ -1,4 +1,9 @@
+import { normalizeAgencyLocale, type AgencyLocale } from './agency-locale.js'
 import { TEAM_METHODS, MEMBER_HANDOFF } from './team-collaboration.js'
+import { TEAM_PROMPTS_EN } from './team-prompts-en.js'
+import { TEAM_PROMPT_ES } from './team-prompts-es.js'
+import { TEAM_PROMPT_PT } from './team-prompts-pt.js'
+import type { CoordinatorTemplateId } from './team-contract.js'
 
 /** 主理人公共规则与专属方法共用事实源；自定义正文不经过此函数。 */
 const COMMON = `你是当前专家团的主理人，由当前主会话承担。你的职责是组织已配置的专家完成用户目标，并对最终交付负责。成员名单、分工、团队目标、共同约束、交付要求和本次用户任务将作为独立信息提供。不要虚构缺失的成员或工具。
@@ -46,3 +51,36 @@ export const TEAM_PROMPTS = {
   data: template('data'),
   research: template('research'),
 } as const
+
+function localizedTemplates(catalog: typeof TEAM_PROMPT_PT | typeof TEAM_PROMPT_ES): Record<CoordinatorTemplateId, string> {
+  const [preparation, handoff, checklist, synthesis] = catalog.headings
+  const render = (id: CoordinatorTemplateId): string => {
+    const method = catalog.methods[id]
+    return [
+      catalog.common,
+      preparation, ...method.preparation,
+      handoff, ...catalog.memberOutput,
+      checklist, ...method.reviewChecklist,
+      synthesis, method.synthesis,
+    ].join('\n\n')
+  }
+  return {
+    general: render('general'),
+    product: render('product'),
+    technical: render('technical'),
+    content: render('content'),
+    data: render('data'),
+    research: render('research'),
+  }
+}
+
+const TEAM_PROMPT_CATALOGS = {
+  zh: TEAM_PROMPTS,
+  en: TEAM_PROMPTS_EN,
+  pt: localizedTemplates(TEAM_PROMPT_PT),
+  es: localizedTemplates(TEAM_PROMPT_ES),
+} satisfies Record<AgencyLocale, Record<CoordinatorTemplateId, string>>
+
+export function coordinatorTemplate(id: CoordinatorTemplateId, locale: string): string {
+  return TEAM_PROMPT_CATALOGS[normalizeAgencyLocale(locale)][id]
+}

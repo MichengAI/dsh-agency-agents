@@ -6,6 +6,17 @@ import {
 } from './creation-tools.js'
 
 describe('creation-tools', () => {
+  it('only reads the current session proposal, even if its replacement was deleted', () => {
+    const registry = createProposalRegistry()
+    const proposal = { kind: 'expert' as const, data: { name: 'Expert', description: 'Description', division: 'engineering', emoji: '🧩', prompt: 'Prompt', avatar: 0 } }
+    const old = registry.save(proposal, 'session-a')
+    const current = registry.save(proposal, 'session-a')
+    expect(registry.get(current)?.confirmed).not.toBe(true)
+    expect(registry.get(old)).toBeUndefined()
+    registry.delete(current)
+    expect(registry.get(old)).toBeUndefined()
+  })
+
   it('stores and retrieves pending proposals by id', () => {
     const registry = createProposalRegistry()
     const proposal = {
@@ -21,7 +32,7 @@ describe('creation-tools', () => {
     }
 
     const id = registry.save(proposal)
-    expect(id).toMatch(/^prop-[a-f0-9-]+$/)
+    expect(id).toMatch(/^prop-[A-Za-z0-9_-]{22}$/)
 
     const retrieved = registry.get(id)
     expect(retrieved).toEqual(proposal)
@@ -41,7 +52,7 @@ describe('creation-tools', () => {
 
     expect(md).toContain('Rust并发安全专家')
     expect(md).toContain('🦀')
-    expect(md).toContain('#dsh-agency:apply-draft?id=prop-1234')
+    expect(md).toContain('dsh-agency:apply-draft?id=prop-1234')
   })
 
   it('renders team proposal markdown with roster and action link', () => {
@@ -73,7 +84,7 @@ describe('creation-tools', () => {
     expect(md).toContain('微前端架构重构团')
     expect(md).toContain('engineering-frontend-developer')
     expect(md).toContain('负责前端工程落地')
-    expect(md).toContain('#dsh-agency:apply-draft?id=prop-5678')
+    expect(md).toContain('dsh-agency:apply-draft?id=prop-5678')
 
     const mdWithI18n = renderTeamProposalMarkdown(
       'prop-5678',

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import ToolRuntime, { defineTool, type ToolDefinition } from '@deepseek-ai/dsh-tools'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { createScope } from '@deepseek-ai/dsh-scope'
 import type { V2TeamService, V2SubagentTeamRuntime } from './team-engine.js'
@@ -21,6 +21,8 @@ import { apply, DEFAULT_DIVISIONS } from './index.js'
 import AgencyAgentsRemote from './remote.js'
 import { BUILTIN_TEAMS } from './team-contract.js'
 import { MemorySettings } from './settings-memory.js'
+import { apply as applyClient } from './client/index.js'
+import type { InputTriggerSource } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
 class TestSettings extends MemorySettings {
   protected async persist(
     _ns: SettingsNamespace,
@@ -43,6 +45,267 @@ function volatileConfig(settings: TestSettings) {
     enabledTeams: { get: () => read().enabledTeams ?? [] },
   }
 }
+describe('C2b registered team tools', () => {
+  const product = BUILTIN_TEAMS[0]
+  const productId = 'team-product'
+  const customId = 'team-custom-00000000-0000-4000-8000-000000000021'
+  const idLikeName = 'team-custom-00000000-0000-4000-8000-000000000022'
+  const ptName = 'Equipe de avaliação de produto'
+  const esName = 'Equipo de evaluación de producto'
+  const task = 'Compare a opção α e preserve 保存 {0}.'
+  const custom = {
+    ...product, id: customId, builtin: false, name: ptName,
+    description: 'Brief privado — no traducir 保存 {0}',
+    goal: 'Conservar a meta original.',
+    examples: ['Use apenas a minuta Α.'],
+    coordinatorMode: 'custom' as const, coordinatorPrompt: '  Minha regra: 保存 {0}\n保留  ',
+  }
+
+  function setup(preference: string, enabledTeams: string[], mode: 'subagent' | 'native' = 'subagent') {
+    const settings = new TestSettings(new Context())
+    settings.register('locale', value => value)
+    // Existing records may predate translations; do not go through today's save validation.
+    const agency = {
+      enabled: product.members.map(member => member.expertSlug),
+      enabledTeams,
+      customTeams: [custom, { ...custom, id: idLikeName, name: productId }],
+    }
+    let locale = preference
+    const restore = () => settings.restore({ 'agency-agents': agency, locale: { preference: locale } })
+    const changeLocale = (next: string) => { locale = next; restore() }
+    const disableTeam = () => { agency.enabledTeams = agency.enabledTeams.filter(id => id !== productId); restore() }
+    const disableMember = () => { agency.enabled = agency.enabled.slice(1); restore() }
+    restore()
+    const services = new Map<string, unknown>()
+    const tools = new Map<string, ToolDefinition>()
+    const promptSections = new Map<string, (context: unknown) => string>()
+    const standardStarts = vi.fn(async (_spec: { prompt: Array<{ text: string }> }) => ({
+      result: Promise.resolve({ output: [{ type: 'text', text: 'Resultado de teste' }], stopReason: 'completed' }),
+      dispose: async () => {},
+    }))
+    const nativeStarts = vi.fn<V2SubagentTeamRuntime['startActivation']>(async spec => ({
+      childId: spec.childId ?? 'test-child', name: spec.name ?? 'test-agent',
+    }))
+    const standard = { getProvider: () => ({ capabilities: { depthLimit: true } }), startActivation: standardStarts }
+    if (mode === 'native') {
+      const native: V2TeamService = {
+        isEnabled: () => true, createTask: async () => ({ id: '1', revision: 1 }),
+        getTask: () => ({}), listTasks: () => [], updateTask: async () => ({}),
+      }
+      const nativeSubagents: V2SubagentTeamRuntime = {
+        startActivation: nativeStarts, namesOf: () => ({ self: 'lead' }), rootOf: () => ({ id: 'test-root' }),
+        listDescendants: async () => [], sendMessage: async () => ({}), interrupt: () => {},
+      }
+      services.set('agentTeams', native)
+      services.set('subagents', nativeSubagents)
+    }
+    const ctx = {
+      settings, effect: () => () => {}, on: () => () => {},
+      inject: (_deps: unknown, callback: (ctx: unknown) => void) => callback(ctx),
+      reflect: { provide: (key: string, value: unknown) => services.set(key, value) },
+      get: (key: string) => services.get(key),
+      typert: { register: () => {} },
+      systemPrompt: { section: ({ name, text }: { name: string; text: (context: unknown) => string }) => promptSections.set(name, text) },
+      tools: { register: (tool: ToolDefinition) => tools.set(tool.name, tool) },
+      subagents: standard,
+    } as unknown as Context
+    apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS, ...volatileConfig(settings) } as never)
+    const agent = { ctx: { tools: { get: () => ({}) } } }
+    const invoke = async (name: string, team?: string) => {
+      const args = team === undefined ? {} : { team, ...(name === 'summon_expert_team' ? { task } : {}) }
+      const result = await tools.get(name)!.execute(args, { agent, signal: new AbortController().signal } as never) as { report: string }
+      return JSON.parse(result.report)
+    }
+    return { tools, invoke, changeLocale, standardStarts, nativeStarts, remote: new AgencyAgentsRemote(ctx), disableTeam, disableMember, promptSections }
+  }
+
+  async function withPortugueseComposer(remote: AgencyAgentsRemote, test: (source: InputTriggerSource) => Promise<void>) {
+    const ok = <T,>(value: T) => ({ ok: true as const, value })
+    const clientRemote = {
+      getTeams: async () => ok(await remote.getTeams()),
+      getCatalog: async () => ok(await remote.getCatalog()),
+    }
+    const sources = new Map<string, InputTriggerSource>()
+    const effects: Array<() => () => void> = []
+    const client = {
+      effect: (run: () => () => void, name: string) => {
+        // Run input-trigger registration, not unrelated browser-only effects.
+        if (name === 'agency-agents: @ menu sources') effects.push(run)
+      },
+      get: (key: string) => key === 'remote.agencyAgents' ? clientRemote : undefined,
+      remote: { $mount: async () => () => {} },
+      locale: { bind: () => (key: string) => key, getSnapshot: () => ({ active: 'pt-BR' }), subscribe: () => () => {} },
+      slots: { inject: () => {} },
+      sessions: {},
+      inputTriggers: { registerSource: (source: InputTriggerSource) => {
+        sources.set(source.name, source)
+        return () => sources.delete(source.name)
+      } },
+    }
+    vi.stubGlobal('fetch', async () => Response.json({}))
+    try {
+      const disposeClient = await applyClient(client as unknown as Parameters<typeof applyClient>[0])
+      const disposeEffects = effects.map(run => run())
+      try {
+        await test(sources.get('agency-agents:teams')!)
+      } finally {
+        disposeEffects.reverse().forEach(dispose => dispose())
+        disposeClient()
+      }
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  }
+
+  it.each([
+    ['en', 'get_expert_team', 'Product Review Team'],
+    ['en', 'summon_expert_team', 'Product Review Team'],
+    ['pt-BR', 'get_expert_team', ptName],
+    ['pt-BR', 'summon_expert_team', ptName],
+  ])('a PT composer selection preserves identity with %s host via %s', async (locale, tool, builtinName) => {
+    const { invoke, remote } = setup(locale, [productId, customId])
+    await withPortugueseComposer(remote, async source => {
+      const session = { sessionId: 'test-session' } as Parameters<typeof source.candidates>[0]
+      const candidates = await source.candidates(session, { query: 'produto' } as Parameters<typeof source.candidates>[1])
+      for (const [id, name] of [[productId, builtinName], [customId, ptName]]) {
+        const candidate = candidates.find(item => item.hint === id)!
+        const pick = source.onPick({ session, candidate } as Parameters<typeof source.onPick>[0])
+        expect(pick).toMatchObject({ insert: { source: source.name, ref: id, label: ptName, clipboardText: `@Equipe: ${ptName}\u00a0` } })
+        if (typeof pick !== 'object' || !('insert' in pick)) throw new Error('Expected a Team reference')
+        const ref = pick.insert.ref
+        expect(source.codec!.clipboardText(ref)).toBe(`@Equipe: ${ptName}\u00a0`)
+        const sent = await source.codec!.serialize(ref, new AbortController().signal)
+        // Simulate the selector available to the model, including the old name-only representation.
+        const stableId = /^<agency-team id="([^"]+)" \/>$/u.exec(sent.trim())?.[1]
+        const selector = stableId ?? sent.replace(/^@Equipe: /u, '').trim()
+        const result = await invoke(tool, selector)
+        expect(tool === 'get_expert_team' ? result : result.team).toMatchObject({ id, name })
+        expect(sent).toBe(`<agency-team id="${id}" />`)
+      }
+    })
+  })
+
+  it.each(['disableTeam', 'disableMember'] as const)('send-time Team serialization refuses an existing chip after %s', async stateChange => {
+    const host = setup('en', [productId])
+    await withPortugueseComposer(host.remote, async source => {
+      const codec = source.codec!
+      const signal = new AbortController().signal
+      await expect(codec.serialize(productId, signal)).resolves.toEqual(expect.any(String))
+      host[stateChange]()
+      expect(codec.clipboardText(productId)).toBe(`@Equipe: ${ptName}\u00a0`)
+      await expect(codec.serialize(productId, signal)).rejects.toThrow('A equipe está desativada ou tem membros indisponíveis. Corrija antes de enviar.')
+    })
+  })
+
+  it('does not serialize an invalid ID even if the Team snapshot lists it as enabled', async () => {
+    const { remote } = setup('en', [productId])
+    const snapshot = await remote.getTeams()
+    const invalidId = 'team-product"'
+    vi.spyOn(remote, 'getTeams').mockResolvedValue({
+      ...snapshot,
+      teams: snapshot.teams.map(team => team.id === productId ? { ...team, id: invalidId } : team),
+      enabledTeams: [invalidId],
+    })
+    await withPortugueseComposer(remote, async source => {
+      await expect(source.codec!.serialize(invalidId, new AbortController().signal)).rejects.toThrow()
+    })
+  })
+
+  it.each([
+    ['en', 'not the display name'], ['pt-BR', 'não o nome exibido'],
+    ['es-419', 'no el nombre visible'], ['zh', '不要使用显示名称'],
+  ])('the %s Team prompt directs the coordinator to the chip ID for both tools', (locale, localizedGuidance) => {
+    const { promptSections } = setup(locale, [productId])
+    const section = promptSections.get('agency:teams')!
+    expect(section({}).split('\n\n')[0]).toContain('<agency-team id="…" />')
+    const guidance = section({}).split('\n\n')[0]
+    for (const token of ['get_expert_team', 'summon_expert_team', localizedGuidance]) expect(guidance).toContain(token)
+    expect(section({ agent: { session: { header: { parentSession: 'parent' } } } })).toBe('')
+  })
+
+  it('reads current PT and ES descriptions and schemas from the same registered tools', () => {
+    const { tools, changeLocale } = setup('pt-BR', [productId])
+    const list = tools.get('list_expert_teams')!
+    const get = tools.get('get_expert_team')!
+    const summon = tools.get('summon_expert_team')!
+    const read = () => ({ list: list.description, get: get.parameters, summon: summon.parameters })
+    const pt = read()
+    changeLocale('es-419')
+    expect([pt, read()]).toMatchObject([
+      { list: expect.stringContaining('Liste as equipes ativadas'), get: { required: ['team'], properties: { team: { type: 'string', description: 'ID estável ou nome completo da equipe.' } } }, summon: { required: ['team', 'task'], properties: { task: { description: expect.stringContaining('No máximo 20000 caracteres') } } } },
+      { list: expect.stringContaining('Enumera los equipos activados'), get: { required: ['team'], properties: { team: { type: 'string', description: 'ID estable o nombre completo del equipo.' } } }, summon: { required: ['team', 'task'], properties: { task: { description: expect.stringContaining('Máximo de 20000 caracteres') } } } },
+    ])
+  })
+
+  it('lists localized enabled teams with stable IDs as the host preference switches', async () => {
+    const { invoke, changeLocale } = setup('pt-BR', [productId, customId])
+    for (const [locale, name] of [['pt-BR', ptName], ['es-419', esName], ['en', 'Product Review Team'], ['zh', '产品方案评审团']]) {
+      changeLocale(locale)
+      expect(await invoke('list_expert_teams')).toMatchObject([
+        { id: productId, name },
+        { id: customId, name: ptName, description: custom.description },
+      ])
+    }
+  })
+
+  it.each(['get_expert_team', 'summon_expert_team'])('%s resolves an enabled existing custom name ahead of a disabled translated builtin', async tool => {
+    const { invoke, standardStarts } = setup('pt-BR', [customId])
+    const result = await invoke(tool, ptName)
+    expect(tool === 'get_expert_team' ? result : result.team).toMatchObject({
+      id: customId, name: ptName, description: custom.description, goal: custom.goal,
+      examples: custom.examples, coordinatorPrompt: custom.coordinatorPrompt,
+    })
+    expect(result.coordinator).toBe(custom.coordinatorPrompt)
+    if (tool === 'summon_expert_team') {
+      expect(result.engine.mode).toBe('subagent')
+      expect(result.coverage).toMatchObject({ status: 'complete', total: 3 })
+      expect(standardStarts).toHaveBeenCalledTimes(3)
+      for (const [spec] of standardStarts.mock.calls) expect(spec.prompt[0].text).toContain(task)
+    }
+  })
+
+  it.each(['get_expert_team', 'summon_expert_team'])('%s rejects ambiguous enabled names and resolves both by stable ID', async tool => {
+    const { invoke, standardStarts } = setup('pt-BR', [productId, customId, idLikeName])
+    const ambiguous = await invoke(tool, ptName).catch((error: Error) => error)
+    expect(ambiguous).toBeInstanceOf(Error)
+    expect(ambiguous.message).toContain('Use um destes IDs estáveis')
+    expect(ambiguous.message).toContain(productId)
+    expect(ambiguous.message).toContain(customId)
+    expect(standardStarts).not.toHaveBeenCalled()
+    for (const id of [productId, customId]) {
+      const result = await invoke(tool, id)
+      expect(tool === 'get_expert_team' ? result : result.team).toMatchObject({ id, name: ptName })
+    }
+  })
+
+  it.each(['get_expert_team', 'summon_expert_team'])('%s does not fall through from a disabled exact ID to an enabled full name', async tool => {
+    const { invoke, standardStarts } = setup('es-419', [idLikeName])
+    await expect(invoke(tool, productId)).rejects.toThrow('El equipo está desactivado o no existe.')
+    expect(standardStarts).not.toHaveBeenCalled()
+  })
+
+  it('uses the locale captured at invocation even when the preference changes during the catalog read', async () => {
+    const { invoke, changeLocale } = setup('pt-BR', [productId])
+    const pending = invoke('get_expert_team', productId)
+    changeLocale('es-419')
+    expect(await pending).toMatchObject({ id: productId, name: ptName, instruction: expect.stringContaining('Depois de definir') })
+    expect(await invoke('get_expert_team', productId)).toMatchObject({ id: productId, name: esName, instruction: expect.stringContaining('Tras definir') })
+  })
+
+  it('dispatches a Spanish full name through native Team with a stable ID and original task text', async () => {
+    const { invoke, standardStarts, nativeStarts } = setup('es-419', [productId], 'native')
+    const result = await invoke('summon_expert_team', esName)
+    expect(result).toMatchObject({ team: { id: productId, name: esName }, engine: { mode: 'native' }, dispatch: { started: 3 } })
+    expect(result).not.toHaveProperty('coverage')
+    expect(standardStarts).not.toHaveBeenCalled()
+    expect(nativeStarts).toHaveBeenCalledTimes(3)
+    for (const [spec] of nativeStarts.mock.calls) {
+      expect(spec.prompt[0].text).toContain('Eres el especialista')
+      expect(spec.prompt[0].text).toContain(task)
+    }
+  })
+})
+
 describe('专家团宿主与远端集成', () => {
   it('五团名册、启用、主理人规则、三人委派、子会话隔离与停用', async () => {
     const settings = new TestSettings(new Context())

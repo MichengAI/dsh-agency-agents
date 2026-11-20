@@ -1,6 +1,6 @@
 import { adoptSharedRevision, catalogState, subscribeCatalog } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
-import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
+import { useTeamLocale, localizeTeam, localizedExperts, teamColon, teamMemberSeparator, teamErrorText } from './team-locale.js';
 import { LibraryCard } from './library-ui.js';
 import { Button, Input } from './plugin-ui.js';
 import { CategorySelect } from './category-select.js';
@@ -25,7 +25,7 @@ export async function unwrap<T>(promise: Promise<{
 }>): Promise<T> {
     const result = await promise;
     if (!result.ok)
-        throw new Error(result.error.message);
+        throw result.error instanceof Error ? result.error : Object.assign(new Error(result.error.message), result.error);
     return result.value;
 }
 export function TeamDetails(props: {
@@ -71,7 +71,7 @@ export function TeamDetails(props: {
           <IconBulb />{tx("团队帮你做")}</h3>
         <div className="agt-examples">
           {props.team.examples.map((example, i) => (<Button key={i} block disabled={!props.onSelect} style={{ height: 'auto', whiteSpace: 'normal', justifyContent: 'space-between' }} onClick={() => props.onSelect?.(example)}>
-              <span>“{example}”</span>
+              <span>{locale === 'es' ? '«' : '“'}{example}{locale === 'es' ? '»' : '”'}</span>
               <IconSend size={16}/>
             </Button>))}
         </div>
@@ -88,7 +88,7 @@ export function TeamDetails(props: {
               <strong>
                 {props.experts.find((e) => e.slug === member.expertSlug)
                 ?.name ?? tx("成员失效")}
-                ：
+                {teamColon(locale)}
               </strong>
               {member.instructions}
             </p>))}
@@ -210,7 +210,7 @@ export function TeamsPanel(props: {
         }
         catch (cause) {
             if (alive.current)
-                setError(cause instanceof Error ? tx(cause.message) : tx("加载失败。"));
+                setError(teamErrorText(locale, cause, "加载失败。"));
         }
     };
     const accept = (value: TeamSnapshot) => {
@@ -262,7 +262,7 @@ export function TeamsPanel(props: {
             setConfirm(null);
         }
         catch (cause) {
-            setError(cause instanceof Error ? tx(cause.message) : tx("操作失败。"));
+            setError(teamErrorText(locale, cause, "操作失败。"));
         }
         finally {
             setBusy(false);
@@ -339,7 +339,7 @@ export function TeamsPanel(props: {
           {error}
           <button type="button" onClick={() => void load()}>{tx("刷新重试")}</button>
         </div>)}
-      {snapshot?.engine?.state === 'disabled' && (<p className="aag-note" role="note">{tx(snapshot.engine.recommendation)}</p>)}
+      {snapshot?.engine?.state === 'disabled' && (<p className="aag-note" role="note">{snapshot.engine.recommendation && tx("建议在插件页开启 Agent Team 的 Host 与 Web 层，并重新加载会话；未开启也可继续使用普通专家团。")}</p>)}
       {notice && (<p role="status" className="aag-custom-notice">
           {notice}
         </p>)}
@@ -370,7 +370,7 @@ export function TeamsPanel(props: {
                 setFilter('all');
             }}>{tx("清除筛选")}</Button>
         </div>)}
-      {details && (<TeamDetails team={details} experts={experts} close={() => setDetails(null)} onCopy={() => copy(details)} onSelect={(example) => void change(details, 'select', example)} onEdit={!details.builtin
+      {details && (<TeamDetails team={details} experts={experts} close={() => setDetails(null)} onCopy={() => copy(localizeTeam(details, locale))} onSelect={(example) => void change(localizeTeam(details, locale), 'select', example)} onEdit={!details.builtin
                 ? () => {
                     setEditor({
                         value: details,
@@ -396,7 +396,7 @@ export function TeamsPanel(props: {
                 ? tx("删除“{0}”的配置，保留成员专家和历史会话。", [confirm.team.name]) : tx("同时启用：{0}。停用团队时不会停用成员。", [confirm.team.members
                     .filter((m) => !snapshot!.enabledExperts.includes(m.expertSlug))
                     .map((m) => experts.find((e) => e.slug === m.expertSlug)?.name ?? tx("失效成员"))
-                    .join(locale === 'en' ? ', ' : '、')])} label={confirm.action === 'delete' ? tx("确认删除") : tx("启用团队及所需成员")} danger={confirm.action === 'delete'} busy={busy} error={error} onCancel={() => setConfirm(null)} onConfirm={() => {
+                    .join(teamMemberSeparator(locale))])} label={confirm.action === 'delete' ? tx("确认删除") : tx("启用团队及所需成员")} danger={confirm.action === 'delete'} busy={busy} error={error} onCancel={() => setConfirm(null)} onConfirm={() => {
                 const current = confirm;
                 void change(current.team, current.action, current.example, true);
             }} />)}

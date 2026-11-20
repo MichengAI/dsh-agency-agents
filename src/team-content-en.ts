@@ -1,10 +1,15 @@
-import { BUILTIN_TEAMS, type ExpertTeam } from './team-contract.js'
+import { normalizeAgencyLocale } from './agency-locale.js'
+import { TEAM_CONSTRAINTS_ES, TEAM_CONTENT_ES } from './team-content-es.js'
+import { TEAM_CONSTRAINTS_PT, TEAM_CONTENT_PT } from './team-content-pt.js'
+import { BUILTIN_TEAMS, type CoordinatorTemplateId, type ExpertTeam } from './team-contract.js'
 
-/** 内置内容的英文版本与稳定标识分离；不得用于翻译用户自定义内容。 */
+/** Built-in display content is separate from IDs and is never applied to custom teams. */
 type Content = Pick<ExpertTeam, 'name' | 'description' | 'goal' | 'tags' | 'examples' | 'deliveryRequirements'> & {
   assignments: readonly (readonly [string, string])[]
 }
-export const TEAM_CONTENT_EN: Record<string, Content> = {
+type BuiltinTeamId = `team-${Exclude<CoordinatorTemplateId, 'general'>}`
+export type BuiltinTeamContent = Record<BuiltinTeamId, Content>
+export const TEAM_CONTENT_EN = {
   'team-product': {
     name: 'Product Review Team',
     description: 'Review requirements, compare options and plan iterations. Balance user value, usability and implementation cost to define scope, priorities and next steps.',
@@ -70,25 +75,39 @@ export const TEAM_CONTENT_EN: Record<string, Content> = {
       ['Alternatives and trade-offs', 'Compare alternatives against consistent criteria grounded in the decision goal. Explain conditions, benefits, costs, risks and reversibility. Recommend an option and evidence that could overturn it without invented precise scores. Hand off key assumptions for reconciliation with source and trend findings.'],
     ],
   },
+} satisfies BuiltinTeamContent
+
+const CONTENT = { en: TEAM_CONTENT_EN, pt: TEAM_CONTENT_PT, es: TEAM_CONTENT_ES }
+const CONSTRAINTS = {
+  en: 'Analyze and review only. State insufficient evidence explicitly; do not modify or publish without authorization.',
+  pt: TEAM_CONSTRAINTS_PT,
+  es: TEAM_CONSTRAINTS_ES,
 }
 
-export function localizeTeam(team: ExpertTeam, locale: 'zh' | 'en'): ExpertTeam {
-  if (locale === 'zh' && team.builtin && team.name === TEAM_CONTENT_EN[team.id]?.name) {
-    const original = BUILTIN_TEAMS.find(item => item.id === team.id)
-    if (original) return { ...team, name: original.name, description: original.description, goal: original.goal, constraints: original.constraints,
-      tags: original.tags, examples: original.examples, deliveryRequirements: original.deliveryRequirements,
+export function localizeTeam(team: ExpertTeam, locale: string): ExpertTeam {
+  if (!team.builtin || !Object.hasOwn(CONTENT.en, team.id)) return team
+  const original = BUILTIN_TEAMS.find(item => item.id === team.id)
+  if (!original) return team
+  const id = team.id as BuiltinTeamId
+  const active = normalizeAgencyLocale(locale)
+  if (active === 'zh') {
+    if (!Object.values(CONTENT).some(catalog => catalog[id].name === team.name)) return team
+    const { name, description, goal, constraints, tags, examples, deliveryRequirements } = original
+    return {
+      ...team, name, description, goal, constraints, tags, examples, deliveryRequirements,
       members: team.members.map(member => {
         const translated = original.members.find(item => item.expertSlug === member.expertSlug)
         return translated ? { ...member, duty: translated.duty, instructions: translated.instructions } : member
-      }) }
+      }),
+    }
   }
-  const content = locale === 'en' && team.builtin ? TEAM_CONTENT_EN[team.id] : undefined
-  if (!content) return team
-  const { assignments, ...fields } = content
-  const original = BUILTIN_TEAMS.find(item => item.id === team.id)
-  return { ...team, ...fields, constraints: 'Analyze and review only. State insufficient evidence explicitly; do not modify or publish without authorization.',
+  const { assignments, ...fields } = CONTENT[active][id]
+  return {
+    ...team, ...fields, constraints: CONSTRAINTS[active],
     members: team.members.map(member => {
-      const index = original?.members.findIndex(item => item.expertSlug === member.expertSlug) ?? -1
-      return { ...member, duty: assignments[index]?.[0] ?? member.duty, instructions: assignments[index]?.[1] ?? member.instructions }
-    }) }
+      const index = original.members.findIndex(item => item.expertSlug === member.expertSlug)
+      const assignment = assignments[index]
+      return assignment ? { ...member, duty: assignment[0], instructions: assignment[1] } : member
+    }),
+  }
 }

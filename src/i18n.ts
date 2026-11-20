@@ -6,10 +6,14 @@ import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import type { Context } from '@deepseek-ai/cordis'
 import { EN_DIVISION, ZH_DIVISION } from './names.js'
 import { settingsNamespaceCompat } from './settings-compat.js'
+import { normalizeAgencyLocale, personaLocale, type AgencyLocale } from './agency-locale.js'
+import { ES_DIVISION, PT_DIVISION, esHost, ptHost } from './host-locales.js'
+
+export type { AgencyLocale } from './agency-locale.js'
 
 const LOCALE_SETTINGS_NAMESPACE = settingsNamespaceCompat('locale')
 
-/** 与 DSH locale 插件一致的语言标识。 */
+/** Legacy EN/ZH consumer contract. New host workflows use AgencyLocale. */
 export type LocaleId = 'zh' | 'en'
 
 /** 简体中文宿主文案（key 集真相源）。 */
@@ -87,55 +91,57 @@ export const enHost = {
   'list.expertFailed': 'Failed: {error}',
 } satisfies Record<HostKey, string>
 
-/**
- * 将未知值收成 zh / en。只有显式中标语言（zh、zh-*）才走中文；未选择时按 DSH 约定回退 en，
- * 因为 locale.preference 缺失表示「交给浏览器」，宿主无权替用户假定中文。
- */
-export function resolveHostLocale(value: unknown): LocaleId {
-  if (typeof value !== 'string') return 'en'
-  const tag = value.trim().toLowerCase()
-  return tag === 'zh' || tag.startsWith('zh-') ? 'zh' : 'en'
-}
+/** Normalize explicit host preferences; omitted preferences belong to the browser. */
+export const resolveHostLocale = normalizeAgencyLocale
+
+const HOST_CATALOGS = { zh: zhHost, en: enHost, pt: ptHost, es: esHost } satisfies Record<AgencyLocale, Record<HostKey, string>>
 
 /** 按当前语言格式化宿主文案。 */
-export function formatHost(locale: LocaleId, key: HostKey, params?: Record<string, string | number>): string {
-  const dict = locale === 'en' ? enHost : zhHost
-  let text = dict[key]
-  if (params !== undefined) {
-    for (const [name, value] of Object.entries(params)) text = text.replaceAll('{' + name + '}', String(value))
-  }
-  return text
+export function formatHost(locale: AgencyLocale, key: HostKey, params?: Record<string, string | number>): string {
+  const text = HOST_CATALOGS[locale][key]
+  return params === undefined ? text : text.replace(/\{(\w+)\}/g, (token, name: string) =>
+    Object.hasOwn(params, name) ? String(params[name]) : token,
+  )
 }
 
 /** 从宿主 locale.preference 读取语言；未选择（缺失或读取异常）时按 DSH 约定回退 en。实时值在 describe() 里，get() 能直接取当前快照。 */
-export function readHostLocale(ctx: {
+interface HostLocaleContext {
   settings?: {
     get?: (ns: SettingsNamespace) => unknown
     describe?: () => ReadonlyArray<{ ns?: unknown; value?: unknown }>
   }
-}): LocaleId {
+}
+
+function preferenceOf(section: unknown): unknown {
+  return section !== null && typeof section === 'object' && 'preference' in section
+    ? section.preference
+    : undefined
+}
+
+export function readAgencyLocale(ctx: HostLocaleContext): AgencyLocale {
   try {
     // Cordis 对未注入服务的属性访问会直接抛错，optional chaining 拦不住。
     const settings = ctx.settings
     if (typeof settings?.get === 'function') {
-      const section = settings.get(LOCALE_SETTINGS_NAMESPACE) as { preference?: unknown } | undefined
-      if (section !== undefined) return resolveHostLocale(section.preference)
+      const section = settings.get(LOCALE_SETTINGS_NAMESPACE)
+      if (section !== undefined) return resolveHostLocale(preferenceOf(section))
     }
     const described = settings?.describe?.().find((item) => item.ns === LOCALE_SETTINGS_NAMESPACE)
-    const value = described?.value
-    const preference = value !== null && typeof value === 'object' && 'preference' in value
-      ? (value as { preference?: unknown }).preference
-      : undefined
-    return resolveHostLocale(preference)
+    return resolveHostLocale(preferenceOf(described?.value))
   } catch {
     // 读不到语言时同样不猜中文：DSH 的兜底语言是 en。
     return 'en'
   }
 }
 
+/** Adapter for callers whose catalogs only accept EN/ZH. */
+export function readHostLocale(ctx: HostLocaleContext): LocaleId {
+  return personaLocale(readAgencyLocale(ctx))
+}
+
 /** 工具 schema 只读语言快照；初始化、locale 激活和语言变更后才调用 describe。 */
-export function createHostLocaleReader(ctx: Context): () => LocaleId {
-  let current = readHostLocale(ctx)
+export function createAgencyLocaleReader(ctx: Context): () => AgencyLocale {
+  let current = readAgencyLocale(ctx)
   let scheduled = false
   let refreshing = false
   let disposed = false
@@ -148,7 +154,7 @@ export function createHostLocaleReader(ctx: Context): () => LocaleId {
       scheduled = false
       if (disposed) return
       refreshing = true
-      try { current = readHostLocale(ctx) } finally { refreshing = false }
+      try { current = readAgencyLocale(ctx) } finally { refreshing = false }
     })
   }
   ctx.on?.('settings/document-updated', (ns) => {
@@ -164,9 +170,9 @@ export function createHostLocaleReader(ctx: Context): () => LocaleId {
   return () => {
     // get() 能读到当前快照时直接用，不依赖设置事件是否已经发出。
     try {
-      const settings = ctx.settings as Parameters<typeof readHostLocale>[0]['settings']
-      const section = settings?.get?.(LOCALE_SETTINGS_NAMESPACE) as { preference?: unknown } | undefined
-      if (section !== undefined) current = resolveHostLocale(section.preference)
+      const settings = ctx.settings as HostLocaleContext['settings']
+      const section = settings?.get?.(LOCALE_SETTINGS_NAMESPACE)
+      if (section !== undefined) current = resolveHostLocale(preferenceOf(section))
     } catch {
       // 服务卸载或读取异常时保留最后一次有效语言。
     }
@@ -174,32 +180,40 @@ export function createHostLocaleReader(ctx: Context): () => LocaleId {
   }
 }
 
-/** 分区查询同时认 key、中文名和英文名。 */
+/** Snapshot adapter for callers whose catalogs only accept EN/ZH. */
+export function createHostLocaleReader(ctx: Context): () => LocaleId {
+  const read = createAgencyLocaleReader(ctx)
+  return () => personaLocale(read())
+}
+
+const DIVISIONS: Record<AgencyLocale, Readonly<Record<string, string>>> = {
+  zh: ZH_DIVISION, en: EN_DIVISION, pt: PT_DIVISION, es: ES_DIVISION,
+}
+
+function divisionLabel(labels: Readonly<Record<string, string>>, division: string): string | undefined {
+  return Object.hasOwn(labels, division) ? labels[division] : undefined
+}
+
+/** Match stable keys and any of the first-party display labels. */
 export function matchDivision(query: string, division: string): boolean {
   const q = query.trim().toLowerCase()
-  if (q.length === 0) return false
-  if (division.toLowerCase() === q) return true
-  const zh = ZH_DIVISION[division]
-  if (zh !== undefined && zh.toLowerCase() === q) return true
-  const en = EN_DIVISION[division]
-  if (en !== undefined && en.toLowerCase() === q) return true
-  return false
+  return q !== '' && (division.toLowerCase() === q
+    || Object.values(DIVISIONS).some(labels => divisionLabel(labels, division)?.toLowerCase() === q))
 }
 
 /** 按当前语言取分区显示名。 */
-export function localizedDivision(division: string, locale: LocaleId): string {
-  if (locale === 'en') return EN_DIVISION[division] ?? division
-  return ZH_DIVISION[division] ?? division
+export function localizedDivision(division: string, locale: AgencyLocale): string {
+  return divisionLabel(DIVISIONS[locale], division) ?? divisionLabel(EN_DIVISION, division) ?? division
 }
 
 /** 按当前语言取专家显示名。 */
-export function localizedExpertName(expert: { readonly name: string; readonly nameEn: string }, locale: LocaleId): string {
-  return locale === 'en' ? expert.nameEn : expert.name
+export function localizedExpertName(expert: { readonly name: string; readonly nameEn: string }, locale: AgencyLocale): string {
+  return personaLocale(locale) === 'en' ? expert.nameEn : expert.name
 }
 
-/** 按当前语言取专家简介；英文缺失时回退中文。 */
-export function localizedExpertDescription(expert: { readonly description: string; readonly descriptionEn?: string }, locale: LocaleId): string {
-  return locale === 'en' && expert.descriptionEn !== undefined && expert.descriptionEn !== ''
+/** EN/PT/ES use the English description if present, otherwise the original. */
+export function localizedExpertDescription(expert: { readonly description: string; readonly descriptionEn?: string }, locale: AgencyLocale): string {
+  return personaLocale(locale) === 'en' && expert.descriptionEn !== undefined && expert.descriptionEn !== ''
     ? expert.descriptionEn
     : expert.description
 }
@@ -212,7 +226,7 @@ export interface ExpertListGroup {
 
 /** 渲染 list_experts 的用户可见文本。 */
 export function renderExpertList(
-  locale: LocaleId,
+  locale: AgencyLocale,
   args: { readonly division?: unknown },
   value: { readonly divisions: readonly ExpertListGroup[]; readonly total: number },
 ): string {
@@ -239,7 +253,7 @@ export function renderExpertList(
 
 /** 渲染批量召唤结果：成功项输出答案，失败项输出本地化失败句。 */
 export function renderSummonResults(
-  locale: LocaleId,
+  locale: AgencyLocale,
   results: ReadonlyArray<{ readonly expert: string; readonly ok: boolean; readonly answer: string; readonly error?: string }>,
 ): string {
   return results.map((item) => {

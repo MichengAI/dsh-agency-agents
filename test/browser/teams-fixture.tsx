@@ -3,7 +3,8 @@ import { teamText } from '../../src/team-i18n'
 import { AgentsButton, AgencySettingsPanel, CSS } from '../../src/client/index'
 import { CUSTOM_EDITOR_CSS } from '../../src/client/custom-editor'
 import { confirmTeamAction } from '../../src/client/team-confirmation'
-import { zh, en } from '../../src/client/locales'
+import { zh, en, pt, es } from '../../src/client/locales'
+import { normalizeAgencyLocale, personaLocale } from '../../src/agency-locale'
 import { TeamsPanel, type TeamRemote } from '../../src/client/team-ui'
 import { BUILTIN_TEAMS, type TeamSnapshot } from '../../src/team-contract'
 import { ROSTER } from '../../src/client/roster'
@@ -22,9 +23,13 @@ const experts = ROSTER.map((e) => ({
   divisionZh: ZH_DIVISION[e.division] ?? e.division,
   custom: false,
 }))
-const translate = ((key: string, values?: Record<string, unknown>) => (((params.get('lang') === 'en' ? en : zh) as Record<string, string>)[key] ?? key).replace(/\{(\w+)\}/gu, (match, name: string) => values?.[name] === undefined ? match : String(values[name]))) as React.ComponentProps<typeof AgencySettingsPanel>['t']
 const params = new URLSearchParams(location.search)
-const activeLocale = () => params.get('lang') === 'en' ? 'en' as const : 'zh' as const
+const getTeamLocale = () => normalizeAgencyLocale(params.get('lang') ?? 'zh')
+const activeLocale = () => personaLocale(getTeamLocale())
+const catalogs = { zh, en, pt, es }
+const translate = ((key: string, values?: Record<string, unknown>) => ((catalogs[getTeamLocale()] as Record<string, string>)[key] ?? key).replace(/\{(\w+)\}/gu, (match, name: string) => values?.[name] === undefined ? match : String(values[name]))) as React.ComponentProps<typeof AgencySettingsPanel>['t']
+// Supply the locale input without bypassing the production TeamLocale providers.
+const teamLocaleProps = { getTeamLocale }
 let deleteFailure = params.has('deleteFailure')
 let snapshot: TeamSnapshot = {
   ...(params.has('teamDisabled') ? { engine: { state: 'disabled' as const, mode: 'subagent' as const, reason: teamText(activeLocale(), 'Agent Team 服务或当前会话工具尚未就绪。'), recommendation: teamText(activeLocale(), '建议在插件页开启 Agent Team 的 Host 与 Web 层，并重新加载会话；未开启也可继续使用普通专家团。') } } : {}),
@@ -178,7 +183,7 @@ export function TeamsFixture() {
         if (revision !== snapshot.revision) return rejectStale()
         snapshot = { ...snapshot, enabledExperts: [...enabled], revision: revision + 1 }
         return { ok: true, value: { enabled: [...snapshot.enabledExperts], revision: snapshot.revision } }
-      } : unsupported, getPrompt: sharedSettings ? async () => ({ ok: true, value: { prompt: customExpert.prompt } }) : unsupported }} getActive={activeLocale} t={translate} prepareTeamSelection={() => () => true} />
+      } : unsupported, getPrompt: sharedSettings ? async () => ({ ok: true, value: { prompt: customExpert.prompt } }) : unsupported }} getActive={activeLocale} {...teamLocaleProps} t={translate} prepareTeamSelection={() => () => true} />
     </main></div></div>
   </>
   if (params.has('menu'))
@@ -205,7 +210,7 @@ export function TeamsFixture() {
               setEnabled: unsupported,
               getPrompt: unsupported,
             }}
-            getActive={activeLocale}
+            getActive={activeLocale} {...teamLocaleProps}
             t={translate}
             prepareTeamSelection={() => (team, example) => {
               setSelected(team.name)

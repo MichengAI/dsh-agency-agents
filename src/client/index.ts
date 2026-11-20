@@ -10,8 +10,8 @@ import { TeamMenu } from './team-composer.js'
 import { TEAM_REFERENCE_SOURCE, insertTeamReference, teamReference } from './team-reference.js'
 import { TeamLocaleContext } from './team-locale.js'
 import { localizeTeam } from '../team-content-en.js'
-import { teamText } from '../team-i18n.js'
-import type { ExpertTeam } from '../team-contract.js'
+import { teamText, type TeamLocale } from '../team-i18n.js'
+import { BUILTIN_TEAMS, TEAM_CUSTOM_ID, type ExpertTeam } from '../team-contract.js'
 import { PromptDialog } from "./prompt-dialog.js";
 import React from 'react'
 import { createPortal } from 'react-dom'
@@ -49,6 +49,8 @@ import { installNativeTeamNames } from './native-team-names.js'
 import { AgentsNavIcon, installSettingsNavIcon } from './settings-nav-icon.js'
 import type { AgencyCatalogRemote, AgencyCreationRemote } from './remote.js'
 import type { StoredProposal } from '../creation-tools.js'
+import { normalizeAgencyLocale, type AgencyLocale } from '../agency-locale.js'
+import { isPositiveDraftLabel, parseDraftAction, parseDraftMarker, type DraftKind } from '../creation-locale.js'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -815,6 +817,7 @@ export interface ReferenceSessionListSnapshot {
 export interface ReferenceSessionAccess {
   readonly list?: {
     getSnapshot(): ReferenceSessionListSnapshot
+    subscribe?(listener: () => void): () => void
   }
   scope?(id: SessionId): CordisClientContext | undefined
   binding?(id: SessionId): { readonly ctx: CordisClientContext } | undefined
@@ -925,7 +928,20 @@ export function insertSelectedExpert(
   return expert !== undefined && insertReference?.(buildExpertReference(expert, active)) === true
 }
 
-type ButtonProps = PropsLocale<'agency'> & {
+type TeamLocaleProps = {
+  readonly getTeamLocale?: () => TeamLocale
+  readonly subscribeTeamLocale?: (listener: () => void) => () => void
+  readonly getActive: () => 'zh' | 'en'
+}
+
+const noTeamLocaleSubscription = () => () => {}
+
+function useTeamLocale(props: TeamLocaleProps): TeamLocale {
+  const getSnapshot = props.getTeamLocale ?? props.getActive
+  return React.useSyncExternalStore(props.subscribeTeamLocale ?? noTeamLocaleSubscription, getSnapshot, getSnapshot)
+}
+
+type ButtonProps = PropsLocale<'agency'> & TeamLocaleProps & {
   readonly remote: AgencyAgentsRemoteApi
   readonly onEnabledChange?: (enabled: ReadonlySet<string>) => void
   /** 由 session slot 的 inject 回调注入，永远绑定当前编辑器所属会话。 */
@@ -934,7 +950,6 @@ type ButtonProps = PropsLocale<'agency'> & {
   readonly prepareInsertion?: () => (reference: ReferenceInsert) => boolean
   /** 当前 locale 读取器（locale 切换后框架以新 t 重渲染，名称随之刷新）。 */
   readonly prepareTeamSelection?: () => (team: ExpertTeam, example?: string) => boolean | Promise<boolean>
-  readonly getActive: () => 'zh' | 'en'
 }
 
 export interface ExpertMenuLayoutCoords {
@@ -971,6 +986,7 @@ export function computeExpertMenuCoords(root: HTMLElement): ExpertMenuLayoutCoor
 }
 
 export function AgentsButton(props: ButtonProps): React.ReactElement {
+  const teamLocale = useTeamLocale(props)
   const [mode, setMode] = React.useState<'experts' | 'teams'>('experts')
   const [open, setOpen] = React.useState(false)
   const [insertError, setInsertError] = React.useState<string | null>(null)
@@ -1166,14 +1182,14 @@ export function AgentsButton(props: ButtonProps): React.ReactElement {
       insertError === null ? null : React.createElement('div', { className: 'aag-error', role: 'alert' }, insertError,
         React.createElement('button', { type: 'button', disabled: busy, onClick: () => load() }, props.t('btn.refresh'))),
       'getTeams' in props.remote ? React.createElement(SegmentedControl, {
-        id: 'aag-composer-mode', label: teamText(props.getActive(), '专家'), value: mode,
+        id: 'aag-composer-mode', label: teamText(teamLocale, '专家'), value: mode,
         options: [
-          { value: 'experts' as const, label: teamText(props.getActive(), '专家') },
-          { value: 'teams' as const, label: teamText(props.getActive(), '专家团') },
+          { value: 'experts' as const, label: teamText(teamLocale, '专家') },
+          { value: 'teams' as const, label: teamText(teamLocale, '专家团') },
         ],
         onChange: (value) => setMode(value === 'teams' ? 'teams' : 'experts'),
       }) : null,
-      mode === 'teams' && 'getTeams' in props.remote ? React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamMenu, { remote: props.remote as TeamRemote,
+      mode === 'teams' && 'getTeams' in props.remote ? React.createElement(TeamLocaleContext.Provider, { value: teamLocale }, React.createElement(TeamMenu, { remote: props.remote as TeamRemote,
         prepareSelect: props.prepareTeamSelection, onSelected: () => close(), onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) } })) :
       React.createElement(ExpertDiscovery, { experts: results, enabled: catalog.enabled, locale: props.getActive(), t: props.t, avatarSrc: menuAvatar,
         query, onQuery: setQuery, busy, hasMore: searching && matches.length > results.length, onPick: slug => { void pick(slug) } }))
@@ -1754,11 +1770,12 @@ function ExpertCardsSettings(props: PropsLocale<'agency'> & {
     }))
 }
 
-export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCardsSettings> & {
+export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCardsSettings> & TeamLocaleProps & {
   closeSettings?: () => void
   prepareTeamSelection(): (team: ExpertTeam, example?: string) => boolean | Promise<boolean>
 }) {
-  const tx = (key: string) => teamText(props.getActive(), key)
+  const teamLocale = useTeamLocale(props)
+  const tx = (key: string) => teamText(teamLocale, key)
   const [view, setView] = React.useState<'experts' | 'teams'>('experts')
   const [expertSummary, setExpertSummary] = React.useState({ total: 0, enabled: 0 })
   const [teamSummary, setTeamSummary] = React.useState({ total: 0, enabled: 0 })
@@ -1786,7 +1803,7 @@ export function AgencySettingsPanel(props: React.ComponentProps<typeof ExpertCar
         React.createElement('p', { className: 'aag-desc' }, props.t('settings.desc')))),
     React.createElement('div', { className: 'aag-library-navigation' }, navigation),
     React.createElement('div', { id: 'aag-library-panel-experts', hidden: view !== 'experts' }, React.createElement(ExpertCardsSettings, { ...props, closeSettings: props.closeSettings ?? (props as { close?: () => void }).close, sharedHeader: true, onSummary: setExpertSummary })),
-    React.createElement('div', { id: 'aag-library-panel-teams', hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: props.getActive() }, React.createElement(TeamsPanel, {
+    React.createElement('div', { id: 'aag-library-panel-teams', hidden: view !== 'teams' }, React.createElement(TeamLocaleContext.Provider, { value: teamLocale }, React.createElement(TeamsPanel, {
       remote: props.remote as TeamRemote, sharedHeader: true, onSummary: setTeamSummary, prepareSelect: props.prepareTeamSelection,
       closeSettings: props.closeSettings ?? (props as { close?: () => void }).close,
       onExpertsChanged: () => { void readEnabled(props.remote).then(value => props.onEnabledChange?.(value.enabled)) },
@@ -1808,101 +1825,139 @@ export async function withTimeout<T>(promise: Promise<T>, ms: number, errorMessa
   }
 }
 
-/** 判断元素是否为 Ask 弹窗中代表“立即打开编辑窗口”的单选选项元素（精准匹配，不含多选项容器） */
-export function isAskConfirmOptionElement(el: Element | null): boolean {
-  if (!el) return false
-  const target = el.closest('button, [data-option-row]')
-  if (!target) return false
+const ASK_CARD = '[data-question-key]'
+const ASK_RADIO = 'button[role="radio"]'
 
-  // 必须是选项行或按钮自身，排除包含全部选项的大卡片/容器
-  const text = (target.textContent ?? '').trim()
-  const ariaLabel = target.getAttribute('aria-label') ?? ''
-
-  // 避免命中包含“留在当前对话”的父级容器
-  if (text.includes('留在当前对话')) return false
-
-  return text.includes('立即打开编辑窗口') || ariaLabel.includes('立即打开编辑窗口')
+// The host groups Skip and Submit as sibling buttons; pager buttons have a third child.
+function isAskSubmitButton(button: HTMLButtonElement): boolean {
+  if (!button.closest('footer')) return false
+  const actions = Array.from(button.parentElement?.children ?? [])
+  return actions.length === 2 && actions[0]?.matches('button') === true && actions[1] === button
+    && !button.hasAttribute('aria-label') && !button.hasAttribute('aria-expanded')
 }
 
-/**
- * 判断是否在已被选中确认项的 Ask 卡片上点击了提交/确认动作。
- * 覆盖：
- * 1. 卡片底部的 Primary 提交/继续按钮
- * 2. 键盘回车或直接在确认选项上触发确认
- * 显式排除折叠/展开详细说明、最小化、关闭和跳过等辅助动作，避免多余拉取。
- */
-export function isAskConfirmSubmitAction(el: Element | null, pendingCards: WeakSet<Element>): boolean {
-  if (!el) return false
-  const card = el.closest('[data-question-key], [role="dialog"], section, div[class*="frame"]')
-  if (!card || !pendingCards.has(card)) return false
-
-  const button = el.closest('button')
-  if (!button) return false
-
-  // 排除折叠/展开详细说明小按钮（带有 aria-expanded 或相应文案）
-  if (typeof button.hasAttribute === 'function' && button.hasAttribute('aria-expanded')) return false
-
-  const label = (typeof button.getAttribute === 'function' ? (button.getAttribute('aria-label') ?? '') : '').toLowerCase()
-  const btnText = (button.textContent ?? '').trim().toLowerCase()
-
-  // 排除辅助动作：展开、收起、跳过、取消、关闭、最小化、微调
-  const isAuxiliary =
-    label.includes('expand') || label.includes('collapse') || label.includes('展开') || label.includes('收起') ||
-    label.includes('close') || label.includes('cancel') || label.includes('关闭') || label.includes('取消') ||
-    label.includes('minimize') || label.includes('最小化') ||
-    btnText.includes('跳过') || btnText.includes('取消') || btnText.includes('留在当前对话') ||
-    btnText.includes('展开') || btnText.includes('收起') || btnText.includes('skip') || btnText.includes('cancel')
-
-  if (isAuxiliary) return false
-  return true
-}
-
-let activeFetchInFlight = false
-
-/**
- * 在用户明确点击确认或触发创建时，受控单次/短线拉取最新草案并打开编辑窗口。
- * 彻底消除全局常驻 setInterval 轮询，避免同源 HTTP 连接耗尽。
- * 采用 withTimeout 竞速熔断，根除网络挂死导致的 activeFetchInFlight 永久锁死。
- */
-export async function triggerConfirmedProposalFetch(options: {
-  remote: AgencyAgentsRemoteApi
-  sessions: unknown
-  lastHandledTimestamp: number
-  onSuccess: (proposal: StoredProposal, timestamp: number) => void
+export async function fetchConfirmedDraft(options: {
+  read: () => Promise<RemoteResult<StoredProposal | null>>
+  isCurrent: () => boolean
+  sessionId: string
+  kind: DraftKind
   maxAttempts?: number
   delayMs?: number
   timeoutMs?: number
-}): Promise<boolean> {
-  if (activeFetchInFlight) return false
-  activeFetchInFlight = true
-
-  const maxAttempts = options.maxAttempts ?? 4
-  const delayMs = options.delayMs ?? 350
-  const timeoutMs = options.timeoutMs ?? 5000
-
-  try {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs * (attempt + 1)))
-      try {
-        const targetSessionId = resolveTargetSessionId(options.sessions as unknown as ReferenceSessionAccess)
-
-        // 采用 withTimeout 进行竞速熔断，防止底层网络未接 AbortController 导致永久挂起
-        const res = await withTimeout(
-          options.remote.getLatestProposal(options.lastHandledTimestamp, targetSessionId),
-          timeoutMs
-        )
-
-        if (res.ok && res.value && res.value.timestamp > options.lastHandledTimestamp) {
-          options.onSuccess(res.value.proposal, res.value.timestamp)
-          return true
-        }
-      } catch (err) {
-        console.warn?.('[agency-agents] 获取已确认草案失败：', err)
+}): Promise<StoredProposal | undefined> {
+  for (let attempt = 0; attempt < (options.maxAttempts ?? 4); attempt++) {
+    await new Promise(resolve => setTimeout(resolve, (options.delayMs ?? 200) * (attempt + 1)))
+    if (!options.isCurrent()) return
+    try {
+      const res = await withTimeout(options.read(), options.timeoutMs ?? 2000)
+      if (!options.isCurrent()) return
+      if (res.ok && res.value) {
+        const proposal = res.value
+        if (proposal.sessionId !== options.sessionId || proposal.kind !== options.kind) return
+        if (proposal.confirmed === true) return proposal
       }
+    } catch { /* A failed read is not confirmation. */ }
+  }
+}
+
+export function installDraftInteractions(options: {
+  remote: AgencyAgentsRemoteApi
+  getSessionId: () => string | undefined
+  subscribeSession?: (listener: () => void) => (() => void) | undefined
+  getLocale: () => AgencyLocale
+  t: TranslateNS<'agency'>,
+  onSaved?: (catalog?: CatalogSnapshot) => void,
+}): () => void {
+  const pending = new Set<string>()
+  const handled = new WeakSet<Element>()
+  const editors = new Map<string, () => void>()
+  let disposed = false
+  let generation = 0
+  let currentSession = options.getSessionId()
+  const closeEditors = () => { for (const close of editors.values()) close() }
+  const unsubscribe = options.subscribeSession?.(() => {
+    const next = options.getSessionId()
+    if (next === currentSession) return
+    currentSession = next
+    generation++
+    closeEditors()
+  })
+  const sessionGuard = (sessionId: string) => {
+    const started = generation
+    return () => !disposed && generation === started && options.getSessionId() === sessionId
+  }
+  const open = (id: string, proposal: StoredProposal, isCurrent: () => boolean, entry: 'manual' | 'confirmation') => {
+    if (editors.has(id) || !isCurrent()) return
+    const close = openGlobalDraftEditor({ proposal, remote: options.remote, locale: options.getLocale(), t: options.t,
+      isCurrent,
+      revalidate: async () => {
+        if (!isCurrent()) return false
+        const refreshed = await withTimeout(options.remote.getPendingProposal(id), 2000)
+        return isCurrent() && refreshed.ok && refreshed.value !== null
+          && refreshed.value.sessionId === proposal.sessionId && refreshed.value.kind === proposal.kind
+          && (entry === 'manual' || refreshed.value.confirmed === true)
+      },
+      onSaved: options.onSaved, onClose: () => { editors.delete(id) } })
+    editors.set(id, close)
+  }
+
+  const autoOpen = (button: HTMLButtonElement, keyboard: boolean) => {
+    const card = button.closest(ASK_CARD)
+    if (!card || handled.has(card) || button.disabled || (keyboard ? !button.matches(ASK_RADIO) : !isAskSubmitButton(button))) return
+    const selected = card.querySelectorAll(`${ASK_RADIO}[aria-checked="true"]:not(:disabled)`)
+    if (selected.length !== 1 || !isPositiveDraftLabel(selected[0]?.getAttribute('aria-label'))) return
+    const markers = Array.from(card.querySelectorAll('code')).flatMap(code => parseDraftMarker(code.textContent ?? '') ?? [])
+    if (markers.length !== 1) return
+    const marker = markers[0]!
+    const { id, kind } = marker
+    const sessionId = options.getSessionId()
+    if (!sessionId || pending.has(id) || editors.has(id)) return
+    pending.add(id)
+    const isCurrent = sessionGuard(sessionId)
+    void fetchConfirmedDraft({ read: () => options.remote.getPendingProposal(id), isCurrent, sessionId, kind })
+      .then(proposal => {
+        if (!proposal || !isCurrent()) return
+        handled.add(card)
+        open(id, proposal, isCurrent, 'confirmation')
+      }).finally(() => { pending.delete(id) })
+  }
+
+  const handleClick = (event: MouseEvent) => {
+    const target = event.target instanceof Element ? event.target : null
+    const href = target?.closest('a[href]')?.getAttribute('href')
+    if (href?.startsWith('dsh-agency:')) {
+      event.preventDefault()
+      event.stopPropagation()
+      if (event.type !== 'click' || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      const id = parseDraftAction(href)
+      const sessionId = options.getSessionId()
+      if (!id || !sessionId || pending.has(id) || editors.has(id)) return
+      pending.add(id)
+      const isCurrent = sessionGuard(sessionId)
+      // Deliberate preview-link clicks remain independent of the Ask confirmation.
+      void Promise.resolve().then(() => withTimeout(options.remote.getPendingProposal(id), 2000)).then(res => {
+        if (isCurrent() && res.ok && res.value?.sessionId === sessionId) open(id, res.value, isCurrent, 'manual')
+      }).catch(() => {}).finally(() => { pending.delete(id) })
+      return
     }
-    return false
-  } finally {
-    activeFetchInFlight = false
+    const button = target?.closest('button')
+    if (button) autoOpen(button, false)
+  }
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key !== 'Enter' || event.isComposing || event.repeat) return
+    const button = event.target instanceof Element ? event.target.closest('button') : null
+    if (button) autoOpen(button, true)
+  }
+  document.addEventListener('click', handleClick, true)
+  document.addEventListener('auxclick', handleClick, true)
+  document.addEventListener('keydown', handleKeyDown, true)
+  return () => {
+    disposed = true
+    unsubscribe?.()
+    closeEditors()
+    document.removeEventListener('click', handleClick, true)
+    document.removeEventListener('auxclick', handleClick, true)
+    document.removeEventListener('keydown', handleKeyDown, true)
   }
 }
 
@@ -1988,6 +2043,8 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   ctx.effect(() => ctx.locale.register(NS, { zh, en, ja, es, fr, de, ru, pt }), 'agency-agents: dictionaries')
   const t = ctx.locale.bind(NS)
   const getActive = (): 'zh' | 'en' => ctx.locale.getSnapshot().active === 'en' ? 'en' : 'zh'
+  const getTeamLocale = (): TeamLocale => normalizeAgencyLocale(ctx.locale.getSnapshot().active)
+  const teamLocaleProps = { getTeamLocale, subscribeTeamLocale: (listener: () => void) => ctx.locale.subscribe(listener) }
   installSettingsNavIcon(ctx)
 
   // 挂载本插件的 Typert Remote：host 端由 gateway 的 SRC 自动发现（@Remote
@@ -1995,7 +2052,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   // 获取；直接读取 ctx.remote.agencyAgents 会要求预先注入该服务并导致死锁。
   const disposeRemote = await ctx.remote.$mount(TYPERT_REMOTE)
   const remote = ctx.get('remote.agencyAgents') as AgencyAgentsRemoteApi | undefined
-  if (remote === undefined) throw new Error(teamText(getActive(), 'agency-agents Remote 挂载后不可用'))
+  if (remote === undefined) throw new Error(teamText(getTeamLocale(), 'agency-agents Remote 挂载后不可用'))
 
   const callApi = async (path: string, options?: RequestInit): Promise<any> => {
     const url = resolveApiUrl(path)
@@ -2030,6 +2087,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       },
       remote,
       getActive,
+      ...teamLocaleProps,
       getLocale: () => ctx.locale.getSnapshot().active,
       onEnabledChange: updateEnabledForMentions,
       prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
@@ -2038,6 +2096,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     injectProps: () => ({
       remote,
       getActive,
+      ...teamLocaleProps,
       getLocale: () => ctx.locale.getSnapshot().active,
       onEnabledChange: updateEnabledForMentions,
       prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
@@ -2078,10 +2137,11 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
         const expert = experts.find(item => item.slug === slug && !item.conflict)
         return expert ? [[identity, displayName(expert, active)] as const] : []
       }))
-      const teams = snapshot.teams.map(team => ({
-        names: [...new Set([team.name, localizeTeam(team, active).name])],
-        label: localizeTeam(team, active).name,
-      }))
+      const teamLocale = getTeamLocale()
+      const teams = snapshot.teams.map(team => {
+        const label = localizeTeam(team, teamLocale).name
+        return { names: [...new Set([team.name, label])], label }
+      })
       return { members, teams }
     }, error => console.warn('[agency-agents] 原生成员显示名读取失败：', error))
     const localeDispose = ctx.locale.subscribe(() => { void names.refresh() })
@@ -2111,12 +2171,13 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   const insertTeamTask = async (current: ReferenceInsertionTarget | undefined, team: ExpertTeam, example?: string, sessionId?: SessionId, span?: TokenSpan): Promise<boolean> => {
     if (!current) return false
     teamCache = [...teamCache.filter(item => item.id !== team.id), team]
+    const locale = getTeamLocale()
     const sessions = ctx.sessions as unknown as ReferenceSessionAccess
     const id = resolveTargetSessionId(sessions, sessionId)
     const actx = id === undefined ? undefined : sessions.scope?.(id) ?? sessions.binding?.(id)?.ctx
     return insertTeamReference({ state: current.state, insertReference: (ref, tokenSpan) => current.insertReference(ref, tokenSpan),
       insertText: (text, tokenSpan) => actx?.bail(actx, 'slash/input-insert-text', { text, span: tokenSpan }) === true,
-      notify: (level, text) => current.notify?.(level, text) }, team, example, span, getActive())
+      notify: (level, text) => current.notify?.(level, text) }, localizeTeam(team, locale), example, span, locale)
   }
   const bindExpertInsertion = (sessionId?: SessionId): {
     readonly insertReference: (reference: ReferenceInsert) => boolean
@@ -2162,6 +2223,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
           closeSettings: (props as { close?: () => void }).close,
           remote,
           getActive,
+          ...teamLocaleProps,
           onEnabledChange: updateEnabledForMentions,
           prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
         }),
@@ -2209,7 +2271,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       name: 'conversation.input.left', id: 'agency-agents', order: 0, locale: NS,
       ...({ inject: bindExpertInsertion } as Record<string, unknown>),
     },
-    (props) => React.createElement(AgentsButton, { ...props, remote, getActive, onEnabledChange: updateEnabledForMentions }),
+    (props) => React.createElement(AgentsButton, { ...props, remote, getActive, ...teamLocaleProps, onEnabledChange: updateEnabledForMentions }),
   ))
 
   ctx.slots.inject('conversation.hero.options', () => ctx.slots.register(
@@ -2225,7 +2287,8 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       const target = resolveTarget(sessionId as SessionId) ?? fallbackTarget
 
       const catalog = catalogState(remote)
-      const currentTeams = teamCache.length > 0 ? teamCache : (teamState(remote as TeamRemote)?.teams ?? [])
+      const teamLocale = getTeamLocale()
+      const currentTeams = (teamState(remote as TeamRemote)?.teams ?? teamCache).map(team => localizeTeam(team, teamLocale))
 
       return React.createElement(RecommendBar, {
         draft,
@@ -2272,7 +2335,8 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
 
       const target = resolveTarget(sessionId as SessionId) ?? fallbackTarget
       const catalog = catalogState(remote)
-      const currentTeams = teamCache.length > 0 ? teamCache : (teamState(remote as TeamRemote)?.teams ?? [])
+      const teamLocale = getTeamLocale()
+      const currentTeams = (teamState(remote as TeamRemote)?.teams ?? teamCache).map(team => localizeTeam(team, teamLocale))
 
       return React.createElement(RecommendBar, {
         draft,
@@ -2307,28 +2371,37 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       if (typeof teamRemote.getTeams === 'function') disposers.push(ctx.inputTriggers.registerSource({
         trigger: '@', name: TEAM_REFERENCE_SOURCE, order: 99,
         candidates: async (_session, request) => {
+          const locale = getTeamLocale()
           const cached = teamState(teamRemote)
           const snapshot = cached ?? await refreshTeams(teamRemote)
           if (cached) void refreshTeams(teamRemote).catch((error: unknown) => console.warn('[agency-agents] 专家团刷新失败：', error))
-          teamCache = snapshot.teams.map(team => localizeTeam(team, active))
-          return teamCache.filter(team => snapshot.enabledTeams.includes(team.id) && `${team.name} ${team.description}`.toLowerCase().includes(String(request.query ?? '').toLowerCase())).map(team => ({ name: `${team.name} · ${teamText(active, '专家团')}`, hint: team.id, section: teamText(active, '专家团') }))
+          teamCache = snapshot.teams
+          return teamCache.map(team => localizeTeam(team, locale)).filter(team => snapshot.enabledTeams.includes(team.id) && `${team.name} ${team.description}`.toLowerCase().includes(String(request.query ?? '').toLowerCase())).map(team => ({ name: `${team.name} · ${teamText(locale, '专家团')}`, hint: team.id, section: teamText(locale, '专家团') }))
         },
         onPick: pick => {
           const team = teamCache.find(team => team.id === pick.candidate.hint)
           if (!team) return undefined
           const target = resolveTarget(pick.session.sessionId)
-          if (!target) return { insert: teamReference(team, active) }
-          void insertTeamTask(target, team, undefined, pick.session.sessionId, pick.span).catch(error => target.notify?.('error', error instanceof Error ? error.message : teamText(active, '操作失败。')))
+          const locale = getTeamLocale()
+          if (!target) return { insert: teamReference(localizeTeam(team, locale), locale) }
+          void insertTeamTask(target, team, undefined, pick.session.sessionId, pick.span).catch(error => target.notify?.('error', error instanceof Error ? error.message : teamText(locale, '操作失败。')))
           return 'handled'
         },
         codec: {
-          clipboardText: id => teamText(active, '@专家团：{0}\u00a0', [teamCache.find(team => team.id === id)?.name ?? teamText(active, '已移除团队（请重新选择）')]),
+          clipboardText: id => {
+            const locale = getTeamLocale()
+            const team = (teamState(teamRemote)?.teams ?? teamCache).find(team => team.id === id)
+            return teamText(locale, '@专家团：{0}\u00a0', [team ? localizeTeam(team, locale).name : teamText(locale, '已移除团队（请重新选择）')])
+          },
           serialize: async id => {
+            const locale = getTeamLocale()
             const [snapshot, catalog] = await Promise.all([refreshTeams(teamRemote), unwrap(teamRemote.getCatalog())])
-            teamCache = snapshot.teams.map(team => localizeTeam(team, active))
+            teamCache = snapshot.teams
             const team = teamCache.find(team => team.id === id)
-            if (!team || !snapshot.enabledTeams.includes(id) || team.members.some(member => !catalog.enabled.includes(member.expertSlug) || !catalog.experts.some(e => e.slug === member.expertSlug && !e.conflict))) throw new Error(teamText(active, '团队已停用或成员失效，请修复后再发送。'))
-            return teamText(active, '@专家团：{0}\u00a0', [team.name])
+            if (!team || !snapshot.enabledTeams.includes(id) || team.members.some(member => !catalog.enabled.includes(member.expertSlug) || !catalog.experts.some(e => e.slug === member.expertSlug && !e.conflict))) throw new Error(teamText(locale, '团队已停用或成员失效，请修复后再发送。'))
+            const validId = team.builtin ? BUILTIN_TEAMS.some(builtin => builtin.id === team.id) : TEAM_CUSTOM_ID.test(team.id)
+            if (!validId) throw new Error(teamText(locale, '团队已停用或成员失效，请修复后再发送。'))
+            return `<agency-team id="${team.id}" />`
           },
         },
       }))
@@ -2412,98 +2485,17 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     }
   }, 'agency-agents: @ menu sources')
 
-  ctx.effect(() => {
-    let lastHandledTimestamp = Date.now() - 3000
-    const pendingConfirmCards = new WeakSet<Element>()
-
-    const handleAction = () => {
-      void triggerConfirmedProposalFetch({
-        remote,
-        sessions: ctx.sessions,
-        lastHandledTimestamp,
-        onSuccess: (proposal, timestamp) => {
-          lastHandledTimestamp = timestamp
-          openGlobalDraftEditor({
-            proposal,
-            remote,
-            locale: getActive(),
-            t: t as any,
-            onSaved: (savedCatalog) => {
-              if (savedCatalog) acceptCatalog(remote, savedCatalog)
-              void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
-            },
-          })
-        },
-      })
-    }
-
-    const handleClick = async (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null
-
-      // 1. 响应聊天消息中的 Markdown 动作链接：[点击在弹窗中核对并保存草案](#dsh-agency:apply-draft?id=...)
-      const link = target?.closest('a[href*="#dsh-agency:apply-draft"]') as HTMLAnchorElement | null
-      if (link) {
-        event.preventDefault()
-        event.stopPropagation()
-
-        try {
-          const url = new URL(link.href, window.location.href)
-          const proposalId = url.searchParams.get('id') ?? new URLSearchParams(url.hash.split('?')[1] ?? '').get('id')
-          if (!proposalId) return
-
-          const res = await remote.getPendingProposal(proposalId)
-          if (!res.ok || !res.value) {
-            console.warn('[agency-agents] 草案已过期或不存在：', proposalId)
-            return
-          }
-          const proposal = res.value
-
-          openGlobalDraftEditor({
-            proposal,
-            remote,
-            locale: getActive(),
-            t: t as any,
-            onSaved: (savedCatalog) => {
-              if (savedCatalog) acceptCatalog(remote, savedCatalog)
-              void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
-            },
-          })
-        } catch (err) {
-          console.error('[agency-agents] 打开草案弹窗失败：', err)
-        }
-        return
-      }
-
-      // 2. 捕获 ASK 卡片上的单选确认选项（更新待提交卡片，并作即选即提交兼容）
-      if (isAskConfirmOptionElement(target)) {
-        const card = target?.closest('[data-question-key], [role="dialog"], section, div[class*="frame"]')
-        if (card) pendingConfirmCards.add(card)
-        handleAction()
-        return
-      }
-
-      // 3. 捕获在已选定卡片上的提交动作（Primary 提交/继续按钮点击）
-      if (isAskConfirmSubmitAction(target, pendingConfirmCards)) {
-        handleAction()
-      }
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter') return
-      const target = event.target as HTMLElement | null
-      const card = target?.closest('[data-question-key], [role="dialog"], section, div[class*="frame"]')
-      if (card && pendingConfirmCards.has(card)) {
-        handleAction()
-      }
-    }
-
-    document.addEventListener('click', handleClick, true)
-    document.addEventListener('keydown', handleKeyDown, true)
-    return () => {
-      document.removeEventListener('click', handleClick, true)
-      document.removeEventListener('keydown', handleKeyDown, true)
-    }
-  }, 'agency-agents: draft interaction listener')
+  ctx.effect(() => installDraftInteractions({
+    remote,
+    getSessionId: () => resolveTargetSessionId(ctx.sessions as unknown as ReferenceSessionAccess),
+    subscribeSession: listener => (ctx.sessions as unknown as ReferenceSessionAccess).list?.subscribe?.(listener),
+    getLocale: () => normalizeAgencyLocale(ctx.locale.getSnapshot().active),
+    t,
+    onSaved: savedCatalog => {
+      if (savedCatalog) acceptCatalog(remote, savedCatalog)
+      void readEnabled(remote).then(value => updateEnabledForMentions(value.enabled))
+    },
+  }), 'agency-agents: draft interaction listener')
 
   return () => {
     sidebarController.destroy()

@@ -1,4 +1,6 @@
-import { teamText } from './team-i18n.js';
+import { teamText, type TeamLocale } from './team-i18n.js';
+import { personaLocale } from './agency-locale.js';
+import { PersonaError } from './persona-error.js';
 import type { ExpertSummary } from './expert-contract.js';
 import { localizeTeam } from './team-content-en.js';
 import { localizedExpertName, type LocaleId } from './i18n.js';
@@ -19,15 +21,17 @@ export async function executeTeam(args: {
     enabled: readonly string[];
     task: string;
     revision: number;
-    locale?: LocaleId;
+    locale?: TeamLocale;
     signal?: AbortSignal;
-    readPersona(expert: ExpertSummary): Promise<string>;
+    readPersona(expert: ExpertSummary, assetLocale: LocaleId): Promise<string>;
     run(member: TeamMemberRun): Promise<string>;
 }) {
-    const tx = (key: string, values?: readonly unknown[]) => teamText(args.locale ?? 'zh', key, values);
+    const locale = args.locale ?? 'zh';
+    const assetLocale = personaLocale(locale);
+    const tx = (key: string, values?: readonly unknown[]) => teamText(locale, key, values);
 
-    const team = structuredClone(teamSchema.parse(localizeTeam(args.team, args.locale ?? 'zh')));
-    const experts = structuredClone(args.experts).map(expert => ({ ...expert, name: localizedExpertName(expert, args.locale ?? 'zh') }));
+    const team = structuredClone(teamSchema.parse(localizeTeam(args.team, locale)));
+    const experts = structuredClone(args.experts);
     const task = args.task.trim();
     if (!task || Array.from(task).length > TEAM_TASK_MAX_CHARS)
         throw new Error(tx("团队任务必须为 1～{0} 字。请压缩为摘要（目标、约束和文件路径）后重试，不要粘贴源码。", [TEAM_TASK_MAX_CHARS]));
@@ -36,9 +40,9 @@ export async function executeTeam(args: {
         const expert = experts.find((e) => e.slug === member.expertSlug && !e.conflict);
         if (!expert || !args.enabled.includes(expert.slug))
             throw new Error(tx("团队成员不存在、冲突或已停用，请修复后重新召唤。"));
-        return { member, expert };
+        return { member, expert, name: expert.custom ? expert.name : localizedExpertName(expert, locale) };
     });
-    const collaboration = teamCollaboration(team, args.locale);
+    const collaboration = teamCollaboration(team, locale);
     const results: {
         expert: string;
         slug: string;
@@ -46,19 +50,19 @@ export async function executeTeam(args: {
         answer: string;
         error?: string;
     }[] = Array(selected.length);
-    const prepared = await Promise.all(selected.map(async ({ member, expert }, current) => {
+    const prepared = await Promise.all(selected.map(async ({ member, expert, name }, current) => {
         try {
-            const persona = await args.readPersona(expert);
+            const persona = await args.readPersona(expert, assetLocale);
             args.signal?.throwIfAborted();
             return {
                 slug: expert.slug,
-                name: expert.name,
+                name,
                 persona,
                 prompt: [
                     tx("专家团：{0}\n共同目标：{1}\n共同约束：{2}", [team.name, team.goal, team.constraints]),
                     tx("任务简报：\n{0}", [task]),
                     tx("共同交付要求：{0}", [team.deliveryRequirements]),
-                    tx("职责边界：\n{0}", [selected.map((peer) => `${peer.expert.name}（${peer.expert.slug}）：${peer.member.duty}`).join('\n')]),
+                    tx("职责边界：\n{0}", [selected.map((peer) => `${peer.name}${locale === 'zh' ? `（${peer.expert.slug}）：` : ` (${peer.expert.slug}): `}${peer.member.duty}`).join('\n')]),
                     tx("你的分工：{0}\n{1}", [member.duty, member.instructions]),
                     tx("本次为独立并行分析，不得假设已经收到其他成员的结果。需要交叉核验的事项交给主理人，不自行召唤其他专家或启动新一轮。"),
                     tx("回传格式：\n{0}", [collaboration.memberOutput.join('\n')]),
@@ -69,11 +73,13 @@ export async function executeTeam(args: {
         catch (cause) {
             args.signal?.throwIfAborted();
             results[current] = {
-                expert: expert.name,
+                expert: name,
                 slug: expert.slug,
                 ok: false,
                 answer: '',
-                error: cause instanceof Error ? cause.message : tx("身份读取失败"),
+                error: cause instanceof PersonaError
+                    ? new PersonaError(cause.code, locale).message
+                    : cause instanceof Error ? cause.message : tx("身份读取失败"),
             };
             return undefined;
         }
@@ -133,7 +139,7 @@ export async function executeTeam(args: {
     return {
         team,
         revision: args.revision,
-        coordinator: effectiveCoordinator(team, args.locale),
+        coordinator: effectiveCoordinator(team, locale),
         results,
         collaboration,
         coverage,

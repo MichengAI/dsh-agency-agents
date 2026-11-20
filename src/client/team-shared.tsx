@@ -1,4 +1,4 @@
-import { useTeamLocale } from './team-locale.js';
+import { localizeTeamExpert, useTeamLocale } from './team-locale.js';
 import { LibraryConfirm } from './library-ui.js';
 import { Modal } from './plugin-ui.js';
 import { useEscapeLayer } from './escape-layer.js';
@@ -92,7 +92,7 @@ export function MemberList({ team, experts, }: {
         return (<li key={member.expertSlug}>
           <Avatar expert={expert} size={40}/>
           <span>
-            <strong>{(locale === 'en' ? expert?.nameEn : expert?.name) ?? tx("成员已失效")}</strong>
+            <strong>{expert ? localizeTeamExpert(expert, locale).name : tx("成员已失效")}</strong>
             <small>{member.duty}</small>
           </span>
         </li>);

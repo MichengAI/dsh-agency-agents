@@ -6,7 +6,7 @@ import "@deepseek-ai/dsh-settings";
 declare const ZH_NAME: Readonly<Record<string, string>>;
 //#endregion
 //#region src/i18n.d.ts
-/** 与 DSH locale 插件一致的语言标识。 */
+/** Legacy EN/ZH consumer contract. New host workflows use AgencyLocale. */
 type LocaleId = 'zh' | 'en';
 //#endregion
 //#region src/index.d.ts

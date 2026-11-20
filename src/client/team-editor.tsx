@@ -1,4 +1,4 @@
-import { useTeamLocale, localizedExperts } from './team-locale.js';
+import { useTeamLocale, localizedExperts, teamDivisionName, teamColon, teamMemberSeparator, isStaleTeamRevision, teamErrorText } from './team-locale.js';
 import { LibraryEditorFooter } from './library-ui.js';
 import React from 'react';
 import { effectiveCoordinator, teamInputSchema, type TeamInput, type TeamSnapshot, } from '../team-contract.js';
@@ -6,7 +6,7 @@ import type { ExpertSummary } from '../expert-contract.js';
 import { Button, Input } from './plugin-ui.js';
 import { SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives';
 import { CategorySelect } from './category-select.js';
-import { EN_DIVISION, ZH_DIVISION } from '../names.js';
+import type { TeamLocale } from '../team-i18n.js';
 import { TeamDialog, TeamConfirm, Avatar, IconPlus, IconTrash, IconRefresh, IconSearch, } from './team-shared.js';
 import { TeamDetails } from './team-ui.js';
 import { filterTeamMemberCandidates, type TeamMemberPickerStatus } from './team-member-picker.js';
@@ -16,7 +16,7 @@ const PICKER_ROW = 72
 /** 只挂载可见行。一次渲染三百多位专家会把打开弹窗卡住。 */
 function MemberPicker(props: {
     experts: readonly ExpertSummary[]
-    locale: 'zh' | 'en'
+    locale: TeamLocale
     query: string
     source: 'all' | 'base' | 'custom'
     division: string
@@ -32,12 +32,12 @@ function MemberPicker(props: {
     onPick(expert: ExpertSummary): void
     close(): void
 }) {
-    const names = props.locale === 'en' ? EN_DIVISION : ZH_DIVISION
     const options = React.useMemo(() => {
         const values = [...new Set(props.experts.map((expert) => expert.division))]
-        values.sort((left, right) => (names[left] ?? left).localeCompare(names[right] ?? right, props.locale))
-        return [{ value: '', label: props.tx("全部分类") }, ...values.map((value) => ({ value, label: names[value] ?? value }))]
-    }, [props.experts, props.locale, names, props.tx])
+        const labels = values.map(value => ({ value, label: teamDivisionName(value, props.locale) }))
+        labels.sort((left, right) => left.label.localeCompare(right.label, props.locale))
+        return [{ value: '', label: props.tx("全部分类") }, ...labels]
+    }, [props.experts, props.locale, props.tx])
     const matches = filterTeamMemberCandidates(props.experts, {
         source: props.source,
         division: props.division,
@@ -98,7 +98,7 @@ function MemberPicker(props: {
             <Avatar expert={expert} size={40}/>
             <span>
               <strong>{expert.name}</strong>
-              <small>{names[expert.division] ?? expert.division} · {expert.description}</small>
+              <small>{teamDivisionName(expert.division, props.locale)} · {expert.description}</small>
             </span>
           </button>))}
         </div>}
@@ -195,9 +195,9 @@ export function TeamEditor(props: {
             await props.save(parsed.data, enabled, reviewedRevision);
         }
         catch (cause) {
-            const message = cause instanceof Error ? tx(cause.message) : tx("保存失败，请重试。");
-            setError(message);
-            if (/changed since it was read|其他窗口|another window|配置已更新|修订/iu.test(message)) {
+            const stale = isStaleTeamRevision(cause);
+            setError(teamErrorText(locale, cause, "保存失败，请重试。"));
+            if (stale) {
                 setNeedsReview(true);
                 setReview(null);
                 setConfirm(null);
@@ -380,7 +380,7 @@ export function TeamEditor(props: {
                 void props
                     .refresh()
                     .then(setReview)
-                    .catch((cause) => setError(cause instanceof Error ? tx(cause.message) : tx("刷新失败。")))
+                    .catch((cause) => setError(teamErrorText(locale, cause, "刷新失败。")))
                     .finally(() => setBusy(false));
             }}>{tx("读取最新配置")}</Button>
                 {review && (<>
@@ -397,7 +397,7 @@ export function TeamEditor(props: {
                         <p>{tx("交付要求：")}{latestTeam.deliveryRequirements}</p>
                         {latestTeam.members.map((member) => (<p key={member.expertSlug}>
                             {props.experts.find((expert) => expert.slug === member.expertSlug)?.name ?? tx("成员已失效")}
-                            ：{member.duty}。{member.instructions}
+                            {teamColon(locale)}{member.duty}{locale === 'zh' ? '。' : '. '}{member.instructions}
                           </p>))}
                         <Input.TextArea aria-label={tx("最新主理人提示词")} readOnly value={effectiveCoordinator(latestTeam, locale)} rows={8}/>
                       </>) : (<p>{tx("该专家团已被删除，保留草稿将另存为新团队。")}</p>)}
@@ -414,7 +414,7 @@ export function TeamEditor(props: {
       {confirm && (<TeamConfirm busy={busy} error={error} cancelLabel={confirm === 'discard' ? tx("继续编辑") : tx("取消")} title={confirm === 'discard'
                 ? tx("放弃未保存修改？") : confirm === 'restore'
                 ? tx("恢复团队模板？") : tx("启用团队成员")} description={confirm === 'enable'
-                ? tx("同时启用：{0}。停用团队时不会停用这些专家。", [missing.map((e) => e.name).join(locale === 'en' ? ', ' : '、')]) : confirm === 'restore'
+                ? tx("同时启用：{0}。停用团队时不会停用这些专家。", [missing.map((e) => e.name).join(teamMemberSeparator(locale))]) : confirm === 'restore'
                 ? tx("只恢复主理人规则，不修改成员分工、目标或交付要求。") : tx("未保存的表单改动将丢弃。")} label={confirm === 'discard'
                 ? tx("放弃修改") : confirm === 'restore'
                 ? tx("确认恢复") : tx("启用团队及所需成员")} danger={confirm !== 'enable'} onCancel={() => setConfirm(null)} onConfirm={() => {

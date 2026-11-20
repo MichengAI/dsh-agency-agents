@@ -29,7 +29,7 @@ describe('端到端真机时序回归测试 (E2E Creation Probe)', () => {
     expect(md1).toContain('### 🧩 专家草案预览：🦀 Rust 并发安全专家')
     expect(md1).toContain('* **所属分类**：工程')
     expect(md1).toContain('<summary>查看完整系统提示词（点击展开）</summary>')
-    expect(md1).toContain('请对我说「**确认**」，我将弹出确认卡片并为您唤起全量填好的编辑抽屉！')
+    expect(md1).toContain('满意后请说「**确认**」以显示确认卡片。')
 
     // 验证草案打磨期，客户端绝对不弹窗
     const t0 = Date.now() - 500
@@ -139,7 +139,7 @@ describe('端到端真机时序回归测试 (E2E Creation Probe)', () => {
     expect(teamMd).toContain('* 🕵️ **代码审查工程师**（`engineering-code-reviewer`）：代码质量与工程规范')
     expect(teamMd).toContain('* 🏛️ **软件架构师**（`engineering-software-architect`）：系统架构与解耦')
     expect(teamMd).toContain('* 🛡️ **安全工程师**（`security-security-engineer`）：安全漏洞排查')
-    expect(teamMd).toContain('请对我说「**确认**」，我将弹出确认卡片并为您唤起全量填好的编辑弹窗！')
+    expect(teamMd).toContain('满意后请说「**确认**」以显示确认卡片。')
 
     // 4. 模拟确认
     registry.confirmLatest(sessionTeam)

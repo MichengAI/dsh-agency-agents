@@ -66,11 +66,13 @@ Explicit `maxDepth` uses ordinary mode to preserve depth limits. Native dispatch
 
 ### Tool interfaces
 
+If enabled teams share a name in the current language, pass the stable ID returned by `list_expert_teams` to `get_expert_team` or `summon_expert_team`. Switching languages does not change team IDs or rename custom teams.
+
 Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_teams`, `get_expert_team`, and `summon_expert_team`. The main conversation reads the enabled team's rules and duties before delegating the complete task, then verifies and summarizes actual member results.
 
 ### Drafts, language, and data
 
-- System presets, member names, coordinator templates, UI, and runtime feedback support Chinese and English. Custom content remains unchanged, and language switches preserve unsaved drafts.
+- The expert and expert team creation workflows, including confirmation cards, follow the DSH language setting in Chinese, English, Portuguese, and Spanish. In these workflows, the Team member picker and stock persona prompts use English in Portuguese and Spanish until the stock profiles are translated. This does not change the language fallback of the general expert library. Changing the language does not rewrite custom content or unsaved drafts.
 - Confirm team replacement or example insertion. If the draft changes during confirmation, stop insertion and retain the new text, attachments, and references.
 - Team configuration lives in the host `agency-agents` settings namespace. Keep drafts on edit conflicts and review the latest configuration. Disabling or deleting teams does not disable experts or delete historical conversations.
 - Experts cannot summon further experts or automatically add analysis rounds. Cancellation prevents queued starts; completed results and failures are reported separately.
@@ -83,7 +85,7 @@ Create custom experts and teams directly through natural language in chat via th
 2. **In-Chat Structured Preview**: Specialized tools (`propose_custom_expert` / `propose_expert_team`) generate Markdown preview cards containing division categories, collapsed prompt blocks, and localized roster members with emojis, physically preventing disruptive popups during drafting;
 3. **Fuzzy Expert Slug Resolution**: When assembling teams, the model can specify Chinese names, English names, or short slugs (e.g. `code-reviewer`), which are automatically resolved to valid in-repo expert slugs without schema validation errors;
 4. **Interactive Ask Confirmation**: Once satisfied, the user replies \"confirm\" in chat. The agent triggers a native host **Ask interaction card** for two-step human confirmation;
-5. **Global Pre-filled Modal Launch**: After user submission, the full editor modal or drawer opens with all proposed fields pre-filled and inputs styled to 100% full container width for final human-in-the-loop review and saving;
+5. **Prefilled editor**: Submitting the positive option opens only the confirmed draft. Cancel or skip to keep the editor closed. You can also open the current draft deliberately from its preview link. Neither path saves the draft; review the form and choose **Save and enable**.
 6. **Session-Bound Concurrency**: Proposal states are strictly bound to `sessionId`, ensuring multiple concurrent sessions or windows never cross-trigger popups.
 
 ### Bulk Batch Actions
