@@ -1,6 +1,6 @@
 import { adoptSharedRevision, catalogState, subscribeCatalog } from './catalog.js';
 import { acceptTeams, refreshTeams, subscribeTeams, teamState } from './team-cache.js';
-import { useTeamLocale, localizeTeam, localizedExperts } from './team-locale.js';
+import { useTeamLocale, localizeTeam, localizedExperts, teamMemberSeparator, teamErrorText } from './team-locale.js';
 import React from 'react';
 import type { ExpertTeam, TeamSnapshot } from '../team-contract.js';
 import type { ExpertSummary } from '../expert-contract.js';
@@ -72,7 +72,7 @@ export function TeamMenu(props: {
         }
         catch (cause) {
             if (alive.current)
-                setError(cause instanceof Error ? tx(cause.message) : tx("专家团加载失败"));
+                setError(teamErrorText(locale, cause, "专家团加载失败"));
         }
     };
     const pick = async (team: ExpertTeam, example?: string, confirmed = false) => {
@@ -104,7 +104,7 @@ export function TeamMenu(props: {
         }
         catch (cause) {
             if (alive.current)
-                setError(cause instanceof Error ? tx(cause.message) : tx("选择失败。"));
+                setError(teamErrorText(locale, cause, "选择失败。"));
         }
         finally {
             if (alive.current)
@@ -140,7 +140,7 @@ export function TeamMenu(props: {
             {snapshot ? tx("搜索并启用一个专家团。") : tx("正在加载…")}
           </p>)}
       </div>
-      {detail && (<TeamDetails team={detail} experts={experts} close={() => setDetail(null)} onSelect={(example) => void pick(detail, example)}/>)}
+      {detail && (<TeamDetails team={detail} experts={experts} close={() => setDetail(null)} onSelect={(example) => void pick(localizeTeam(detail, locale), example)}/>)}
       {confirm && (<TeamConfirm title={tx("启用专家团")} label={tx("启用团队及所需成员")} onCancel={() => setConfirm(null)} onConfirm={() => {
                 const value = confirm;
                 setConfirm(null);
@@ -148,8 +148,8 @@ export function TeamMenu(props: {
             }}>
           <p>{tx("启用“")}{confirm.team.name}{tx("”及所需成员：")}{confirm.team.members
                 .map((m) => experts.find((e) => e.slug === m.expertSlug)?.name ?? tx("失效成员"))
-                .join(locale === 'en' ? ', ' : '、')}
-            。
+                .join(teamMemberSeparator(locale))}
+            {locale === 'zh' ? '。' : '.'}
           </p>
         </TeamConfirm>)}
     </div>);

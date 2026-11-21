@@ -5,13 +5,18 @@ import {
 import { teamInputSchema, type TeamInput } from './team-contract.js'
 import { ZH_DIVISION } from './names.js'
 
+export type DraftValidationReason =
+  | { code: 'notObject' }
+  | { code: 'unknownDivision' | 'unknownMember'; path: string; value: string }
+  | { code: 'invalidField'; path: string; issue: z.core.$ZodIssue | undefined }
+
 export type ExpertValidationResult =
   | { ok: true; value: z.output<typeof customExpertInputSchema> }
-  | { ok: false; error: string }
+  | { ok: false; reason: DraftValidationReason }
 
 export type TeamValidationResult =
   | { ok: true; value: TeamInput; memberReasons: Record<string, string> }
-  | { ok: false; error: string }
+  | { ok: false; reason: DraftValidationReason }
 
 /**
  * 校验模型生成的专家草案并规范化。
@@ -19,7 +24,7 @@ export type TeamValidationResult =
  */
 export function validateExpertProposal(input: unknown): ExpertValidationResult {
   if (typeof input !== 'object' || input === null) {
-    return { ok: false, error: '专家草案必须是对象结构。' }
+    return { ok: false, reason: { code: 'notObject' } }
   }
 
   const raw = { ...(input as Record<string, unknown>) }
@@ -28,15 +33,14 @@ export function validateExpertProposal(input: unknown): ExpertValidationResult {
 
   // 校验 division 是否属于有效内置分区
   if (typeof raw.division === 'string' && !Object.hasOwn(ZH_DIVISION, raw.division)) {
-    return { ok: false, error: `专家分类「${raw.division}」不存在。` }
+    return { ok: false, reason: { code: 'unknownDivision', path: 'division', value: raw.division } }
   }
 
-  const parsed = customExpertInputSchema.safeParse(raw)
+  const parsed = customExpertInputSchema.safeParse(raw, { reportInput: true })
   if (!parsed.success) {
     const issue = parsed.error.issues[0]
     const path = issue?.path.join('.') ?? ''
-    const msg = issue?.message ?? '校验未通过'
-    return { ok: false, error: `专家草案字段「${path}」不合法: ${msg}` }
+    return { ok: false, reason: { code: 'invalidField', path, issue } }
   }
 
   return { ok: true, value: parsed.data }
@@ -79,7 +83,7 @@ export function validateTeamProposal(
   availableExperts?: ReadonlySet<string> | readonly ExpertMatchCandidate[],
 ): TeamValidationResult {
   if (typeof input !== 'object' || input === null) {
-    return { ok: false, error: '专家团草案必须是对象结构。' }
+    return { ok: false, reason: { code: 'notObject' } }
   }
 
   const raw = { ...(input as Record<string, unknown>) }
@@ -111,24 +115,23 @@ export function validateTeamProposal(
     })
   }
 
-  const parsed = teamInputSchema.safeParse(raw)
+  const parsed = teamInputSchema.safeParse(raw, { reportInput: true })
   if (!parsed.success) {
     const issue = parsed.error.issues[0]
     const path = issue?.path.join('.') ?? ''
-    const msg = issue?.message ?? '校验未通过'
-    return { ok: false, error: `专家团草案字段「${path}」不合法: ${msg}` }
+    return { ok: false, reason: { code: 'invalidField', path, issue } }
   }
 
   const team = parsed.data
 
   // 严格核验成员 slug 是否存在于真实专家库中
-  if (candidates.length > 0) {
+  if (availableExperts !== undefined) {
     const validSlugs = new Set(candidates.map(c => c.slug))
-    for (const member of team.members) {
+    for (const [index, member] of team.members.entries()) {
       if (!validSlugs.has(member.expertSlug)) {
         return {
           ok: false,
-          error: `专家成员「${member.expertSlug}」不存在于当前专家库中。`,
+          reason: { code: 'unknownMember', path: `members.${index}.expertSlug`, value: member.expertSlug },
         }
       }
     }

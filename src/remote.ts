@@ -1,6 +1,6 @@
 import { AGENCY_TEAM_SERVICE, type AgencyTeamLibrary } from './team-library.js'
 import { nativeTeamMemberName } from './team-engine.js'
-import { teamText } from './team-i18n.js'
+import { teamText, type TeamLocale } from './team-i18n.js'
 import type { TeamInput, TeamSnapshot, TeamEngineStatus } from './team-contract.js'
 import type { Context } from '@deepseek-ai/cordis'
 import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
@@ -8,7 +8,9 @@ import type { TypertContribution } from '@deepseek-ai/dsh-typert-registry'
 import type {} from '@deepseek-ai/dsh-typert-registry'
 import { AGENCY_AGENTS_DESCRIPTORS } from './remote-contract.js'
 import { AGENCY_PERSONA_SERVICE, type AgencyPersonaSource } from './index.js'
-import { formatHost, readHostLocale } from './i18n.js'
+import { formatHost, readAgencyLocale } from './i18n.js'
+import { personaLocale } from './agency-locale.js'
+import { PersonaError } from './persona-error.js'
 import type { ProposalRegistry, StoredProposal, LatestProposal } from './creation-tools.js'
 import { settingsNamespaceCompat } from './settings-compat.js'
 import { AGENCY_LIBRARY_SERVICE, type AgencyExpertLibrary } from './expert-library.js'
@@ -18,14 +20,14 @@ export { readExpertPrompt, readLocalizedExpertPrompt } from './index.js'
 
 const AGENCY_SETTINGS_NAMESPACE = settingsNamespaceCompat('agency-agents')
 
-function personaSource(ctx: Context): AgencyPersonaSource {
+function personaSource(ctx: Context, locale: TeamLocale): AgencyPersonaSource {
   try {
     const source = ctx.get(AGENCY_PERSONA_SERVICE) as AgencyPersonaSource | undefined
     if (source !== undefined) return source
   } catch (cause: unknown) {
-    throw new Error(formatHost(readHostLocale(ctx), 'error.personaSourceUnavailable'), { cause })
+    throw new Error(formatHost(locale, 'error.personaSourceUnavailable'), { cause })
   }
-  throw new Error(formatHost(readHostLocale(ctx), 'error.personaSourceUnavailable'))
+  throw new Error(formatHost(locale, 'error.personaSourceUnavailable'))
 }
 
 /**
@@ -51,7 +53,7 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
 
   private teams(): AgencyTeamLibrary {
     const library = this.ctx.get(AGENCY_TEAM_SERVICE) as AgencyTeamLibrary | undefined
-    if (!library) throw new Error(teamText(readHostLocale(this.ctx), '专家团服务不可用，请重新加载插件。'))
+    if (!library) throw new Error(teamText(readAgencyLocale(this.ctx), '专家团服务不可用，请重新加载插件。'))
     return library
   }
   @Remote('getTeams')
@@ -70,7 +72,7 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
 
   private library(): AgencyExpertLibrary {
     const library = this.ctx.get(AGENCY_LIBRARY_SERVICE) as AgencyExpertLibrary | undefined
-    if (library === undefined) throw new Error(formatHost(readHostLocale(this.ctx), 'error.personaSourceUnavailable'))
+    if (library === undefined) throw new Error(formatHost(readAgencyLocale(this.ctx), 'error.personaSourceUnavailable'))
     return library
   }
 
@@ -123,7 +125,15 @@ export default class AgencyAgentsRemote extends TypertRemoteService {
   /** 按需读取一位专家的 persona 正文，避免将完整提示词随客户端名册预加载。 */
   @Remote('getPrompt')
   async getPrompt(slug: string, division: string): Promise<{ prompt: string }> {
-    return personaSource(this.ctx).getPrompt(slug, division, readHostLocale(this.ctx))
+    const locale = readAgencyLocale(this.ctx)
+    try {
+      return await personaSource(this.ctx, locale).getPrompt(slug, division, personaLocale(locale))
+    } catch (cause) {
+      if (cause instanceof PersonaError && locale !== personaLocale(locale)) {
+        throw new PersonaError(cause.code, locale, cause)
+      }
+      throw cause
+    }
   }
 
   /** 获取暂存的专家或专家团提案，用于前端弹窗回显。 */

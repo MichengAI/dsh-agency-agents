@@ -1,5 +1,14 @@
-import type { TeamInput } from './team-contract.js'
+import { normalizeAgencyLocale, type AgencyLocale } from './agency-locale.js'
+import type { CoordinatorTemplateId, TeamInput } from './team-contract.js'
 import { TEAM_METHODS_EN, MEMBER_HANDOFF_EN } from './team-collaboration-en.js'
+import { TEAM_METHODS_ES, MEMBER_HANDOFF_ES, TEAM_COLLABORATION_ES } from './team-collaboration-es.js'
+import { TEAM_METHODS_PT, MEMBER_HANDOFF_PT, TEAM_COLLABORATION_PT } from './team-collaboration-pt.js'
+
+export type CollaborationMethods = Record<CoordinatorTemplateId, {
+  preparation: readonly string[]
+  reviewChecklist: readonly string[]
+  synthesis: string
+}>
 
 /** 专属方法只定义业务输入与验收，不声明宿主不存在的工具或多轮能力。 */
 export const TEAM_METHODS = {
@@ -96,43 +105,40 @@ export const MEMBER_HANDOFF = [
   '交接给主理人：列出需与其他职责核对的具体问题、缺失资料和未覆盖内容；没有则明确说明。',
 ] as const
 
+const COLLABORATION = {
+  zh: {
+    methods: TEAM_METHODS, memberOutput: MEMBER_HANDOFF,
+    steps: ['主理人整理任务简报', '成员独立并行分析', '成员回传结论与依据', '主理人核验交接与分歧', '统一交付并说明覆盖范围'],
+    customReview: '按自定义主理人规则和本团交付要求核验，不套用旧团队专属模板。',
+    customSynthesis: '按自定义主理人规则及交付要求汇总。',
+  },
+  en: {
+    methods: TEAM_METHODS_EN, memberOutput: MEMBER_HANDOFF_EN,
+    steps: ['Coordinator prepares a task brief', 'Members analyze independently in parallel', 'Members return conclusions and evidence', 'Coordinator verifies handoffs and disagreements', 'Deliver one result with explicit coverage'],
+    customReview: 'Verify against the custom coordinator rules and deliverables; do not apply a previous team template.',
+    customSynthesis: 'Synthesize according to the custom coordinator rules and deliverables.',
+  },
+  pt: { methods: TEAM_METHODS_PT, memberOutput: MEMBER_HANDOFF_PT, ...TEAM_COLLABORATION_PT },
+  es: { methods: TEAM_METHODS_ES, memberOutput: MEMBER_HANDOFF_ES, ...TEAM_COLLABORATION_ES },
+} satisfies Record<AgencyLocale, {
+  methods: CollaborationMethods
+  memberOutput: readonly string[]
+  steps: readonly string[]
+  customReview: string
+  customSynthesis: string
+}>
+
 /** 准备与交接规范既用于委派，也返回给主会话；自定义模式不暗中叠加专属模板。 */
-export function teamCollaboration(team: TeamInput, locale: 'zh' | 'en' = 'zh') {
-  if (locale === 'en') {
-    const method = TEAM_METHODS_EN[team.coordinatorMode === 'custom' ? 'general' : team.coordinatorTemplateId]
-    return {
-      steps: ['Coordinator prepares a task brief', 'Members analyze independently in parallel', 'Members return conclusions and evidence', 'Coordinator verifies handoffs and disagreements', 'Deliver one result with explicit coverage'],
-      preparation: [...method.preparation], memberOutput: [...MEMBER_HANDOFF_EN],
-      reviewChecklist: team.coordinatorMode === 'custom' ? ['Verify against the custom coordinator rules and deliverables; do not apply a previous team template.', ...method.reviewChecklist] : [...method.reviewChecklist],
-      synthesis: team.coordinatorMode === 'custom' ? 'Synthesize according to the custom coordinator rules and deliverables.' : method.synthesis,
-      deliveryRequirements: team.deliveryRequirements,
-    }
-  }
-  const method =
-    TEAM_METHODS[
-      team.coordinatorMode === 'custom' ? 'general' : team.coordinatorTemplateId
-    ]
+export function teamCollaboration(team: TeamInput, locale = 'zh') {
+  const catalog = COLLABORATION[normalizeAgencyLocale(locale)]
+  const custom = team.coordinatorMode === 'custom'
+  const method = catalog.methods[custom ? 'general' : team.coordinatorTemplateId]
   return {
-    steps: [
-      '主理人整理任务简报',
-      '成员独立并行分析',
-      '成员回传结论与依据',
-      '主理人核验交接与分歧',
-      '统一交付并说明覆盖范围',
-    ],
+    steps: [...catalog.steps],
     preparation: [...method.preparation],
-    memberOutput: [...MEMBER_HANDOFF],
-    reviewChecklist:
-      team.coordinatorMode === 'custom'
-        ? [
-            '按自定义主理人规则和本团交付要求核验，不套用旧团队专属模板。',
-            ...TEAM_METHODS.general.reviewChecklist,
-          ]
-        : [...method.reviewChecklist],
-    synthesis:
-      team.coordinatorMode === 'custom'
-        ? '按自定义主理人规则及交付要求汇总。'
-        : method.synthesis,
+    memberOutput: [...catalog.memberOutput],
+    reviewChecklist: custom ? [catalog.customReview, ...method.reviewChecklist] : [...method.reviewChecklist],
+    synthesis: custom ? catalog.customSynthesis : method.synthesis,
     deliveryRequirements: team.deliveryRequirements,
   }
 }

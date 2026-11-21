@@ -1,13 +1,14 @@
 import { z } from 'zod'
 import { customExpertInputSchema, type CustomExpertInput } from './expert-contract.js'
 import { teamInputSchema, type TeamInput } from './team-contract.js'
-import { ZH_DIVISION } from './names.js'
+import type { AgencyLocale } from './agency-locale.js'
+import { ZH_DIVISION, EN_DIVISION } from './names.js'
+import { ES_DIVISION, PT_DIVISION } from './host-locales.js'
+import { draftActionLink, draftCopy } from './creation-locale.js'
 
 function generateProposalId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `prop-${crypto.randomUUID()}`
-  }
-  return `prop-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16))
+  return `prop-${btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/u, '')}`
 }
 
 export const storedProposalItemSchema = z.union([
@@ -45,6 +46,7 @@ export interface ProposalRegistry {
   getLatest(afterTimestamp: number, sessionId?: string): LatestProposal
   getLatestConfirmed(afterTimestamp: number, sessionId?: string): LatestProposal
   confirmLatest(sessionId?: string): LatestProposal
+  confirm(id: string, sessionId: string): boolean
 }
 
 interface ProposalEntry {
@@ -52,6 +54,7 @@ interface ProposalEntry {
   readonly proposal: StoredProposal
   timestamp: number
   expiresAt: number
+  superseded?: true
 }
 
 export function createProposalRegistry(): ProposalRegistry {
@@ -68,8 +71,6 @@ export function createProposalRegistry(): ProposalRegistry {
   }
 
   const matchSession = (entry: ProposalEntry, sessionId?: string): boolean => {
-    if (!sessionId) return true
-    if (!entry.proposal.sessionId) return true
     return entry.proposal.sessionId === sessionId
   }
 
@@ -78,15 +79,21 @@ export function createProposalRegistry(): ProposalRegistry {
       cleanup()
       const id = generateProposalId()
       const now = Date.now()
-      if (sessionId && !proposal.sessionId) {
-        proposal.sessionId = sessionId
+      if (sessionId) {
+        for (const entry of store.values()) {
+          if (matchSession(entry, sessionId)) {
+            entry.superseded = true
+            entry.proposal.confirmed = false
+          }
+        }
       }
-      store.set(id, { id, proposal, timestamp: now, expiresAt: now + TTL_MS })
+      store.set(id, { id, proposal: { ...proposal, ...(sessionId ? { sessionId } : {}) }, timestamp: now, expiresAt: now + TTL_MS })
       return id
     },
     get(id: string): StoredProposal | undefined {
       cleanup()
-      return store.get(id)?.proposal
+      const entry = store.get(id)
+      return entry?.superseded ? undefined : entry?.proposal
     },
     delete(id: string): boolean {
       return store.delete(id)
@@ -95,7 +102,7 @@ export function createProposalRegistry(): ProposalRegistry {
       cleanup()
       let best: ProposalEntry | null = null
       for (const entry of store.values()) {
-        if (entry.timestamp > afterTimestamp && matchSession(entry, sessionId)) {
+        if (!entry.superseded && entry.timestamp > afterTimestamp && matchSession(entry, sessionId)) {
           if (!best || entry.timestamp >= best.timestamp) {
             best = entry
           }
@@ -115,11 +122,17 @@ export function createProposalRegistry(): ProposalRegistry {
       }
       return best ? { id: best.id, proposal: best.proposal, timestamp: best.timestamp } : null
     },
+    confirm(id: string, sessionId: string): boolean {
+      const latest = this.getLatest(0, sessionId)
+      if (!latest || latest.id !== id || latest.proposal.confirmed === true) return false
+      latest.proposal.confirmed = true
+      return true
+    },
     confirmLatest(sessionId?: string): LatestProposal {
       cleanup()
       let best: ProposalEntry | null = null
       for (const entry of store.values()) {
-        if (matchSession(entry, sessionId)) {
+        if (!entry.superseded && matchSession(entry, sessionId)) {
           if (!best || entry.timestamp >= best.timestamp) {
             best = entry
           }
@@ -134,24 +147,27 @@ export function createProposalRegistry(): ProposalRegistry {
   }
 }
 
-export function renderExpertProposalMarkdown(id: string, expert: CustomExpertInput): string {
-  const divisionName = ZH_DIVISION[expert.division] ?? expert.division
+export function renderExpertProposalMarkdown(id: string, expert: CustomExpertInput, locale: AgencyLocale = 'zh'): string {
+  const copy = draftCopy(locale)
+  const labels: Readonly<Record<string, string>> = { zh: ZH_DIVISION, en: EN_DIVISION, pt: PT_DIVISION, es: ES_DIVISION }[locale]
+  const divisionName = Object.hasOwn(labels, expert.division) ? labels[expert.division] : expert.division
+  const colon = locale === 'zh' ? '：' : ': '
   return [
-    `### 🧩 专家草案预览：${expert.emoji} ${expert.name}`,
-    `* **所属分类**：${divisionName}`,
-    `* **一句话简介**：${expert.description}`,
+    `### 🧩 ${copy.expertPreview}${colon}${expert.emoji} ${expert.name}`,
+    `* **${copy.division}**${colon}${divisionName}`,
+    `* **${copy.summary}**${colon}${expert.description}`,
     '',
     '<details>',
-    '<summary>查看完整系统提示词（点击展开）</summary>',
+    `<summary>${copy.prompt}</summary>`,
     '',
     '```markdown',
     expert.prompt,
     '```',
     '</details>',
     '',
-    `👉 **[点击直接在弹窗中核对并保存草案](#dsh-agency:apply-draft?id=${id})**`,
+    `👉 **[${copy.previewLink}](${draftActionLink(id)})**`,
     '',
-    '> 💬 **这是专家草案预览**。你可以仔细阅读核对：如果需要修改（如调整名字、增删提示词规则），请直接在对话中告诉我；如果你觉得满意，请对我说「**确认**」，我将弹出确认卡片并为您唤起全量填好的编辑抽屉！',
+    `> 💬 ${copy.previewHelp}`,
   ].join('\n')
 }
 
@@ -165,30 +181,33 @@ export function renderTeamProposalMarkdown(
   team: TeamInput,
   reasons: Record<string, string> = {},
   expertMap: Record<string, LocalizedExpertInfo | string> = {},
+  locale: AgencyLocale = 'zh',
 ): string {
+  const copy = draftCopy(locale)
+  const [left, right, colon] = locale === 'zh' ? ['（', '）', '：'] : [' (', ')', ': ']
   const tagsStr = team.tags.length > 0 ? ` [${team.tags.join(' / ')}]` : ''
   const membersList = team.members
     .map(m => {
       const info = expertMap[m.expertSlug]
       const name = typeof info === 'object' ? info.name : typeof info === 'string' ? info : m.expertSlug
       const emoji = typeof info === 'object' && info.emoji ? `${info.emoji} ` : ''
-      const reason = reasons[m.expertSlug] ? `（*入选理由*：${reasons[m.expertSlug]}）` : ''
-      return `* ${emoji}**${name}**（\`${m.expertSlug}\`）：${m.duty}${reason}\n  *分工*：${m.instructions}`
+      const reason = reasons[m.expertSlug] ? `${left}*${copy.reason}*${colon}${reasons[m.expertSlug]}${right}` : ''
+      return `* ${emoji}**${name}**${left}\`${m.expertSlug}\`${right}${colon}${m.duty}${reason}\n  *${copy.assignment}*${colon}${m.instructions}`
     })
     .join('\n')
 
   return [
-    `### 👥 专家团队草案预览：${team.name}${tagsStr}`,
-    `* **定位简介**：${team.description}`,
-    `* **团队目标**：${team.goal}`,
-    `* **交付要求**：${team.deliveryRequirements}`,
-    ...(team.constraints ? [`* **通用约束**：${team.constraints}`] : []),
+    `### 👥 ${copy.teamPreview}${colon}${team.name}${tagsStr}`,
+    `* **${copy.description}**${colon}${team.description}`,
+    `* **${copy.goal}**${colon}${team.goal}`,
+    `* **${copy.delivery}**${colon}${team.deliveryRequirements}`,
+    ...(team.constraints ? [`* **${copy.constraints}**${colon}${team.constraints}`] : []),
     '',
-    '**团队成员阵容**：',
+    `**${copy.members}**${colon.trimEnd()}`,
     membersList,
     '',
-    `👉 **[点击直接在弹窗中核对并保存草案](#dsh-agency:apply-draft?id=${id})**`,
+    `👉 **[${copy.previewLink}](${draftActionLink(id)})**`,
     '',
-    '> 💬 **这是专家团队草案预览**。你可以仔细阅读核对成员分工与目标：如果需要修改（如增减成员、调整分工），请直接在对话中告诉我；如果你觉得满意，请对我说「**确认**」，我将弹出确认卡片并为您唤起全量填好的编辑弹窗！',
+    `> 💬 ${copy.previewHelp}`,
   ].join('\n')
 }

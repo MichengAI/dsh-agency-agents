@@ -54,6 +54,14 @@ Gestione equipos en «Configuración → Expertos → Equipos de expertos», com
 2. Seleccione un equipo con `@` en el editor para insertar automáticamente ejemplos de tareas antes de enviar.
 3. Si el host tiene habilitado Agent Team, se aplicará automáticamente el modo de colaboración nativo.
 
+### Idioma y creación por conversación
+
+Si dos equipos habilitados tienen el mismo nombre, usa el identificador (ID) que devuelve `list_expert_teams`. Cambiar de idioma no modifica el ID ni el nombre de los equipos personalizados.
+
+La creación de expertos y equipos sigue el idioma configurado en DSH: español, portugués, inglés o chino. Revisa el borrador en la conversación, confirma en la tarjeta y comprueba el formulario rellenado antes de guardar y habilitar. Cancelar u omitir la tarjeta no abre el editor.
+
+El contenido personalizado conserva su idioma. En español y portugués, el selector de miembros del equipo y las instrucciones de los expertos incluidos usan el inglés hasta que se traduzcan los perfiles originales. Esto no cambia el idioma alternativo de la biblioteca general.
+
 ## Instalación rápida
 
 ```bash

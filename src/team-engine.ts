@@ -1,7 +1,7 @@
 import { resolveHostModule } from './settings-compat.js';
-import { readHostLocale } from './i18n.js';
+import { readAgencyLocale } from './i18n.js';
 import { localizeTeam } from './team-content-en.js';
-import { teamText } from './team-i18n.js';
+import { teamText, type TeamLocale } from './team-i18n.js';
 import { createHash, randomUUID } from 'node:crypto';
 import type { Context } from '@deepseek-ai/cordis';
 import type { Agent } from '@deepseek-ai/dsh-agent';
@@ -131,7 +131,7 @@ export function hostHasAgentTeam(): boolean {
     }
     return agentTeamInstalled = false;
 }
-export function detectTeamEngine(service: unknown, supported: boolean, toolsReady = true, maxDepth?: number, locale: 'zh' | 'en' = 'zh', subagents?: unknown): TeamEngineStatus {
+export function detectTeamEngine(service: unknown, supported: boolean, toolsReady = true, maxDepth?: number, locale: TeamLocale = 'zh', subagents?: unknown): TeamEngineStatus {
     const tx = (key: string, values?: readonly unknown[]) => teamText(locale, key, values);
 
     const compatible = isV2TeamService(service) && isV2SubagentTeamRuntime(subagents);
@@ -143,7 +143,7 @@ export function detectTeamEngine(service: unknown, supported: boolean, toolsRead
         return { state: 'enabled', mode: 'subagent', reason: tx("原生 Agent Team 暂不支持本插件配置的深度限制，本次使用普通子代理以保留该限制。"), recommendation: '' };
     return { state: 'enabled', mode: 'native', reason: tx("Agent Team 已启用，使用原生团队协作。"), recommendation: '' };
 }
-export function resolveTeamEngine(ctx: Context, agent?: Agent, maxDepth?: number) {
+export function resolveTeamEngine(ctx: Context, agent?: Agent, maxDepth?: number, locale = readAgencyLocale(ctx)) {
     const service: unknown = ctx.get('agentTeams');
     const subagents: unknown = ctx.get('subagents');
     if (isV2TeamService(service) && isV2SubagentTeamRuntime(subagents)) {
@@ -157,9 +157,9 @@ export function resolveTeamEngine(ctx: Context, agent?: Agent, maxDepth?: number
             }
         }
         const toolsReady = !agent || (sessionEnabled && ['team_task_create', 'team_task_list', 'team_task_update', 'list_agents', 'wait_agent', 'send_message'].every(name => agent.ctx?.tools?.get?.(name, agent) !== undefined));
-        return { service, subagents, status: detectTeamEngine(service, true, toolsReady, maxDepth, readHostLocale(ctx), subagents) };
+        return { service, subagents, status: detectTeamEngine(service, true, toolsReady, maxDepth, locale, subagents) };
     }
-    return { service: undefined, subagents: undefined, status: detectTeamEngine(service, hostHasAgentTeam(), true, maxDepth, readHostLocale(ctx), subagents) };
+    return { service: undefined, subagents: undefined, status: detectTeamEngine(service, hostHasAgentTeam(), true, maxDepth, locale, subagents) };
 }
 const activeLeads = new WeakSet<object>();
 /** 0.2.2-rc.2+ subagent.name 硬上限 32 字符（1–32 小写字母/数字/连字符），仍保留统一前缀与 10 位哈希标识。 */
@@ -179,9 +179,10 @@ type NativeDispatchArgs = Omit<Parameters<typeof executeTeam>[0], 'run'> & {
 };
 /** 原生调用只返回委派确认；成员结论通过宿主消息与任务板异步交回主会话。 */
 export async function dispatchNativeTeam(args: NativeDispatchArgs) {
-    const tx = (key: string, values?: readonly unknown[]) => teamText(args.locale ?? 'zh', key, values);
+    const locale = args.locale ?? 'zh';
+    const tx = (key: string, values?: readonly unknown[]) => teamText(locale, key, values);
 
-    const team = localizeTeam(args.team, args.locale ?? 'zh');
+    const team = localizeTeam(args.team, locale);
     args.signal.throwIfAborted();
     if (activeLeads.has(args.agent))
         throw new Error(tx("当前会话正在创建专家团，请等待本次委派完成。"));
@@ -201,7 +202,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
         const root = v2Subagents.rootOf(args.agent);
         const existingDescendants = await v2Subagents.listDescendants(root.id, args.signal);
         const agentsRegistry = args.ctx?.get?.('agents') as { get?: (id: string) => { status?: string } | undefined } | undefined;
-        const report = await executeTeam({ ...args, team, run: async (member) => {
+        const report = await executeTeam({ ...args, team, locale, run: async (member) => {
                 args.signal.throwIfAborted();
                 const name = nativeV2TeamMemberName(args.team.id, member.slug);
                 const existing = existingDescendants.find(entry => entry.path === name && entry.mode === 'continuable');
@@ -211,7 +212,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                         throw new Error(tx("专家队友仍在运行或不可恢复：{0}", [liveStatus]));
                 }
                 const task = await v2Service.createTask(args.agent, {
-                    subject: `${team.name}：${member.name}`.slice(0, 180),
+                    subject: `${team.name}${locale === 'zh' ? '：' : ': '}${member.name}`.slice(0, 180),
                     description: tx("{0}\n\n完整任务与专家职责以队友收到的本次任务消息为准。", [Array.from(member.prompt).slice(0, 6000).join('')]),
                 }, args.signal);
                 tasks.set(member.slug, { name, taskId: task.id });

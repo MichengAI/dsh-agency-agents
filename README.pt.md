@@ -54,6 +54,14 @@ Faça a gestão de equipas em «Definições → Especialistas → Equipas de es
 2. Selecione uma equipa com `@` na caixa de entrada para inserir automaticamente exemplos de tarefas antes de enviar.
 3. Se o anfitrião tiver o serviço Agent Team ativado, o modo nativo de colaboração paralela será aplicado automaticamente.
 
+### Idioma e criação por conversa
+
+Se duas equipas ativas tiverem o mesmo nome, use o identificador (ID) apresentado por `list_expert_teams`. Mudar de idioma não altera o ID nem o nome das equipas personalizadas.
+
+A criação de especialistas e equipas segue o idioma definido no DSH: português, espanhol, inglês ou chinês. Reveja o rascunho na conversa, confirme no cartão e confira o formulário preenchido antes de guardar e ativar. Cancelar ou ignorar o cartão não abre o editor.
+
+O conteúdo personalizado não é traduzido. Em português e espanhol, o seletor de membros da equipa e as instruções dos especialistas integrados usam inglês enquanto os perfis originais não forem traduzidos. O idioma de recurso da biblioteca geral não muda.
+
 ## Instalação rápida
 
 ```bash

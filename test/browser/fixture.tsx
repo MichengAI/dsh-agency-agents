@@ -1,3 +1,4 @@
+import { CreationFixture } from './creation-fixture'
 import { TeamsFixture } from './teams-fixture'
 import { NativeNamesFixture } from './native-names-fixture'
 import React from 'react'
@@ -24,5 +25,5 @@ function Fixture() {
   </>
 }
 const strict = new URLSearchParams(location.search).has('strict')
-const content = new URLSearchParams(location.search).has('nativeNames') ? <NativeNamesFixture /> : new URLSearchParams(location.search).has('teams') ? <TeamsFixture /> : new URLSearchParams(location.search).has('discovery') ? <DiscoveryFixture /> : <Fixture />
+const content = new URLSearchParams(location.search).has('creation') ? <CreationFixture /> : new URLSearchParams(location.search).has('nativeNames') ? <NativeNamesFixture /> : new URLSearchParams(location.search).has('teams') ? <TeamsFixture /> : new URLSearchParams(location.search).has('discovery') ? <DiscoveryFixture /> : <Fixture />
 createRoot(document.getElementById('root')!).render(strict ? <React.StrictMode>{content}</React.StrictMode> : content)

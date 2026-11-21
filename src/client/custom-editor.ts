@@ -7,11 +7,14 @@ import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { customExpertInputSchema, DEFAULT_EXPERT_EMOJI, type CatalogSnapshot, type CustomExpertInput } from '../expert-contract.js'
 import type { AgencyCatalogRemote } from './remote.js'
 import { EXPERT_AVATAR_URLS } from './avatars.js'
+import type { AgencyLocale } from '../agency-locale.js'
+import { ES_DIVISION, PT_DIVISION } from '../host-locales.js'
 import { EN_DIVISION, ZH_DIVISION } from '../names.js'
 
 import { loadEditorReview, continueEditorReview, type EditorReview } from "./editor-review.js";
 
 const h = React.createElement
+const DIVISION_LABELS: Record<AgencyLocale, Readonly<Record<string, string>>> = { en: EN_DIVISION, zh: ZH_DIVISION, pt: PT_DIVISION, es: ES_DIVISION }
 export interface CustomEditorProps {
   readonly expert?: CustomExpertInput
   readonly enabled: boolean
@@ -20,6 +23,7 @@ export interface CustomEditorProps {
   readonly remote: AgencyCatalogRemote
   readonly t: TranslateNS<'agency'>
   readonly locale: 'zh' | 'en'
+  readonly divisionLocale?: AgencyLocale
   readonly onSaved: (catalog: CatalogSnapshot) => void
   readonly onClose: () => void
 }
@@ -134,7 +138,7 @@ export function CustomExpertEditor(props: CustomEditorProps): React.ReactElement
       h(CategorySelect, {
         id: 'aag-custom-division', value: draft.division, disabled: busy, label: props.t('custom.division'),
         onChange: (value: string) => set('division', value),
-        options: props.divisions.map(division => ({ value: division, label: (props.locale === 'en' ? EN_DIVISION : ZH_DIVISION)[division] ?? division })),
+        options: props.divisions.map(division => ({ value: division, label: DIVISION_LABELS[props.divisionLocale ?? props.locale][division] ?? division })),
       })),
     h('div', { className: 'aag-custom-prompt-head' }, h('label', { htmlFor: 'aag-custom-prompt' }, props.t('custom.prompt')),
       draft.prompt === '' ? h(Button, { disabled: busy, onClick: () => set('prompt', props.t('custom.templateText')) }, props.t('custom.template')) : null),

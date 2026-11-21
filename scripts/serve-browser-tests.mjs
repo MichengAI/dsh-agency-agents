@@ -30,6 +30,11 @@ function cssModulesPlugin() {
   }
 }
 
+// Opt-in proof using an existing Host renderer bundle; normal CI stays self-contained.
+const hostMarkdownEntry = process.env.AGENCY_HOST_MARKDOWN_ENTRY
+if (hostMarkdownEntry !== undefined && (!hostMarkdownEntry || !existsSync(resolve(hostMarkdownEntry)))) {
+  throw new Error('AGENCY_HOST_MARKDOWN_ENTRY must point to an existing host primitives bundle')
+}
 const directory = await mkdtemp(join(tmpdir(), 'agency-browser-'))
 let bundle
 try {
@@ -38,9 +43,21 @@ try {
   entry: { fixture: 'test/browser/fixture.tsx' },
   outDir: directory,
   platform: 'browser', format: 'esm', dts: false,
-  plugins: [cssModulesPlugin()],
+  ...(hostMarkdownEntry === undefined ? {} : { outputOptions: { codeSplitting: false } }),
+  plugins: [cssModulesPlugin(), {
+    name: 'agency-test-host-markdown',
+    resolveId(source) {
+      if (source !== './creation-markdown-fixture' || hostMarkdownEntry === undefined) return
+      return resolve(hostMarkdownEntry)
+    },
+  }],
   alias: {
     '@deepseek-ai/dsh-client-ui-primitives': resolve('test/runtime-modules.ts'),
+    ...(hostMarkdownEntry === undefined ? {} : {
+      'react/jsx-runtime': resolve('node_modules/react/jsx-runtime.js'),
+      'react/jsx-dev-runtime': resolve('node_modules/react/jsx-dev-runtime.js'),
+      react: resolve('node_modules/react/index.js'),
+    }),
   },
   deps: { alwaysBundle: () => true },
   define: { 'process.env.NODE_ENV': JSON.stringify('development') }
