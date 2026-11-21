@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [1.3.1] - 2026-11-21
 
-- **Localization:** Localize expert and expert team creation confirmations in English, Portuguese, and Spanish, alongside Chinese. Keep confirmation bound to the displayed draft and preserve user-authored content.
+- **Multi-Language Creation Workflow:** Added complete localization for expert and expert team creation workflows in English, Portuguese, and Spanish, alongside Chinese. In-chat Markdown draft previews, interactive Ask confirmation cards, and field validation notices now adapt seamlessly to the host language while keeping confirmation strictly bound to the active draft and preserving user-authored content ([#45](https://github.com/MichengAI/dsh-agency-agents/issues/45), [#46](https://github.com/MichengAI/dsh-agency-agents/pull/46)).
 
 ## [1.3.0] - 2026-11-19
 
