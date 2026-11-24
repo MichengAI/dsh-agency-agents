@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2] - 2026-11-24
+
+- **Full Compatibility with DeepSeek Harness `0.2.3-alpha.2`**:
+  - **Enhanced Host Compatibility & Stability**: Fully verified and adapted for DSH `0.2.3-alpha.2`, ensuring single expert summoning, multi-agent team collaboration, and settings panels operate reliably on the latest host release;
+  - **Interface & Multi-Language State Sync**: Improved client-side language preference detection, ensuring UI elements immediately synchronize and refresh when switching host languages;
+  - **Support Matrix & Dependency Updates**: Aligned documentation support matrices, development dependencies, and test suites with the latest host specifications.
+
 ## [1.3.1] - 2026-11-21
 
 - **Multi-Language Creation Workflow:** Added complete localization for expert and expert team creation workflows in English, Portuguese, and Spanish, alongside Chinese. In-chat Markdown draft previews, interactive Ask confirmation cards, and field validation notices now adapt seamlessly to the host language while keeping confirmation strictly bound to the active draft and preserving user-authored content ([#45](https://github.com/MichengAI/dsh-agency-agents/issues/45), [#46](https://github.com/MichengAI/dsh-agency-agents/pull/46)).
