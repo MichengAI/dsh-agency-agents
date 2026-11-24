@@ -2042,8 +2042,12 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
   // framework 以 (namespace, revision) 重新派生注入的 t 并触发重渲染。
   ctx.effect(() => ctx.locale.register(NS, { zh, en, ja, es, fr, de, ru, pt }), 'agency-agents: dictionaries')
   const t = ctx.locale.bind(NS)
-  const getActive = (): 'zh' | 'en' => ctx.locale.getSnapshot().active === 'en' ? 'en' : 'zh'
-  const getTeamLocale = (): TeamLocale => normalizeAgencyLocale(ctx.locale.getSnapshot().active)
+  const getRawLocaleActive = (): unknown => {
+    const localeService = ctx.locale as unknown as { getSnapshot?: () => { active?: unknown }; snapshot?: { active?: unknown } }
+    return localeService?.getSnapshot?.()?.active ?? localeService?.snapshot?.active
+  }
+  const getActive = (): 'zh' | 'en' => getRawLocaleActive() === 'en' ? 'en' : 'zh'
+  const getTeamLocale = (): TeamLocale => normalizeAgencyLocale(getRawLocaleActive())
   const teamLocaleProps = { getTeamLocale, subscribeTeamLocale: (listener: () => void) => ctx.locale.subscribe(listener) }
   installSettingsNavIcon(ctx)
 
@@ -2088,7 +2092,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       remote,
       getActive,
       ...teamLocaleProps,
-      getLocale: () => ctx.locale.getSnapshot().active,
+      getLocale: () => getRawLocaleActive(),
       onEnabledChange: updateEnabledForMentions,
       prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
     }),
@@ -2097,7 +2101,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
       remote,
       getActive,
       ...teamLocaleProps,
-      getLocale: () => ctx.locale.getSnapshot().active,
+      getLocale: () => getRawLocaleActive(),
       onEnabledChange: updateEnabledForMentions,
       prepareTeamSelection: bindExpertInsertion().prepareTeamSelection,
     }),
@@ -2489,7 +2493,7 @@ export async function apply(ctx: ClientContext): Promise<() => void> {
     remote,
     getSessionId: () => resolveTargetSessionId(ctx.sessions as unknown as ReferenceSessionAccess),
     subscribeSession: listener => (ctx.sessions as unknown as ReferenceSessionAccess).list?.subscribe?.(listener),
-    getLocale: () => normalizeAgencyLocale(ctx.locale.getSnapshot().active),
+    getLocale: () => normalizeAgencyLocale(getRawLocaleActive()),
     t,
     onSaved: savedCatalog => {
       if (savedCatalog) acceptCatalog(remote, savedCatalog)

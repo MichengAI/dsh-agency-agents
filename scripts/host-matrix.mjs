@@ -13,8 +13,10 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const manifestPath = join(root, 'package.json');
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 
-// DSH >=0.2.2-rc.2 配套的 Cordis 与 Schemastery 工具链版本。
-const toolchain = { cordis: '4.1.0', schemastery: '3.19.0' };
+// DSH 宿主配套的 Cordis 与 Schemastery 工具链版本。
+const toolchain = version.startsWith('0.2.3')
+  ? { cordis: '4.2.0-alpha.1', schemastery: '3.20.0-alpha.1' }
+  : { cordis: '4.1.0', schemastery: '3.19.0' };
 
 const dev = manifest.devDependencies ?? {};
 const aligned = [];

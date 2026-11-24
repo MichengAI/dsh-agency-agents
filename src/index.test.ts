@@ -13,7 +13,7 @@ import { en, zh, type AgencyKey } from './client/locales.js'
 import { ROSTER } from './client/roster.js'
 import { enHost, formatHost, matchDivision, readHostLocale, renderExpertList, renderSummonResults, resolveHostLocale, zhHost } from './i18n.js'
 import { TYPERT_REMOTE } from './client/remote.js'
-import { agencySettingsFromLegacyDocument, loadHostModule, readAgencySettings, recoverImportedAgencySettings, settingsNamespaceCompat } from './settings-compat.js'
+import { agencySettingsFromLegacyDocument, loadHostModule, readAgencySettings, recoverImportedAgencySettings, resolveRootContext, settingsNamespaceCompat } from './settings-compat.js'
 import { clearSubagentRegistryForTest, getSubagentConfig, isManagedSubagentId, initSubagentRegistry, flushSubagentRegistrySync } from './subagent-registry.js'
 
 const PACKAGE_MANIFEST = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
@@ -1667,7 +1667,7 @@ describe('@ 菜单分组标题本地化', () => {
     expect(PACKAGE_MANIFEST.packageManager).toBe('pnpm@11.22.0')
   })
 
-  it('DSH 开发依赖固定为 0.2.2-rc.5', () => {
+  it('DSH 开发依赖固定为 0.2.3-alpha.2', () => {
     // CI 宿主矩阵会把基线改写为目标版本，此时只要求各宿主包版本一致。
     const matrixHost = process.env.DSH_HOST_MATRIX
     const versions = new Set<string>()
@@ -1676,14 +1676,40 @@ describe('@ 菜单分组标题本地化', () => {
         // dsh-error 自 0.2.2-rc.2 才发布，矩阵在更早版本上保留基线值。
         if (name === '@deepseek-ai/dsh-error') continue
         versions.add(version)
-        if (!matrixHost) expect(version).toBe('0.2.2-rc.5')
+        if (!matrixHost) expect(version).toBe('0.2.3-alpha.2')
       }
     }
     if (matrixHost) {
       expect(versions.size).toBe(1)
       return
     }
-    expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.2-rc.5')
+    expect(PACKAGE_MANIFEST.devDependencies?.['@deepseek-ai/dsh-client-ui-primitives']).toBe('0.2.3-alpha.2')
+  })
+
+  it('Cordis 4.2+ 下 root 重构为 Symbol 且直接访问 ctx.root 抛错时仍能正常解析或平稳降级', () => {
+    const rootFake = { isRoot: true } as unknown as Context
+    const cordisRootSymbol = Symbol.for('cordis.root')
+
+    // 1. Cordis 4.2+ 通过 Symbol.for('cordis.root') 解析
+    const symbolCtx = { [cordisRootSymbol]: rootFake } as unknown as Context
+    expect(resolveRootContext(symbolCtx)).toBe(rootFake)
+
+    // 2. 传统 ctx.root 正常访问
+    const legacyCtx = { root: rootFake } as unknown as Context
+    expect(resolveRootContext(legacyCtx)).toBe(rootFake)
+
+    // 3. Cordis 4.2+ 未注入拦截：读取 .root 抛错时不崩且返回 undefined
+    const throwingCtx = new Proxy({}, {
+      has(_target, prop) {
+        if (prop === 'root') return true
+        return false
+      },
+      get(_target, prop) {
+        if (prop === 'root') throw new Error('cannot get property "root" without inject')
+        return undefined
+      },
+    }) as unknown as Context
+    expect(resolveRootContext(throwingCtx)).toBeUndefined()
   })
 
   it('设置标题提供 GitHub 与问题反馈两个入口', () => {

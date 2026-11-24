@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import ToolRuntime, { defineTool, type ToolDefinition } from '@deepseek-ai/dsh-tools'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
+import { SessionProjectionRegistry } from '@deepseek-ai/dsh-session-projection'
 import { createScope } from '@deepseek-ai/dsh-scope'
 import type { V2TeamService, V2SubagentTeamRuntime } from './team-engine.js'
 import { EXPERT_TOOL_DENY } from './team-engine.js'
@@ -632,6 +633,7 @@ describe('专家团宿主与远端集成', () => {
 
   it('验证 EXPERT_TOOL_DENY 在真实 dsh-tools 作用域下可成功 restrict 且阻断未知工具', async () => {
     const root = new Context()
+    await root.plugin(SessionProjectionRegistry as any).await()
     await root.plugin(SystemPrompt, {}).await()
     await root.plugin(ToolRuntime, {}).await()
     await new Promise((r) => setTimeout(r, 60))

@@ -193,8 +193,24 @@ type HmrStore = {
   exit?: <T>(callback: () => T) => T
 }
 
+export function resolveRootContext(ctx: Context): Context | undefined {
+  const cordisRoot = Symbol.for('cordis.root')
+  if (cordisRoot in ctx && (ctx as unknown as Record<symbol, unknown>)[cordisRoot]) {
+    return (ctx as unknown as Record<symbol, unknown>)[cordisRoot] as Context
+  }
+  try {
+    if ('root' in ctx && (ctx as unknown as Record<string, unknown>).root) {
+      return (ctx as unknown as Record<string, unknown>).root as Context
+    }
+  } catch {
+    // 捕获 Cordis 4.2+ 未注入属性读取拦截
+  }
+  return undefined
+}
+
 function hmrStore(ctx: Context): HmrStore | undefined {
-  const scopes = [ctx, (ctx as { root?: Context }).root].filter((scope): scope is Context => scope !== undefined)
+  const root = resolveRootContext(ctx)
+  const scopes = [ctx, root].filter((scope): scope is Context => scope !== undefined)
   for (const scope of scopes) {
     try {
       const hmr = (scope as { get?: (name: string) => unknown }).get?.('hmr') as { executing?: HmrStore } | undefined

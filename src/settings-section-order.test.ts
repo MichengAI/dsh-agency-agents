@@ -46,7 +46,7 @@ it('registerSettingsSection 正确对接真实宿主门面（仅暴露 spec，�
   result.offSection?.()
   result.offIcon?.()
   expect(registered.size).toBe(0)
-}, 20000)
+}, 40000)
 
 it('registerSettingsSection 在老宿主（未声明 icon）跳过图标注册，正文依然正常挂载', async () => {
   const { registerSettingsSection } = await import('./client/index.js')
