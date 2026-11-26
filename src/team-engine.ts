@@ -4,7 +4,7 @@ import { localizeTeam } from './team-content-en.js';
 import { teamText, type TeamLocale } from './team-i18n.js';
 import { createHash, randomUUID } from 'node:crypto';
 import type { Context } from '@deepseek-ai/cordis';
-import type { Agent } from '@deepseek-ai/dsh-agent';
+import type { Agent, AgentOptions } from '@deepseek-ai/dsh-agent';
 import { SessionId } from '@deepseek-ai/dsh-session';
 import { recordSubagentConfig, forgetSubagentConfig } from './subagent-registry.js';
 import { executeTeam } from './team-runtime.js';
@@ -55,6 +55,7 @@ export interface V2SubagentTeamRuntime {
             type: 'text';
             text: string;
         }[];
+        agentOptions?: AgentOptions;
         signal: AbortSignal;
         delivery: 'parent' | 'caller';
     }): Promise<{
@@ -175,6 +176,7 @@ type NativeDispatchArgs = Omit<Parameters<typeof executeTeam>[0], 'run'> & {
     ctx?: Context;
     agent: object;
     provider: string;
+    memberAgentOptions?: ReadonlyMap<string, AgentOptions>;
     signal: AbortSignal;
 };
 /** 原生调用只返回委派确认；成员结论通过宿主消息与任务板异步交回主会话。 */
@@ -193,6 +195,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
         name: string;
         taskId: string;
     }>();
+    const notes = new Map<string, string>();
     try {
         const v2Service = args.service;
         const v2Subagents = args.subagents;
@@ -201,7 +204,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
             throw new Error(tx("当前子代理服务不支持专家团所需的身份、工具过滤或深度限制。"));
         const root = v2Subagents.rootOf(args.agent);
         const existingDescendants = await v2Subagents.listDescendants(root.id, args.signal);
-        const agentsRegistry = args.ctx?.get?.('agents') as { get?: (id: string) => { status?: string } | undefined } | undefined;
+        const agentsRegistry = args.ctx?.get?.('agents') as { get?: (id: string) => { status?: string; options?: AgentOptions } | undefined } | undefined;
         const report = await executeTeam({ ...args, team, locale, run: async (member) => {
                 args.signal.throwIfAborted();
                 const name = nativeV2TeamMemberName(args.team.id, member.slug);
@@ -218,6 +221,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                 tasks.set(member.slug, { name, taskId: task.id });
                 let accepted = false;
                 let createdChildId: ReturnType<typeof SessionId> | undefined;
+                const memberOptions = args.memberAgentOptions?.get(member.slug);
                 try {
                     args.signal.throwIfAborted();
                     const text = [
@@ -229,6 +233,16 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                     if (existing) {
                         await v2Subagents.sendMessage(args.agent, existing.id, [{ type: 'text', text }], { signal: args.signal });
                         launchedV2Ids.push(existing.id);
+                        if (memberOptions !== undefined) {
+                            const liveOptions = agentsRegistry?.get?.(existing.id)?.options;
+                            const sameRoute = liveOptions !== undefined
+                                && liveOptions.provider === memberOptions.provider
+                                && liveOptions.model === memberOptions.model
+                                && liveOptions.reasoningEffort === memberOptions.reasoningEffort;
+                            if (!sameRoute) {
+                                notes.set(member.slug, tx("复用已存在的原生队友，继续沿用其创建时模型；当前显式指定的模型未重新生效。"));
+                            }
+                        }
                     }
                     else {
                         const childId = SessionId(randomUUID());
@@ -246,6 +260,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
                             childId,
                             parent: args.agent,
                             prompt: [{ type: 'text', text }],
+                            ...(memberOptions === undefined ? {} : { agentOptions: memberOptions }),
                             signal: args.signal,
                             delivery: 'parent',
                         });
@@ -273,7 +288,7 @@ export async function dispatchNativeTeam(args: NativeDispatchArgs) {
             } });
         return {
             team: report.team, revision: report.revision, coordinator: report.coordinator, collaboration: report.collaboration,
-            dispatch: { started: launched.length, total: report.results.length, members: report.results.map(result => ({ expert: result.expert, slug: result.slug, ...tasks.get(result.slug), status: result.ok ? 'started' : 'failed', ...(result.error ? { error: result.error } : {}) })) },
+            dispatch: { started: launched.length, total: report.results.length, members: report.results.map(result => ({ expert: result.expert, slug: result.slug, ...tasks.get(result.slug), status: result.ok ? 'started' : 'failed', ...(result.error ? { error: result.error } : {}), ...(notes.has(result.slug) ? { note: notes.get(result.slug) } : {}) })) },
             instruction: launched.length
                 ? tx("以上仅是启动确认，不是评审结论。使用 team_task_list 查看本次任务，使用 wait_agent 等待成员消息；没有结果时不要结束为最终答复。收到实际成员结论后，按 coordinator 和 collaboration.reviewChecklist 核验并汇总。只处理本次 taskId；失败成员明确标注，不自动重试或追加普通子代理。") : tx("本次没有成功启动成员。请报告失败原因，不得编造专家意见；不要自动改用普通模式重复执行。"),
         };

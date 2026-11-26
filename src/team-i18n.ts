@@ -138,6 +138,20 @@ export const TEAM_EN = {
   '入选理由': 'Selection Reason',
   '覆盖成员': 'Team Roster',
   '帮我组建一个专家团队，任务目标是 ': 'Assemble an expert team for this mission: ',
+  '可选：团队默认 LLM provider ID（需与 model 成对提供）。不传时默认沿用当前会话模型；如需更换模型，请先通过 list_subagent_models 查询已授权路线（若该工具可用）。': 'Optional default LLM provider ID for the team (requires model). Omit provider, model, and reasoning_effort to inherit the current conversation model; call list_subagent_models first when available.',
+  '可选：团队默认模型 ID（需与 provider 成对提供）。': 'Optional default model ID for the team (requires provider).',
+  '可选：团队默认推理强度 ID（需同时提供 provider 与 model；省略时使用目标模型默认值）。': 'Optional default reasoning effort ID for the team (requires provider and model; omit to use the selected model default).',
+  '可选：按团队成员覆盖模型配置，优先级高于团队默认模型。': 'Optional per-member model overrides that take precedence over the team default.',
+  '团队成员的 slug 或显示名称。': 'Expert slug or display name in this team.',
+  '可选：该成员单独使用的 LLM provider ID（需与 model 成对提供）。': 'Optional LLM provider ID for this member (requires model).',
+  '可选：该成员单独使用的模型 ID（需与 provider 成对提供）。': 'Optional model ID for this member (requires provider).',
+  '可选：该成员单独使用的推理强度 ID。': 'Optional reasoning effort ID for this member.',
+  'member_models 中的专家 "{0}" 不在当前专家团成员列表中。': 'Expert "{0}" in member_models is not a member of this team.',
+  'member_models 中存在重复的专家配置："{0}"。': 'Duplicate member_models entry for expert "{0}".',
+  'member_models 必须是数组。': 'member_models must be an array.',
+  'member_models 的第 {0} 项必须提供专家标识。': 'member_models item #{0} must specify an expert.',
+  '复用已存在的原生队友，继续沿用其创建时模型；当前显式指定的模型未重新生效。': 'Reusing the existing native teammate with its creation-time model; the explicitly requested model override was not reapplied.',
+  '如用户明确指定模型、推理强度或省钱/快速模型策略，请先调用 list_subagent_models 查询已授权路线再传入召唤参数；否则省略模型参数以沿用当前会话模型。若无可用授权模型，提示用户到宿主子智能体设置开启并勾选。': 'Only when the user explicitly requests a specific model, reasoning effort, or a cheaper/faster model strategy, call list_subagent_models first to inspect authorized routes before passing model options; otherwise omit model parameters to inherit the current conversation model. If no routes are authorized, advise the user to enable and select allowed models in Host subagent settings.',
 } as const
 
 export type TeamLocale = AgencyLocale

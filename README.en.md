@@ -62,13 +62,18 @@ Manage teams in **Settings → Experts → Expert teams**, sharing the header, s
 | Supported but disabled, or current-session tools unavailable | Recommend enabling Team while continuing to allow ordinary execution. |
 | Services and current-session tools available | Use native Agent Team, shared tasks, and teammate messages; wait for actual results before summarizing. |
 
-Explicit `maxDepth` uses ordinary mode to preserve depth limits. Native dispatch acceptance is not expert completion; partial startup failures do not automatically switch modes and duplicate work. Members inherit the main conversation's model selection; there is no per-expert model setting. Native model labels are provided by DSH and may display creation-time values.
+Explicit `maxDepth` uses ordinary mode to preserve depth limits. Native dispatch acceptance is not expert completion; partial startup failures do not automatically switch modes and duplicate work. Members inherit the main conversation's model selection by default; when explicitly requested in chat, `summon_expert`, `summon_experts`, and `summon_expert_team` accept authorized `provider`, `model`, and `reasoning_effort` options from the host subagent allowlist (with batch/team defaults and per-member overrides). Reusing an existing resident native teammate within the same conversation keeps its creation-time model. Native model labels are provided by DSH and may display creation-time values.
 
 ### Tool interfaces
 
 If enabled teams share a name in the current language, pass the stable ID returned by `list_expert_teams` to `get_expert_team` or `summon_expert_team`. Switching languages does not change team IDs or rename custom teams.
 
 Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_teams`, `get_expert_team`, and `summon_expert_team`. The main conversation reads the enabled team's rules and duties before delegating the complete task, then verifies and summarizes actual member results.
+
+- **Per-call model & reasoning options (optional)**:
+  - `summon_expert`, `summon_experts`, and `summon_expert_team` accept optional `provider`, `model`, and `reasoning_effort` (omitting them inherits the current conversation model; `provider` and `model` must be supplied as a pair, and `reasoning_effort` requires both).
+  - `summon_experts` supports per-item overrides inside `experts[]`, and `summon_expert_team` supports `member_models: [{ expert, provider?, model?, reasoning_effort? }]` to override the team default for specific members (for example, `summon_expert_team(team, task, provider, model, member_models)`).
+  - **Host prerequisite**: Standard DSH Web and Desktop presets enable `modelSelection: true` and `modelDiscovery: true` on `tool-subagent` by default; enable model selection and select allowed routes under **Settings → Plugins → Subagent**. For custom or headless host deployments, ensure both flags are enabled on `tool-subagent` so `list_subagent_models` and non-parent routes are available.
 
 ### Drafts, language, and data
 

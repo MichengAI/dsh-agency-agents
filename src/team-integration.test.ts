@@ -1030,4 +1030,149 @@ describe('专家团宿主与远端集成', () => {
       await rm(tempHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 })
     }
   })
+
+  it('summon_expert_team 在普通与原生模式均支持团队默认与 member_models 覆盖，前置失败时不建任务板也不启动任何成员', async () => {
+    const product = BUILTIN_TEAMS[0]
+    const setupTeam = (mode: 'subagent' | 'native', existingPaths: string[] = []) => {
+      const settings = new TestSettings(new Context())
+      settings.register('locale', (value) => value)
+      settings.restore({
+        'agency-agents': { enabled: product.members.map(m => m.expertSlug), enabledTeams: [product.id] },
+        locale: { preference: 'zh' },
+      })
+      const services = new Map<string, unknown>()
+      const tools = new Map<string, ToolDefinition>()
+      const promptSections = new Map<string, (context: unknown) => string>()
+      const standardStarts = vi.fn(async (_spec: Record<string, unknown>) => ({
+        result: Promise.resolve({ output: [{ type: 'text', text: '普通结果' }], stopReason: 'completed' }),
+        dispose: async () => {},
+      }))
+      const nativeStarts = vi.fn(async (spec: { childId?: string; name?: string }) => ({
+        childId: spec.childId ?? 'c-1',
+        name: spec.name ?? 'm-1',
+      }))
+      const nativeSend = vi.fn(async () => ({}))
+      const createTask = vi.fn(async () => ({ id: 't-1', revision: 1 }))
+
+      services.set('subagentModelSelection', {
+        allowedRoutes: () => [
+          { provider: 'deepseek', model: 'deepseek-chat' },
+          { provider: 'anthropic', model: 'claude-sonnet-4' },
+        ],
+      })
+      services.set('llm', {
+        resolveCallConfig: vi.fn(async (cfg: Record<string, unknown>) => cfg),
+      })
+      const spawnProvider = { capabilities: { agentOptions: true, depthLimit: true }, prepareContinuable: () => ({}) }
+      if (mode === 'native') {
+        services.set('agentTeams', {
+          isEnabled: () => true,
+          createTask,
+          getTask: () => ({}),
+          listTasks: () => [],
+          updateTask: async () => ({}),
+        } satisfies V2TeamService)
+        services.set('subagents', {
+          startActivation: nativeStarts,
+          namesOf: () => ({ self: 'lead' }),
+          rootOf: () => ({ id: 'root-1' }),
+          listDescendants: async () => existingPaths.map((p, idx) => ({ id: `exist-${idx}`, mode: 'continuable', path: p })),
+          sendMessage: nativeSend,
+          interrupt: () => {},
+          getProvider: () => spawnProvider,
+        } satisfies V2SubagentTeamRuntime & { getProvider: () => unknown })
+      }
+      const ctx = {
+        settings,
+        effect: () => () => {},
+        on: () => () => {},
+        inject: (_deps: unknown, cb: (c: unknown) => void) => cb(ctx),
+        reflect: { provide: (k: string, v: unknown) => services.set(k, v) },
+        get: (k: string) => services.get(k),
+        typert: { register: () => {} },
+        systemPrompt: { section: ({ name, text }: { name: string; text: (c: unknown) => string }) => promptSections.set(name, text) },
+        tools: {
+          register: (tool: ToolDefinition) => tools.set(tool.name, tool),
+          get: (name: string) => (name === 'list_subagent_models' ? { name } : undefined),
+        },
+        subagents: {
+          getProvider: () => spawnProvider,
+          startActivation: standardStarts,
+        },
+      } as unknown as Context
+      apply(ctx, { root: '', provider: 'spawn', divisions: DEFAULT_DIVISIONS, ...volatileConfig(settings) } as never)
+      const agent = {
+        options: { provider: 'kimi', model: 'kimi-k3-pro' },
+        ctx: { tools: { get: () => ({}) } },
+      }
+      return { tools, promptSections, standardStarts, nativeStarts, nativeSend, createTask, agent }
+    }
+
+    // 1. 普通模式：团队默认 + member_models 覆盖
+    const sub = setupTeam('subagent')
+    const subTool = sub.tools.get('summon_expert_team')!
+    const firstSlug = product.members[0]!.expertSlug
+    const subOut = JSON.parse((await subTool.execute({
+      team: product.id,
+      task: '评审方案',
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      member_models: [{ expert: firstSlug, provider: 'anthropic', model: 'claude-sonnet-4', reasoning_effort: 'high' }],
+    }, { agent: sub.agent, signal: new AbortController().signal } as never) as { report: string }).report)
+
+    expect(subOut.engine.mode).toBe('subagent')
+    expect(sub.standardStarts).toHaveBeenCalledTimes(product.members.length)
+    const calledOptions = sub.standardStarts.mock.calls.map(([spec]) => spec.agentOptions)
+    expect(calledOptions).toContainEqual({ provider: 'anthropic', model: 'claude-sonnet-4', reasoningEffort: 'high' })
+    expect(calledOptions.filter(opt => (opt as { model?: string } | undefined)?.model === 'deepseek-chat')).toHaveLength(product.members.length - 1)
+
+    // 2. 原生模式前置拦截：未授权模型不得建任务或启动成员
+    const nat = setupTeam('native')
+    const natTool = nat.tools.get('summon_expert_team')!
+    await expect(natTool.execute({
+      team: product.id,
+      task: '评审方案',
+      provider: 'openai',
+      model: 'gpt-5',
+    }, { agent: nat.agent, signal: new AbortController().signal } as never)).rejects.toThrow(/list_subagent_models/)
+    expect(nat.createTask).not.toHaveBeenCalled()
+    expect(nat.nativeStarts).not.toHaveBeenCalled()
+
+    // 3. 原生模式首次创建透传 agentOptions
+    const natOk = JSON.parse((await natTool.execute({
+      team: product.id,
+      task: '评审方案',
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      member_models: [{ expert: firstSlug, provider: 'anthropic', model: 'claude-sonnet-4' }],
+    }, { agent: nat.agent, signal: new AbortController().signal } as never) as { report: string }).report)
+    expect(natOk.engine.mode).toBe('native')
+    expect(nat.nativeStarts).toHaveBeenCalledTimes(product.members.length)
+    expect(nat.nativeStarts.mock.calls.map(([spec]) => (spec as unknown as { agentOptions?: unknown }).agentOptions)).toContainEqual({
+      provider: 'anthropic',
+      model: 'claude-sonnet-4',
+    })
+
+    // 4. 原生模式二次唤醒既有 continuable 队友且显式指定模型：宽松放行并在 dispatch.members 附加 note
+    const { nativeV2TeamMemberName } = await import('./team-engine.js')
+    const existingName = nativeV2TeamMemberName(product.id, firstSlug)
+    const natReuse = setupTeam('native', [existingName])
+    const natReuseTool = natReuse.tools.get('summon_expert_team')!
+    const reuseOut = JSON.parse((await natReuseTool.execute({
+      team: product.id,
+      task: '继续评审',
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+    }, { agent: natReuse.agent, signal: new AbortController().signal } as never) as { report: string }).report)
+
+    expect(natReuse.nativeSend).toHaveBeenCalledTimes(1)
+    expect(natReuse.nativeStarts).toHaveBeenCalledTimes(product.members.length - 1)
+    const reusedMember = reuseOut.dispatch.members.find((m: { slug: string }) => m.slug === firstSlug)
+    expect(reusedMember.status).toBe('started')
+    expect(reusedMember.note).toContain('创建时模型')
+
+    // 5. agency:teams 动态提示词联动
+    expect(natReuse.promptSections.get('agency:teams')!({ agent: natReuse.agent })).toContain('list_subagent_models')
+    expect(natReuse.promptSections.get('agency:teams')!({})).not.toContain('list_subagent_models')
+  })
 })

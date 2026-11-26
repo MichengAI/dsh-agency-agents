@@ -27,6 +27,9 @@ declare function normalizeSummonTaskMaxChars(value: unknown): number;
 interface SummonExpertSpec {
   readonly expert: unknown;
   readonly task: string;
+  readonly provider?: unknown;
+  readonly model?: unknown;
+  readonly reasoning_effort?: unknown;
 }
 /** 批量召唤中单个专家的结果。 */
 interface SummonExpertItemResult {

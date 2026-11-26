@@ -2211,4 +2211,251 @@ describe('summon_experts', () => {
     expect(summon.output.render({}, value)[0]?.text).toContain('ok-review')
     expect(summon.output.render({}, value)[0]?.text).toContain('失败')
   })
+
+  it('summon_expert 支持传递已授权的独立模型与推理强度，并透传给 startActivation.agentOptions', async () => {
+    const tools: Array<{ name: string; parameters?: Record<string, unknown>; execute: (args: unknown, exec: unknown) => Promise<unknown> }> = []
+    const startedSpecs: Array<Record<string, unknown>> = []
+    const spawnProvider = { capabilities: { agentOptions: true, depthLimit: true } }
+    const ctx = {
+      tools: {
+        register: (tool: (typeof tools)[number]) => tools.push(tool),
+        get: (name: string) => (name === 'list_subagent_models' ? { name } : undefined),
+      },
+      subagents: {
+        getProvider: () => spawnProvider,
+        startActivation: async (spec: Record<string, unknown>) => {
+          startedSpecs.push(spec)
+          return {
+            result: Promise.resolve({ output: [{ type: 'text', text: 'model-ok' }], stopReason: 'completed' }),
+            dispose: async () => undefined,
+          }
+        },
+      },
+      get: (service: string) => {
+        if (service === 'subagentModelSelection') {
+          return { allowedRoutes: () => [{ provider: 'deepseek', model: 'deepseek-chat' }] }
+        }
+        if (service === 'llm') {
+          return { resolveCallConfig: async (cfg: Record<string, unknown>) => cfg }
+        }
+        return undefined
+      },
+      systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
+      settings: alphaSettings(['reviewer'], 'zh'),
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const summon = tools.find((tool) => tool.name === 'summon_expert')!
+    const props = (summon.parameters as { properties?: Record<string, unknown> }).properties ?? {}
+    expect(props).toHaveProperty('provider')
+    expect(props).toHaveProperty('model')
+    expect(props).toHaveProperty('reasoning_effort')
+
+    const parentAgent = { options: { provider: 'kimi', model: 'kimi-k3-pro', reasoningEffort: 'high' } }
+    const out = await summon.execute({
+      expert: 'reviewer',
+      task: 'review diff',
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      reasoning_effort: 'low',
+    }, { agent: parentAgent })
+
+    expect(out).toEqual({ expert: 'Reviewer', answer: 'model-ok' })
+    expect(startedSpecs).toHaveLength(1)
+    expect(startedSpecs[0]?.agentOptions).toEqual({
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      reasoningEffort: 'low',
+    })
+
+    await expect(summon.execute({
+      expert: 'reviewer',
+      task: 'review diff',
+      provider: 'openai',
+      model: 'gpt-5',
+    }, { agent: parentAgent })).rejects.toThrow(/list_subagent_models/)
+    expect(startedSpecs).toHaveLength(1)
+  })
+
+  it('summon_experts 支持顶层默认模型与单项覆盖，半边缺参仅失败对应条目', async () => {
+    const tools: Array<{ name: string; execute: (args: unknown, exec: unknown) => Promise<{ results: Array<{ expert: string; ok: boolean; answer: string; error?: string }> }> }> = []
+    const startedSpecs: Array<Record<string, unknown>> = []
+    const spawnProvider = { capabilities: { agentOptions: true, depthLimit: true } }
+    const ctx = {
+      tools: {
+        register: (tool: (typeof tools)[number]) => tools.push(tool),
+        get: (name: string) => (name === 'list_subagent_models' ? { name } : undefined),
+      },
+      subagents: {
+        getProvider: () => spawnProvider,
+        startActivation: async (spec: Record<string, unknown>) => {
+          startedSpecs.push(spec)
+          return {
+            result: Promise.resolve({ output: [{ type: 'text', text: String(spec.label) }], stopReason: 'completed' }),
+            dispose: async () => undefined,
+          }
+        },
+      },
+      get: (service: string) => {
+        if (service === 'subagentModelSelection') {
+          return {
+            allowedRoutes: () => [
+              { provider: 'deepseek', model: 'deepseek-chat' },
+              { provider: 'openai', model: 'gpt-4o-mini' },
+            ],
+          }
+        }
+        if (service === 'llm') {
+          return { resolveCallConfig: async (cfg: Record<string, unknown>) => cfg }
+        }
+        return undefined
+      },
+      systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
+      settings: alphaSettings(['reviewer', 'historian'], 'zh'),
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer', 'historian'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const summonMany = tools.find((tool) => tool.name === 'summon_experts')!
+    const parentAgent = { options: { provider: 'kimi', model: 'kimi-k3-pro' } }
+
+    const res = await summonMany.execute({
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      experts: [
+        { expert: 'reviewer', task: 'check A' },
+        { expert: 'historian', task: 'check B', provider: 'openai', model: 'gpt-4o-mini', reasoning_effort: 'medium' },
+      ],
+    }, { agent: parentAgent })
+
+    expect(res.results).toHaveLength(2)
+    expect(res.results.every((item) => item.ok)).toBe(true)
+    expect(startedSpecs.find((s) => s.label === 'Reviewer')?.agentOptions).toEqual({
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+    })
+    expect(startedSpecs.find((s) => s.label === 'Historian')?.agentOptions).toEqual({
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+      reasoningEffort: 'medium',
+    })
+
+    const partial = await summonMany.execute({
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      experts: [
+        { expert: 'reviewer', task: 'check A', model: 'gpt-4o-mini' },
+        { expert: 'historian', task: 'check B' },
+      ],
+    }, { agent: parentAgent })
+    expect(partial.results[0]).toMatchObject({ expert: 'reviewer', ok: false, error: expect.stringMatching(/provider.*model/i) })
+    expect(partial.results[1]).toMatchObject({ expert: 'Historian', ok: true })
+  })
+
+  it('agency:experts 提示词随 list_subagent_models 可见性动态切换选模引导', () => {
+    let discoveryVisible = false
+    const sections: Array<{ name: string; text: (context: unknown) => string }> = []
+    const ctx = {
+      tools: {
+        register: () => undefined,
+        get: (name: string) => (name === 'list_subagent_models' && discoveryVisible ? { name } : undefined),
+      },
+      subagents: { getProvider: () => undefined },
+      systemPrompt: { section: (section: (typeof sections)[number]) => sections.push(section) },
+      settings: alphaSettings(['reviewer']),
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const section = sections.find((s) => s.name === 'agency:experts')!
+
+    expect(section.text({ agent: { session: { header: {} } } })).not.toContain('list_subagent_models')
+    discoveryVisible = true
+    const withDiscovery = section.text({ agent: { session: { header: {} } } })
+    expect(withDiscovery).toContain('list_subagent_models')
+    expect(withDiscovery).toContain('Omit `provider`, `model`, and `reasoning_effort` by default')
+  })
+
+  it('summon_experts 对同一模型路线共享单次预检，失败时仍正确归属各条目', async () => {
+    const tools: Array<{ name: string; execute: (args: unknown, exec: unknown) => Promise<{ results: Array<{ expert: string; ok: boolean; answer: string; error?: string }> }> }> = []
+    let shouldFail = false
+    const resolveCallConfig = vi.fn(async (cfg: Record<string, unknown>) => {
+      if (shouldFail) throw new Error('route rejected by adapter')
+      return cfg
+    })
+    const spawnProvider = { capabilities: { agentOptions: true, depthLimit: true } }
+    const ctx = {
+      tools: {
+        register: (tool: (typeof tools)[number]) => tools.push(tool),
+        get: (name: string) => (name === 'list_subagent_models' ? { name } : undefined),
+      },
+      subagents: {
+        getProvider: () => spawnProvider,
+        startActivation: async (spec: Record<string, unknown>) => ({
+          result: Promise.resolve({ output: [{ type: 'text', text: String(spec.label) }], stopReason: 'completed' }),
+          dispose: async () => undefined,
+        }),
+      },
+      get: (service: string) => {
+        if (service === 'subagentModelSelection') {
+          return {
+            allowedRoutes: () => [{ provider: 'deepseek', model: 'deepseek-chat' }],
+          }
+        }
+        if (service === 'llm') return { resolveCallConfig }
+        return undefined
+      },
+      systemPrompt: { section: () => undefined },
+      on: () => () => undefined,
+      settings: alphaSettings(['reviewer', 'historian'], 'zh'),
+      inject: (_deps: unknown, cb: (sctx: unknown) => void) => {
+        cb({ settings: { register: () => ({ get: () => ({ enabled: ['reviewer', 'historian'] }), watch: () => () => {} }) }, effect: () => () => {} })
+      },
+      reflect: { provide: () => undefined },
+    } as unknown as Context
+
+    applyOnHost(ctx, { root: dir, provider: 'spawn', divisions: ['engineering'] })
+    const summonMany = tools.find((tool) => tool.name === 'summon_experts')!
+    const parentAgent = { options: { provider: 'kimi', model: 'kimi-k3-pro' } }
+
+    const okRes = await summonMany.execute({
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      experts: [
+        { expert: 'reviewer', task: 'check A' },
+        { expert: 'historian', task: 'check B' },
+      ],
+    }, { agent: parentAgent })
+
+    expect(okRes.results.every((item) => item.ok)).toBe(true)
+    expect(resolveCallConfig).toHaveBeenCalledTimes(1)
+
+    resolveCallConfig.mockClear()
+    shouldFail = true
+    const failRes = await summonMany.execute({
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      experts: [
+        { expert: 'reviewer', task: 'check A' },
+        { expert: 'historian', task: 'check B' },
+      ],
+    }, { agent: parentAgent })
+
+    expect(resolveCallConfig).toHaveBeenCalledTimes(1)
+    expect(failRes.results).toHaveLength(2)
+    expect(failRes.results[0]).toMatchObject({ expert: 'reviewer', ok: false, error: expect.stringContaining('route rejected by adapter') })
+    expect(failRes.results[1]).toMatchObject({ expert: 'historian', ok: false, error: expect.stringContaining('route rejected by adapter') })
+  })
 })
