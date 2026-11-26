@@ -73,7 +73,7 @@
 - **独立模型与推理强度参数（可选）**：
   - `summon_expert`、`summon_experts` 与 `summon_expert_team` 均支持可选 `provider`、`model` 与 `reasoning_effort`（未传时默认沿用当前会话模型；指定模型时 `provider` 与 `model` 须成对传入，指定 `reasoning_effort` 时也须同时提供两者）。
   - `summon_experts` 可在 `experts[]` 每项单独指定 `provider` / `model` / `reasoning_effort` 覆盖顶层默认；`summon_expert_team` 可通过 `member_models: [{ expert, provider?, model?, reasoning_effort? }]` 为指定成员覆盖团队默认模型（如 `summon_expert_team(team, task, provider, model, member_models)`）。
-  - **宿主前提**：DSH 标准 Web / Desktop 预设已为 `tool-subagent` 默认开启 `modelSelection: true` 与 `modelDiscovery: true`；在「设置 → 插件 → 子智能体」中开启模型选择并勾选允许路线后即可切换。若使用自定义配置或 headless 宿主，需确保 `tool-subagent` 开启上述两项，才可向模型暴露 `list_subagent_models` 与允许非父会话路线。
+  - **宿主前提**：DSH 的 `standard`、`ptc` 与 `cordis` 预设（Web / Desktop）已为 `tool-subagent` 默认开启 `modelSelection: true` 与 `modelDiscovery: true`；在「设置 → 插件 → 子智能体」中开启模型选择并勾选允许路线后即可切换。Desktop 的 `minimal` 预设默认关闭上述两项，自定义配置或 headless 宿主也需确保 `tool-subagent` 开启这两项，才可向模型暴露 `list_subagent_models` 与允许非父会话路线。
 
 ### 草稿、语言与数据
 

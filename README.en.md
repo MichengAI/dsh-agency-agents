@@ -73,7 +73,7 @@ Retain `list_experts`, `summon_expert`, and `summon_experts`. Add `list_expert_t
 - **Per-call model & reasoning options (optional)**:
   - `summon_expert`, `summon_experts`, and `summon_expert_team` accept optional `provider`, `model`, and `reasoning_effort` (omitting them inherits the current conversation model; `provider` and `model` must be supplied as a pair, and `reasoning_effort` requires both).
   - `summon_experts` supports per-item overrides inside `experts[]`, and `summon_expert_team` supports `member_models: [{ expert, provider?, model?, reasoning_effort? }]` to override the team default for specific members (for example, `summon_expert_team(team, task, provider, model, member_models)`).
-  - **Host prerequisite**: Standard DSH Web and Desktop presets enable `modelSelection: true` and `modelDiscovery: true` on `tool-subagent` by default; enable model selection and select allowed routes under **Settings → Plugins → Subagent**. For custom or headless host deployments, ensure both flags are enabled on `tool-subagent` so `list_subagent_models` and non-parent routes are available.
+  - **Host prerequisite**: DSH `standard`, `ptc`, and `cordis` presets (Web and Desktop) enable `modelSelection: true` and `modelDiscovery: true` on `tool-subagent` by default; enable model selection and select allowed routes under **Settings → Plugins → Subagent**. Both flags default to off in Desktop's `minimal` preset—and in custom or headless deployments, ensure both flags are enabled on `tool-subagent` so `list_subagent_models` and non-parent routes are available.
 
 ### Drafts, language, and data
 

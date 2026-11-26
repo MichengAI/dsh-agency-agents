@@ -64,7 +64,7 @@ function createFakeAgent(options: {
       ...(options.reasoningEffort === undefined ? {} : { reasoningEffort: options.reasoningEffort }),
     },
     session: {
-      ...(options.headerConfig === undefined ? {} : { requestHeader: () => ({ config: options.headerConfig }) }),
+      requestHeader: () => (options.headerConfig === undefined ? undefined : { config: options.headerConfig }),
       seq: events.length,
       eventAt: (seq: number) => events[seq],
     },
@@ -366,5 +366,93 @@ describe('子代理独立模型解析与跨版本白名单校验', () => {
       locale: 'en',
       teamLocale: 'en',
     })).rejects.toThrow('member_models must be an array.')
+  })
+
+  it('父路线解析直接对齐宿主委托语义，空串头配置不回退 created 且缺失 requestHeader 安全兜底', async () => {
+    const overridden = createFakeAgent({
+      provider: 'kimi',
+      model: 'kimi-k3-pro',
+      reasoningEffort: 'high' as AgentOptions['reasoningEffort'],
+      headerConfig: { provider: 'deepseek', model: 'deepseek-chat' },
+    })
+    expect(readParentAgentOptions(overridden)).toEqual({
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+    })
+
+    const blankHeader = createFakeAgent({
+      provider: 'kimi',
+      model: 'kimi-k3-pro',
+      reasoningEffort: 'high' as AgentOptions['reasoningEffort'],
+      headerConfig: { provider: '', model: '' },
+    })
+    // 对齐宿主 parentAgentOptionsForDelegation：存在 requestHeader().config 时不回退 created，空串由父路线校验拦截
+    expect(readParentAgentOptions(blankHeader)).toEqual({
+      provider: '',
+      model: '',
+    })
+
+    const { ctx } = createFakeContext({ allowedRoutes: () => undefined })
+    await expect(resolveChildModelOptions({
+      ctx,
+      providerName: 'spawn',
+      agent: blankHeader,
+      request: { provider: 'kimi', model: 'kimi-k3-pro' },
+      locale: 'zh',
+    })).rejects.toThrow('当前会话缺少有效父模型路线')
+
+    expect(readParentAgentOptions({ options: { provider: 'kimi', model: 'kimi-k3-pro' } })).toEqual({
+      provider: 'kimi',
+      model: 'kimi-k3-pro',
+    })
+    expect(readParentAgentOptions({
+      options: { provider: 'kimi', model: 'kimi-k3-pro' },
+      session: { requestHeader: () => { throw new Error('broken header') } },
+    })).toEqual({
+      provider: 'kimi',
+      model: 'kimi-k3-pro',
+    })
+  })
+
+  it('allowedRoutes 抛出 INVALID_MODEL_SELECTION_SETTINGS 时转为本地化错误，未知异常原样透传', async () => {
+    const agent = createFakeAgent({ provider: 'kimi', model: 'kimi-k3-pro' })
+    const invalidSettingsErr = Object.assign(
+      new Error('enabled subagent model selection requires at least one allowed model'),
+      { code: 'INVALID_MODEL_SELECTION_SETTINGS' },
+    )
+    const { ctx: invalidCtx } = createFakeContext({
+      allowedRoutes: () => {
+        throw invalidSettingsErr
+      },
+    })
+
+    await expect(resolveChildModelOptions({
+      ctx: invalidCtx,
+      providerName: 'spawn',
+      agent,
+      request: { provider: 'deepseek', model: 'deepseek-chat' },
+      locale: 'zh',
+    })).rejects.toThrow(/宿主子智能体模型选择配置无效.*enabled subagent model selection requires at least one allowed model/)
+
+    await expect(resolveChildModelOptions({
+      ctx: invalidCtx,
+      providerName: 'spawn',
+      agent,
+      request: { provider: 'deepseek', model: 'deepseek-chat' },
+      locale: 'en',
+    })).rejects.toThrow(/Host subagent model selection settings are invalid.*enabled subagent model selection requires at least one allowed model/)
+
+    const { ctx: unexpectedCtx } = createFakeContext({
+      allowedRoutes: () => {
+        throw new Error('boom-unexpected')
+      },
+    })
+    await expect(resolveChildModelOptions({
+      ctx: unexpectedCtx,
+      providerName: 'spawn',
+      agent,
+      request: { provider: 'deepseek', model: 'deepseek-chat' },
+      locale: 'zh',
+    })).rejects.toThrow('boom-unexpected')
   })
 })

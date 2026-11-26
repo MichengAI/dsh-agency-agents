@@ -9,6 +9,7 @@
  */
 
 import type { AgentOptions } from '@deepseek-ai/dsh-agent'
+import { parentAgentOptionsForDelegation } from '@deepseek-ai/dsh-subagent'
 import { formatHost, localizedExpertName, type AgencyLocale } from './i18n.js'
 import { teamText, type TeamLocale } from './team-i18n.js'
 
@@ -156,31 +157,24 @@ export function hasRouteDiscoveryTool(
 
 /**
  * 读取当前父会话的有效模型选项。
- * 优先取最新 `session.requestHeader().config`，缺失时回退 `agent.options`。
+ * 直接复用宿主 `parentAgentOptionsForDelegation`，并在轻量级对象缺失 `session.requestHeader` 或抛错时安全回退 `agent.options`。
  */
 export function readParentAgentOptions(agent: unknown): AgentOptions {
   if (agent === undefined || agent === null || typeof agent !== 'object') return {}
   const record = agent as AgentLike
   const created = record.options ?? {}
-  let headerConfig: { provider?: string; model?: string; reasoningEffort?: AgentOptions['reasoningEffort'] } | undefined
-  try {
-    headerConfig = typeof record.session?.requestHeader === 'function'
-      ? record.session.requestHeader()?.config
-      : undefined
-  } catch {
-    headerConfig = undefined
+  if (typeof record.session?.requestHeader === 'function') {
+    try {
+      return parentAgentOptionsForDelegation({
+        ...record,
+        options: created,
+        session: record.session,
+      } as unknown as Parameters<typeof parentAgentOptionsForDelegation>[0])
+    } catch {
+      return { ...created }
+    }
   }
-  if (headerConfig === undefined) return { ...created }
-  const headerProvider = asNonEmptyString(headerConfig.provider)
-  const provider = headerProvider ?? asNonEmptyString(created.provider)
-  const model = asNonEmptyString(headerConfig.model) ?? asNonEmptyString(created.model)
-  const reasoningEffort = headerConfig.reasoningEffort ?? (headerProvider === undefined ? created.reasoningEffort : undefined)
-  return {
-    ...(created.maxTokens === undefined ? {} : { maxTokens: created.maxTokens }),
-    ...(provider === undefined ? {} : { provider }),
-    ...(model === undefined ? {} : { model }),
-    ...(reasoningEffort === undefined ? {} : { reasoningEffort }),
-  }
+  return { ...created }
 }
 
 function isAllowedRouteList(value: unknown): value is AllowedModelRoute[] {
@@ -217,10 +211,21 @@ function readLegacySessionModelPolicy(session: SessionLike | undefined): { reado
 function readAuthorizedModelPolicy(
   ctx: ModelSelectionContext,
   agent: unknown,
+  locale: AgencyLocale,
 ): { readonly routes: readonly AllowedModelRoute[] } | undefined {
   const selection = ctx.get?.('subagentModelSelection' as never, false) as ModelSelectionServiceLike | undefined
   if (typeof selection?.allowedRoutes === 'function') {
-    const routes = selection.allowedRoutes()
+    let routes: AllowedModelRoute[] | undefined
+    try {
+      routes = selection.allowedRoutes()
+    } catch (error) {
+      const code = (error as { code?: unknown } | null | undefined)?.code
+      if (code === 'INVALID_MODEL_SELECTION_SETTINGS') {
+        const detail = error instanceof Error ? error.message : String(error)
+        throw new Error(formatHost(locale, 'error.invalidModelSelectionSettings', { detail }))
+      }
+      throw error
+    }
     return routes === undefined ? undefined : { routes }
   }
   return readLegacySessionModelPolicy((agent as AgentLike | undefined)?.session)
@@ -235,10 +240,12 @@ function assertAuthorizedRoute(
 ): void {
   const hint = discoveryVisible ? formatHost(locale, 'error.routeDiscoveryHint') : ''
   if (policy === undefined) {
-    if (parentOptions.provider === undefined || parentOptions.model === undefined) {
+    const parentProvider = asNonEmptyString(parentOptions.provider)
+    const parentModel = asNonEmptyString(parentOptions.model)
+    if (parentProvider === undefined || parentModel === undefined) {
       throw new Error(formatHost(locale, 'error.parentRouteMissing'))
     }
-    if (route.provider === parentOptions.provider && route.model === parentOptions.model) return
+    if (route.provider === parentProvider && route.model === parentModel) return
     throw new Error(formatHost(locale, 'error.modelRouteNotAllowed', {
       provider: route.provider,
       model: route.model,
@@ -292,7 +299,7 @@ export async function resolveChildModelOptions(params: {
   }
 
   const parentOptions = readParentAgentOptions(agent)
-  const policy = readAuthorizedModelPolicy(ctx, agent)
+  const policy = readAuthorizedModelPolicy(ctx, agent, locale)
   assertAuthorizedRoute(policy, parentOptions, { provider: request.provider, model: request.model }, locale, discoveryVisible)
 
   const llm = ctx.get?.('llm' as never, false) as LlmRuntimeLike | undefined
