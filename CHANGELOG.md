@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0] - 2026-11-27
+
+- **Per-Call Model & Reasoning Effort for Experts and Teams** ([#47](https://github.com/MichengAI/dsh-agency-agents/issues/47)):
+  - **Optional Model Selection on Summon Tools**: `summon_expert`, `summon_experts`, and `summon_expert_team` now accept optional `provider`, `model`, and `reasoning_effort` parameters. Omitting them inherits the current conversation model; supplying a model requires both `provider` and `model`, and setting `reasoning_effort` requires both as well.
+  - **Per-Item & Per-Member Overrides**: `summon_experts` supports per-item model overrides inside `experts[]`, and `summon_expert_team` supports `member_models` so individual team members can use lighter or higher-reasoning models independently from the team default.
+  - **Host Allowlist Enforcement & Clear Error Messages**: Requested routes are verified against the allowed subagent routes configured under **Settings → Plugins → Subagent** before launching experts. Unpaired parameters, unauthorized routes, or invalid host model selection settings fail fast with localized guidance. Reusing a resident native teammate within the same conversation preserves its creation-time model with an explicit notice.
+  - **Documentation Updates**: Added usage instructions for independent model options and clarified default host preset behavior (`standard`, `ptc`, `cordis`, and Desktop `minimal`) across the READMEs.
+
 ## [1.3.2] - 2026-11-24
 
 - **Full Compatibility with DeepSeek Harness `0.2.3-alpha.2`**:

@@ -1,5 +1,13 @@
 # 更新日志
 
+## [1.4.0] - 2026-11-27
+
+- **专家与专家团支持独立模型及思考强度配置**（[#47](https://github.com/MichengAI/dsh-agency-agents/issues/47)）：
+  - **召唤工具可选模型参数**：`summon_expert`、`summon_experts` 与 `summon_expert_team` 均新增可选的 `provider`、`model` 与 `reasoning_effort` 参数。未传入时默认沿用当前会话模型；指定模型时须成对提供 `provider` 与 `model`，指定 `reasoning_effort` 时须同时提供两者。
+  - **批量与团队成员级差异化覆盖**：`summon_experts` 支持在单个专家条目中独立覆盖模型与思考强度；`summon_expert_team` 新增 `member_models` 参数，允许按成员单独指定更轻量的模型或调整思考强度，不必全团绑定同一模型。
+  - **严格遵循宿主授权边界与明确报错提示**：所有指定路线在启动前均按「设置 → 插件 → 子智能体」中配置的允许模型清单校验；参数残缺、未授权路线或宿主模型选择配置无效时将直接返回清晰的本地化提示，不会启动多余子代理；在原生模式下复用同会话已有常驻队友时，沿用其创建时模型并附带明确说明。
+  - **文档同步**：在双语说明文档中补充独立模型参数用法，并明确宿主 `standard`、`ptc`、`cordis` 与 Desktop `minimal` 预设的默认开启前提。
+
 ## [1.3.2] - 2026-11-24
 
 - **全面适配 DeepSeek Harness 最新版本（`0.2.3-alpha.2`）**：
