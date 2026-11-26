@@ -2,11 +2,11 @@
 
 ## [1.4.0] - 2026-11-27
 
-- **Per-Call Model & Reasoning Effort for Experts and Teams** ([#47](https://github.com/MichengAI/dsh-agency-agents/issues/47)):
-  - **Optional Model Selection on Summon Tools**: `summon_expert`, `summon_experts`, and `summon_expert_team` now accept optional `provider`, `model`, and `reasoning_effort` parameters. Omitting them inherits the current conversation model; supplying a model requires both `provider` and `model`, and setting `reasoning_effort` requires both as well.
-  - **Per-Item & Per-Member Overrides**: `summon_experts` supports per-item model overrides inside `experts[]`, and `summon_expert_team` supports `member_models` so individual team members can use lighter or higher-reasoning models independently from the team default.
-  - **Host Allowlist Enforcement & Clear Error Messages**: Requested routes are verified against the allowed subagent routes configured under **Settings → Plugins → Subagent** before launching experts. Unpaired parameters, unauthorized routes, or invalid host model selection settings fail fast with localized guidance. Reusing a resident native teammate within the same conversation preserves its creation-time model with an explicit notice.
-  - **Documentation Updates**: Added usage instructions for independent model options and clarified default host preset behavior (`standard`, `ptc`, `cordis`, and Desktop `minimal`) across the READMEs.
+- **Per-Task Model & Reasoning Selection for Experts and Teams via Natural Language** ([#47](https://github.com/MichengAI/dsh-agency-agents/issues/47)):
+  - **Just Ask in Chat**: When summoning an expert, multiple experts, or an expert team, simply state the model or reasoning effort you want in plain language (for example, asking a reviewer to run with a lighter model or lower reasoning effort). When omitted, experts continue to inherit the current conversation's model.
+  - **Flexible Batch & Team Overrides**: When calling multiple experts or a team together, you can set a default model for the whole group while assigning a different model or reasoning effort to specific experts or team members.
+  - **Respects Host Allowlists & Clear Feedback**: Only models enabled under **Settings → Plugins → Subagent** are permitted. If subagent model selection is disabled or the requested model is not allowed, the request stops immediately with a clear message instead of silently falling back. Reusing an already active native teammate in the same conversation keeps its initial model and notes this in the result.
+  - **Prerequisite**: Make sure subagent model selection is enabled and allowed models are checked under **Settings → Plugins → Subagent** (some minimal or custom setups keep this off by default).
 
 ## [1.3.2] - 2026-11-24
 

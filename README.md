@@ -62,18 +62,18 @@
 | 支持但未启用，或当前会话工具未就绪 | 建议开启，仍可继续普通调用。 |
 | 服务和当前会话工具均可用 | 使用原生 Agent Team、共享任务板和队友消息，等待实际结果后汇总。 |
 
-显式配置 `maxDepth` 时使用普通模式以保留深度约束。原生模式任务启动确认不等于专家已经完成；创建中途失败不会自动切换模式重复执行。队友默认沿用主会话的模型选择；当在自然语言对话中明确要求切换模型、推理强度或采用轻量模型时，`summon_expert`、`summon_experts` 与 `summon_expert_team` 支持传入宿主子智能体设置中已授权的 `provider`、`model` 与 `reasoning_effort`（批量与专家团支持整批默认与成员级覆盖）。原生模式同会话复用已有常驻队友时沿用创建时的模型；原生面板的模型标签由 DSH 提供，可能显示创建时的值。
+显式配置 `maxDepth` 时使用普通模式以保留深度约束。原生模式任务启动确认不等于专家已经完成；创建中途失败不会自动切换模式重复执行。队友默认沿用主会话的模型选择；当你在对话里用自然语言指定想要使用的模型或思考强度时（例如让某位专家或整支团队改用更轻量的模型，或给个别成员单独提高思考强度），插件会按宿主「设置 → 插件 → 子智能体」中允许的模型列表来调度，并在未授权时直接提示原因。原生模式同会话复用已有常驻队友时沿用创建时的模型；原生面板的模型标签由 DSH 提供，可能显示创建时的值。
 
-### 工具接口
+### 自然语言指定模型与工具说明
 
 如果已启用的专家团名称相同，请使用 `list_expert_teams` 返回的稳定 ID。切换语言不改变团队 ID，也不会重命名自定义团队。
 
 保留个人专家工具 `list_experts`、`summon_expert`、`summon_experts`；新增 `list_expert_teams`、`get_expert_team`、`summon_expert_team`。主会话应先读取已启用团队的规则与分工，再提交完整任务，最后核验并汇总成员结果。
 
-- **独立模型与推理强度参数（可选）**：
-  - `summon_expert`、`summon_experts` 与 `summon_expert_team` 均支持可选 `provider`、`model` 与 `reasoning_effort`（未传时默认沿用当前会话模型；指定模型时 `provider` 与 `model` 须成对传入，指定 `reasoning_effort` 时也须同时提供两者）。
-  - `summon_experts` 可在 `experts[]` 每项单独指定 `provider` / `model` / `reasoning_effort` 覆盖顶层默认；`summon_expert_team` 可通过 `member_models: [{ expert, provider?, model?, reasoning_effort? }]` 为指定成员覆盖团队默认模型（如 `summon_expert_team(team, task, provider, model, member_models)`）。
-  - **宿主前提**：DSH 的 `standard`、`ptc` 与 `cordis` 预设（Web / Desktop）已为 `tool-subagent` 默认开启 `modelSelection: true` 与 `modelDiscovery: true`；在「设置 → 插件 → 子智能体」中开启模型选择并勾选允许路线后即可切换。Desktop 的 `minimal` 预设默认关闭上述两项，自定义配置或 headless 宿主也需确保 `tool-subagent` 开启这两项，才可向模型暴露 `list_subagent_models` 与允许非父会话路线。
+- **自然语言选模用法**：日常使用时直接用对话表达即可，无需手写工具参数。例如：
+  - 单专家：`「用某个轻量模型召唤代码审查专家帮我看下这段改动，思考强度设低一点」`
+  - 专家团：`「启动技术方案评审团，整体用轻量模型，其中安全专家改用高思考强度的模型」`
+- **行为边界**：未说明模型时默认沿用当前对话模型；仅允许选用已在「设置 → 插件 → 子智能体」中开启并勾选的模型（部分精简或自定义环境下默认关闭，需要手动开启）。若同会话内复用已在线的原生团队成员，将沿用它创建时的模型并在结果中说明。
 
 ### 草稿、语言与数据
 
