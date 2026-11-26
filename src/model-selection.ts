@@ -166,7 +166,6 @@ export function readParentAgentOptions(agent: unknown): AgentOptions {
   if (typeof record.session?.requestHeader === 'function') {
     try {
       return parentAgentOptionsForDelegation({
-        ...record,
         options: created,
         session: record.session,
       } as unknown as Parameters<typeof parentAgentOptionsForDelegation>[0])
